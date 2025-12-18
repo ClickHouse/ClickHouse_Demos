@@ -1,1 +1,1 @@
-# ClickHouse_Webinar_Demo
+# ClickHouse_Demos
