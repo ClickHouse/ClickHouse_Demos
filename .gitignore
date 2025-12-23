@@ -1,0 +1,45 @@
+# Test directory - not pushed to repo
+test/
+
+# Presenter notes - local only
+incremental_materialized_views/docs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.test
+.env.local
+
+# Logs
+*.log
+
+# ClickHouse data
+clickhouse-data/

@@ -1,0 +1,16 @@
+# ClickHouse Demo Requirements
+# Install with: pip install -r requirements.txt
+
+# ClickHouse client library
+clickhouse-connect>=0.7.0
+
+# Data generation
+faker>=20.0.0
+
+# CLI utilities
+python-dotenv>=1.0.0
+tqdm>=4.66.0
+
+# Optional: For advanced features
+pandas>=2.0.0
+numpy>=1.24.0
