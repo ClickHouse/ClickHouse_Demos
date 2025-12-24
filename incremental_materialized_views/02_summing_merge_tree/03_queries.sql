@@ -94,10 +94,10 @@ ORDER BY page_url;
 -- ================================================
 SELECT '--- Limitation: What about COUNT DISTINCT? ---' AS step;
 
--- Let's try to count unique users
+-- Let's try to count unique users (same user_id 1001 multiple times)
 INSERT INTO events_raw (event_type, page_url, user_id, revenue) VALUES
-    ('pageview', '/home', 1001, 0),  -- Same user as before!
-    ('pageview', '/home', 1001, 0);  -- Same user again!
+    ('pageview', '/home', 1001, 0),
+    ('pageview', '/home', 1001, 0);
 
 SELECT
     'SummingMergeTree limitation' AS issue,

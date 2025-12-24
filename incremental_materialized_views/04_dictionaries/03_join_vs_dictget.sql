@@ -10,17 +10,18 @@ USE mv_demo_dictionaries;
 -- Insert Sample Orders
 -- ================================================
 
+-- Sample orders: Various customers buying different products
 INSERT INTO orders_raw (customer_id, product_id, quantity) VALUES
-    (1001, 1, 1),   -- Alice buys Laptop
-    (1001, 2, 2),   -- Alice buys 2 Wireless Mice
-    (1002, 4, 1),   -- Bob buys Keyboard
-    (1003, 5, 2),   -- Carol buys 2 Monitors
-    (1003, 6, 1),   -- Carol buys Desk Chair
-    (1004, 3, 3),   -- David buys 3 USB-C Hubs
-    (1005, 1, 1),   -- Eva buys Laptop
-    (1005, 9, 1),   -- Eva buys Headphones
-    (1006, 7, 1),   -- Frank buys Standing Desk
-    (1007, 1, 2);   -- Grace buys 2 Laptops
+    (1001, 1, 1),
+    (1001, 2, 2),
+    (1002, 4, 1),
+    (1003, 5, 2),
+    (1003, 6, 1),
+    (1004, 3, 3),
+    (1005, 1, 1),
+    (1005, 9, 1),
+    (1006, 7, 1),
+    (1007, 1, 2);
 
 SELECT '[OK] Sample orders inserted' AS status;
 SELECT 'Orders count:' AS info, count() AS count FROM orders_raw;

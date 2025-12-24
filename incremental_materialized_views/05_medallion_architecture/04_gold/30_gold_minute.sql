@@ -202,8 +202,7 @@ SELECT '--- Performance: Aggregated vs Raw ---' AS section;
 -- Query 1: From Gold (pre-aggregated) - FAST
 SELECT
     'Gold layer (pre-aggregated)' AS source,
-    count() AS metric_rows,
-    formatReadableTimeDelta(measuredTimeNSec / 1000000) AS query_time
+    count() AS metric_rows
 FROM (
     SELECT
         minute,
@@ -217,8 +216,7 @@ FROM (
 -- Query 2: From Silver (raw orders) - SLOWER
 SELECT
     'Silver layer (raw orders)' AS source,
-    count() AS rows_scanned,
-    formatReadableTimeDelta(measuredTimeNSec / 1000000) AS query_time
+    count() AS rows_scanned
 FROM (
     SELECT
         toStartOfMinute(order_time) AS minute,

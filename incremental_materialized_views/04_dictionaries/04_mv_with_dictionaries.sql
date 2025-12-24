@@ -75,12 +75,13 @@ SELECT '[OK] Enrichment MV created' AS status;
 
 SELECT '-- Inserting new orders (will auto-enrich):' AS info;
 
+-- New orders to test auto-enrichment
 INSERT INTO orders_raw (customer_id, product_id, quantity) VALUES
-    (1001, 8, 1),   -- Alice buys Webcam
-    (1002, 10, 2),  -- Bob buys 2 Laptop Stands
-    (1003, 1, 1),   -- Carol buys Laptop
-    (1007, 4, 1),   -- Grace buys Keyboard
-    (1009, 9, 2);   -- Iris buys 2 Headphones
+    (1001, 8, 1),
+    (1002, 10, 2),
+    (1003, 1, 1),
+    (1007, 4, 1),
+    (1009, 9, 2);
 
 -- ================================================
 -- Query Enriched Data

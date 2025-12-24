@@ -11,10 +11,11 @@ USE mv_demo_aggregating;
 -- ================================================
 SELECT '--- Step 1: Inserting first batch (5 orders, 4 customers) ---' AS step;
 
+-- Note: Customer 1001 orders twice in this batch
 INSERT INTO orders_raw (customer_id, product_category, quantity, amount) VALUES
     (1001, 'Electronics', 1, 299.99),
     (1002, 'Electronics', 2, 149.99),
-    (1001, 'Electronics', 1, 49.99),   -- Same customer 1001!
+    (1001, 'Electronics', 1, 49.99),
     (1003, 'Clothing', 3, 89.99),
     (1004, 'Clothing', 1, 129.99);
 
@@ -48,10 +49,11 @@ ORDER BY category;
 -- ================================================
 SELECT '--- Step 3: Inserting second batch (same customers!) ---' AS step;
 
+-- Customers 1001 and 1003 appear again, plus new customer 1005
 INSERT INTO orders_raw (customer_id, product_category, quantity, amount) VALUES
-    (1001, 'Electronics', 1, 199.99),   -- Customer 1001 again!
-    (1005, 'Electronics', 1, 79.99),    -- New customer
-    (1003, 'Clothing', 2, 59.99);       -- Customer 1003 again!
+    (1001, 'Electronics', 1, 199.99),
+    (1005, 'Electronics', 1, 79.99),
+    (1003, 'Clothing', 2, 59.99);
 
 -- ================================================
 -- Step 4: Observe correct COUNT DISTINCT across batches

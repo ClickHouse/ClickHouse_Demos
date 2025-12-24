@@ -63,15 +63,16 @@ ch --queries-file MASTER_CLEANUP.sql
 **Key Concept**: A Materialized View in ClickHouse is an INSERT trigger, not a cached query.
 
 ```mermaid
+%%{init: {'themeVariables': {'primaryTextColor': '#000000', 'lineColor': '#000000'}}}%%
 flowchart LR
     A[INSERT] --> B[page_views_raw]
     B --> C{MV Trigger}
     C --> D[page_views_count]
 
-    style A fill:#e1f5fe
-    style B fill:#fff3e0
-    style C fill:#f3e5f5
-    style D fill:#e8f5e9
+    style A fill:#e1f5fe,color:#000000
+    style B fill:#fff3e0,color:#000000
+    style C fill:#f3e5f5,color:#000000
+    style D fill:#e8f5e9,color:#000000
 ```
 
 <details>
@@ -107,7 +108,17 @@ Demonstrates:
 - Inserting raw page view events
 - Querying aggregated counts (no computation at query time)
 
-### Step 4: Cleanup (Optional)
+### Step 4: Performance Comparison
+
+```bash
+ch --queries-file 01_basic_incremental_mvs/03_performance.sql
+```
+
+Compares query performance:
+- **MV Target (pre-aggregated)**: ~3ms, reads only aggregated rows
+- **Raw Table (on-the-fly)**: ~5ms, must scan 100K+ rows
+
+### Step 5: Cleanup (Optional)
 
 ```bash
 ch --queries-file 01_basic_incremental_mvs/99_cleanup.sql
@@ -132,6 +143,7 @@ ch --queries-file 01_basic_incremental_mvs/99_cleanup.sql
 **Key Concept**: SummingMergeTree automatically sums numeric columns when rows with the same ORDER BY key are merged.
 
 ```mermaid
+%%{init: {'themeVariables': {'primaryTextColor': '#000000', 'lineColor': '#000000'}}}%%
 flowchart LR
     A[INSERT] --> B[events_raw]
     B --> C{MV Trigger}
@@ -139,12 +151,12 @@ flowchart LR
     D --> E{Background<br/>Merge}
     E --> F[Auto-Summed<br/>Rows]
 
-    style A fill:#e1f5fe
-    style B fill:#fff3e0
-    style C fill:#f3e5f5
-    style D fill:#e8f5e9
-    style E fill:#fce4ec
-    style F fill:#e8f5e9
+    style A fill:#e1f5fe,color:#000000
+    style B fill:#fff3e0,color:#000000
+    style C fill:#f3e5f5,color:#000000
+    style D fill:#e8f5e9,color:#000000
+    style E fill:#fce4ec,color:#000000
+    style F fill:#e8f5e9,color:#000000
 ```
 
 <details>
@@ -190,7 +202,18 @@ Demonstrates:
 - Using `FINAL` to see merged results before background merge
 - Using `OPTIMIZE TABLE` to force immediate merge
 
-### Step 5: Cleanup (Optional)
+### Step 5: Performance Comparison
+
+```bash
+ch --queries-file 02_summing_merge_tree/04_performance.sql
+```
+
+Compares query performance (500K events):
+- **SummingMergeTree**: ~4ms, reads 54 pre-merged rows
+- **Regular MergeTree**: ~3ms, reads 50 rows (no auto-sum)
+- **Raw Events Table**: ~10ms, must scan 500K rows
+
+### Step 6: Cleanup (Optional)
 
 ```bash
 ch --queries-file 02_summing_merge_tree/99_cleanup.sql
@@ -215,6 +238,7 @@ ch --queries-file 02_summing_merge_tree/99_cleanup.sql
 **Key Concept**: AggregateFunction columns store intermediate STATE, enabling COUNT DISTINCT and AVG across INSERT batches.
 
 ```mermaid
+%%{init: {'themeVariables': {'primaryTextColor': '#000000', 'lineColor': '#000000'}}}%%
 flowchart LR
     A[INSERT] --> B[orders_raw]
     B --> C{MV with<br/>*State functions}
@@ -222,12 +246,12 @@ flowchart LR
     D --> E[Query with<br/>*Merge functions]
     E --> F[Final<br/>Results]
 
-    style A fill:#e1f5fe
-    style B fill:#fff3e0
-    style C fill:#f3e5f5
-    style D fill:#e8f5e9
-    style E fill:#fff9c4
-    style F fill:#e8f5e9
+    style A fill:#e1f5fe,color:#000000
+    style B fill:#fff3e0,color:#000000
+    style C fill:#f3e5f5,color:#000000
+    style D fill:#e8f5e9,color:#000000
+    style E fill:#fff9c4,color:#000000
+    style F fill:#e8f5e9,color:#000000
 ```
 
 ### State/Merge Pattern
@@ -285,7 +309,17 @@ Demonstrates:
 - Querying with `countMerge()`, `sumMerge()`, `avgMerge()`, `uniqMerge()`
 - Correct COUNT DISTINCT even across separate INSERT batches
 
-### Step 5: Cleanup (Optional)
+### Step 5: Performance Comparison
+
+```bash
+ch --queries-file 03_aggregating_merge_tree/04_performance.sql
+```
+
+Compares query performance (1M orders):
+- **AggregatingMergeTree + uniqMerge()**: ~6ms, reads 14 rows
+- **Raw Table + COUNT DISTINCT**: ~26ms, must scan 1M rows
+
+### Step 6: Cleanup (Optional)
 
 ```bash
 ch --queries-file 03_aggregating_merge_tree/99_cleanup.sql
@@ -309,6 +343,7 @@ ch --queries-file 03_aggregating_merge_tree/99_cleanup.sql
 **Key Concept**: Dictionaries provide O(1) in-memory lookups, replacing expensive JOINs for dimension data.
 
 ```mermaid
+%%{init: {'themeVariables': {'primaryTextColor': '#000000', 'lineColor': '#000000'}}}%%
 flowchart LR
     subgraph Source Tables
         P[dim_products]
@@ -332,12 +367,12 @@ flowchart LR
     PD -->|O 1 lookup| MV
     CD -->|O 1 lookup| MV
 
-    style P fill:#fff3e0
-    style C fill:#fff3e0
-    style PD fill:#e8f5e9
-    style CD fill:#e8f5e9
-    style Q fill:#e1f5fe
-    style MV fill:#f3e5f5
+    style P fill:#fff3e0,color:#000000
+    style C fill:#fff3e0,color:#000000
+    style PD fill:#e8f5e9,color:#000000
+    style CD fill:#e8f5e9,color:#000000
+    style Q fill:#e1f5fe,color:#000000
+    style MV fill:#f3e5f5,color:#000000
 ```
 
 ### dictGet() Functions
@@ -409,7 +444,19 @@ This creates:
 - MV that auto-enriches orders using dictGet()
 - Analytics queries on enriched data
 
-### Step 6: Cleanup (Optional)
+### Step 6: Performance Comparison
+
+```bash
+ch --queries-file 04_dictionaries/05_performance.sql
+```
+
+Compares query performance (500K orders):
+- **dictGet() - O(1) lookup**: ~15ms, constant time regardless of dimension size
+- **JOIN - table scan**: ~25ms, must scan dimension tables for every query
+
+Shows why dictionaries are essential for dimension lookups at scale.
+
+### Step 7: Cleanup (Optional)
 
 ```bash
 ch --queries-file 04_dictionaries/99_cleanup.sql
@@ -436,6 +483,7 @@ ch --queries-file 04_dictionaries/99_cleanup.sql
 **Key Concept**: Full Bronze -> Silver -> Gold pipeline combining all patterns from Examples 1-4.
 
 ```mermaid
+%%{init: {'themeVariables': {'primaryTextColor': '#000000', 'lineColor': '#000000'}}}%%
 flowchart TB
     subgraph Bronze ["Bronze Layer (7d TTL)"]
         A[events_raw<br/>JSON blobs]
@@ -458,12 +506,12 @@ flowchart TB
     D -->|MV: Cascading rollup| E
     E -->|MV: Cascading rollup| F
 
-    style A fill:#cd7f32
-    style B fill:#c0c0c0
-    style C fill:#c0c0c0
-    style D fill:#ffd700
-    style E fill:#ffd700
-    style F fill:#ffd700
+    style A fill:#cd7f32,color:#000000
+    style B fill:#c0c0c0,color:#000000
+    style C fill:#c0c0c0,color:#000000
+    style D fill:#ffd700,color:#000000
+    style E fill:#ffd700,color:#000000
+    style F fill:#ffd700,color:#000000
 ```
 
 <details>
@@ -578,7 +626,24 @@ python3 05_medallion_architecture/scripts/stream_simulator.py --rate 500
 
 Continuously streams events at 500/second.
 
-### Step 12: Cleanup (Optional)
+### Step 12: Performance Comparison
+
+```bash
+ch --queries-file 05_medallion_architecture/05_queries/43_performance.sql
+```
+
+Compares query performance across all layers:
+- **Gold Layer (sales_by_day)**: ~2ms, reads pre-aggregated rows - FASTEST
+- **Gold Layer (sales_by_hour)**: ~3ms, slightly more rows
+- **Silver Layer (orders_enriched)**: ~15ms, must scan enriched rows
+- **Bronze Layer (events_raw)**: ~50ms, JSON parsing + dictionary lookups - SLOWEST
+
+Demonstrates:
+- Data volume reduction at each layer
+- Query time improvement from layered aggregation
+- Scalability analysis (10x, 100x data projections)
+
+### Step 13: Cleanup (Optional)
 
 ```bash
 ch --queries-file 05_medallion_architecture/06_cleanup/99_cleanup.sql
@@ -589,6 +654,7 @@ ch --queries-file 05_medallion_architecture/06_cleanup/99_cleanup.sql
 ### Data Flow Diagram
 
 ```mermaid
+%%{init: {'themeVariables': {'primaryTextColor': '#000000', 'lineColor': '#000000'}}}%%
 flowchart LR
     subgraph Input
         API[API Events]
@@ -675,34 +741,4 @@ incremental_materialized_views/
 |-- MASTER_CLEANUP.sql
 |-- run_tests.sh
 |-- README.md
-```
-
----
-
-## Progression Summary
-
-```mermaid
-flowchart TB
-    E1[Example 1<br/>Basic MV]
-    E2[Example 2<br/>SummingMergeTree]
-    E3[Example 3<br/>AggregatingMergeTree]
-    E4[Example 4<br/>Dictionaries]
-    E5[Example 5<br/>Medallion Architecture]
-
-    E1 -->|"Adds: auto-sum on merge"| E2
-    E2 -->|"Adds: State/Merge pattern"| E3
-    E3 -->|"Adds: O(1) lookups"| E4
-    E4 -->|"Combines all patterns"| E5
-
-    E1 -.- L1[MV = INSERT trigger]
-    E2 -.- L2[SUM across batches]
-    E3 -.- L3[COUNT DISTINCT, AVG]
-    E4 -.- L4[dictGet for dimensions]
-    E5 -.- L5[Bronze->Silver->Gold]
-
-    style E1 fill:#e1f5fe
-    style E2 fill:#fff3e0
-    style E3 fill:#f3e5f5
-    style E4 fill:#e0f2f1
-    style E5 fill:#e8f5e9
 ```
