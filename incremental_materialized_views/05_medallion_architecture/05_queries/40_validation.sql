@@ -184,15 +184,15 @@ WITH
     ),
     minute_metrics AS (
         SELECT
-            sum(countMerge(total_orders)) AS orders,
-            sum(sumMerge(total_revenue)) AS revenue
+            countMerge(total_orders) AS orders,
+            sumMerge(total_revenue) AS revenue
         FROM sales_by_minute
         WHERE minute >= now() - INTERVAL 1 HOUR
     ),
     hour_metrics AS (
         SELECT
-            sum(countMerge(total_orders)) AS orders,
-            sum(sumMerge(total_revenue)) AS revenue
+            countMerge(total_orders) AS orders,
+            sumMerge(total_revenue) AS revenue
         FROM sales_by_hour
         WHERE hour >= now() - INTERVAL 1 HOUR
     )
@@ -223,44 +223,44 @@ FROM hour_metrics h;
 
 SELECT '=== 8. TTL CONFIGURATION CHECK ===' AS section;
 
+-- Note: Using create_table_query for ClickHouse Cloud compatibility
 SELECT
     table,
     engine,
-    ttl_expression,
     CASE
-        WHEN ttl_expression LIKE '%7 DAY%' THEN '7 days (Bronze)'
-        WHEN ttl_expression LIKE '%30 DAY%' THEN '30 days (Silver)'
-        WHEN ttl_expression LIKE '%90 DAY%' THEN '90 days (Gold-Minute)'
-        WHEN ttl_expression LIKE '%365 DAY%' THEN '365 days (Gold-Hour)'
-        WHEN ttl_expression LIKE '%730 DAY%' THEN '730 days (Gold-Day)'
-        ELSE 'Unknown'
+        WHEN create_table_query LIKE '%TTL%7 DAY%' THEN '7 days (Bronze)'
+        WHEN create_table_query LIKE '%TTL%30 DAY%' THEN '30 days (Silver)'
+        WHEN create_table_query LIKE '%TTL%90 DAY%' THEN '90 days (Gold-Minute)'
+        WHEN create_table_query LIKE '%TTL%365 DAY%' THEN '365 days (Gold-Hour)'
+        WHEN create_table_query LIKE '%TTL%730 DAY%' THEN '730 days (Gold-Day)'
+        WHEN create_table_query LIKE '%TTL%' THEN 'TTL configured'
+        ELSE 'No TTL'
     END AS retention_policy
 FROM system.tables
 WHERE database = 'fastmart_demo'
-  AND ttl_expression != ''
+  AND create_table_query LIKE '%TTL%'
 ORDER BY table;
 
 -- Expected: Different TTLs per layer (7d → 30d → 90d → 365d → 730d)
 
 -- ================================================
--- 9. Verify Anomaly Detection Working
+-- 9. Verify Anomaly Detection Working (Optional)
 -- ================================================
 
 SELECT '=== 9. ANOMALY DETECTION CHECK ===' AS section;
 
+-- Note: order_anomalies table is optional and may not exist in basic demo
+-- Check if table exists before querying
 SELECT
-    anomaly_type,
-    count() AS anomalies_detected,
-    round(avg(anomaly_score), 2) AS avg_score,
-    round(min(order_amount), 2) AS min_amount,
-    round(max(order_amount), 2) AS max_amount
-FROM order_anomalies
-WHERE detection_time >= now() - INTERVAL 24 HOUR
-GROUP BY anomaly_type
-ORDER BY anomalies_detected DESC;
+    'order_anomalies' AS table_name,
+    CASE
+        WHEN (SELECT count() FROM system.tables WHERE database = 'fastmart_demo' AND table = 'order_anomalies') > 0
+        THEN 'Table exists - anomaly detection enabled'
+        ELSE 'Table not found - anomaly detection not configured (OK for basic demo)'
+    END AS status;
 
 -- Expected: If you have anomalies, they should appear here
--- If no anomalies, that's OK (means all orders are normal)
+-- If no anomalies or table not found, that's OK (means basic demo or all orders are normal)
 
 -- ================================================
 -- 10. Verify Cascading Pipeline Latency

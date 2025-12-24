@@ -10,9 +10,9 @@
 SELECT
     'WARNING: This script will DROP the entire fastmart_demo database!' AS warning,
     'All tables, views, dictionaries, and data will be permanently deleted.' AS notice,
-    'Press Ctrl+C now to cancel, or wait 5 seconds to proceed...' AS action;
+    'Press Ctrl+C now to cancel, or wait 2 seconds to proceed...' AS action;
 
-SELECT sleep(5);
+SELECT sleep(2);
 
 -- ================================================
 -- Drop Database (simplest approach)

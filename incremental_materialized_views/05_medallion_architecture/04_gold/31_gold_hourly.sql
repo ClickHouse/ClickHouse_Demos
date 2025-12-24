@@ -184,11 +184,11 @@ GROUP BY day, category;
 SELECT '[OK] Inserting sample data (flows through all layers)' AS step;
 
 INSERT INTO events_raw (event_type, source_system, payload) VALUES
-    ('order', 'web', '{"order_id": "demo-001", "customer_id": 1001, "product_id": 1, "quantity": 2, "price": 29.99, "payment_method": "credit_card"}'),
-    ('order', 'mobile', '{"order_id": "demo-002", "customer_id": 1002, "product_id": 3, "quantity": 1, "price": 9.99, "payment_method": "paypal"}'),
-    ('order', 'api', '{"order_id": "demo-003", "customer_id": 1003, "product_id": 2, "quantity": 5, "price": 12.99, "payment_method": "credit_card"}'),
-    ('order', 'web', '{"order_id": "demo-004", "customer_id": 1004, "product_id": 4, "quantity": 3, "price": 14.99, "payment_method": "debit_card"}'),
-    ('order', 'mobile', '{"order_id": "demo-005", "customer_id": 1005, "product_id": 5, "quantity": 1, "price": 39.99, "payment_method": "credit_card"}'),
+    ('order', 'web', '{"order_id": "550e8400-e29b-41d4-a716-446655440001", "customer_id": 1001, "product_id": 1, "quantity": 2, "price": 29.99, "payment_method": "credit_card"}'),
+    ('order', 'mobile', '{"order_id": "550e8400-e29b-41d4-a716-446655440002", "customer_id": 1002, "product_id": 3, "quantity": 1, "price": 9.99, "payment_method": "paypal"}'),
+    ('order', 'api', '{"order_id": "550e8400-e29b-41d4-a716-446655440003", "customer_id": 1003, "product_id": 2, "quantity": 5, "price": 12.99, "payment_method": "credit_card"}'),
+    ('order', 'web', '{"order_id": "550e8400-e29b-41d4-a716-446655440004", "customer_id": 1004, "product_id": 4, "quantity": 3, "price": 14.99, "payment_method": "debit_card"}'),
+    ('order', 'mobile', '{"order_id": "550e8400-e29b-41d4-a716-446655440005", "customer_id": 1005, "product_id": 5, "quantity": 1, "price": 39.99, "payment_method": "credit_card"}'),
     ('click', 'web', '{"session_id": "sess_001", "customer_id": 1001, "page": "/products/mouse", "action": "view", "duration_seconds": 45}'),
     ('click', 'mobile', '{"session_id": "sess_002", "customer_id": 1002, "page": "/cart", "action": "add_to_cart", "product_id": 3}'),
     ('inventory_update', 'batch', '{"product_id": 1, "warehouse_id": 101, "quantity_change": -2, "new_stock_level": 48, "reason": "order_fulfillment"}');
@@ -234,8 +234,8 @@ SELECT '--- Cascading Aggregation Comparison ---' AS section;
 SELECT
     'Minute level' AS granularity,
     count() AS aggregate_rows,
-    sum(countMerge(total_orders)) AS total_orders,
-    round(sum(sumMerge(total_revenue)), 2) AS total_revenue
+    countMerge(total_orders) AS total_orders,
+    round(sumMerge(total_revenue), 2) AS total_revenue
 FROM sales_by_minute
 WHERE minute >= now() - INTERVAL 1 HOUR;
 
@@ -243,8 +243,8 @@ WHERE minute >= now() - INTERVAL 1 HOUR;
 SELECT
     'Hour level' AS granularity,
     count() AS aggregate_rows,
-    sum(countMerge(total_orders)) AS total_orders,
-    round(sum(sumMerge(total_revenue)), 2) AS total_revenue
+    countMerge(total_orders) AS total_orders,
+    round(sumMerge(total_revenue), 2) AS total_revenue
 FROM sales_by_hour
 WHERE hour >= now() - INTERVAL 1 HOUR;
 
@@ -252,8 +252,8 @@ WHERE hour >= now() - INTERVAL 1 HOUR;
 SELECT
     'Day level' AS granularity,
     count() AS aggregate_rows,
-    sum(countMerge(total_orders)) AS total_orders,
-    round(sum(sumMerge(total_revenue)), 2) AS total_revenue
+    countMerge(total_orders) AS total_orders,
+    round(sumMerge(total_revenue), 2) AS total_revenue
 FROM sales_by_day
 WHERE day >= today() - INTERVAL 1 DAY;
 
@@ -298,8 +298,7 @@ SELECT '--- Query Performance by Aggregation Tier ---' AS section;
 -- Query the same metric at different granularities
 SELECT
     'Query from RAW orders' AS source,
-    count() AS rows_processed,
-    formatReadableTimeDelta(measuredTimeNSec / 1000000) AS query_time
+    count() AS rows_processed
 FROM (
     SELECT
         toStartOfHour(order_time) AS hour,
@@ -311,8 +310,7 @@ FROM (
 
 SELECT
     'Query from MINUTE aggregates' AS source,
-    count() AS rows_processed,
-    formatReadableTimeDelta(measuredTimeNSec / 1000000) AS query_time
+    count() AS rows_processed
 FROM (
     SELECT
         toStartOfHour(minute) AS hour,
@@ -324,8 +322,7 @@ FROM (
 
 SELECT
     'Query from HOUR aggregates' AS source,
-    count() AS rows_processed,
-    formatReadableTimeDelta(measuredTimeNSec / 1000000) AS query_time
+    count() AS rows_processed
 FROM (
     SELECT
         hour,
