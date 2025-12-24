@@ -351,8 +351,11 @@ run_sql "05_medallion_architecture/04_gold/30_gold_minute.sql"
 run_sql "05_medallion_architecture/04_gold/31_gold_hourly.sql"
 
 # Generate test events with Python (more events for realistic test)
-echo -e "${YELLOW}Step 5.6: Generate events (Python)${NC}"
-$PYTHON_CMD 05_medallion_architecture/scripts/generate_events.py --count 5000 --days 7 || {
+# Uses EVENT_COUNT and EVENT_DAYS from .env (minimum: 500000 events, 1 day)
+EVENT_COUNT="${EVENT_COUNT:-500000}"
+EVENT_DAYS="${EVENT_DAYS:-1}"
+echo -e "${YELLOW}Step 5.6: Generate events (Python) - ${EVENT_COUNT} events over ${EVENT_DAYS} day(s)${NC}"
+$PYTHON_CMD 05_medallion_architecture/scripts/generate_events.py --count $EVENT_COUNT --days $EVENT_DAYS || {
     echo -e "${RED}FAILED: generate_events.py${NC}"
     test_fail "generate_events.py failed"
 }

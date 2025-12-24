@@ -71,7 +71,7 @@ SELECT '--- Step 6: After OPTIMIZE (fully merged) ---' AS step;
 OPTIMIZE TABLE hourly_metrics FINAL;
 
 SELECT hour, page_url, pageviews, clicks, purchases, revenue
-FROM hourly_metrics
+FROM hourly_metrics FINAL
 ORDER BY page_url;
 
 -- ================================================
