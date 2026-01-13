@@ -402,7 +402,7 @@ ORDER BY
 -- ================================================
 SELECT
     'Cascading aggregations created' AS status,
-    'Minute → Hour → Day pipeline working' AS result,
+    'Minute -> Hour -> Day pipeline working' AS result,
     '100x+ query speedup demonstrated' AS performance,
-    'Next: Add anomaly detection layer' AS next_step,
-    'File: sql/gold/32_anomaly_detection.sql' AS next_file;
+    'Next: Run validation and performance queries' AS next_step,
+    'File: 05_queries/40_validation.sql' AS next_file;
