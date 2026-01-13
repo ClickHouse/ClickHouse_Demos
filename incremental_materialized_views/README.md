@@ -523,6 +523,22 @@ flowchart TB
 pip install -r 05_medallion_architecture/scripts/requirements.txt
 ```
 
+### Environment Configuration
+
+Configure data generation volume in `.env`:
+
+```bash
+# Recommended configurations:
+#   Quick demo:     EVENT_COUNT=500000   EVENT_DAYS=1  (~2 min generation)
+#   Standard demo:  EVENT_COUNT=1000000  EVENT_DAYS=1  (~4 min generation)
+#   Large scale:    EVENT_COUNT=5000000  EVENT_DAYS=1  (~15 min generation)
+
+export EVENT_COUNT=500000  # Number of events (minimum 500K recommended)
+export EVENT_DAYS=1        # Time span (1 day recommended for dense aggregations)
+```
+
+Higher event counts produce more dramatic performance differences between layers.
+
 ### Step 1: Create Database and Configuration
 
 ```bash
@@ -613,10 +629,11 @@ This creates:
 ### Step 10: Generate Test Events
 
 ```bash
-python3 05_medallion_architecture/scripts/generate_events.py --count 100000
+# Uses EVENT_COUNT and EVENT_DAYS from .env (default: 500K events, 1 day)
+python3 05_medallion_architecture/scripts/generate_events.py
 ```
 
-Generates and inserts 100,000 test events.
+Generates test events using configuration from `.env`. Default 500K events over 1 day provides sufficient data density for meaningful aggregation comparisons.
 
 ### Step 11: (Optional) Stream Real-Time Events
 
