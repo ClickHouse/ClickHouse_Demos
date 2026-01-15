@@ -42,8 +42,6 @@ DROP DATABASE IF EXISTS webinar_demo;
 CREATE DATABASE webinar_demo;
 USE webinar_demo;
 
-SELECT '=== SETUP: Creating dimension tables ===' AS status;
-
 -- -----------------------------------------------
 -- Products dimension table (10 sample products)
 -- This will be loaded into a dictionary later
@@ -94,12 +92,6 @@ INSERT INTO dim_customers VALUES
     (1009, 'Ivy Chen', 'Gold', 'Singapore'),
     (1010, 'Jack Taylor', 'Silver', 'USA');
 
-SELECT '=== SETUP: Verifying dimension data ===' AS status;
-SELECT count() AS products FROM dim_products;
-SELECT count() AS customers FROM dim_customers;
-
-SELECT '=== SETUP: Creating dictionaries ===' AS status;
-
 -- -----------------------------------------------
 -- Products dictionary
 -- Loads product data into memory as a hash table
@@ -138,8 +130,6 @@ LIFETIME(MIN 300 MAX 600);
 SYSTEM RELOAD DICTIONARY webinar_demo.products_dict;
 SYSTEM RELOAD DICTIONARY webinar_demo.customers_dict;
 
-SELECT '=== SETUP: Creating tables for SECTION 1 (MVs demo) ===' AS status;
-
 -- -----------------------------------------------
 -- Tables for SECTION 1: Materialized Views Demo
 -- raw_logs: source table where data arrives
@@ -159,8 +149,6 @@ CREATE TABLE log_summary (
     event_count UInt64
 ) ENGINE = SummingMergeTree()
 ORDER BY log_type;
-
-SELECT '=== SETUP: Creating tables for SECTION 2 (AVG problem demo) ===' AS status;
 
 -- -----------------------------------------------
 -- Tables for SECTION 2: The AVG Problem Demo
@@ -187,8 +175,6 @@ CREATE TABLE tt_avg_latency (
 ) ENGINE = AggregatingMergeTree()
 ORDER BY endpoint;
 
-SELECT '=== SETUP: Creating tables for SECTION 3 (Dictionaries demo) ===' AS status;
-
 -- -----------------------------------------------
 -- Tables for SECTION 3: Dictionaries Demo
 -- orders_fact: fact table with foreign keys
@@ -210,8 +196,6 @@ SELECT
     1 + (number % 10) AS product_id,       -- Random product 1-10
     1 + (number % 5) AS quantity           -- Random quantity 1-5
 FROM numbers(1000);
-
-SELECT '=== SETUP: Creating tables for SECTION 4 (Medallion demo) ===' AS status;
 
 -- -----------------------------------------------
 -- BRONZE layer: Raw JSON events (landing zone)
@@ -277,8 +261,6 @@ CREATE TABLE gold_sales_day (
     unique_customers AggregateFunction(uniq, UInt32)
 ) ENGINE = AggregatingMergeTree()
 ORDER BY (day, category);
-
-SELECT '=== SETUP: Creating Materialized Views for Medallion pipeline ===' AS status;
 
 -- -----------------------------------------------
 -- MV 1: Bronze -> Silver (parse JSON)
@@ -348,8 +330,6 @@ SELECT
 FROM silver_orders_enriched
 GROUP BY day, category;
 
-SELECT '=== SETUP: Generating seed data (50,000 orders) ===' AS status;
-
 -- -----------------------------------------------
 -- Generate 50,000 sample orders for the demo
 -- Data flows: bronze -> silver -> silver_enriched -> gold
@@ -370,24 +350,6 @@ SELECT
         '}'
     ) AS payload
 FROM numbers(50000);
-
-SELECT '=== SETUP COMPLETE ===' AS status;
-
--- Verify everything was created correctly
-SELECT 'Dimension tables:' AS check,
-    (SELECT count() FROM dim_products) AS products,
-    (SELECT count() FROM dim_customers) AS customers;
-
-SELECT 'Dictionaries:' AS check;
-SELECT name, status, element_count
-FROM system.dictionaries
-WHERE database = 'webinar_demo';
-
-SELECT 'Medallion pipeline:' AS check,
-    (SELECT count() FROM bronze_events) AS bronze,
-    (SELECT count() FROM silver_orders) AS silver,
-    (SELECT count() FROM silver_orders_enriched) AS silver_enriched,
-    (SELECT count() FROM gold_sales_day) AS gold_day;
 
 -- ****************************************************************************
 -- **  END OF SETUP - Demo starts below                                      **
@@ -416,19 +378,7 @@ USE webinar_demo;
 -- ClickHouse approach: Incremental Materialized Views!
 -- ---------------------------------------------------------------------------
 
-SELECT '>>> SECTION 1: Incremental Materialized Views <<<' AS demo;
-
-
--- ---------------------------------------------------------------------------
--- STEP 1.1: Show the two tables we'll use
--- ---------------------------------------------------------------------------
--- raw_logs: where events land (source)
--- log_summary: aggregated counts by type (target) - uses SummingMergeTree!
-
-SELECT 'raw_logs (source) - raw events land here' AS table_1;
-SELECT 'log_summary (target) - aggregated counts by type' AS table_2;
-
--- Verify both tables are empty
+-- Verify both tables are empty (raw_logs is source, log_summary is target)
 SELECT count() AS raw_logs_count FROM raw_logs;
 SELECT count() AS log_summary_count FROM log_summary;
 
@@ -450,8 +400,6 @@ SELECT
     1 AS event_count                     -- Each event counts as 1
 FROM raw_logs;
 
-SELECT 'MV created! Extracts log type and counts events automatically' AS status;
-
 
 -- ---------------------------------------------------------------------------
 -- STEP 1.3: Insert events into raw_logs
@@ -466,16 +414,12 @@ INSERT INTO raw_logs (log_message) VALUES
     ('API request received'),
     ('User logged out');
 
-SELECT 'Inserted 6 events into raw_logs' AS action;
-
 
 -- ---------------------------------------------------------------------------
 -- STEP 1.4: Check log_summary - AGGREGATED automatically!
 -- ---------------------------------------------------------------------------
--- WOW moment: 6 events -> 3 aggregated rows!
+-- 6 events -> 3 aggregated rows!
 -- MV extracted types AND counted them!
-
-SELECT '>>> Data transformed and aggregated automatically! <<<' AS wow_moment;
 
 SELECT log_type, sum(event_count) AS total_events
 FROM log_summary
@@ -499,14 +443,11 @@ INSERT INTO raw_logs (log_message) VALUES
     ('Error database connection lost'),
     ('Error timeout exceeded');
 
-SELECT 'Inserted 2 more Error events...' AS action;
-
+-- Error count increased from 2 to 4 - automatically!
 SELECT log_type, sum(event_count) AS total_events
 FROM log_summary
 GROUP BY log_type
 ORDER BY total_events DESC;
-
--- Result: Error count increased from 2 to 4 - automatically!
 
 
 
@@ -533,20 +474,11 @@ USE webinar_demo;
 -- If you pre-compute averages per batch, you'll get WRONG results!
 -- ---------------------------------------------------------------------------
 
-SELECT '>>> SECTION 2: The AVG Problem <<<' AS demo;
-
-
 -- ---------------------------------------------------------------------------
 -- STEP 2.1: Set up with SIMPLE numbers (easy mental math!)
 -- ---------------------------------------------------------------------------
--- 4 API latency measurements that anyone can calculate
-
-SELECT '--- ALL 4 latency measurements (in ms) ---' AS step;
-
-SELECT toFloat64(arrayJoin([10, 10, 10, 50])) AS latency_ms;
-
--- Calculate the TRUE average: (10+10+10+50)/4 = 80/4 = 20ms
-SELECT '--- TRUE AVERAGE (verify the math yourself!) ---' AS step;
+-- 4 API latency measurements: [10, 10, 10, 50]
+-- TRUE average: (10+10+10+50)/4 = 80/4 = 20ms
 
 SELECT
     round(avg(latency), 2) AS true_average_ms,
@@ -554,19 +486,12 @@ SELECT
     sum(latency) AS total_sum
 FROM (SELECT toFloat64(arrayJoin([10, 10, 10, 50])) AS latency);
 
--- Result: 20ms from 4 requests (sum=80)
--- REMEMBER: 20ms is the CORRECT answer!
-
 
 -- ---------------------------------------------------------------------------
 -- STEP 2.2: Data arrives in separate batches
 -- ---------------------------------------------------------------------------
--- This is realistic: different time windows, different sources, micro-batches
-
-SELECT '--- But data arrives in BATCHES... ---' AS step;
-
-SELECT 'Batch 1: 3 requests [10, 10, 10] -> avg = 10ms' AS batch1;
-SELECT 'Batch 2: 1 request [50] -> avg = 50ms' AS batch2;
+-- Batch 1: 3 requests [10, 10, 10] -> avg = 10ms
+-- Batch 2: 1 request [50] -> avg = 50ms
 
 -- Store pre-computed batch averages (common but WRONG approach!)
 INSERT INTO tt_avg_latency_wrong (endpoint, avg_latency, batch_id)
@@ -580,8 +505,7 @@ VALUES ('/api/users', 50.0, 2);
 -- STEP 2.3: THE PROBLEM - avg(avg) gives WRONG answer!
 -- ---------------------------------------------------------------------------
 -- If we average the batch averages: (10 + 50) / 2 = 30ms ... WRONG!
-
-SELECT '>>> THE PROBLEM: avg(avg) = 30ms ... but true avg is 20ms! <<<' AS problem;
+-- True avg is 20ms, but avg(avg) gives 30ms - 50% error!
 
 SELECT
     endpoint,
@@ -590,22 +514,11 @@ SELECT
 FROM tt_avg_latency_wrong
 GROUP BY endpoint;
 
--- The dramatic comparison:
-SELECT
-    '20ms' AS true_average,
-    '30ms' AS wrong_average,
-    '50% OFF!' AS error_magnitude;
-
--- Why wrong? Batch 2 had 1 request but got EQUAL weight to Batch 1's 3 requests!
--- This is the "avg of avg" problem - a classic mistake in analytics!
-
 
 -- ---------------------------------------------------------------------------
 -- STEP 2.4: THE SOLUTION - AggregatingMergeTree with State functions
 -- ---------------------------------------------------------------------------
 -- avgState stores (sum, count) so batches combine correctly!
-
-SELECT '>>> THE SOLUTION: AggregatingMergeTree <<<' AS solution;
 
 -- Insert Batch 1 using avgState (stores sum=30, count=3)
 INSERT INTO tt_avg_latency (endpoint, avg_latency, count_requests, sum_latency)
@@ -633,8 +546,7 @@ FROM (
 -- ---------------------------------------------------------------------------
 -- STEP 2.5: Query with Merge functions - CORRECT result!
 -- ---------------------------------------------------------------------------
-
-SELECT '>>> CORRECT: avgMerge = 20ms (matches true average!) <<<' AS wow_moment;
+-- avgMerge combines: (30+50)/(3+1) = 80/4 = 20ms - CORRECT!
 
 SELECT
     endpoint,
@@ -643,36 +555,6 @@ SELECT
     sumMerge(sum_latency) AS total_sum
 FROM tt_avg_latency
 GROUP BY endpoint;
-
--- Result: 20ms from 4 requests (sum=80) - CORRECT!
--- avgMerge combines: (30+50)/(3+1) = 80/4 = 20ms
-
-
--- ---------------------------------------------------------------------------
--- STEP 2.6: Final comparison - the punchline!
--- ---------------------------------------------------------------------------
-
-SELECT '>>> FINAL COMPARISON <<<' AS section;
-
-SELECT
-    'True average' AS method,
-    20.00 AS result_ms,
-    '(10+10+10+50)/4 = 20' AS math
-UNION ALL
-SELECT
-    'avg(avg) WRONG' AS method,
-    30.00 AS result_ms,
-    '(10+50)/2 = 30 -- 50% ERROR!' AS math
-UNION ALL
-SELECT
-    'avgMerge CORRECT' AS method,
-    20.00 AS result_ms,
-    '(30+50)/(3+1) = 20' AS math;
-
--- TALKING POINT:
--- "avgState stores (sum, count), not just the average.
--- avgMerge combines them correctly: (30+50)/(3+1) = 20ms
--- This is why AggregatingMergeTree is essential for accurate analytics!"
 
 
 
@@ -697,15 +579,10 @@ USE webinar_demo;
 -- Dictionaries give you O(1) lookups - same speed at ANY scale!
 -- ---------------------------------------------------------------------------
 
-SELECT '>>> SECTION 3: Dictionaries <<<' AS demo;
-
-
 -- ---------------------------------------------------------------------------
 -- STEP 3.1: Show dictionaries are loaded in memory
 -- ---------------------------------------------------------------------------
 -- Dictionaries are pre-loaded hash tables sitting in RAM
-
-SELECT 'Dictionaries loaded in memory:' AS status;
 
 SELECT
     name,
@@ -721,8 +598,6 @@ ORDER BY name;
 -- STEP 3.2: Traditional JOIN approach
 -- ---------------------------------------------------------------------------
 -- This is how you'd normally get customer/product names
-
-SELECT 'Traditional JOIN approach:' AS approach;
 
 SELECT
     o.order_id,
@@ -743,8 +618,6 @@ LIMIT 5;
 -- ---------------------------------------------------------------------------
 -- Same result, but using hash table lookups instead of JOINs
 
-SELECT '>>> dictGet approach - O(1) lookups! <<<' AS wow_moment;
-
 SELECT
     order_id,
     -- O(1) lookup from customers_dict
@@ -758,45 +631,11 @@ SELECT
 FROM orders_fact
 LIMIT 5;
 
-
--- ---------------------------------------------------------------------------
--- STEP 3.4: Scale comparison - THIS is why dictGet wins!
--- ---------------------------------------------------------------------------
--- The real power shows at scale. Let's visualize the difference.
-
-SELECT '>>> The SCALE advantage <<<' AS key_insight;
-
-SELECT
-    'With 1,000 orders' AS data_scale,
-    'JOIN scans 1,000 rows per dimension' AS join_work,
-    'dictGet: 1,000 hash lookups (instant)' AS dict_work
-UNION ALL
-SELECT
-    'With 1,000,000 orders' AS data_scale,
-    'JOIN scans 1,000,000 rows per dimension' AS join_work,
-    'dictGet: 1,000,000 hash lookups (still instant!)' AS dict_work
-UNION ALL
-SELECT
-    'With 1,000,000,000 orders' AS data_scale,
-    'JOIN: minutes to hours' AS join_work,
-    'dictGet: milliseconds (O(1) = constant time!)' AS dict_work;
-
--- Quick complexity comparison
-SELECT
-    'JOIN' AS approach,
-    'O(n) - linear growth' AS complexity,
-    'Gets slower as data grows' AS behavior
-UNION ALL
-SELECT
-    'dictGet' AS approach,
-    'O(1) - constant time' AS complexity,
-    'Same speed at ANY scale!' AS behavior;
-
--- TALKING POINT:
--- "At 1,000 orders, both approaches feel fast.
+-- SCALE ADVANTAGE:
+-- At 1,000 orders, both approaches feel fast.
 -- At 1 million orders, JOINs start to hurt.
 -- At 1 billion orders? dictGet is still instant!
--- This is why dictionaries are essential for real-time analytics."
+-- JOIN = O(n) linear growth, dictGet = O(1) constant time.
 
 
 
@@ -821,68 +660,23 @@ USE webinar_demo;
 -- ---------------------------------------------------------------------------
 -- BUSINESS CONTEXT: Your CEO wants real-time dashboards.
 -- You have 50,000 orders. Scanning them all takes too long.
--- Watch how ClickHouse compresses this into just 3 rows!
+-- Watch how ClickHouse compresses this into just a few rows!
 -- ---------------------------------------------------------------------------
 
-SELECT '>>> SECTION 4: Medallion Architecture Finale <<<' AS demo;
-
-SELECT 'We have 50,000 orders. CEO wants instant dashboards. Watch this...' AS setup;
-
-
 -- ---------------------------------------------------------------------------
--- STEP 4.1: THE PUNCHLINE FIRST - Data compression at each layer
+-- STEP 4.1: Data volume at each layer
 -- ---------------------------------------------------------------------------
--- This is the WOW moment! Lead with the result.
+-- 50,000 events -> ~3 aggregate rows in Gold layer
 
-SELECT '>>> Data volume at each layer <<<' AS insight;
-
--- Build anticipation: Bronze...
-SELECT 'BRONZE (raw events):' AS layer, count() AS rows FROM bronze_events;
-
--- Silver...
-SELECT 'SILVER (parsed + enriched):' AS layer, count() AS rows FROM silver_orders_enriched;
-
--- And Gold... (pause for effect)
-SELECT 'GOLD (daily aggregates):' AS layer, count() AS rows FROM gold_sales_day;
-
--- The dramatic reveal
-SELECT
-    '50,000 events' AS started_with,
-    (SELECT count() FROM gold_sales_day) AS compressed_to,
-    'aggregate rows!' AS result;
-
--- CEO gets instant dashboards because queries hit 3 rows, not 50,000!
+SELECT 'BRONZE' AS layer, count() AS rows FROM bronze_events;
+SELECT 'SILVER' AS layer, count() AS rows FROM silver_orders_enriched;
+SELECT 'GOLD' AS layer, count() AS rows FROM gold_sales_day;
 
 
 -- ---------------------------------------------------------------------------
--- STEP 4.2: How did we get here? The Medallion Pipeline
+-- STEP 4.2: Peek at Silver - enrichment with dictGet
 -- ---------------------------------------------------------------------------
-
-SELECT 'The Medallion Pipeline (all automatic, zero orchestration):' AS architecture;
-
-SELECT
-    'BRONZE' AS layer,
-    'Raw JSON events' AS data_type,
-    'Landing zone' AS purpose
-UNION ALL
-SELECT
-    'SILVER' AS layer,
-    'Parsed + enriched (dictGet!)' AS data_type,
-    'Clean, typed, enriched' AS purpose
-UNION ALL
-SELECT
-    'GOLD' AS layer,
-    'Pre-aggregated (AggregatingMT)' AS data_type,
-    'Instant business metrics' AS purpose;
-
-
--- ---------------------------------------------------------------------------
--- STEP 4.3: Peek at Silver - enrichment with dictGet
--- ---------------------------------------------------------------------------
--- Notice: customer_name, product_name came from dictionaries!
--- Added automatically via MV, not at query time!
-
-SELECT 'Silver layer sample (enriched via dictGet in MV):' AS layer;
+-- customer_name, product_name came from dictionaries (added via MV)
 
 SELECT
     customer_name,       -- From customers_dict
@@ -897,11 +691,9 @@ LIMIT 3;
 
 
 -- ---------------------------------------------------------------------------
--- STEP 4.4: Query Gold - instant results from 3 rows!
+-- STEP 4.3: Query Gold - instant results
 -- ---------------------------------------------------------------------------
--- Uses Merge functions (remember Section 2? avgMerge, sumMerge...)
-
-SELECT '>>> Gold layer query - instant! <<<' AS wow_moment;
+-- Uses Merge functions (avgMerge, sumMerge...) - see Section 2
 
 SELECT
     category,
@@ -913,41 +705,17 @@ FROM gold_sales_day
 GROUP BY category
 ORDER BY revenue DESC;
 
--- This query scanned 3 rows. A query on Bronze would scan 50,000!
-
 
 -- ---------------------------------------------------------------------------
--- STEP 4.5: Everything ties together
+-- STEP 4.4: LIVE DEMO - Insert new order, watch it flow!
 -- ---------------------------------------------------------------------------
-
-SELECT '>>> All 3 concepts working together <<<' AS summary;
-
-SELECT '1. Incremental MVs' AS feature, 'Data flows automatically (Section 1)' AS callback
-UNION ALL
-SELECT '2. AggregatingMergeTree' AS feature, 'Correct aggregations with State/Merge (Section 2)' AS callback
-UNION ALL
-SELECT '3. Dictionaries' AS feature, 'O(1) enrichment with dictGet (Section 3)' AS callback
-UNION ALL
-SELECT '4. Medallion' AS feature, 'All combined: Bronze -> Silver -> Gold' AS callback;
-
-
--- ---------------------------------------------------------------------------
--- STEP 4.6: LIVE FINALE - Insert new order, watch it flow!
--- ---------------------------------------------------------------------------
--- This is the grand finale! Real-time data flowing through the entire pipeline.
-
-SELECT '>>> LIVE FINALE: Insert new order, watch it cascade! <<<' AS live_demo;
+-- Real-time data flowing through the entire pipeline
 
 -- Insert a single order into Bronze
 INSERT INTO bronze_events (event_type, source_system, payload) VALUES
     ('order', 'live_demo', '{"order_id":"550e8400-e29b-41d4-a716-446655440099","customer_id":1003,"product_id":6,"quantity":2,"price":79.99}');
 
-SELECT 'Just inserted: Carol bought 2 Keyboards...' AS action;
-
 -- Show it arrived in Silver - already enriched with dictGet!
-SELECT
-    'It flowed through the ENTIRE pipeline automatically:' AS result;
-
 SELECT
     customer_name,
     customer_tier,
@@ -958,25 +726,16 @@ SELECT
 FROM silver_orders_enriched
 WHERE order_id = '550e8400-e29b-41d4-a716-446655440099'::UUID;
 
--- The punchline
+-- Show updated Gold Layer aggregates
 SELECT
-    'Bronze -> Silver (with dictGet) -> Gold (with AggregatingMT)' AS pipeline,
-    'All automatic. All in milliseconds. All in ClickHouse.' AS result;
-
-
--- ---------------------------------------------------------------------------
--- STEP 4.7: THE CLOSING LINE
--- ---------------------------------------------------------------------------
-
-SELECT '>>> FINAL MESSAGE <<<' AS finale;
-
-SELECT 'No Spark. No Airflow. No Kafka Connect. No external tools.' AS what_we_didnt_need;
-
-SELECT 'Just ClickHouse.' AS what_we_used;
-
--- ---------------------------------------------------------------------------
--- END OF DEMO
--- ---------------------------------------------------------------------------
+    category,
+    countMerge(total_orders) AS orders,
+    round(sumMerge(total_revenue), 2) AS revenue,
+    round(sumMerge(total_profit), 2) AS profit,
+    uniqMerge(unique_customers) AS unique_customers
+FROM gold_sales_day
+GROUP BY category
+ORDER BY revenue DESC;
 
 
 
