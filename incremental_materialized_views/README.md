@@ -753,6 +753,9 @@ incremental_materialized_views/
 |   |-- 05_queries/
 |   |-- 06_cleanup/
 |   |-- scripts/
+|-- demo/                        # Single-file demo combining all concepts
+|   |-- README.md
+|   |-- webinar_demo.sql
 |-- .env.example
 |-- .env
 |-- MASTER_CLEANUP.sql
