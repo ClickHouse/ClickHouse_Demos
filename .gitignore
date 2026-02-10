@@ -32,6 +32,9 @@ htmlcov/
 *.swo
 *~
 
+# Archives
+*.zip
+
 # OS
 .DS_Store
 Thumbs.db

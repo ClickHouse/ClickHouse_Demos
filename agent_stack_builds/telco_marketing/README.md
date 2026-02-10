@@ -184,7 +184,7 @@ flowchart TB
 Get up and running with everything in Docker:
 
 ```bash
-cd agent_stack_builds/telco_marketing
+cd ClickHouse_Demos/agent_stack_builds/telco_marketing
 make setup-local
 # (Optional) Edit .env to set your LLM API key
 make start
@@ -206,7 +206,7 @@ After `make start`, the following services are available:
 Connect to ClickHouse Cloud (with remote MCP server) and Langfuse Cloud:
 
 ```bash
-cd agent_stack_builds/telco_marketing
+cd ClickHouse_Demos/agent_stack_builds/telco_marketing
 make setup-hybrid
 # Edit .env with your cloud credentials and LLM API key
 # Enable Remote MCP Server in ClickHouse Cloud console (Connect > Remote MCP Server)
@@ -1650,22 +1650,22 @@ make clean
 
 This repository contains the following components:
 
-| Directory/File                 | Description                                                                |
-| :----------------------------- | :------------------------------------------------------------------------- |
-| **`data-generator/`**          | Python script to generate realistic telco data                             |
-| **`clickhouse/`**              | ClickHouse database initialization script                                  |
+| Directory/File                 | Description                                                                            |
+| :----------------------------- | :------------------------------------------------------------------------------------- |
+| **`data-generator/`**          | Python script to generate realistic telco data                                         |
+| **`clickhouse/`**              | ClickHouse database initialization script                                              |
 | **`docker-compose.yml`**       | Base Docker Compose file (LibreChat, LiteLLM, data-generator, and supporting services) |
-| **`docker-compose.local.yml`** | Local overlay (ClickHouse, MCP server, Langfuse)               |
-| **`litellm_config.yaml`**      | LiteLLM proxy config: Gemini models + Langfuse callback                    |
-| **`librechat.local.yaml`**     | LibreChat MCP config for local mode (local MCP container)                  |
-| **`librechat.hybrid.yaml`**    | LibreChat MCP config for hybrid mode (ClickHouse Cloud remote MCP)         |
-| **`.env.local.example`**       | Environment template for local deployment                                  |
-| **`.env.hybrid.example`**      | Environment template for hybrid deployment                                 |
-| **`test/telco_marketing/`**    | Test suite (in repo root `test/` directory)                                |
-| **`Makefile`**                 | Mode-aware management commands                                             |
-| **`Makefile.local.mk`**        | Local-mode variables and init-schema target                                |
-| **`Makefile.hybrid.mk`**       | Hybrid-mode variables and init-schema target                               |
-| **`README.md`**                | This documentation                                                         |
+| **`docker-compose.local.yml`** | Local overlay (ClickHouse, MCP server, Langfuse)                                       |
+| **`litellm_config.yaml`**      | LiteLLM proxy config: Gemini models + Langfuse callback                                |
+| **`librechat.local.yaml`**     | LibreChat MCP config for local mode (local MCP container)                              |
+| **`librechat.hybrid.yaml`**    | LibreChat MCP config for hybrid mode (ClickHouse Cloud remote MCP)                     |
+| **`.env.local.example`**       | Environment template for local deployment                                              |
+| **`.env.hybrid.example`**      | Environment template for hybrid deployment                                             |
+| **`test/telco_marketing/`**    | Test suite (in repo root `test/` directory)                                            |
+| **`Makefile`**                 | Mode-aware management commands                                                         |
+| **`Makefile.local.mk`**        | Local-mode variables and init-schema target                                            |
+| **`Makefile.hybrid.mk`**       | Hybrid-mode variables and init-schema target                                           |
+| **`README.md`**                | This documentation                                                                     |
 
 ### Component Details
 
