@@ -1,0 +1,112 @@
+# Local overlay -- adds ClickHouse, MCP server, Langfuse, and PostgreSQL for full local deployment.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+
+services:
+  # MCP ClickHouse Server - bridges LibreChat to local ClickHouse
+  # (In hybrid mode, LibreChat connects directly to ClickHouse Cloud's remote MCP server.)
+  mcp-clickhouse:
+    image: mcp/clickhouse
+    container_name: telco-mcp-clickhouse
+    ports:
+      - "8001:8000"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    environment:
+      CLICKHOUSE_HOST: ${CLICKHOUSE_HOST:-clickhouse}
+      CLICKHOUSE_PORT: ${CLICKHOUSE_PORT:-8123}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
+      CLICKHOUSE_SECURE: ${CLICKHOUSE_SECURE:-false}
+      CLICKHOUSE_VERIFY: ${CLICKHOUSE_VERIFY:-false}
+      CLICKHOUSE_MCP_SERVER_TRANSPORT: ${CLICKHOUSE_MCP_SERVER_TRANSPORT:-sse}
+      CLICKHOUSE_MCP_BIND_HOST: ${CLICKHOUSE_MCP_BIND_HOST:-0.0.0.0}
+    networks:
+      - telco-network
+
+  # ClickHouse Database (local)
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.8
+    container_name: telco-clickhouse
+    ports:
+      - "8124:8123"
+      - "9001:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      CLICKHOUSE_DB: telco
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 0
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--user", "default", "--password", "clickhouse", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - telco-network
+
+  # Langfuse PostgreSQL Backend
+  langfuse-db:
+    image: postgres:16-alpine
+    container_name: telco-langfuse-db
+    environment:
+      POSTGRES_USER: ${LANGFUSE_DB_USER:-langfuse}
+      POSTGRES_PASSWORD: ${LANGFUSE_DB_PASSWORD:-langfuse}
+      POSTGRES_DB: ${LANGFUSE_DB_NAME:-langfuse}
+    volumes:
+      - langfuse_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LANGFUSE_DB_USER:-langfuse}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - telco-network
+
+  # Langfuse LLMOps Platform (local)
+  langfuse:
+    image: langfuse/langfuse:2
+    container_name: telco-langfuse
+    depends_on:
+      langfuse-db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://${LANGFUSE_DB_USER:-langfuse}:${LANGFUSE_DB_PASSWORD:-langfuse}@langfuse-db:5432/${LANGFUSE_DB_NAME:-langfuse}
+      NEXTAUTH_URL: ${LANGFUSE_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-changeme-generate-a-secure-secret}
+      SALT: ${LANGFUSE_SALT:-changeme-generate-a-secure-salt}
+      TELEMETRY_ENABLED: ${LANGFUSE_TELEMETRY:-false}
+      # Headless initialization: auto-create org, project, user, and API keys
+      LANGFUSE_INIT_ORG_ID: ${LANGFUSE_INIT_ORG_ID:-telco-workshop}
+      LANGFUSE_INIT_ORG_NAME: ${LANGFUSE_INIT_ORG_NAME:-Telco Workshop}
+      LANGFUSE_INIT_PROJECT_ID: ${LANGFUSE_INIT_PROJECT_ID:-telco-analytics}
+      LANGFUSE_INIT_PROJECT_NAME: ${LANGFUSE_INIT_PROJECT_NAME:-Telco Analytics}
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY:-}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY:-}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL:-admin@telco.local}
+      LANGFUSE_INIT_USER_NAME: ${LANGFUSE_INIT_USER_NAME:-Admin}
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:-admin}
+    networks:
+      - telco-network
+
+  # Override: LiteLLM waits for Langfuse in local mode
+  litellm:
+    depends_on:
+      langfuse:
+        condition: service_started
+
+  # Override: data-generator depends on ClickHouse in local mode
+  data-generator:
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+volumes:
+  clickhouse_data:
+    driver: local
+  langfuse_db_data:
+    driver: local
