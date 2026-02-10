@@ -4,6 +4,9 @@ test/
 # Presenter notes - local only
 incremental_materialized_views/docs/
 
+# Training documents - local only
+agent_stack_builds/telco_marketing/training/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -37,6 +40,11 @@ Thumbs.db
 .env
 .env.test
 .env.local
+
+# Generated LibreChat config (built from templates by make start)
+agent_stack_builds/telco_marketing/librechat.yaml
+.claude
+scratchpad/
 
 # Logs
 *.log
