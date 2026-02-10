@@ -1,0 +1,109 @@
+# Base compose file -- used by both local and hybrid deployment modes.
+# Local mode adds MCP + ClickHouse + Langfuse via docker-compose.local.yml overlay.
+# Hybrid mode uses ClickHouse Cloud's remote MCP server (no local MCP container).
+# Local mode: docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+# Hybrid mode: docker compose -f docker-compose.yml up -d
+
+services:
+  # LibreChat - AI Chat Frontend
+  librechat:
+    image: ghcr.io/danny-avila/librechat:latest
+    container_name: telco-librechat
+    ports:
+      - "${PORT:-3080}:${PORT:-3080}"
+    depends_on:
+      mongodb:
+        condition: service_started
+      meilisearch:
+        condition: service_started
+      litellm:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - ./.env:/app/.env
+      - ./librechat.yaml:/app/librechat.yaml
+    networks:
+      - telco-network
+
+  # MongoDB - LibreChat conversation store
+  mongodb:
+    image: mongo:8.0.17
+    container_name: telco-mongodb
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - telco-network
+
+  # Meilisearch - LibreChat search
+  meilisearch:
+    image: getmeili/meilisearch:v1.12.3
+    container_name: telco-meilisearch
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-masterkey}
+    volumes:
+      - meilisearch_data:/meili_data
+    networks:
+      - telco-network
+
+  # LiteLLM Proxy - routes all LLM calls for Langfuse tracing
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    container_name: telco-litellm
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./litellm_config.yaml:/app/config.yaml
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      GOOGLE_KEY: ${GOOGLE_KEY:-}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_HOST: ${LANGFUSE_BASE_URL:-http://langfuse:3000}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/readiness')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - telco-network
+
+  # Data Generator - populates ClickHouse with telco data
+  data-generator:
+    build:
+      context: ./data-generator
+      dockerfile: Dockerfile
+    container_name: telco-data-generator
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+    environment:
+      CLICKHOUSE_HOST: ${CLICKHOUSE_HOST:-clickhouse}
+      CLICKHOUSE_PORT: ${CLICKHOUSE_PORT:-8123}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
+      CLICKHOUSE_SECURE: ${CLICKHOUSE_SECURE:-false}
+      NUM_CUSTOMERS: ${NUM_CUSTOMERS:-10000}
+      NUM_DAYS: ${NUM_DAYS:-30}
+      NUM_CAMPAIGNS: ${NUM_CAMPAIGNS:-100}
+      EVENTS_PER_DAY: ${EVENTS_PER_DAY:-10000}
+      DATA_SIZE: ${DATA_SIZE:-}
+      DATA_SEED: ${DATA_SEED:-42}
+      GENERATE_DATASETS: ${GENERATE_DATASETS:-all}
+    networks:
+      - telco-network
+    profiles:
+      - generator
+
+volumes:
+  mongodb_data:
+    driver: local
+  meilisearch_data:
+    driver: local
+
+networks:
+  telco-network:
+    driver: bridge
