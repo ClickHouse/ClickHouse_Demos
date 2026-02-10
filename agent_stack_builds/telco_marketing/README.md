@@ -104,20 +104,24 @@ flowchart TB
         MCP[MCP ClickHouse :8001]
         CH[(ClickHouse :8124)]
         LF[Langfuse :3000]
-        PG[(PostgreSQL)]
-        MONGO[(MongoDB)]
-        MEILI[Meilisearch]
         DG[Data Generator]
         LC --> LITE
         LITE --> LF
         LC --> MCP
         MCP --> CH
-        LF --> PG
-        LC --> MONGO
-        LC --> MEILI
     end
     LITE --> GEMINI[Gemini API]
     USER[User] --> LC
+
+    style LC fill:#4285F4,stroke:#1a73e8,color:#fff
+    style LITE fill:#8430CE,stroke:#6a1fb0,color:#fff
+    style MCP fill:#04696B,stroke:#035354,color:#fff
+    style CH fill:#FBBC04,stroke:#e0a800,color:#000
+    style LF fill:#34A853,stroke:#2a8a43,color:#fff
+    style DG fill:#E8710A,stroke:#c25f08,color:#fff
+    style GEMINI fill:#EA4335,stroke:#c5362a,color:#fff
+    style USER fill:#F538A0,stroke:#d42e87,color:#fff
+    style Docker fill:#e8f0fe,stroke:#4285F4,color:#000
 ```
 
 ### Hybrid Mode
@@ -129,12 +133,8 @@ flowchart TB
     subgraph Docker["Docker Compose (Local)"]
         LC[LibreChat :3080]
         LITE[LiteLLM :4000]
-        MONGO[(MongoDB)]
-        MEILI[Meilisearch]
         DG[Data Generator]
         LC --> LITE
-        LC --> MONGO
-        LC --> MEILI
     end
     subgraph Cloud["Cloud Services"]
         RMCP[ClickHouse Remote MCP]
@@ -147,6 +147,17 @@ flowchart TB
     USER[User] --> LC
     LC --> RMCP
     DG --> CH
+
+    style LC fill:#4285F4,stroke:#1a73e8,color:#fff
+    style LITE fill:#8430CE,stroke:#6a1fb0,color:#fff
+    style DG fill:#E8710A,stroke:#c25f08,color:#fff
+    style RMCP fill:#04696B,stroke:#035354,color:#fff
+    style CH fill:#FBBC04,stroke:#e0a800,color:#000
+    style LF fill:#34A853,stroke:#2a8a43,color:#fff
+    style GEMINI fill:#EA4335,stroke:#c5362a,color:#fff
+    style USER fill:#F538A0,stroke:#d42e87,color:#fff
+    style Docker fill:#e8f0fe,stroke:#4285F4,color:#000
+    style Cloud fill:#fef7e0,stroke:#FBBC04,color:#000
 ```
 
 ### Core Components
@@ -260,7 +271,7 @@ GOOGLE_KEY=your-google-api-key
 make start
 ```
 
-This launches ClickHouse, Langfuse, LibreChat, LiteLLM, MCP server, MongoDB, and Meilisearch.
+This launches ClickHouse, Langfuse, LibreChat, LiteLLM, MCP server, and supporting services.
 
 #### Step 4: Generate Data
 
@@ -327,7 +338,7 @@ make init-schema
 make start
 ```
 
-This launches LibreChat, LiteLLM, MongoDB, and Meilisearch locally. The MCP connection to ClickHouse Cloud is handled by the remote MCP server.
+This launches LibreChat, LiteLLM, and supporting services locally. The MCP connection to ClickHouse Cloud is handled by the remote MCP server.
 
 #### Step 5: Generate Data
 
@@ -1643,8 +1654,8 @@ This repository contains the following components:
 | :----------------------------- | :------------------------------------------------------------------------- |
 | **`data-generator/`**          | Python script to generate realistic telco data                             |
 | **`clickhouse/`**              | ClickHouse database initialization script                                  |
-| **`docker-compose.yml`**       | Base Docker Compose file (LibreChat, MongoDB, Meilisearch, data-generator) |
-| **`docker-compose.local.yml`** | Local overlay (ClickHouse, MCP server, Langfuse, PostgreSQL)               |
+| **`docker-compose.yml`**       | Base Docker Compose file (LibreChat, LiteLLM, data-generator, and supporting services) |
+| **`docker-compose.local.yml`** | Local overlay (ClickHouse, MCP server, Langfuse)               |
 | **`litellm_config.yaml`**      | LiteLLM proxy config: Gemini models + Langfuse callback                    |
 | **`librechat.local.yaml`**     | LibreChat MCP config for local mode (local MCP container)                  |
 | **`librechat.hybrid.yaml`**    | LibreChat MCP config for hybrid mode (ClickHouse Cloud remote MCP)         |
