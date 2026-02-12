@@ -406,7 +406,7 @@ def main():
     """
     # Load configuration from environment
     clickhouse_host = os.getenv("CLICKHOUSE_HOST", "clickhouse")
-    clickhouse_port = int(os.getenv("CLICKHOUSE_PORT", "8123"))
+    clickhouse_http_port = int(os.getenv("CLICKHOUSE_HTTP_PORT", "8443"))
     clickhouse_user = os.getenv("CLICKHOUSE_USER", "default")
     clickhouse_password = os.getenv("CLICKHOUSE_PASSWORD", "")
     clickhouse_secure = os.getenv("CLICKHOUSE_SECURE", "false").lower() == "true"
@@ -452,7 +452,7 @@ def main():
     print("Telco Data Generator")
     print("=" * 60)
     print(f"Configuration:")
-    print(f"  ClickHouse Host: {clickhouse_host}:{clickhouse_port}")
+    print(f"  ClickHouse Host: {clickhouse_host}:{clickhouse_http_port}")
     if data_size:
         print(f"  Data Size Preset: {data_size}")
     print(f"  Number of Customers: {num_customers}")
@@ -469,7 +469,7 @@ def main():
     print("\nConnecting to ClickHouse...")
     connect_kwargs = dict(
         host=clickhouse_host,
-        port=clickhouse_port,
+        port=clickhouse_http_port,
         username=clickhouse_user,
         password=clickhouse_password,
     )
