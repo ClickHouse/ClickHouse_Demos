@@ -445,8 +445,8 @@ def main():
         batch_size = 1000
 
     # Customer chunk size: how many customers to generate CDRs for at a time.
-    # Each customer generates ~40 CDRs/day, so 500 customers * 30 days = ~600K records per chunk.
-    customer_chunk_size = 500
+    # Each customer generates ~40 CDRs/day, so 100 customers * 30 days = ~120K records per chunk.
+    customer_chunk_size = 100
 
     print("=" * 60)
     print("Telco Data Generator")
