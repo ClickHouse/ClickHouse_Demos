@@ -182,7 +182,7 @@ restart: stop start
 
 generate-data:
 	@echo "Generating telco data..."
-	$(COMPOSE_CMD) --profile generator up data-generator
+	$(COMPOSE_CMD) --profile generator up --build --force-recreate data-generator
 	@echo "[OK] Data generation complete"
 
 # ---------------------------------------------------------------------------
