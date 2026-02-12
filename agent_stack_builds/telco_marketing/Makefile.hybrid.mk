@@ -6,14 +6,14 @@ COMPOSE_CMD := docker compose -f docker-compose.yml
 # Helper to read a variable from .env
 env_val = $(shell grep -s '^$(1)=' .env 2>/dev/null | cut -d= -f2)
 
-CH_CLIENT := @docker run --rm --network=host clickhouse/clickhouse-client \
+CH_CLIENT := @docker run --rm --network=host clickhouse/clickhouse-server clickhouse-client \
 		--host=$(call env_val,CLICKHOUSE_HOST) \
 		--port=$(call env_val,CLICKHOUSE_PORT) \
 		--user=$(call env_val,CLICKHOUSE_USER) \
 		--password=$(call env_val,CLICKHOUSE_PASSWORD) \
 		--secure
 
-CH_INTERACTIVE := @docker run --rm -it --network=host clickhouse/clickhouse-client \
+CH_INTERACTIVE := @docker run --rm -it --network=host clickhouse/clickhouse-server clickhouse-client \
 		--host=$(call env_val,CLICKHOUSE_HOST) \
 		--port=$(call env_val,CLICKHOUSE_PORT) \
 		--user=$(call env_val,CLICKHOUSE_USER) \
