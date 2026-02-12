@@ -82,6 +82,7 @@ services:
           memory: 2g
     environment:
       CLICKHOUSE_HOST: ${CLICKHOUSE_HOST:-clickhouse}
+      CLICKHOUSE_PORT: ${CLICKHOUSE_PORT:-9440}
       CLICKHOUSE_HTTP_PORT: ${CLICKHOUSE_HTTP_PORT:-8443}
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
@@ -93,6 +94,7 @@ services:
       DATA_SIZE: ${DATA_SIZE:-}
       DATA_SEED: ${DATA_SEED:-42}
       GENERATE_DATASETS: ${GENERATE_DATASETS:-all}
+      PYTHONUNBUFFERED: 1
     networks:
       - telco-network
     profiles:
