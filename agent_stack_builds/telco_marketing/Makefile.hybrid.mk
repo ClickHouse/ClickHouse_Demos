@@ -40,7 +40,7 @@ init-schema:
 	@echo "Pushing schema to ClickHouse Cloud..."
 	@docker run --rm \
 		-v $(PWD)/clickhouse/init.sql:/init.sql \
-		clickhouse/clickhouse-client \
+		clickhouse/clickhouse-server clickhouse-client \
 		--host=$(call env_val,CLICKHOUSE_HOST) \
 		--port=$(call env_val,CLICKHOUSE_PORT) \
 		--user=$(call env_val,CLICKHOUSE_USER) \
