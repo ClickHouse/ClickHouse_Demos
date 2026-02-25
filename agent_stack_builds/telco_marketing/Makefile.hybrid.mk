@@ -8,14 +8,14 @@ env_val = $(shell grep -s '^$(1)=' .env 2>/dev/null | cut -d= -f2)
 
 CH_CLIENT := @docker run --rm --network=host clickhouse/clickhouse-server clickhouse-client \
 		--host=$(call env_val,CLICKHOUSE_HOST) \
-		--port=$(call env_val,CLICKHOUSE_PORT) \
+		--port=$(call env_val,CLICKHOUSE_NATIVE_PORT) \
 		--user=$(call env_val,CLICKHOUSE_USER) \
 		--password=$(call env_val,CLICKHOUSE_PASSWORD) \
 		--secure
 
 CH_INTERACTIVE := @docker run --rm -it --network=host clickhouse/clickhouse-server clickhouse-client \
 		--host=$(call env_val,CLICKHOUSE_HOST) \
-		--port=$(call env_val,CLICKHOUSE_PORT) \
+		--port=$(call env_val,CLICKHOUSE_NATIVE_PORT) \
 		--user=$(call env_val,CLICKHOUSE_USER) \
 		--password=$(call env_val,CLICKHOUSE_PASSWORD) \
 		--secure \
@@ -42,7 +42,7 @@ init-schema:
 		-v $(PWD)/clickhouse/init.sql:/init.sql \
 		clickhouse/clickhouse-server clickhouse-client \
 		--host=$(call env_val,CLICKHOUSE_HOST) \
-		--port=$(call env_val,CLICKHOUSE_PORT) \
+		--port=$(call env_val,CLICKHOUSE_NATIVE_PORT) \
 		--user=$(call env_val,CLICKHOUSE_USER) \
 		--password=$(call env_val,CLICKHOUSE_PASSWORD) \
 		--secure \
