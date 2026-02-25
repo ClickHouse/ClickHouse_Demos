@@ -406,7 +406,7 @@ def main():
     """
     # Load configuration from environment
     clickhouse_host = os.getenv("CLICKHOUSE_HOST", "clickhouse")
-    clickhouse_http_port = int(os.getenv("CLICKHOUSE_HTTP_PORT", "8443"))
+    clickhouse_http_port = int(os.getenv("CLICKHOUSE_PORT", "8123"))
     clickhouse_user = os.getenv("CLICKHOUSE_USER", "default")
     clickhouse_password = os.getenv("CLICKHOUSE_PASSWORD", "")
     clickhouse_secure = os.getenv("CLICKHOUSE_SECURE", "false").lower() == "true"
