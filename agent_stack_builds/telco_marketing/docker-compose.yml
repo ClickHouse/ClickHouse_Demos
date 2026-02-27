@@ -23,6 +23,12 @@ services:
     volumes:
       - ./.env:/app/.env
       - ./librechat.yaml:/app/librechat.yaml
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3080/api/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
     networks:
       - telco-network
 
@@ -60,7 +66,7 @@ services:
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
-      LANGFUSE_HOST: ${LANGFUSE_BASE_URL:-http://langfuse:3000}
+      LANGFUSE_HOST: ${LANGFUSE_BASE_URL:-http://langfuse-web:3000}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/readiness')"]
       interval: 10s
