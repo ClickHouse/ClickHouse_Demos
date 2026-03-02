@@ -24,7 +24,7 @@ services:
     networks:
       - telco-network
 
-  # ClickHouse Database (local)
+  # ClickHouse Database (local) - used by both telco demo and Langfuse
   clickhouse:
     image: clickhouse/clickhouse-server:25.8
     container_name: telco-clickhouse
@@ -65,21 +65,115 @@ services:
     networks:
       - telco-network
 
-  # Langfuse LLMOps Platform (local)
-  langfuse:
-    image: langfuse/langfuse:2
-    container_name: telco-langfuse
+  # Langfuse Redis (queue and caching)
+  langfuse-redis:
+    image: redis:7-alpine
+    container_name: telco-langfuse-redis
+    command: >
+      --requirepass ${LANGFUSE_REDIS_PASSWORD:-langfuse_redis}
+      --maxmemory-policy noeviction
+    volumes:
+      - langfuse_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${LANGFUSE_REDIS_PASSWORD:-langfuse_redis}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - telco-network
+
+  # Langfuse MinIO (blob and event storage)
+  langfuse-minio:
+    image: cgr.dev/chainguard/minio
+    container_name: telco-langfuse-minio
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: ${LANGFUSE_MINIO_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${LANGFUSE_MINIO_PASSWORD:-miniosecret}
+    ports:
+      - "9090:9000"
+    volumes:
+      - langfuse_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    networks:
+      - telco-network
+
+  # Langfuse Worker - background event processing
+  langfuse-worker:
+    image: langfuse/langfuse-worker:3.155.1
+    container_name: telco-langfuse-worker
+    restart: unless-stopped
     depends_on:
       langfuse-db:
+        condition: service_healthy
+      langfuse-redis:
+        condition: service_healthy
+      langfuse-minio:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    environment: &langfuse-common-env
+      DATABASE_URL: postgresql://${LANGFUSE_DB_USER:-langfuse}:${LANGFUSE_DB_PASSWORD:-langfuse}@langfuse-db:5432/${LANGFUSE_DB_NAME:-langfuse}
+      NEXTAUTH_URL: ${LANGFUSE_URL:-http://localhost:3000}
+      SALT: ${LANGFUSE_SALT:-changeme-generate-a-secure-salt}
+      ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
+      TELEMETRY_ENABLED: ${LANGFUSE_TELEMETRY:-false}
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: ${LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES:-false}
+      # ClickHouse (shared with telco demo)
+      CLICKHOUSE_MIGRATION_URL: clickhouse://${CLICKHOUSE_USER:-default}:${CLICKHOUSE_PASSWORD:-clickhouse}@clickhouse:9000
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-clickhouse}
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      # MinIO blob storage
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_MINIO_USER:-minio}
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_PASSWORD:-miniosecret}
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://langfuse-minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+      LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+      LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_MINIO_USER:-minio}
+      LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_PASSWORD:-miniosecret}
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://langfuse-minio:9000
+      LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+      LANGFUSE_S3_BATCH_EXPORT_ENABLED: "false"
+      # Redis
+      REDIS_HOST: langfuse-redis
+      REDIS_PORT: 6379
+      REDIS_AUTH: ${LANGFUSE_REDIS_PASSWORD:-langfuse_redis}
+      REDIS_TLS_ENABLED: "false"
+    networks:
+      - telco-network
+
+  # Langfuse Web - UI and API
+  langfuse-web:
+    image: langfuse/langfuse:3.155.1
+    container_name: telco-langfuse-web
+    restart: unless-stopped
+    depends_on:
+      langfuse-db:
+        condition: service_healthy
+      langfuse-redis:
+        condition: service_healthy
+      langfuse-minio:
+        condition: service_healthy
+      clickhouse:
         condition: service_healthy
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://${LANGFUSE_DB_USER:-langfuse}:${LANGFUSE_DB_PASSWORD:-langfuse}@langfuse-db:5432/${LANGFUSE_DB_NAME:-langfuse}
-      NEXTAUTH_URL: ${LANGFUSE_URL:-http://localhost:3000}
+      <<: *langfuse-common-env
       NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-changeme-generate-a-secure-secret}
-      SALT: ${LANGFUSE_SALT:-changeme-generate-a-secure-salt}
-      TELEMETRY_ENABLED: ${LANGFUSE_TELEMETRY:-false}
       # Headless initialization: auto-create org, project, user, and API keys
       LANGFUSE_INIT_ORG_ID: ${LANGFUSE_INIT_ORG_ID:-telco-workshop}
       LANGFUSE_INIT_ORG_NAME: ${LANGFUSE_INIT_ORG_NAME:-Telco Workshop}
@@ -93,10 +187,10 @@ services:
     networks:
       - telco-network
 
-  # Override: LiteLLM waits for Langfuse in local mode
+  # Override: LiteLLM waits for Langfuse web in local mode
   litellm:
     depends_on:
-      langfuse:
+      langfuse-web:
         condition: service_started
 
   # Override: data-generator depends on ClickHouse in local mode
@@ -109,4 +203,8 @@ volumes:
   clickhouse_data:
     driver: local
   langfuse_db_data:
+    driver: local
+  langfuse_redis_data:
+    driver: local
+  langfuse_minio_data:
     driver: local
