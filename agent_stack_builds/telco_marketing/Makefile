@@ -53,6 +53,7 @@ setup-local:
 	@# Generate security keys
 	@LANGFUSE_SECRET=$$(openssl rand -hex 32) && \
 	 LANGFUSE_SALT=$$(openssl rand -hex 32) && \
+	 LANGFUSE_ENCRYPTION_KEY=$$(openssl rand -hex 32) && \
 	 CREDS_KEY=$$(openssl rand -hex 32) && \
 	 CREDS_IV=$$(openssl rand -hex 16) && \
 	 JWT_SECRET=$$(openssl rand -hex 32) && \
@@ -64,6 +65,9 @@ setup-local:
 	   .env && \
 	 sed -i.bak \
 	   -e "0,/<generate-with-openssl-rand-hex-32>/s||$$LANGFUSE_SALT|" \
+	   .env && \
+	 sed -i.bak \
+	   -e "0,/<generate-with-openssl-rand-hex-32>/s||$$LANGFUSE_ENCRYPTION_KEY|" \
 	   .env && \
 	 sed -i.bak \
 	   -e "0,/<generate-with-openssl-rand-hex-32>/s||$$CREDS_KEY|" \
@@ -160,15 +164,17 @@ start:
 	$(COMPOSE_CMD) up -d
 	@echo "[OK] Services started"
 	$(SERVICE_TABLE)
-	@echo "Waiting for services to be ready..."
-	@sleep 15
+	@echo "Waiting for LibreChat to be ready..."
+	@until docker inspect --format='{{.State.Health.Status}}' telco-librechat 2>/dev/null | grep -q healthy; do \
+		printf "."; sleep 3; \
+	done && echo " ready"
 	@# Create default workshop user (idempotent -- fails silently if user exists)
 	@LC_EMAIL=$$(grep -s '^LIBRECHAT_USER_EMAIL=' .env 2>/dev/null | cut -d= -f2) && \
 	 LC_NAME=$$(grep -s '^LIBRECHAT_USER_NAME=' .env 2>/dev/null | cut -d= -f2) && \
 	 LC_PASS=$$(grep -s '^LIBRECHAT_USER_PASSWORD=' .env 2>/dev/null | cut -d= -f2) && \
 	 LC_USER=$$(echo "$$LC_EMAIL" | cut -d@ -f1) && \
-	 echo "y" | docker exec -i telco-librechat sh -c \
-		"cd /app && node config/create-user.js $$LC_EMAIL $$LC_NAME $$LC_USER $$LC_PASS" \
+	 docker exec telco-librechat sh -c \
+		"cd /app && node config/create-user.js $$LC_EMAIL $$LC_NAME $$LC_USER $$LC_PASS --email-verified=true" \
 		>/dev/null 2>&1 && \
 		echo "[OK] Default user created: $$LC_EMAIL / $$LC_PASS" || \
 		echo "[OK] Default user already exists: $$LC_EMAIL / $$LC_PASS"
