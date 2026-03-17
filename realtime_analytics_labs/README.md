@@ -95,7 +95,7 @@ All labs use the **NYC Taxi** public dataset — one of the most commonly used d
 
 | Attribute | Value |
 |-----------|-------|
-| Rows loaded (labs) | ~8 million (files 0–2) |
+| Rows loaded (labs) | ~3 million (files 0–2) |
 | Full dataset | ~3 billion rows |
 | Source | AWS S3 (ClickHouse public bucket) |
 | Key columns | `pickup_datetime`, `fare_amount`, `trip_distance`, `passenger_count`, `payment_type`, `pickup_ntaname`, `dropoff_ntaname` |
