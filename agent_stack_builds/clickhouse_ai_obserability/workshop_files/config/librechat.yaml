@@ -6,6 +6,9 @@ cache: true
 
 # Interface settings
 interface:
+  # Disable code artifacts (requires external CodeSandbox servers)
+  codeArtifacts: false
+
   # Privacy settings
   privacyPolicy:
     externalUrl: ""
