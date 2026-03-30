@@ -6,8 +6,9 @@ cache: true
 
 # Interface settings
 interface:
-  # Enable code artifacts — requires HTTPS (provided by nginx reverse proxy)
-  codeArtifacts: true
+  # React/Sandpack artifacts disabled — bundler missing @swc/helpers in self-hosted context.
+  # Models are instructed to use Mermaid artifacts instead (renders natively, no bundler needed).
+  codeArtifacts: false
 
   # Privacy settings
   privacyPolicy:
@@ -109,7 +110,7 @@ endpoints:
         - Use SpanKind = 'SERVER' for entry-point requests
         - Always include Timestamp filters for performance
         - Prefer materialized views when available
-        - For data visualizations, dashboards, and diagrams: always create artifacts using type "application/vnd.ant.mermaid". Use xychart-beta for bar/line charts, pie for pie charts, flowchart for architecture. NEVER use React or create-react-app artifacts.
+        - ARTIFACTS: ALWAYS use type "application/vnd.ant.mermaid" for any chart, graph, or diagram. NEVER use React or application/vnd.ant.react — the bundler is unavailable and will error. Use xychart-beta for bar/line, pie for pie charts, flowchart for architecture/dependency graphs.
 
         Available tables: otel_traces, otel_metrics, otel_logs, otel_services
 
