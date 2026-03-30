@@ -46,6 +46,30 @@ fileConfig:
     default:
       disabled: true
 
+# MCP Settings
+mcpSettings:
+  allowedDomains:
+    - "mcp-clickhouse"
+    - "host.docker.internal"
+    - "localhost"
+
+# MCP Servers
+mcpServers:
+  clickhouse-otel:
+    type: sse
+    url: http://mcp-clickhouse:8000/sse
+    timeout: 30000
+    initTimeout: 15000
+    title: "ClickHouse OTel Database"
+    description: "Query OpenTelemetry data (traces, metrics, logs) from ClickHouse at sql.clickhouse.com"
+    chatMenu: true
+    startup: true
+    serverInstructions: |
+      You have access to ClickHouse at sql.clickhouse.com, database: otel_v2.
+      Key tables: otel_traces, otel_metrics_sum, otel_metrics_gauge, otel_metrics_histogram, otel_logs.
+      Duration fields are in nanoseconds — divide by 1e6 for milliseconds.
+      Always filter by Timestamp for performance. Use SpanKind = 'SERVER' for entry-point spans.
+
 # Model configuration
 endpoints:
   # Use LiteLLM proxy for all LLM requests
@@ -97,6 +121,8 @@ modelSpecs:
       label: "Claude 3.5 Sonnet (Recommended)"
       description: "Best for complex queries and analysis"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/anthropic.svg"
+      mcpServers:
+        - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
         model: "claude-3-5-sonnet"
@@ -107,6 +133,8 @@ modelSpecs:
       label: "GPT-4 Turbo"
       description: "Fast and accurate for most queries"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/openai.svg"
+      mcpServers:
+        - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
         model: "gpt-4-turbo"
@@ -117,6 +145,8 @@ modelSpecs:
       label: "GPT-4o"
       description: "Optimized for speed and cost"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/openai.svg"
+      mcpServers:
+        - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
         model: "gpt-4o"
@@ -127,6 +157,8 @@ modelSpecs:
       label: "Claude 3 Haiku (Fast)"
       description: "Quick responses for simple queries"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/anthropic.svg"
+      mcpServers:
+        - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
         model: "claude-3-haiku"
@@ -137,6 +169,8 @@ modelSpecs:
       label: "Gemini 1.5 Pro"
       description: "Google's powerful model for complex analysis"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
+      mcpServers:
+        - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
         model: "gemini-1.5-pro"
@@ -147,6 +181,8 @@ modelSpecs:
       label: "Gemini 1.5 Flash (Fast)"
       description: "Google's fast model for quick queries"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
+      mcpServers:
+        - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
         model: "gemini-1.5-flash"
@@ -157,75 +193,11 @@ modelSpecs:
       label: "GPT-3.5 Turbo (Lite)"
       description: "Budget option for basic queries"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/openai.svg"
+      mcpServers:
+        - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
         model: "gpt-3.5-turbo"
         max_tokens: 4096
         temperature: 0.1
 
-# UI Customization
-customization:
-  title: "Observability Analytics AI"
-  description: "Query OpenTelemetry data using natural language"
-  logoURL: ""
-  favicon: ""
-  helpAndFaqURL: ""
-
-# Preset configurations (for workshop scenarios)
-presets:
-  - title: "Service Discovery"
-    model: "claude-3-haiku"
-    temperature: 0.1
-    systemPrompt: "Focus on identifying active services and their basic health metrics."
-
-  - title: "Error Investigation"
-    model: "claude-3-5-sonnet"
-    temperature: 0.1
-    systemPrompt: "Deep dive into error patterns, correlate with logs, and identify root causes."
-
-  - title: "Latency Analysis"
-    model: "gpt-4-turbo"
-    temperature: 0.1
-    systemPrompt: "Analyze latency distributions, identify slow endpoints, and compare percentiles."
-
-  - title: "Service Dependencies"
-    model: "claude-3-5-sonnet"
-    temperature: 0.1
-    systemPrompt: "Build service dependency graphs and analyze cross-service interactions."
-
-  - title: "SLA Compliance"
-    model: "gpt-4-turbo"
-    temperature: 0.1
-    systemPrompt: "Check SLA compliance, calculate availability, and identify violations."
-
-# Example prompts for workshop participants
-examples:
-  - category: "Service Health"
-    prompts:
-      - "What services are currently running?"
-      - "Show me error rates by service in the last hour"
-      - "Which service has the highest p99 latency?"
-
-  - category: "Error Analysis"
-    prompts:
-      - "Find all failed requests in the last 30 minutes"
-      - "Why is the payment service failing?"
-      - "Show me the most common errors across all services"
-
-  - category: "Performance"
-    prompts:
-      - "Show me the 10 slowest traces"
-      - "What's the p95 latency for the API gateway?"
-      - "Find database queries slower than 5 seconds"
-
-  - category: "Dependencies"
-    prompts:
-      - "Build a service dependency map"
-      - "Which services call the authentication service?"
-      - "Show me the critical path for checkout requests"
-
-  - category: "SLA & Compliance"
-    prompts:
-      - "Are any services violating their SLA?"
-      - "What's the availability of the payment service?"
-      - "Compare actual vs target error rates"
