@@ -182,6 +182,13 @@ Wait 30-60 seconds for services to initialize.
 
 Open your browser to: `http://your-ec2-ip:3000`
 
+**Workshop login credentials:**
+
+| Field    | Value                        |
+|----------|------------------------------|
+| Email    | `workshop@clickhouse.com`    |
+| Password | `observability2024`          |
+
 ## 📚 Workshop Agenda
 
 ### Part 1: Setup & Introduction (10 minutes)
