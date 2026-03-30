@@ -79,18 +79,16 @@ endpoints:
       baseURL: "http://litellm:4000"
       models:
         default:
-          - "claude-3-5-sonnet"
-          - "gpt-4-turbo"
-          - "gpt-4o"
+          - "gemini-2.0-flash"
           - "gemini-1.5-pro"
-          - "claude-3-haiku"
           - "gemini-1.5-flash"
-          - "gpt-3.5-turbo"
+          - "claude-3-5-sonnet"
+          - "claude-3-haiku"
         fetch: false
       titleConvo: true
-      titleModel: "claude-3-haiku"
+      titleModel: "gemini-1.5-flash"
       summarize: false
-      summaryModel: "claude-3-haiku"
+      summaryModel: "gemini-1.5-flash"
       forcePrompt: false
       modelDisplayLabel: "Observability AI"
       addParams:
@@ -117,51 +115,16 @@ endpoints:
 modelSpecs:
   enforce: true
   list:
-    - name: "claude-3-5-sonnet"
-      label: "Claude 3.5 Sonnet (Recommended)"
-      description: "Best for complex queries and analysis"
-      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/anthropic.svg"
+    - name: "gemini-2.0-flash"
+      label: "Gemini 2.0 Flash (Recommended)"
+      default: true
+      description: "Google's latest fast model — best for most queries"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
       mcpServers:
         - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
-        model: "claude-3-5-sonnet"
-        max_tokens: 4096
-        temperature: 0.1
-
-    - name: "gpt-4-turbo"
-      label: "GPT-4 Turbo"
-      description: "Fast and accurate for most queries"
-      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/openai.svg"
-      mcpServers:
-        - "clickhouse-otel"
-      preset:
-        endpoint: "Observability AI"
-        model: "gpt-4-turbo"
-        max_tokens: 4096
-        temperature: 0.1
-
-    - name: "gpt-4o"
-      label: "GPT-4o"
-      description: "Optimized for speed and cost"
-      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/openai.svg"
-      mcpServers:
-        - "clickhouse-otel"
-      preset:
-        endpoint: "Observability AI"
-        model: "gpt-4o"
-        max_tokens: 4096
-        temperature: 0.1
-
-    - name: "claude-3-haiku"
-      label: "Claude 3 Haiku (Fast)"
-      description: "Quick responses for simple queries"
-      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/anthropic.svg"
-      mcpServers:
-        - "clickhouse-otel"
-      preset:
-        endpoint: "Observability AI"
-        model: "claude-3-haiku"
+        model: "gemini-2.0-flash"
         max_tokens: 4096
         temperature: 0.1
 
@@ -178,8 +141,8 @@ modelSpecs:
         temperature: 0.1
 
     - name: "gemini-1.5-flash"
-      label: "Gemini 1.5 Flash (Fast)"
-      description: "Google's fast model for quick queries"
+      label: "Gemini 1.5 Flash"
+      description: "Fast and cost-effective for quick queries"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
       mcpServers:
         - "clickhouse-otel"
@@ -189,15 +152,27 @@ modelSpecs:
         max_tokens: 4096
         temperature: 0.1
 
-    - name: "gpt-3.5-turbo"
-      label: "GPT-3.5 Turbo (Lite)"
-      description: "Budget option for basic queries"
-      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/openai.svg"
+    - name: "claude-3-5-sonnet"
+      label: "Claude 3.5 Sonnet"
+      description: "Anthropic's best for complex reasoning"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/anthropic.svg"
       mcpServers:
         - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
-        model: "gpt-3.5-turbo"
+        model: "claude-3-5-sonnet"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "claude-3-haiku"
+      label: "Claude 3 Haiku"
+      description: "Fast and lightweight for simple queries"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/anthropic.svg"
+      mcpServers:
+        - "clickhouse-otel"
+      preset:
+        endpoint: "Observability AI"
+        model: "claude-3-haiku"
         max_tokens: 4096
         temperature: 0.1
 
