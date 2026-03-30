@@ -23,15 +23,17 @@ Participants will learn how to:
 ```mermaid
 flowchart TD
     Browser["🌐 User Browser"]
-    LibreChat["💬 LibreChat\nChat UI · Auth · History"]
-    LiteLLM["⚡ LiteLLM Proxy\n① Receive messages\n② Inject system prompt\n③ Route to LLM\n④ Auto-trace to Langfuse\n⑤ Stream response"]
+    Nginx["🔒 Nginx Reverse Proxy\nTLS termination"]
+    LibreChat["💬 LibreChat\nChat Interface\nStores: Conversations, User Auth"]
+    LiteLLM["⚡ LiteLLM\nCore Workshop Component\n\n• Receives requests from LibreChat\n• Injects system prompt (observability schema)\n• Routes to Claude / GPT-4\n• AUTOMATICALLY sends traces to Langfuse\n• Tracks tokens, costs, latency"]
     LLMs["🤖 LLM APIs\nClaude Sonnet 4.6\nGemini 2.5 Pro/Flash"]
-    Langfuse["📊 Langfuse Cloud\nTraces · Tokens\nCosts · Latency\nScores"]
+    Langfuse["📊 Langfuse Cloud\nTraces · Tokens\nCosts · Latency · Scores"]
     ClickHouse["🏠 ClickHouse Cloud\notel_traces\notel_metrics\notel_logs"]
     MCP["🔌 MCP Server\nClickHouse connector\nSSE transport"]
 
-    Browser -->|"HTTPS :443"| LibreChat
-    LibreChat -->|"HTTP :4000"| LiteLLM
+    Browser -->|"HTTPS :443"| Nginx
+    Nginx -->|"HTTP :3000"| LibreChat
+    LibreChat -->|"HTTP :4000\nConfigured as OpenAI endpoint"| LiteLLM
     LiteLLM -->|"HTTPS"| LLMs
     LiteLLM -->|"HTTPS traces"| Langfuse
     LLMs -->|"SQL via MCP"| MCP
@@ -40,6 +42,7 @@ flowchart TD
     style LiteLLM fill:#f5a623,color:#000
     style ClickHouse fill:#FAFF69,color:#000
     style Langfuse fill:#6366f1,color:#fff
+    style Nginx fill:#009639,color:#fff
 ```
 
 **Workshop Focus:** LibreChat → **LiteLLM** (automatic Langfuse tracing) → LLMs
