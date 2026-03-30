@@ -6,8 +6,8 @@ cache: true
 
 # Interface settings
 interface:
-  # Disable code artifacts (requires external CodeSandbox servers)
-  codeArtifacts: false
+  # Enable code artifacts — requires HTTPS (provided by nginx reverse proxy)
+  codeArtifacts: true
 
   # Privacy settings
   privacyPolicy:
