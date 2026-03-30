@@ -31,6 +31,12 @@ litellm_settings:
   failure_callback: ["langfuse"]
   drop_params: true
   callbacks: scorer.auto_scorer
+  # Forward LibreChat user identity to Langfuse for per-user trace filtering
+  default_team_settings:
+    - team_id: workshop
+      metadata:
+        generation_name: "observability-workshop"
+  langfuse_default_tags: ["workshop"]
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
