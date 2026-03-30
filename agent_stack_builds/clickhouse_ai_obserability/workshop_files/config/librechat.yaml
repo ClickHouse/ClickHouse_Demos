@@ -1,0 +1,231 @@
+# LibreChat Configuration for Observability Workshop
+version: 1.1.5
+
+# Cache settings
+cache: true
+
+# Interface settings
+interface:
+  # Privacy settings
+  privacyPolicy:
+    externalUrl: ""
+    openNewTab: true
+
+  # Terms of service
+  termsOfService:
+    externalUrl: ""
+    openNewTab: true
+
+# Registration settings
+registration:
+  socialLogins: []
+  allowedDomains: []
+
+# Rate limiting (adjust for workshop size)
+rateLimits:
+  fileUploads:
+    ipMax: 100
+    ipWindowInMinutes: 60
+    userMax: 50
+    userWindowInMinutes: 60
+
+  conversationsImport:
+    ipMax: 100
+    ipWindowInMinutes: 60
+    userMax: 50
+    userWindowInMinutes: 60
+
+# File upload settings (disabled for workshop)
+fileStrategy: "local"
+fileConfig:
+  endpoints:
+    assistants:
+      disabled: true
+    openAI:
+      disabled: true
+    default:
+      disabled: true
+
+# Model configuration
+endpoints:
+  # Use LiteLLM proxy for all LLM requests
+  custom:
+    - name: "Observability AI"
+      apiKey: "sk-litellm"
+      baseURL: "http://litellm:4000"
+      models:
+        default:
+          - "claude-3-5-sonnet"
+          - "gpt-4-turbo"
+          - "gpt-4o"
+          - "gemini-1.5-pro"
+          - "claude-3-haiku"
+          - "gemini-1.5-flash"
+          - "gpt-3.5-turbo"
+        fetch: false
+      titleConvo: true
+      titleModel: "claude-3-haiku"
+      summarize: false
+      summaryModel: "claude-3-haiku"
+      forcePrompt: false
+      modelDisplayLabel: "Observability AI"
+      addParams:
+        max_tokens: 4096
+        temperature: 0.1
+
+      # Custom system message for observability
+      systemMessage: |
+        You are an expert observability analyst and SQL specialist helping engineers analyze OpenTelemetry data stored in ClickHouse.
+
+        Your role is to convert natural language questions about system performance, errors, latency, and service health into precise ClickHouse SQL queries.
+
+        Key reminders:
+        - Duration is stored in nanoseconds - always divide by 1,000,000 for milliseconds
+        - Use SpanKind = 'SERVER' for entry-point requests
+        - Always include Timestamp filters for performance
+        - Prefer materialized views when available
+
+        Available tables: otel_traces, otel_metrics, otel_logs, otel_services
+
+        Provide clear SQL queries, execute them, format results as tables, and give actionable insights.
+
+# Model specifications
+modelSpecs:
+  enforce: true
+  list:
+    - name: "claude-3-5-sonnet"
+      label: "Claude 3.5 Sonnet (Recommended)"
+      description: "Best for complex queries and analysis"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/anthropic.svg"
+      preset:
+        endpoint: "Observability AI"
+        model: "claude-3-5-sonnet"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "gpt-4-turbo"
+      label: "GPT-4 Turbo"
+      description: "Fast and accurate for most queries"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/openai.svg"
+      preset:
+        endpoint: "Observability AI"
+        model: "gpt-4-turbo"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "gpt-4o"
+      label: "GPT-4o"
+      description: "Optimized for speed and cost"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/openai.svg"
+      preset:
+        endpoint: "Observability AI"
+        model: "gpt-4o"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "claude-3-haiku"
+      label: "Claude 3 Haiku (Fast)"
+      description: "Quick responses for simple queries"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/anthropic.svg"
+      preset:
+        endpoint: "Observability AI"
+        model: "claude-3-haiku"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "gemini-1.5-pro"
+      label: "Gemini 1.5 Pro"
+      description: "Google's powerful model for complex analysis"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
+      preset:
+        endpoint: "Observability AI"
+        model: "gemini-1.5-pro"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "gemini-1.5-flash"
+      label: "Gemini 1.5 Flash (Fast)"
+      description: "Google's fast model for quick queries"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
+      preset:
+        endpoint: "Observability AI"
+        model: "gemini-1.5-flash"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "gpt-3.5-turbo"
+      label: "GPT-3.5 Turbo (Lite)"
+      description: "Budget option for basic queries"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/openai.svg"
+      preset:
+        endpoint: "Observability AI"
+        model: "gpt-3.5-turbo"
+        max_tokens: 4096
+        temperature: 0.1
+
+# UI Customization
+customization:
+  title: "Observability Analytics AI"
+  description: "Query OpenTelemetry data using natural language"
+  logoURL: ""
+  favicon: ""
+  helpAndFaqURL: ""
+
+# Preset configurations (for workshop scenarios)
+presets:
+  - title: "Service Discovery"
+    model: "claude-3-haiku"
+    temperature: 0.1
+    systemPrompt: "Focus on identifying active services and their basic health metrics."
+
+  - title: "Error Investigation"
+    model: "claude-3-5-sonnet"
+    temperature: 0.1
+    systemPrompt: "Deep dive into error patterns, correlate with logs, and identify root causes."
+
+  - title: "Latency Analysis"
+    model: "gpt-4-turbo"
+    temperature: 0.1
+    systemPrompt: "Analyze latency distributions, identify slow endpoints, and compare percentiles."
+
+  - title: "Service Dependencies"
+    model: "claude-3-5-sonnet"
+    temperature: 0.1
+    systemPrompt: "Build service dependency graphs and analyze cross-service interactions."
+
+  - title: "SLA Compliance"
+    model: "gpt-4-turbo"
+    temperature: 0.1
+    systemPrompt: "Check SLA compliance, calculate availability, and identify violations."
+
+# Example prompts for workshop participants
+examples:
+  - category: "Service Health"
+    prompts:
+      - "What services are currently running?"
+      - "Show me error rates by service in the last hour"
+      - "Which service has the highest p99 latency?"
+
+  - category: "Error Analysis"
+    prompts:
+      - "Find all failed requests in the last 30 minutes"
+      - "Why is the payment service failing?"
+      - "Show me the most common errors across all services"
+
+  - category: "Performance"
+    prompts:
+      - "Show me the 10 slowest traces"
+      - "What's the p95 latency for the API gateway?"
+      - "Find database queries slower than 5 seconds"
+
+  - category: "Dependencies"
+    prompts:
+      - "Build a service dependency map"
+      - "Which services call the authentication service?"
+      - "Show me the critical path for checkout requests"
+
+  - category: "SLA & Compliance"
+    prompts:
+      - "Are any services violating their SLA?"
+      - "What's the availability of the payment service?"
+      - "Compare actual vs target error rates"
