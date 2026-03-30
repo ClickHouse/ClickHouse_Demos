@@ -17,12 +17,34 @@ class AutoScorer(CustomLogger):
             trace_id = slp.get("trace_id") or kwargs.get("litellm_call_id", "")
             if not trace_id or not response_obj:
                 return
+
+            # Extract user identity and session from the request
+            # LibreChat sends `user` (MongoDB user ID) in the OpenAI API call
+            # LiteLLM captures it in standard_logging_object
+            user_id = (
+                slp.get("user")
+                or kwargs.get("user")
+                or kwargs.get("litellm_params", {}).get("user")
+                or "unknown"
+            )
+            # Use LiteLLM's call_id as a stable session handle per conversation turn
+            session_id = slp.get("metadata", {}).get("session_id") or kwargs.get("litellm_call_id", "")
+
+            # Update the trace with user_id and session so it's filterable in Langfuse
+            self.lf.trace(
+                id=trace_id,
+                user_id=user_id,
+                session_id=session_id,
+                tags=["workshop"],
+            )
+
+            # Automatic quality score: depth of response (rough proxy for usefulness)
             choices = getattr(response_obj, "choices", [])
             output = choices[0].message.content or "" if choices else ""
             score = min(1.0, len(output) / 300) if len(output) > 20 else 0.2
             self.lf.score(trace_id=trace_id, name="quality", value=round(score, 2))
             self.lf.flush()
-            print(f"[AutoScorer] scored trace={trace_id} quality={round(score, 2)}")
+            print(f"[AutoScorer] user={user_id} trace={trace_id} quality={round(score, 2)}")
         except Exception as e:
             print(f"[AutoScorer] Error: {e}")
 
