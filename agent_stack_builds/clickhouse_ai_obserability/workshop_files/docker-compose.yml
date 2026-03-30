@@ -17,6 +17,7 @@ services:
       # LiteLLM Proxy Configuration
       - OPENAI_API_KEY=${LITELLM_MASTER_KEY:-sk-1234}
       - OPENAI_REVERSE_PROXY=http://litellm:4000
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-1234}
 
       # App Configuration
       - APP_TITLE=Observability Analytics AI

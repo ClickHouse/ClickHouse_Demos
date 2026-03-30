@@ -75,7 +75,7 @@ endpoints:
   # Use LiteLLM proxy for all LLM requests
   custom:
     - name: "Observability AI"
-      apiKey: "sk-litellm"
+      apiKey: "${LITELLM_MASTER_KEY}"
       baseURL: "http://litellm:4000"
       models:
         default:
