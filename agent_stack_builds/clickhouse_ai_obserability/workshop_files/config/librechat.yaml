@@ -79,16 +79,16 @@ endpoints:
       baseURL: "http://litellm:4000"
       models:
         default:
+          - "gemini-2.5-pro"
+          - "gemini-2.5-flash"
           - "gemini-2.0-flash"
-          - "gemini-1.5-pro"
-          - "gemini-1.5-flash"
           - "claude-3-5-sonnet"
           - "claude-3-haiku"
         fetch: false
       titleConvo: true
-      titleModel: "gemini-1.5-flash"
+      titleModel: "gemini-2.0-flash"
       summarize: false
-      summaryModel: "gemini-1.5-flash"
+      summaryModel: "gemini-2.0-flash"
       forcePrompt: false
       modelDisplayLabel: "Observability AI"
       addParams:
@@ -115,40 +115,40 @@ endpoints:
 modelSpecs:
   enforce: true
   list:
-    - name: "gemini-2.0-flash"
-      label: "Gemini 2.0 Flash (Recommended)"
+    - name: "gemini-2.5-pro"
+      label: "Gemini 2.5 Pro (Recommended)"
       default: true
-      description: "Google's latest fast model — best for most queries"
+      description: "Google's most capable model for complex analysis"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
+      mcpServers:
+        - "clickhouse-otel"
+      preset:
+        endpoint: "Observability AI"
+        model: "gemini-2.5-pro"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "gemini-2.5-flash"
+      label: "Gemini 2.5 Flash"
+      description: "Fast and capable for most queries"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
+      mcpServers:
+        - "clickhouse-otel"
+      preset:
+        endpoint: "Observability AI"
+        model: "gemini-2.5-flash"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "gemini-2.0-flash"
+      label: "Gemini 2.0 Flash"
+      description: "Reliable and fast for quick queries"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
       mcpServers:
         - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
         model: "gemini-2.0-flash"
-        max_tokens: 4096
-        temperature: 0.1
-
-    - name: "gemini-1.5-pro"
-      label: "Gemini 1.5 Pro"
-      description: "Google's powerful model for complex analysis"
-      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
-      mcpServers:
-        - "clickhouse-otel"
-      preset:
-        endpoint: "Observability AI"
-        model: "gemini-1.5-pro"
-        max_tokens: 4096
-        temperature: 0.1
-
-    - name: "gemini-1.5-flash"
-      label: "Gemini 1.5 Flash"
-      description: "Fast and cost-effective for quick queries"
-      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
-      mcpServers:
-        - "clickhouse-otel"
-      preset:
-        endpoint: "Observability AI"
-        model: "gemini-1.5-flash"
         max_tokens: 4096
         temperature: 0.1
 
