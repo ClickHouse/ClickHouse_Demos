@@ -19,12 +19,12 @@ model_list:
   - model_name: claude-3-5-sonnet
     litellm_params:
       model: anthropic/claude-3-5-sonnet-20241022
-      api_key: os.environ/ANTHROPIC_API_KEY
+      api_key: os.environ/ANTHROPIC_KEY
 
   - model_name: claude-3-haiku
     litellm_params:
       model: anthropic/claude-3-haiku-20240307
-      api_key: os.environ/ANTHROPIC_API_KEY
+      api_key: os.environ/ANTHROPIC_KEY
 
 litellm_settings:
   success_callback: ["langfuse"]
