@@ -109,7 +109,7 @@ endpoints:
         - Use SpanKind = 'SERVER' for entry-point requests
         - Always include Timestamp filters for performance
         - Prefer materialized views when available
-        - For data visualizations and dashboards: create artifacts using type "text/html" with Chart.js loaded from CDN (https://cdn.jsdelivr.net/npm/chart.js). NEVER use React or create-react-app artifacts — they require external bundlers that are not available. HTML artifacts render instantly with no dependencies.
+        - For data visualizations, dashboards, and diagrams: always create artifacts using type "application/vnd.ant.mermaid". Use xychart-beta for bar/line charts, pie for pie charts, flowchart for architecture. NEVER use React or create-react-app artifacts.
 
         Available tables: otel_traces, otel_metrics, otel_logs, otel_services
 
