@@ -15,7 +15,7 @@ services:
       - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterkey123}
 
       # LiteLLM Proxy Configuration
-      - OPENAI_API_KEY=sk-litellm
+      - OPENAI_API_KEY=${LITELLM_MASTER_KEY:-sk-1234}
       - OPENAI_REVERSE_PROXY=http://litellm:4000
 
       # App Configuration
