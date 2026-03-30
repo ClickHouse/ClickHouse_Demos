@@ -81,7 +81,6 @@ services:
     environment:
       # LiteLLM Configuration
       - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-1234}
-      - DATABASE_URL=postgresql://litellm:litellm123@postgres:5432/litellm
 
       # LLM Provider Keys
       - OPENAI_API_KEY=${OPENAI_API_KEY}
