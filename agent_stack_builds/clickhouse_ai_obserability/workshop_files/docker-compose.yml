@@ -86,7 +86,7 @@ services:
 
       # LLM Provider Keys
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_KEY=${ANTHROPIC_KEY:-}
       - GOOGLE_KEY=${GOOGLE_KEY:-}
 
       # Langfuse Configuration
