@@ -1,4 +1,3 @@
-
 litellm_settings:
   success_callback: ["langfuse"]
   failure_callback: ["langfuse"]
@@ -6,19 +5,30 @@ litellm_settings:
   json_logs: true
 
 model_list:
-  # Google Gemini Models (primary)
-  - model_name: gemini-2.0-flash
+  # Google Gemini Models
+  - model_name: gemini-2.5-pro
     litellm_params:
-      model: gemini/gemini-2.0-flash
+      model: gemini/gemini-2.5-pro
       api_key: ${GOOGLE_API_KEY}
+      api_base: https://generativelanguage.googleapis.com/v1beta
     model_info:
       mode: chat
       supports_function_calling: true
 
-  - model_name: gemini-2.0-flash-lite
+  - model_name: gemini-2.5-flash
     litellm_params:
-      model: gemini/gemini-2.0-flash-lite
+      model: gemini/gemini-2.5-flash
       api_key: ${GOOGLE_API_KEY}
+      api_base: https://generativelanguage.googleapis.com/v1beta
+    model_info:
+      mode: chat
+      supports_function_calling: true
+
+  - model_name: gemini-flash-latest
+    litellm_params:
+      model: gemini/gemini-flash-latest
+      api_key: ${GOOGLE_API_KEY}
+      api_base: https://generativelanguage.googleapis.com/v1beta
     model_info:
       mode: chat
       supports_function_calling: true
