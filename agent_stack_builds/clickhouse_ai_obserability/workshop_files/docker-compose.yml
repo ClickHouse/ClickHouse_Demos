@@ -81,10 +81,13 @@ services:
     environment:
       # LiteLLM Configuration (no master key = no auth required)
 
+      # LiteLLM Master Key
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-1234}
+
       # LLM Provider Keys
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_KEY=${GOOGLE_KEY:-}
 
       # Langfuse Configuration
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
@@ -102,7 +105,7 @@ services:
     volumes:
       - ./config/litellm_config.yaml:/app/config.yaml:ro
       - ./config/system_prompt.txt:/app/system_prompt.txt:ro
-    command: --config /app/config.yaml --detailed_debug
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
     depends_on:
       - postgres
     restart: unless-stopped

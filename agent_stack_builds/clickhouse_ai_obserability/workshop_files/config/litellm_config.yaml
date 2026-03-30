@@ -1,56 +1,35 @@
-litellm_settings:
-  success_callback: ["langfuse"]
-  failure_callback: ["langfuse"]
-  drop_params: true
-  json_logs: true
-
 model_list:
-  # Google Gemini via OpenAI-compatible endpoint (bypasses LiteLLM Vertex routing)
+  # Google Gemini
   - model_name: gemini-2.5-pro
     litellm_params:
-      model: openai/gemini-2.5-pro
-      api_key: ${GOOGLE_API_KEY}
-      api_base: https://generativelanguage.googleapis.com/v1beta/openai/
-    model_info:
-      mode: chat
-      supports_function_calling: true
+      model: gemini/gemini-2.5-pro
+      api_key: os.environ/GOOGLE_KEY
 
   - model_name: gemini-2.5-flash
     litellm_params:
-      model: openai/gemini-2.5-flash
-      api_key: ${GOOGLE_API_KEY}
-      api_base: https://generativelanguage.googleapis.com/v1beta/openai/
-    model_info:
-      mode: chat
-      supports_function_calling: true
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GOOGLE_KEY
 
   - model_name: gemini-flash-latest
     litellm_params:
-      model: openai/gemini-flash-latest
-      api_key: ${GOOGLE_API_KEY}
-      api_base: https://generativelanguage.googleapis.com/v1beta/openai/
-    model_info:
-      mode: chat
-      supports_function_calling: true
+      model: gemini/gemini-flash-latest
+      api_key: os.environ/GOOGLE_KEY
 
   # Anthropic Models (fallback)
   - model_name: claude-3-5-sonnet
     litellm_params:
       model: anthropic/claude-3-5-sonnet-20241022
-      api_key: ${ANTHROPIC_API_KEY}
-    model_info:
-      mode: chat
-      supports_function_calling: true
+      api_key: os.environ/ANTHROPIC_API_KEY
 
   - model_name: claude-3-haiku
     litellm_params:
       model: anthropic/claude-3-haiku-20240307
-      api_key: ${ANTHROPIC_API_KEY}
-    model_info:
-      mode: chat
-      supports_function_calling: true
+      api_key: os.environ/ANTHROPIC_API_KEY
 
-router_settings:
-  routing_strategy: simple-shuffle
-  num_retries: 2
-  timeout: 300
+litellm_settings:
+  success_callback: ["langfuse"]
+  failure_callback: ["langfuse"]
+  drop_params: true
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

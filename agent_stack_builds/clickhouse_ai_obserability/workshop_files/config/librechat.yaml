@@ -76,7 +76,7 @@ endpoints:
   custom:
     - name: "Observability AI"
       apiKey: "${LITELLM_MASTER_KEY}"
-      baseURL: "http://litellm:4000"
+      baseURL: "http://litellm:4000/v1"
       models:
         default:
           - "gemini-2.5-pro"
