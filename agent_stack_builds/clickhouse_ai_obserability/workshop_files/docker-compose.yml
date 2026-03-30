@@ -101,10 +101,12 @@ services:
       - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
       - CLICKHOUSE_DATABASE=${CLICKHOUSE_DATABASE:-default}
       - CLICKHOUSE_SECURE=true
+      - PYTHONPATH=/app/custom
 
     volumes:
       - ./config/litellm_config.yaml:/app/config.yaml:ro
       - ./config/system_prompt.txt:/app/system_prompt.txt:ro
+      - ./config/scorer.py:/app/scorer.py:ro
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     depends_on:
       - postgres
