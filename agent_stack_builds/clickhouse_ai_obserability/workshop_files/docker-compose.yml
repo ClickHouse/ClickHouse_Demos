@@ -32,6 +32,9 @@ services:
       # File Upload (disable for workshop)
       - ENABLE_FILE_UPLOAD=false
 
+      # Sandpack bundler for React artifact preview (requires HTTPS via nginx)
+      - SANDPACK_BUNDLER_URL=https://sandpack-bundler.codesandbox.io
+
     depends_on:
       - mongodb
       - meilisearch
