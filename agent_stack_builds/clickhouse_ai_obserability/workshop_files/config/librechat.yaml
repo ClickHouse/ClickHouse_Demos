@@ -86,9 +86,9 @@ endpoints:
           - "claude-3-haiku"
         fetch: false
       titleConvo: true
-      titleModel: "gemini-2.0-flash"
+      titleModel: "gemini-2.5-flash"
       summarize: false
-      summaryModel: "gemini-2.0-flash"
+      summaryModel: "gemini-2.5-flash"
       forcePrompt: false
       modelDisplayLabel: "Observability AI"
       addParams:
