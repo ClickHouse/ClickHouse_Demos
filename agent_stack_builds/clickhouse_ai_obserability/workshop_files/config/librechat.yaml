@@ -82,8 +82,8 @@ endpoints:
           - "gemini-2.5-pro"
           - "gemini-2.5-flash"
           - "gemini-flash-latest"
-          - "claude-3-5-sonnet"
-          - "claude-3-haiku"
+          - "claude-sonnet-4-6"
+          - "claude-haiku-4-5"
         fetch: false
       titleConvo: true
       titleModel: "gemini-2.5-flash"
@@ -152,27 +152,27 @@ modelSpecs:
         max_tokens: 4096
         temperature: 0.1
 
-    - name: "claude-3-5-sonnet"
-      label: "Claude 3.5 Sonnet"
-      description: "Anthropic's best for complex reasoning"
+    - name: "claude-sonnet-4-6"
+      label: "Claude Sonnet 4.6"
+      description: "Anthropic's latest and most capable model"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/anthropic.svg"
       mcpServers:
         - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
-        model: "claude-3-5-sonnet"
+        model: "claude-sonnet-4-6"
         max_tokens: 4096
         temperature: 0.1
 
-    - name: "claude-3-haiku"
-      label: "Claude 3 Haiku"
+    - name: "claude-haiku-4-5"
+      label: "Claude Haiku 4.5"
       description: "Fast and lightweight for simple queries"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/anthropic.svg"
       mcpServers:
         - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
-        model: "claude-3-haiku"
+        model: "claude-haiku-4-5"
         max_tokens: 4096
         temperature: 0.1
 
