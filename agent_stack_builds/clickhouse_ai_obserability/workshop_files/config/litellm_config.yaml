@@ -30,6 +30,7 @@ litellm_settings:
   success_callback: ["langfuse"]
   failure_callback: ["langfuse"]
   drop_params: true
+  callbacks: scorer.auto_scorer
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
