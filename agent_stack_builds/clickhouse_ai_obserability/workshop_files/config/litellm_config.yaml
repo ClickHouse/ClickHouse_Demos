@@ -5,30 +5,30 @@ litellm_settings:
   json_logs: true
 
 model_list:
-  # Google Gemini Models
+  # Google Gemini via OpenAI-compatible endpoint (bypasses LiteLLM Vertex routing)
   - model_name: gemini-2.5-pro
     litellm_params:
-      model: gemini/gemini-2.5-pro
+      model: openai/gemini-2.5-pro
       api_key: ${GOOGLE_API_KEY}
-      api_base: https://generativelanguage.googleapis.com/v1beta
+      api_base: https://generativelanguage.googleapis.com/v1beta/openai/
     model_info:
       mode: chat
       supports_function_calling: true
 
   - model_name: gemini-2.5-flash
     litellm_params:
-      model: gemini/gemini-2.5-flash
+      model: openai/gemini-2.5-flash
       api_key: ${GOOGLE_API_KEY}
-      api_base: https://generativelanguage.googleapis.com/v1beta
+      api_base: https://generativelanguage.googleapis.com/v1beta/openai/
     model_info:
       mode: chat
       supports_function_calling: true
 
   - model_name: gemini-flash-latest
     litellm_params:
-      model: gemini/gemini-flash-latest
+      model: openai/gemini-flash-latest
       api_key: ${GOOGLE_API_KEY}
-      api_base: https://generativelanguage.googleapis.com/v1beta
+      api_base: https://generativelanguage.googleapis.com/v1beta/openai/
     model_info:
       mode: chat
       supports_function_calling: true
