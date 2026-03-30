@@ -1,5 +1,5 @@
 # LibreChat Configuration for Observability Workshop
-version: 1.1.5
+version: 1.3.4
 
 # Cache settings
 cache: true
@@ -109,6 +109,7 @@ endpoints:
         - Use SpanKind = 'SERVER' for entry-point requests
         - Always include Timestamp filters for performance
         - Prefer materialized views when available
+        - IMPORTANT: Never use artifact blocks or interactive code sandboxes. Always respond with plain markdown and SQL code blocks only.
 
         Available tables: otel_traces, otel_metrics, otel_logs, otel_services
 
