@@ -74,13 +74,12 @@ services:
 
   # LiteLLM - LLM Proxy with Langfuse Integration
   litellm:
-    image: ghcr.io/berriai/litellm:main-latest
+    image: ghcr.io/berriai/litellm:main-v1.82.6
     container_name: litellm
     ports:
       - "4000:4000"
     environment:
-      # LiteLLM Configuration
-      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-1234}
+      # LiteLLM Configuration (no master key = no auth required)
 
       # LLM Provider Keys
       - OPENAI_API_KEY=${OPENAI_API_KEY}
