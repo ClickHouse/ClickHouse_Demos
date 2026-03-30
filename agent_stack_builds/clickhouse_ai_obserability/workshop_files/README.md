@@ -20,58 +20,26 @@ Participants will learn how to:
 
 ## 🏗️ Architecture
 
-```
-┌──────────────────────────────────────────────────┐
-│              User Browser                        │
-└───────────────────┬──────────────────────────────┘
-                    │ HTTP :3000
-                    │
-┌───────────────────▼──────────────────────────────┐
-│             LibreChat (Chat UI)                  │
-│  • User authentication                           │
-│  • Conversation history                          │
-│  • Markdown rendering                            │
-└───────────────────┬──────────────────────────────┘
-                    │ HTTP :4000
-                    │ (Points to LiteLLM as OpenAI endpoint)
-                    │
-┌───────────────────▼──────────────────────────────┐
-│         LiteLLM (CORE WORKSHOP COMPONENT)        │
-│  ┌────────────────────────────────────────────┐  │
-│  │ 1. Receives chat messages from LibreChat  │  │
-│  │ 2. Injects system prompt (DB schema info) │  │
-│  │ 3. Routes to Claude/GPT-4                 │  │
-│  │ 4. AUTO-TRACES to Langfuse (every call!)  │  │
-│  │ 5. Streams response back                   │  │
-│  └────────────────────────────────────────────┘  │
-└─────┬─────────────────────┬──────────────────────┘
-      │                     │
-      │ HTTPS               │ HTTPS
-      │                     │ (Parallel - traces sent here!)
-      ▼                     ▼
-┌─────────────┐      ┌──────────────────────┐
-│  LLM APIs   │      │   Langfuse Cloud     │
-│             │      │  (YOUR PROJECT)      │
-│ • Claude    │      │                      │
-│ • GPT-4     │      │ Captures:            │
-│ • GPT-4o    │      │ • Full traces        │
-│             │      │ • Token usage        │
-│             │      │ • Costs              │
-│             │      │ • Latency            │
-│             │      │ • System prompts     │
-└─────────────┘      └──────────────────────┘
-      │
-      │ (Generated SQL queries ClickHouse)
-      ▼
-┌─────────────────────────────┐
-│     ClickHouse Cloud        │
-│  (OpenTelemetry Data)       │
-│                             │
-│ • otel_traces               │
-│ • otel_metrics              │
-│ • otel_logs                 │
-│ • otel_services             │
-└─────────────────────────────┘
+```mermaid
+flowchart TD
+    Browser["🌐 User Browser"]
+    LibreChat["💬 LibreChat\nChat UI · Auth · History"]
+    LiteLLM["⚡ LiteLLM Proxy\n① Receive messages\n② Inject system prompt\n③ Route to LLM\n④ Auto-trace to Langfuse\n⑤ Stream response"]
+    LLMs["🤖 LLM APIs\nClaude Sonnet 4.6\nGemini 2.5 Pro/Flash"]
+    Langfuse["📊 Langfuse Cloud\nTraces · Tokens\nCosts · Latency\nScores"]
+    ClickHouse["🏠 ClickHouse Cloud\notel_traces\notel_metrics\notel_logs"]
+    MCP["🔌 MCP Server\nClickHouse connector\nSSE transport"]
+
+    Browser -->|"HTTPS :443"| LibreChat
+    LibreChat -->|"HTTP :4000"| LiteLLM
+    LiteLLM -->|"HTTPS"| LLMs
+    LiteLLM -->|"HTTPS traces"| Langfuse
+    LLMs -->|"SQL via MCP"| MCP
+    MCP -->|"HTTPS :8443"| ClickHouse
+
+    style LiteLLM fill:#f5a623,color:#000
+    style ClickHouse fill:#FAFF69,color:#000
+    style Langfuse fill:#6366f1,color:#fff
 ```
 
 **Workshop Focus:** LibreChat → **LiteLLM** (automatic Langfuse tracing) → LLMs
