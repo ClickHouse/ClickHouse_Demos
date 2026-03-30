@@ -79,8 +79,9 @@ endpoints:
       baseURL: "http://litellm:4000"
       models:
         default:
-          - "gemini-2.0-flash"
-          - "gemini-2.0-flash-lite"
+          - "gemini-2.5-pro"
+          - "gemini-2.5-flash"
+          - "gemini-flash-latest"
           - "claude-3-5-sonnet"
           - "claude-3-haiku"
         fetch: false
@@ -114,28 +115,40 @@ endpoints:
 modelSpecs:
   enforce: true
   list:
-    - name: "gemini-2.0-flash"
-      label: "Gemini 2.0 Flash (Recommended)"
+    - name: "gemini-2.5-pro"
+      label: "Gemini 2.5 Pro (Recommended)"
       default: true
-      description: "Google's fast and capable model"
+      description: "Google's most capable model"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
       mcpServers:
         - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
-        model: "gemini-2.0-flash"
+        model: "gemini-2.5-pro"
         max_tokens: 4096
         temperature: 0.1
 
-    - name: "gemini-2.0-flash-lite"
-      label: "Gemini 2.0 Flash Lite"
-      description: "Lightweight and fast for quick queries"
+    - name: "gemini-2.5-flash"
+      label: "Gemini 2.5 Flash"
+      description: "Fast and capable for most queries"
       iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
       mcpServers:
         - "clickhouse-otel"
       preset:
         endpoint: "Observability AI"
-        model: "gemini-2.0-flash-lite"
+        model: "gemini-2.5-flash"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "gemini-flash-latest"
+      label: "Gemini Flash Latest"
+      description: "Latest Gemini Flash model"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
+      mcpServers:
+        - "clickhouse-otel"
+      preset:
+        endpoint: "Observability AI"
+        model: "gemini-flash-latest"
         max_tokens: 4096
         temperature: 0.1
 
