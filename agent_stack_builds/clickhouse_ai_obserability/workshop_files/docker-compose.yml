@@ -74,7 +74,7 @@ services:
 
   # LiteLLM - LLM Proxy with Langfuse Integration
   litellm:
-    image: ghcr.io/berriai/litellm:main-v1.82.6
+    image: ghcr.io/berriai/litellm:main-stable
     container_name: litellm
     ports:
       - "4000:4000"
