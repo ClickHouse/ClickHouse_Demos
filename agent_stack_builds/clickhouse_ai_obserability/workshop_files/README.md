@@ -107,8 +107,8 @@ sudo chmod +x /usr/local/bin/docker-compose
 #### Step 3: Clone Workshop Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/clickhouse_ai_observability.git
-cd clickhouse_ai_observability/workshop_files
+git clone https://github.com/ClickHouse/ClickHouse_Demos.git
+cd ClickHouse_Demos/agent_stack_builds/clickhouse_ai_obserability/workshop_files
 ```
 
 #### Step 4: Configure Environment
@@ -338,7 +338,7 @@ MIT License - see LICENSE file for details
 
 ## 💬 Support
 
-- GitHub Issues: https://github.com/YOUR_USERNAME/clickhouse_ai_observability/issues
+- GitHub Issues: https://github.com/ClickHouse/ClickHouse_Demos/issues
 - ClickHouse Community Slack: https://clickhouse.com/slack
 
 ---
