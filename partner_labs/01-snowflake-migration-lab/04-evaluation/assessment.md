@@ -33,7 +33,7 @@
 - A. `Map(String, String)` — enforces type safety on keys and values
 - B. `String` column, with `JSONExtract*` functions applied at query time
 - C. `Tuple(driver_rating Float32, vehicle_type String, …)` — pre-defined schema
-- D. `JSON` — ClickHouse has a native `JSON` type that is equivalent to `VARIANT`
+- D. `JSON` — ClickHouse has a native `JSON` type; use it directly as a drop-in replacement for `VARIANT`
 
 **Your answer:** ___
 
@@ -265,7 +265,7 @@ ClickHouse has 390 more rows. What does this indicate?
 
 ---
 
-**Q20.** The CH — Capabilities Showcase dashboard uses `dictGet('taxi_zone_dict', 'zone_name', pickup_location_id)` instead of a `JOIN` on the zone dimension table. Why does this outperform a JOIN?
+**Q20.** The CH — Capabilities Showcase dashboard uses `dictGet('analytics.taxi_zones_dict', 'zone', toUInt16(pickup_location_id))` instead of a `JOIN` on the zone dimension table. Why does this outperform a JOIN?
 
 - A. ClickHouse loads dictionaries into GPU memory for hardware-accelerated lookups
 - B. The dictionary is materialised as a hash table in RAM — each lookup is O(1) with no disk I/O, unlike a JOIN that probes data parts on disk
