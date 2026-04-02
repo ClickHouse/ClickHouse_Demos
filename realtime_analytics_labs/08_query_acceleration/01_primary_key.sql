@@ -46,14 +46,14 @@ SELECT '==== 1.2  Primary-key-aligned query ====' AS step;
 -- This query filters on pickup_datetime — our first ORDER BY column
 SELECT count(), avg(fare_amount)
 FROM trips
-WHERE pickup_datetime >= '2015-06-01'
+WHERE pickup_datetime >= '2015-08-01'
   AND pickup_datetime <  '2015-09-01';
 
 -- Inspect how many granules were read
 EXPLAIN indexes = 1
 SELECT count(), avg(fare_amount)
 FROM trips
-WHERE pickup_datetime >= '2015-06-01'
+WHERE pickup_datetime >= '2015-08-01'
   AND pickup_datetime <  '2015-09-01';
 
 -- ============================================================
