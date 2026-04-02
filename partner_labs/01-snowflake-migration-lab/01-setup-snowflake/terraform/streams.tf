@@ -13,7 +13,7 @@
 # ---------------------------------------------------------------------------
 # CDC stream on TRIPS_RAW
 # Captures all DML changes (INSERT/UPDATE/DELETE).
-# In the migration lab, output of this stream feeds ClickPipes.
+# In the migration lab, this stream is retired at cutover — live writes go directly to ClickHouse.
 # ---------------------------------------------------------------------------
 resource "snowflake_execute" "trips_cdc_stream" {
   execute = <<-SQL
@@ -31,17 +31,16 @@ resource "snowflake_execute" "trips_cdc_stream" {
 # Created SUSPENDED — resume after setup:
 #   ALTER TASK NYC_TAXI_DB.RAW.CDC_CONSUME_TASK RESUME;
 #
-# In the migration lab this query is the source-side mechanism for the live
-# CDC track: partners redirect its output to ClickPipes.
+# In the migration lab this query shows the source-side CDC mechanism.
 # Migration challenge: Snowflake Tasks have no native equivalent in
-# ClickHouse — replaced by ClickPipes (streaming) or Airflow (batch).
+# ClickHouse — replaced by the post-cutover producer (direct writes) or Debezium for real CDC.
 # ---------------------------------------------------------------------------
 resource "snowflake_execute" "cdc_consume_task" {
   execute = <<-SQL
     CREATE OR REPLACE TASK NYC_TAXI_DB.RAW.CDC_CONSUME_TASK
       WAREHOUSE = TRANSFORM_WH
       SCHEDULE  = 'USING CRON */5 * * * * UTC'
-      COMMENT   = 'Consumes TRIPS_CDC_STREAM every 5 min — output directed to ClickPipes in migration lab'
+      COMMENT   = 'Consumes TRIPS_CDC_STREAM every 5 min — retired at cutover in migration lab'
     AS
       SELECT
         METADATA$ACTION   AS cdc_action,

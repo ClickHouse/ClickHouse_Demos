@@ -6,8 +6,8 @@
 -- NYC TLC zone records — identical distribution to the Snowflake
 -- seed in 01-setup-snowflake/scripts/02_seed_data.sql.
 --
--- The zone data is static reference data (265 rows). It is not
--- loaded via ClickPipes; it is seeded once via this script.
+-- The zone data is static reference data (265 rows). It is seeded
+-- once via this script before the first dbt run.
 -- stg_taxi_zones reads from this table via source('raw', 'dim_taxi_zones').
 -- ============================================================
 
