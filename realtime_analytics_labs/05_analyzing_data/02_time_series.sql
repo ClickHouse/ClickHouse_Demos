@@ -139,8 +139,8 @@ SELECT
     toStartOfHour(pickup_datetime)  AS hour,
     count()                         AS trips
 FROM trips
-WHERE pickup_datetime >= '2013-07-04 00:00:00'
-  AND pickup_datetime <  '2013-07-05 00:00:00'
+WHERE pickup_datetime >= '2015-07-04 00:00:00'
+  AND pickup_datetime <  '2015-07-05 00:00:00'
 GROUP BY hour
 ORDER BY hour;
 

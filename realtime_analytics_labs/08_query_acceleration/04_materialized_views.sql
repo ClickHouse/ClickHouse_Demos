@@ -112,12 +112,6 @@ FROM trips
 WHERE pickup_ntaname != ''
 GROUP BY hour, pickup_ntaname;
 
-SELECT
-    formatReadableQuantity(count())     AS rows_in_mv_target,
-    min(hour)                           AS earliest_hour,
-    max(hour)                           AS latest_hour
-FROM trips_hourly_zone;
-
 -- ============================================================
 -- TALKING POINT
 -- ============================================================
