@@ -15,10 +15,10 @@
 --   INSERT INTO DIM_PAYMENT_TYPE VALUES (1, 'CREDIT', 'Credit Card'), ...
 -- and dim_payment_type.sql referenced NYC_TAXI_DB.ANALYTICS.DIM_PAYMENT_TYPE.
 --
--- In ClickHouse, ClickPipes only ingests trip/zone data. Payment type is static
--- reference data that doesn't exist in any raw table, so we embed the VALUES
--- directly in the model. This creates a self-contained dbt project with no
--- external seed dependencies for this dimension.
+-- In ClickHouse, the Python migration script only migrates trip data; zone data is
+-- seeded separately. Payment type is static reference data that doesn't exist in
+-- any raw table, so we embed the VALUES directly in the model. This creates a
+-- self-contained dbt project with no external seed dependencies for this dimension.
 --
 -- SQL translation:
 --   INSERT INTO ... VALUES  →  SELECT * FROM (VALUES ...) as inline CTE

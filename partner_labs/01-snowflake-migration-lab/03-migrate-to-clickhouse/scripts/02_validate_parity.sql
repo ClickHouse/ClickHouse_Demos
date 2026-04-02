@@ -1,7 +1,7 @@
 -- ============================================================
 -- 02_validate_parity.sql
 -- Manual parity validation queries for ClickHouse SQL console.
--- Run these after ClickPipes bulk load to confirm data integrity.
+-- Run these after the Python migration script to confirm data integrity.
 -- ============================================================
 -- Connect to your ClickHouse Cloud service before running these queries.
 -- First-run step: USE nyc_taxi_ch;

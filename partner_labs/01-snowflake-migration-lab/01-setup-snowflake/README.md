@@ -230,7 +230,7 @@ The `queries/` directory contains 7 annotated queries, each with:
 | Q4 | LATERAL FLATTEN | **No equivalent — use JSONExtract or pre-flatten** |
 | Q5 | VARIANT colon path | Replace with JSONExtractFloat/String |
 | Q6 | MERGE INTO | **No equivalent — use ReplacingMergeTree** |
-| Q7 | Snowflake Streams | Replace with ClickPipes CDC |
+| Q7 | Snowflake Streams | Retired at cutover — live writes go directly to ClickHouse via producer |
 
 ## Estimated Costs
 

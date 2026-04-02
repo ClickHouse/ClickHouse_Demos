@@ -107,7 +107,7 @@ models:
     description: >
       NYC TLC taxi zone lookup — 265 zones across 5 boroughs.
       Migration note: In Snowflake, data was seeded via 01_create_tables.sql.
-      In ClickHouse, loaded via ClickPipes and promoted through stg_taxi_zones.
+      In ClickHouse, seeded via scripts/00_seed_zones.sql and promoted through stg_taxi_zones.
     columns:
       - name: location_id
         description: "TLC location ID (1–265)"
@@ -119,7 +119,7 @@ models:
     description: >
       Payment type lookup — 6 types (static seed data embedded in model).
       Migration note: In Snowflake, seeded via SQL INSERT. In ClickHouse, embedded
-      as VALUES in the model SELECT since ClickPipes doesn't load this reference data.
+      as VALUES in the model SELECT since it is not part of any migrated raw table.
     columns:
       - name: payment_type_id
         tests:

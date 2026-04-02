@@ -2,15 +2,16 @@ version: 2
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Migration note: In Snowflake Part 1, sources pointed to NYC_TAXI_DB.RAW schema.
-# In ClickHouse, raw data is ingested via ClickPipes (ClickHouse's native CDC/batch
-# ingestion service). Both tables land in the default database/schema.
+# In ClickHouse, raw data is loaded via the Python migration script
+# (scripts/02_migrate_trips.py) and live writes from the post-cutover producer.
+# Both tables land in the default database/schema.
 # ──────────────────────────────────────────────────────────────────────────────
 
 sources:
   - name: raw
     database: default
     schema: default
-    description: "Raw NYC Taxi data — loaded from Snowflake export via ClickPipes"
+    description: "Raw NYC Taxi data — loaded from Snowflake via Python migration script"
     tables:
       - name: trips_raw
         description: >
@@ -38,9 +39,11 @@ sources:
             description: >
               ClickHouse-side ingestion timestamp — set automatically to now() on every INSERT
               via DEFAULT now(). Used as the ReplacingMergeTree(_synced_at) version column.
-              When ClickPipes bulk-loads a row and a later CDC update arrives for the same
-              trip_id, the CDC row has a higher _synced_at and wins during deduplication.
-              stg_trips queries trips_raw FINAL to force dedup before downstream models run.
+              If the migration script is interrupted and re-run with --resume, duplicate rows
+              for the same trip_id may briefly exist; the later INSERT has a higher _synced_at
+              and wins during deduplication. Post-cutover producer retries are also safe for
+              the same reason. stg_trips queries trips_raw FINAL to force dedup before
+              downstream models run.
 
       - name: dim_taxi_zones
         description: >

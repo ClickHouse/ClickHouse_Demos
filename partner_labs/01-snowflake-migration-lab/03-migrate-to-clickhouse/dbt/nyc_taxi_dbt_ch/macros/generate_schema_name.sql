@@ -6,7 +6,7 @@
 --
 -- Why drop the prefix? In ClickHouse, schemas ARE databases. We want clean
 -- database names (analytics, staging) not compound names (nyc_taxi_ch_analytics).
--- This matches how the ClickPipes-loaded source data is organized.
+-- This matches how the migrated source data is organized.
 --
 -- Snowflake equivalent: generate_schema_name macro (identical pattern, different reason —
 -- Snowflake uses it to avoid STAGING_ANALYTICS schema name prefixing).

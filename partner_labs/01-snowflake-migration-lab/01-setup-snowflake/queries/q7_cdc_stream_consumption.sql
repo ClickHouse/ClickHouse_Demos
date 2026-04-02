@@ -1,9 +1,10 @@
 -- Q7: Consume CDC Stream for Incremental ClickHouse Sync
 -- Source-side mechanism for live CDC migration track
--- In the migration lab, output of this query feeds ClickPipes
--- Migration note: Snowflake Streams have no ClickHouse equivalent.
---                 ClickHouse equivalent: ClickPipes for Kafka/S3/Snowflake CDC
---                                        or Debezium → Kafka → ClickHouse
+-- In the migration lab, this stream is retired at cutover — live writes go directly
+-- to ClickHouse via the post-cutover producer (scripts/03_cutover.sh).
+-- Migration note: Snowflake Streams have no native ClickHouse equivalent.
+--                 ClickHouse equivalent: direct producer writes post-cutover,
+--                                        or Debezium → Kafka → ClickHouse for real CDC.
 
 USE WAREHOUSE TRANSFORM_WH;
 USE DATABASE NYC_TAXI_DB;
@@ -34,7 +35,7 @@ LIMIT 10000;
 
 -- To process the full change feed for ClickHouse sync:
 -- 1. SELECT all rows from stream (this consumes the stream)
--- 2. INSERT rows where METADATA$ACTION = 'INSERT' into ClickHouse via ClickPipes
+-- 2. INSERT rows where METADATA$ACTION = 'INSERT' into ClickHouse via the producer
 -- 3. For UPDATE events: rows come as DELETE + INSERT pair; handle in ClickHouse
 --    using ReplacingMergeTree or by processing sign column
 

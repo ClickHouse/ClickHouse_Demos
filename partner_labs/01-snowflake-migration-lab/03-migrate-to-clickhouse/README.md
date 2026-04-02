@@ -439,20 +439,22 @@ WHERE name = 'taxi_zones_dict';
 
 ### 7.5 Add ClickHouse Dashboards
 
-Register the ClickHouse connection in Superset and import the four CH dashboards.
+Follow **[docs/superset_datasets_guide.md](docs/superset_datasets_guide.md)** to manually create all datasets, charts, and dashboards step by step. The guide covers:
 
-```bash
-source .env && source .clickhouse_state
-bash superset/add_clickhouse_connection.sh
-```
+- **Step 0** — Register the ClickHouse connection
+- **Part 1** — 7 datasets (2 table + 5 virtual showcasing `uniqHLL12`, `quantileTDigest`, sampling, window functions, `dictGet`)
+- **Part 2** — 18 charts across 4 dashboards
+- **Part 3** — Assemble the 4 dashboards
 
-The script authenticates to Superset at `http://localhost:8088`, creates a `clickhousedb` connection using the host from `.clickhouse_state`, and imports 4 dashboards.
+> **Shortcut:** To skip the manual steps and import everything in one shot:
+> ```bash
+> source .env && source .clickhouse_state
+> bash superset/add_clickhouse_connection.sh
+> ```
 
 **Verify:**
 
 Open [http://localhost:8088](http://localhost:8088) (admin / admin). Under **Dashboards**, you should see 7 total — 3 Snowflake dashboards and 4 prefixed `CH —`.
-
-If the script returns 403, your Superset session cookie has expired. Log out and back in, then re-run.
 
 ---
 
