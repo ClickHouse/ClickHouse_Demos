@@ -46,6 +46,8 @@ profiles.yml
 **/superset_home/
 **/superset/postgres_data/
 /tmp/superset_import_*.zip
+# Dashboard export ZIPs are source assets — keep them despite root *.zip exclusion
+!**/superset/dashboards/*.zip
 
 # ── OS & editor ──────────────────────────────────────────────────────────────
 .DS_Store
