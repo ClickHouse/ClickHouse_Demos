@@ -16,7 +16,7 @@ This evaluation measures whether you can **explain and defend** those decisions 
 
 Before starting, confirm you have completed all three parts:
 
-- [ ] Part 1 — Snowflake setup running, all 7 queries executed, `docs/migration_assessment.md` filled in
+- [ ] Part 1 — Snowflake setup running, all 7 queries executed
 - [ ] Part 2 — All 5 worksheets complete, `migration-plan.md` filled in with all checkboxes checked
 - [ ] Part 3 — ClickHouse Cloud service live, 50M rows migrated, benchmark results in `scripts/benchmark_results_*.csv`, dashboards working
 
