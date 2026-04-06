@@ -1,6 +1,6 @@
 -- Q3: Top 10 Trips per Borough using QUALIFY
--- Migration note: QUALIFY is Snowflake-specific. No equivalent in ClickHouse.
---                 Rewrite as a subquery (see ClickHouse version below).
+-- Migration note: For this lab, QUALIFY is treated as a dialect gap requiring a subquery rewrite.
+--                 (ClickHouse does support QUALIFY, but the subquery pattern is portable across all SQL engines. https://clickhouse.com/docs/sql-reference/statements/select/qualify)
 
 USE WAREHOUSE ANALYTICS_WH;
 USE DATABASE NYC_TAXI_DB;
@@ -22,7 +22,7 @@ WHERE pickup_at::DATE = CURRENT_DATE() - 1
 QUALIFY rank_in_borough <= 10
 ORDER BY pickup_borough, rank_in_borough;
 
--- ClickHouse equivalent: subquery required (QUALIFY does not exist)
+-- ClickHouse equivalent: subquery rewrite (portable across all SQL engines)
 -- SELECT trip_id, pickup_at, pickup_borough, total_amount_usd, tip_amount_usd, trip_distance_miles, rn AS rank_in_borough
 -- FROM (
 --     SELECT

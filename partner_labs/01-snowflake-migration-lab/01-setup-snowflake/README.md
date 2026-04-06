@@ -78,7 +78,7 @@ cp .env.example .env
 cp dbt/nyc_taxi_dbt/profiles.yml.example ~/.dbt/profiles.yml
 # Edit ~/.dbt/profiles.yml with your account details
 
-# 4. Run full setup (~25 minutes including synthetic data generation)
+# 4. Run full setup (~5-10 minutes including synthetic data generation)
 source .env && ./setup.sh
 
 # 5. Validate
@@ -258,17 +258,7 @@ By the end of Part 1, you should be able to:
 2. **Run** all 7 queries and explain the Snowflake-specific constructs used
 3. **Explain** how dbt incremental models with MERGE strategy work in Snowflake
 4. **Identify** which SQL constructs require translation to ClickHouse (QUALIFY, LATERAL FLATTEN, MERGE, VARIANT syntax)
-5. **Complete** the Migration Assessment template (see `docs/migration_assessment.md`)
-
-The completed assessment feeds directly into **Part 2 — Plan & Design**, where you'll profile the workload in depth and make explicit engine and schema design decisions before touching any ClickHouse infrastructure.
-
-## Migration Assessment
-
-Before proceeding to Part 2, complete `docs/migration_assessment.md`:
-- Workload Inventory: document every table, stream, and task with migration path
-- SQL Dialect Gap Register: document every Snowflake-specific construct with ClickHouse translation
-
-Submit the completed assessment to your ClickHouse SA for sign-off.
+5. **Identify** the migration path for each Snowflake object and SQL construct — ready to proceed to Part 2.
 
 ## Troubleshooting
 
