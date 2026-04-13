@@ -1,17 +1,18 @@
 -- ============================================================
--- Script 00: Seed dim_taxi_zones in ClickHouse
+-- Script 00: Seed taxi_zones in ClickHouse
 -- Run before: dbt run (section 7.1)
 --
--- Creates and populates default.dim_taxi_zones with 265 synthetic
+-- Creates and populates default.taxi_zones with 265 synthetic
 -- NYC TLC zone records — identical distribution to the Snowflake
 -- seed in 01-setup-snowflake/scripts/02_seed_data.sql.
 --
 -- The zone data is static reference data (265 rows). It is seeded
 -- once via this script before the first dbt run.
--- stg_taxi_zones reads from this table via source('raw', 'dim_taxi_zones').
+-- stg_taxi_zones reads from this table via source('raw', 'taxi_zones').
+-- Named taxi_zones (not dim_taxi_zones) to avoid collision with analytics.dim_taxi_zones.
 -- ============================================================
 
-CREATE TABLE IF NOT EXISTS default.dim_taxi_zones (
+CREATE TABLE IF NOT EXISTS default.taxi_zones (
     location_id   UInt16,
     borough       String,
     zone          String,
@@ -20,9 +21,9 @@ CREATE TABLE IF NOT EXISTS default.dim_taxi_zones (
 ENGINE = MergeTree()
 ORDER BY (location_id);
 
-TRUNCATE TABLE default.dim_taxi_zones;
+TRUNCATE TABLE default.taxi_zones;
 
-INSERT INTO default.dim_taxi_zones (location_id, borough, zone, service_zone)
+INSERT INTO default.taxi_zones (location_id, borough, zone, service_zone)
 SELECT
     n AS location_id,
     CASE
@@ -60,5 +61,5 @@ FROM (
 );
 
 -- Verify
-SELECT count() AS zone_count FROM default.dim_taxi_zones;
+SELECT count() AS zone_count FROM default.taxi_zones;
 -- Expected: 265

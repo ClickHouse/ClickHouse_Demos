@@ -15,7 +15,7 @@
 -- dim_taxi_zones was essentially a pass-through with no transformation.
 --
 -- In ClickHouse, the source data flows through the staging layer:
---   scripts/00_seed_zones.sql → source('raw', 'dim_taxi_zones') → stg_taxi_zones → dim_taxi_zones
+--   scripts/00_seed_zones.sql → default.taxi_zones (raw source) → stg_taxi_zones → analytics.dim_taxi_zones
 --
 -- This model simply promotes the staged/cleaned zones to the analytics schema.
 -- No SQL translation required beyond the ref() path change.

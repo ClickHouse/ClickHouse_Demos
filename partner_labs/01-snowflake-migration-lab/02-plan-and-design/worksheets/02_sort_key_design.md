@@ -14,7 +14,7 @@ ClickHouse's `ORDER BY` clause is not decorative. It defines the **primary index
 ### Three rules for ORDER BY design
 
 **Rule 1: Derive from query filters, not from the source schema.**
-Look at the `WHERE`, `GROUP BY`, and `JOIN` columns across your most frequent queries. The most-filtered columns should appear in `ORDER BY`. The source table's primary key (if any) is usually irrelevant.
+Look at the `WHERE`, `GROUP BY`, and `JOIN` columns across your most frequent queries. The most-filtered columns should probably appear in `ORDER BY` (Provided it is not too high cardinality). The source table's primary key (if any) is usually irrelevant.
 
 **Rule 2: Low cardinality first, high cardinality last.**
 ClickHouse's primary index has one entry per ~8192 rows (a *granule*). Low-cardinality columns (e.g., `toStartOfMonth(date)` = ~48 distinct values over 4 years) cluster many rows together — the index can skip entire granules. High-cardinality columns (e.g., `trip_id` = 50M distinct values) are unique per row — putting them first means the index cannot skip anything.
@@ -30,12 +30,12 @@ Before designing sort keys, analyze what columns the queries actually filter on.
 
 The NYC Taxi lab has 7 representative queries. For each, identify the filter columns (WHERE, GROUP BY/ORDER BY on fact tables, JOIN keys):
 
-| Query | Description | Filter / Group Columns | Most selective filter |
+| Query | Description | Filter / Group Columns | Most selective filter | 
 |-------|-------------|----------------------|----------------------|
 | Q1 | Hourly revenue by borough (DATE_TRUNC, DATEADD) | `pickup_at` (date range), `borough` (via dim join) | ? |
-| Q2 | Rolling 7-day avg distance (window function) | `pickup_at` (7-day range), `pickup_location_id` | ? |
-| Q3 | Top 10 trips per zone (QUALIFY) | `pickup_at` (7-day range), `pickup_location_id` | ? |
-| Q4 | Driver ratings by zone (LATERAL FLATTEN / JSON) | `pickup_at` (date range), `pickup_location_id` | ? |
+| Q2 | Rolling 7-day avg distance (window function) | `pickup_at::DATE` (GROUP BY — no WHERE filter) | ? |
+| Q3 | Top 10 trips per zone (QUALIFY) | `pickup_at` (single day: yesterday), `pickup_borough` (PARTITION BY in window) | ? |
+| Q4 | Driver ratings by zone (LATERAL FLATTEN / JSON) | JSON metadata fields (`driver` not null, `driver.rating` not null) | ? |
 | Q5 | Surge pricing analysis (VARIANT colon-path) | `pickup_at` (date range) | ? |
 | Q6 | Hourly aggregation (MERGE equivalent) | `hour_bucket`, `zone_id` | ? |
 | Q7 | CDC stream lag measurement | `trip_id` (point lookup) | ? |
@@ -77,7 +77,7 @@ Using your query workload analysis and cardinality estimates, propose an `ORDER 
 
 | Table | Engine | Proposed ORDER BY | Reasoning |
 |-------|--------|-------------------|-----------|
-| `trips_raw` | MergeTree | `(?, ?)` | *Python migration script loads data; time-range queries filter on pickup_at; trip_id must be in ORDER BY as the RMT dedup key* |
+| `trips_raw` | ReplacingMergeTree(_synced_at) | `(?, ?)` | *Python migration script loads data; time-range queries filter on pickup_at; trip_id must be in ORDER BY as the RMT dedup key* |
 | `fact_trips` | ReplacingMergeTree(updated_at) | `(?, ?, ?)` | *Q1-Q7 all filter on pickup_at; trip_id needed for RMT uniqueness* |
 | `agg_hourly_zone_trips` | ReplacingMergeTree(updated_at) | `(?, ?)` | *Aggregation queries filter on hour_bucket and zone_id* |
 | `dim_taxi_zones` | MergeTree | `(location_id)` | *(filled as example — dim tables are small, lookup by PK)* |
@@ -115,9 +115,9 @@ Using your query workload analysis and cardinality estimates, propose an `ORDER 
 | Query | Most selective filter |
 |-------|-----------------------|
 | Q1 | `pickup_at` (date range eliminates 95%+ of rows before borough join) |
-| Q2 | `pickup_at` (7-day range) |
-| Q3 | `pickup_at` (7-day range) + `pickup_location_id` |
-| Q4 | `pickup_at` (date range) |
+| Q2 | No WHERE filter — full table scan grouped by `pickup_at::DATE` |
+| Q3 | `pickup_at` (single day — eliminates ~99.7% of 4-year dataset) |
+| Q4 | JSON metadata presence check — not a sortable/skippable column |
 | Q5 | `pickup_at` (date range) |
 | Q6 | `hour_bucket` (specific time bucket) |
 | Q7 | `trip_id` (UUID point lookup — unique per row) |
@@ -131,12 +131,14 @@ Using your query workload analysis and cardinality estimates, propose an `ORDER 
 | Table | Proposed ORDER BY | Reasoning |
 |-------|-------------------|-----------|
 | `trips_raw` | `(pickup_at, trip_id)` | Time-range analytical queries benefit from pickup_at first. trip_id for CDC point lookups (RMT uses it as dedup key if needed). |
-| `fact_trips` | `(toStartOfMonth(pickup_at), pickup_at, trip_id)` | Month prefix clusters entire months together (block-level skipping). pickup_at narrows within month. trip_id ensures RMT uniqueness. Q1-Q7 all filter on pickup_at in some form — no query filters on trip_id alone on the fact table. |
+| `fact_trips` | `(toStartOfMonth(pickup_at), pickup_at, trip_id)` | Month prefix clusters entire months together (block-level skipping). pickup_at narrows within month. trip_id ensures RMT uniqueness. Q1-Q7 all filter on pickup_at in some form — no query filters on trip_id alone on the fact table. **Production alternative:** `PARTITION BY toStartOfMonth(pickup_at)` + `ORDER BY (pickup_at, trip_id)` is equally valid — partitioning handles month-level pruning at the filesystem level, freeing the ORDER BY to focus purely on within-partition range scans. The lab uses the function-in-ORDER BY approach to keep the DDL simple, but both are production-grade patterns. |
 | `agg_hourly_zone_trips` | `(hour_bucket, zone_id)` | Both columns appear in Q6. hour_bucket has medium cardinality (~35K); zone_id has low cardinality (265). In query patterns, `WHERE hour_bucket >= X` narrows more than `WHERE zone_id = Y`, but zone_id is a secondary filter. Both should be in ORDER BY. |
 
 ### Reflection Answers
 
 1. `toStartOfMonth(pickup_at)` as the first column groups all trips in a calendar month into adjacent storage blocks. ClickHouse's sparse index can skip all blocks outside the requested date range at month granularity, before `pickup_at` narrows further within the month. If `pickup_at` were first alone, every granule would cover a mix of timestamps with no coarse structure — the index would still work but less efficiently for month-level range scans.
+
+   > **Production note:** An equally valid design is `PARTITION BY toStartOfMonth(pickup_at)` + `ORDER BY (pickup_at, trip_id)`. `PARTITION BY` handles month-level pruning at the filesystem level (entire partition directories are skipped before any index is consulted), while `ORDER BY` focuses purely on within-partition range scans. The trade-off: partitioning creates more files and can hurt performance if partitions are too small (e.g., daily partitions on a sparse dataset). For 50M rows across 4 years (~1M rows/month), monthly partitioning is a safe choice. The lab keeps `toStartOfMonth` in ORDER BY to avoid introducing `PARTITION BY` as a separate concept, but SAs should know both patterns.
 
 2. No. `trip_id` has extremely high cardinality (UUID = 50M distinct values). Putting it first means every block contains exactly one `trip_id` value range — the index is useless for anything except exact `trip_id` lookups. Since the vast majority of `trips_raw` queries are analytical (time-range scans), not CDC point lookups, `pickup_at` first is more valuable. The CDC lookup performance penalty for `trip_id` second is acceptable because CDC lookups are rare point-in-time operations, not the primary analytical workload.
 

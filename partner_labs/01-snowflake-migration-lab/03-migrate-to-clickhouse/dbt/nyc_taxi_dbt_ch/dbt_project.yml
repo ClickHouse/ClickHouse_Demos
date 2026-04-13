@@ -30,7 +30,7 @@ models:
       +materialized: ephemeral
       # ephemeral = CTEs inlined into downstream queries — same behavior as Snowflake Part 1
 
-    analytics:
+    marts:
       +schema: analytics
       +materialized: table
       +engine: "MergeTree()"
