@@ -79,11 +79,11 @@ Fill in the `?` cells:
 
 | Model | `unique_key` | `incremental_strategy` | Incremental filter (inside `is_incremental()`) | Why this filter? |
 |-------|-------------|----------------------|------------------------------------------------|-----------------|
-| `fact_trips` | ? | ? | `WHERE pickup_at > ?` | ? |
+| `fact_trips` | ? | ? | `WHERE updated_at > ?` | ? |
 | `agg_hourly_zone_trips` | ? | ? | `WHERE pickup_at >= ?` | ? |
 
 **Hints:**
-- `fact_trips` uses a high-watermark pattern — it processes rows newer than the latest row already in the target. What aggregate function reads the current high-watermark from `{{ this }}`?
+- `fact_trips` uses a high-watermark pattern — it processes rows newer than the latest row already in the target. Which column should the watermark be on: `pickup_at` or `updated_at`? Think about what happens when a fare adjustment re-inserts the same `trip_id`.
 - `agg_hourly_zone_trips` produces hourly aggregates. If you used a high-watermark like `fact_trips`, what would happen to the boundary hour that was partially calculated in the previous run?
 - For `agg_hourly_zone_trips`, why is the composite key `[hour_bucket, zone_id]` correct here, while `fact_trips` uses only `trip_id`?
 
@@ -150,7 +150,7 @@ Answer these before checking the answer key:
 
 | Model | `unique_key` | `incremental_strategy` | Incremental filter | Why |
 |-------|-------------|----------------------|-------------------|-----|
-| `fact_trips` | `trip_id` | `delete_insert` | `WHERE pickup_at > (SELECT max(pickup_at) FROM {{ this }})` | High-watermark on `pickup_at` processes only trips newer than the last run; `delete_insert` with `unique_key: trip_id` handles any corrections to existing trips that fall within the batch |
+| `fact_trips` | `trip_id` | `delete_insert` | `WHERE updated_at > (SELECT max(updated_at) FROM {{ this }})` | High-watermark on `updated_at` processes both new trips and corrected trips (fare adjustments re-insert the same `trip_id` with the same `pickup_at` but a newer `updated_at`). A `pickup_at` watermark would silently miss corrections — the pickup time never changes. |
 | `agg_hourly_zone_trips` | `[hour_bucket, zone_id]` | `delete_insert` | `WHERE pickup_at >= now() - INTERVAL 2 HOUR` | Rolling window re-aggregates the last 2 hours on every run; this ensures the current boundary hour is fully recalculated even if only partial data was available at the previous run's cutoff |
 
 **Why `[hour_bucket, zone_id]` for agg, not just `trip_id`?**

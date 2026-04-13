@@ -7,7 +7,8 @@
 --   FROM NYC_TAXI_DB.ANALYTICS.DIM_TAXI_ZONES
 --
 -- In ClickHouse, the zone lookup table is seeded once via scripts/00_seed_zones.sql
--- into default.dim_taxi_zones. We reference it via source('raw', 'dim_taxi_zones').
+-- into default.taxi_zones. We reference it via source('raw', 'taxi_zones').
+-- (Named taxi_zones, not dim_taxi_zones, to avoid confusion with analytics.dim_taxi_zones.)
 --
 -- SQL translation:
 --   COALESCE()  →  coalesce()  (same function, lowercase in ClickHouse convention)
@@ -28,7 +29,7 @@ SELECT
     coalesce(borough,      'Unknown') AS borough,
     coalesce(zone,         'Unknown') AS zone,
     coalesce(service_zone, 'Unknown') AS service_zone
-FROM {{ source('raw', 'dim_taxi_zones') }}
+FROM {{ source('raw', 'taxi_zones') }}
 
 -- Snowflake: WHERE LOCATION_ID IS NOT NULL
 -- ClickHouse: Int column in MergeTree defaults to 0 when missing, not NULL

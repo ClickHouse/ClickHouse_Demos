@@ -125,7 +125,7 @@ For each Grade C/D object, identify:
 |--------|------------|
 | `trips_raw` | Nothing (created first; schema before data) |
 | `stg_trips` | `trips_raw` (reads from base table) |
-| `stg_taxi_zones` | `dim_taxi_zones` (reads zone reference data) |
+| `stg_taxi_zones` | raw source `taxi_zones` — seeded by `scripts/00_seed_zones.sql` into `default.taxi_zones` (distinct from the analytics `dim_taxi_zones` model) |
 | `int_trips_enriched` | `stg_trips`, `stg_taxi_zones` (joins both staging views) |
 | `fact_trips` | `int_trips_enriched` (dbt CTE chain) |
 | `agg_hourly_zone_trips` | `int_trips_enriched` (dbt CTE chain) |
@@ -149,11 +149,11 @@ For each Grade C/D object, identify:
 
 | Object | Grade | Challenge |
 |--------|-------|-----------|
-| `trips_raw` | A | Standard MergeTree; simple type mapping |
+| `trips_raw` | A | ReplacingMergeTree(_synced_at); migration retries and post-cutover producer retries require idempotent inserts — same decision as Worksheet 1 |
 | `stg_trips` | B | JSONExtract for TRIP_METADATA; requires JSON path knowledge and testing |
 | `stg_taxi_zones` | A | Passthrough view; trivial translation |
 | `int_trips_enriched` | A | Ephemeral CTE; SQL differences are handled in parent models |
-| `fact_trips` | C | ReplacingMergeTree engine; `delete_insert` incremental strategy; QUALIFY rewrite in Q3; must use FINAL in queries |
+| `fact_trips` | C | ReplacingMergeTree engine; `delete_insert` incremental strategy; QUALIFY treated as a dialect gap in Q3 (subquery rewrite); must use FINAL in queries |
 | `agg_hourly_zone_trips` | B | ReplacingMergeTree; rolling window recalculation logic; `delete_insert` strategy with 2-hr window |
 | `dim_taxi_zones` | A | Static reference; full reload; trivial |
 | `dim_payment_type` | A | Static reference; trivial |

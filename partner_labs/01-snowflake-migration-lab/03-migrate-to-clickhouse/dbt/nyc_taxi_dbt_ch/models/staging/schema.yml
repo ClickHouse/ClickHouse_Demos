@@ -79,7 +79,7 @@ models:
     description: >
       Cleaned taxi zone dimension from TLC lookup table.
       Migration note: In Snowflake, source was NYC_TAXI_DB.ANALYTICS.DIM_TAXI_ZONES.
-      In ClickHouse, seeded via scripts/00_seed_zones.sql as source('raw', 'dim_taxi_zones').
+      In ClickHouse, seeded via scripts/00_seed_zones.sql as source('raw', 'taxi_zones').
     columns:
       - name: location_id
         description: "TLC location ID (1–265)"

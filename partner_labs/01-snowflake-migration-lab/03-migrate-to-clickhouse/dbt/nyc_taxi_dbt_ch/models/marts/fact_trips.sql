@@ -61,7 +61,7 @@
 --   incremental_strategy='merge'       →  incremental_strategy='delete_insert'
 --   cluster_by=['pickup_at::DATE']     →  order_by='(toStartOfMonth(pickup_at), pickup_at, trip_id)'
 --   CURRENT_TIMESTAMP()                →  now()
---   MAX(pickup_at) incremental filter  →  max(pickup_at) (lowercase)
+--   MAX(updated_at) incremental filter  →  max(updated_at) (lowercase)
 --   now() AS updated_at                →  version column for ReplacingMergeTree
 -- ════════════════════════════════════════════════════════════════════════════
 
@@ -103,8 +103,9 @@ SELECT
 FROM {{ ref('int_trips_enriched') }}
 
 {% if is_incremental() %}
-  -- Snowflake: WHERE pickup_at > (SELECT MAX(pickup_at) FROM this)
-  -- ClickHouse: identical logic — max() is lowercase, subquery syntax is the same.
-  -- Only load trips newer than the latest already in the table.
-  WHERE pickup_at > (SELECT max(pickup_at) FROM {{ this }})
+  -- High-watermark on updated_at (not pickup_at) so that fare adjustments are captured.
+  -- A corrected trip re-inserts the same trip_id with the same pickup_at but a newer
+  -- updated_at (set to now() on every insert). A pickup_at watermark would silently
+  -- miss those corrections — the pickup time never changes.
+  WHERE updated_at > (SELECT max(updated_at) FROM {{ this }})
 {% endif %}

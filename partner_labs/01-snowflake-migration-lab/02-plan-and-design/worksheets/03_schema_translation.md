@@ -11,13 +11,15 @@ Type mapping and function translation are the most mechanical part of migration,
 
 **Key principles:**
 
-1. **Be explicit about precision.** Snowflake's `TIMESTAMP_NTZ` has nanosecond precision. ClickHouse's `DateTime` has second precision. Use `DateTime64(3, 'UTC')` for millisecond precision (matching most real-world requirements) or `DateTime64(9, 'UTC')` for nanoseconds.
+1. **Be explicit about precision.** Snowflake's `TIMESTAMP_NTZ` has nanosecond precision. ClickHouse's `DateTime` has only second precision — do not use it for version columns. Use `DateTime64(3, 'UTC')` for millisecond precision (matching most real-world requirements) or `DateTime64(9, 'UTC')` for nanoseconds. **This matters for correctness:** if a `ReplacingMergeTree` version column has only second precision, two updates arriving within the same second are non-deterministic — ClickHouse cannot determine which is newer.
 
-2. **Use the smallest correct integer type.** Snowflake's `INTEGER` is 38-digit arbitrary precision. ClickHouse has fixed-width integers: `Int8`, `Int16`, `Int32`, `Int64`, `UInt8`, `UInt16`, `UInt32`, `UInt64`. Choosing `UInt8` for `vendor_id` (values 1–3) saves 7 bytes per row vs `Int64`. At 50M rows, that is 350MB.
+2. **Use the smallest correct integer type.** Snowflake's `INTEGER` is `NUMBER(38, 0)` — 38-digit fixed precision stored as a 128-bit value. ClickHouse has fixed-width integers: `Int8`, `Int16`, `Int32`, `Int64`, `UInt8`, `UInt16`, `UInt32`, `UInt64`. Choosing `UInt8` for `vendor_id` (values 1–3) saves 7 bytes per row vs `Int64`. At 50M rows, that is 350MB.
 
-3. **VARIANT → String.** ClickHouse has no native semi-structured type that matches Snowflake's VARIANT semantics for arbitrary deeply-nested JSON. Store as `String`; use `JSONExtract*` at query time. The `JSON` type is available in newer versions but changes semantics.
+3. **VARIANT → String.** ClickHouse has a native `JSON` type (available in v25.3+ as production-stable), but it is designed for truly dynamic schemas where the field names and structure are unknown at table creation time. For `trip_metadata` in this lab, the structure is known (`driver.rating`, `app.surge_multiplier`, etc.) — the better approach is to pre-flatten into typed columns during migration, or store as `String` and use `JSONExtract*` at query time. Use the `JSON` type when you genuinely cannot predict the schema: e.g., ingesting arbitrary customer event payloads where every event has different fields.
 
-4. **Float precision.** Snowflake's `FLOAT` maps to `Float64` in ClickHouse. For monetary amounts where precision matters, consider `Decimal(18, 2)` — but for this lab, `Float64` is sufficient to match the source.
+4. **Float precision.** Snowflake's `FLOAT` maps to `Float64` in ClickHouse. For monetary amounts where exact decimal arithmetic is required, use `Decimal(18, 2)` — but for this lab, `Float64` is sufficient to match the source.
+
+5. **LowCardinality() — ClickHouse-only optimization.** Wrapping a type in `LowCardinality(String)` (or `LowCardinality(UInt8)`, etc.) tells ClickHouse to use a dictionary encoding for that column — values are stored as integer references to a dictionary rather than repeated strings. This typically gives 2–5x compression improvement and faster GROUP BY on string columns with fewer than ~10,000 distinct values. Snowflake has no equivalent; it handles this automatically. Good candidates in this lab: `pickup_borough` (6 values), `payment_type` (6 values), `vehicle_type`, `vendor_name`.
 
 ---
 
@@ -27,7 +29,7 @@ Map each column from `NYC_TAXI_DB.RAW.TRIPS_RAW` to its ClickHouse type. Fill in
 
 | Snowflake Column | Snowflake Type | ClickHouse Type | Notes |
 |------------------|---------------|-----------------|-------|
-| `TRIP_ID` | `VARCHAR(36)` | `String` | *(filled — no native UUID type in CH; String is idiomatic)* |
+| `TRIP_ID` | `VARCHAR(36)` | `String` | *(ClickHouse has a native [`UUID`](https://clickhouse.com/docs/sql-reference/data-types/uuid) type, but `String` is idiomatic when migrating from VARCHAR(36): it requires no casting, supports all string functions, and avoids UUID parsing overhead on insert)* |
 | `PICKUP_DATETIME` | `TIMESTAMP_NTZ(9)` | ? | *Hint: what precision does DateTime64 support? What timezone?* |
 | `DROPOFF_DATETIME` | `TIMESTAMP_NTZ(9)` | ? | *Same as PICKUP_DATETIME* |
 | `PICKUP_LOCATION_ID` | `INTEGER` | ? | *Values 1–265. What is the smallest correct unsigned integer type?* |
@@ -63,7 +65,7 @@ Map each column from `NYC_TAXI_DB.RAW.TRIPS_RAW` to its ClickHouse type. Fill in
 | `UPDATED_AT` | `TIMESTAMP_NTZ(9)` | ? | *Version column for ReplacingMergeTree — precision matters* |
 
 **Note on nullable columns:** In ClickHouse, `Nullable(Float64)` has a slight performance overhead compared to `Float64`. For `driver_rating`, which is frequently NULL, you have two options:
-- `Nullable(Float32)` — explicit null semantics; ~5% slower on aggregations
+- `Nullable(Float32)` — explicit null semantics; slower on aggregations due to null-tracking overhead (a separate bitmask column is stored alongside the data)
 - `Float32` with `nan` or `-1.0` as sentinel value — faster but less conventional
 
 For the lab, use `Nullable(Float32)` for correctness.
@@ -80,9 +82,9 @@ Translate each Snowflake expression to its ClickHouse equivalent. These come dir
 | `DATEADD('day', -7, CURRENT_DATE)` | Q1, Q3 | ? |
 | `DATEDIFF('minute', pickup_at, dropoff_at)` | Q4 | ? |
 | `TRIP_METADATA:driver.rating::FLOAT` | Q4, Q5 | ? |
-| `TRIP_METADATA:surge_multiplier::FLOAT` | Q5 | ? |
-| `QUALIFY ROW_NUMBER() OVER (PARTITION BY pickup_location_id ORDER BY fare_amount DESC) <= 10` | Q3 | ? — requires structural rewrite |
-| `MERGE INTO fact_trips t USING staging s ON t.trip_id = s.trip_id WHEN MATCHED THEN UPDATE ...` | Q6 | ? — requires structural rewrite |
+| `TRIP_METADATA:app.surge_multiplier::FLOAT` | Q5 | ? |
+| `QUALIFY ROW_NUMBER() OVER (PARTITION BY pickup_location_id ORDER BY fare_amount DESC) <= 10` | Q3 | ? — treated as a dialect gap in this lab; requires structural rewrite |
+| `MERGE INTO fact_trips t USING staging s ON t.trip_id = s.trip_id WHEN MATCHED THEN UPDATE ...` | Q6 | ? — requires structural rewrite *(Hint: think about the engine and dbt strategy you chose in Worksheets 1 & 2)* |
 | `SELECT METADATA$ACTION, METADATA$ISUPDATE FROM trips_cdc_stream` | Q7 | ? — no equivalent needed; live writes go directly to ClickHouse post-cutover; what pattern gives you current state? |
 
 **Hints:**
@@ -90,7 +92,7 @@ Translate each Snowflake expression to its ClickHouse equivalent. These come dir
 - `DATEADD('day', -7, ...)` → ClickHouse uses `today() - 7` for dates, or `now() - INTERVAL 7 DAY`
 - `DATEDIFF('minute', t1, t2)` → ClickHouse has `dateDiff` (lowercase d)
 - `TRIP_METADATA:driver.rating::FLOAT` → nested path requires two-level `JSONExtractFloat`
-- QUALIFY → wrap in a subquery; keep the window function, add `WHERE` outside
+- QUALIFY → for this lab, treated as a dialect gap; wrap in a subquery: keep the window function, add `WHERE` outside (this rewrite is portable across all SQL engines)
 
 ---
 
@@ -109,7 +111,7 @@ Which do you choose and why?
 
 ---
 
-**Decision 2:** `FARE_AMOUNT` is `FLOAT` in Snowflake. In ClickHouse, you could use `Float64`, `Float32`, or `Decimal(10, 2)`. The lab has 50M rows.
+**Decision 2:** `FARE_AMOUNT` is `FLOAT` in Snowflake. In ClickHouse, you could use `Float64`, `Float32`, or `Decimal(18, 2)`. The lab has 50M rows.
 
 Which do you choose and why? (Consider: precision needs, storage cost, and whether fare amounts in this workload require exact decimal arithmetic.)
 
@@ -169,7 +171,7 @@ Calculate the storage savings of using `UInt16` instead of `Int32` at 50M rows:
 | `DATEADD('day', -7, CURRENT_DATE)` | `today() - 7` or `addDays(today(), -7)` |
 | `DATEDIFF('minute', pickup_at, dropoff_at)` | `dateDiff('minute', pickup_at, dropoff_at)` |
 | `TRIP_METADATA:driver.rating::FLOAT` | `JSONExtractFloat(trip_metadata, 'driver', 'rating')` |
-| `TRIP_METADATA:surge_multiplier::FLOAT` | `JSONExtractFloat(trip_metadata, 'surge_multiplier')` |
+| `TRIP_METADATA:app.surge_multiplier::FLOAT` | `JSONExtractFloat(trip_metadata, 'app', 'surge_multiplier')` |
 | `QUALIFY ROW_NUMBER() OVER (...) <= 10` | `SELECT ... FROM (SELECT ..., ROW_NUMBER() OVER (...) AS rn FROM ...) WHERE rn <= 10` |
 | `MERGE INTO ... WHEN MATCHED THEN UPDATE` | dbt `delete_insert` incremental strategy — no direct SQL equivalent |
 | `SELECT METADATA$ACTION FROM stream` | No equivalent needed — live writes go directly to ClickHouse post-cutover; query the target table with `FINAL` for current deduplicated state |
@@ -180,7 +182,7 @@ Calculate the storage savings of using `UInt16` instead of `Int32` at 50M rows:
 Choose `String`. `Map(String, String)` loses nested structures (the rating is nested under `driver.rating`, not a flat key). `Tuple(...)` requires a fixed schema — if the JSON structure varies across trips, the Tuple definition fails or requires frequent schema migrations. `String` preserves the raw JSON exactly, and `JSONExtract*` handles any path at query time. The trade-off is that extraction is slower than native column access, but for VARIANT columns that are queried infrequently (only in Q4, Q5), this is acceptable.
 
 **Decision 2 — FARE_AMOUNT → Float64**
-Use `Float64`. `Float32` has ~7 significant digits of precision — a $10,000.00 fare would be stored as $9,999.999... (rounding at 7 digits), which is wrong for financial reporting. `Decimal(10, 2)` gives exact precision but is ~2x slower on aggregations. For a lab environment where we're demonstrating analytics performance, `Float64` (15–16 significant digits) is the pragmatic choice. In a production financial system, `Decimal(18, 2)` would be correct.
+Use `Float64`. `Float32` has ~7 significant digits of precision — a $10,000.00 fare would be stored as $9,999.999... (rounding at 7 digits), which is wrong for financial reporting. `Decimal(18, 2)` gives exact precision but is slower on aggregations. For a lab environment where we're demonstrating analytics performance, `Float64` (15–16 significant digits) is the pragmatic choice. In a production financial system, `Decimal(18, 2)` would be correct.
 
 **Decision 3 — UInt16 vs Int32 storage savings**
 - `Int32`: 4 bytes per row × 50,000,000 rows = 200,000,000 bytes = ~190 MB
