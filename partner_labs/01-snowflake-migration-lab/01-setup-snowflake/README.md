@@ -41,7 +41,7 @@ RAW → STAGING → ANALYTICS layers, dbt pipeline, CDC stream, and scheduled ta
 
 | Tool | Version | Install |
 |------|---------|---------|
-| Terraform | >= 1.5 | [terraform.io](https://developer.hashicorp.com/terraform/downloads) |
+| Terraform | >= 1.6 | [terraform.io](https://developer.hashicorp.com/terraform/downloads) |
 | SnowSQL CLI | >= 1.2 | [Snowflake docs](https://docs.snowflake.com/en/user-guide/snowsql-install-config) |
 | Python | **3.11 – 3.13** | [python.org](https://www.python.org/downloads/) — see note below |
 | dbt-snowflake | >= 1.7 | see venv setup below |
@@ -263,7 +263,7 @@ By the end of Part 1, you should be able to:
 ## Troubleshooting
 
 **`terraform init` fails with provider error**
-Ensure you're using Terraform >= 1.5 and have internet access to the Terraform registry.
+Ensure you're using Terraform >= 1.6 and have internet access to the Terraform registry.
 
 **`snowsql` connection refused**
 Verify `SNOWFLAKE_ORG` and `SNOWFLAKE_ACCOUNT` are correct. Test with: `snowsql -a ${SNOWFLAKE_ORG}-${SNOWFLAKE_ACCOUNT} -u ${SNOWFLAKE_USER}`

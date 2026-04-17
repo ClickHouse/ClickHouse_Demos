@@ -170,7 +170,7 @@ Four ClickHouse dashboards are added alongside the three existing Snowflake dash
 
 | Tool | Version | Install |
 |------|---------|---------|
-| Terraform | >= 1.5 | [developer.hashicorp.com/terraform/downloads](https://developer.hashicorp.com/terraform/downloads) |
+| Terraform | >= 1.6 | [developer.hashicorp.com/terraform/downloads](https://developer.hashicorp.com/terraform/downloads) |
 | Python | **3.11 – 3.13** | [python.org](https://www.python.org/downloads/) |
 | dbt-clickhouse | >= 1.8 | see venv setup below |
 | Docker + Compose | any | [docs.docker.com/get-docker](https://docs.docker.com/get-docker/) |

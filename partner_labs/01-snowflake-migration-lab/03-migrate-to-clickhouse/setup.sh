@@ -10,7 +10,7 @@
 # are the migration decisions you should make deliberately, not skip.
 #
 # Prerequisites:
-#   - terraform >= 1.5
+#   - terraform >= 1.6
 #   - Completed Part 2 (02-plan-and-design) with migration-plan.md
 #
 # Usage:
