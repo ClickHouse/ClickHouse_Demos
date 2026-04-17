@@ -55,6 +55,7 @@ Before starting, install the required tools:
 | [Docker Desktop](https://www.docker.com/products/docker-desktop/) | ≥ 24 | Run the trip producer and Superset |
 | [Python](https://www.python.org/downloads/) | ≥ 3.10 | Migration script, dbt, and utility scripts |
 | [dbt Core](https://docs.getdbt.com/docs/core/installation-overview) | ≥ 1.8 | Snowflake and ClickHouse pipeline |
+| [SnowSQL CLI](https://docs.snowflake.com/en/user-guide/snowsql-install-config) | ≥ 1.2 | Run SQL against Snowflake from the terminal |
 | [Snowflake account](https://signup.snowflake.com/) | Trial or paid — **no credit card required** | Source environment |
 | [ClickHouse Cloud account](https://clickhouse.cloud/signUp) | Trial or paid — **no credit card required** | Target environment |
 

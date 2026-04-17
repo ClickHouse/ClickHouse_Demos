@@ -3,7 +3,7 @@
 # setup.sh — Full automated spin-up for NYC Taxi Snowflake lab
 #
 # Prerequisites:
-#   - terraform >= 1.5
+#   - terraform >= 1.6
 #   - snowsql CLI installed and configured
 #   - dbt-snowflake installed (pip install dbt-snowflake)
 #   - docker + docker-compose
