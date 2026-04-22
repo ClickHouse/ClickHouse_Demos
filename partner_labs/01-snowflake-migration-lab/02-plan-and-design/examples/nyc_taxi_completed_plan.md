@@ -196,7 +196,7 @@ Why `delete_insert` over `append` or `merge` strategy?
 
 | Model | `unique_key` | `incremental_strategy` | Incremental filter | Why this filter? |
 |-------|-------------|----------------------|-------------------|-----------------|
-| `fact_trips` | `trip_id` | `delete_insert` | `WHERE pickup_at > (SELECT max(pickup_at) FROM {{ this }})` | High-watermark on `pickup_at` processes only trips newer than the last run; `delete_insert` on `trip_id` handles any corrections to existing trips falling within the batch |
+| `fact_trips` | `trip_id` | `delete_insert` | `WHERE updated_at > (SELECT max(updated_at) FROM {{ this }})` | High-watermark on `updated_at` captures both new trips and corrected trips (fare adjustments re-insert the same `trip_id` with the same `pickup_at` but a newer `updated_at`); a `pickup_at` watermark would silently miss corrections |
 | `agg_hourly_zone_trips` | `[hour_bucket, zone_id]` | `delete_insert` | `WHERE pickup_at >= now() - INTERVAL 2 HOUR` | Rolling 2-hour window forces re-aggregation of boundary hours so partial-hour counts are always corrected; a `max(pickup_at)` high-watermark would permanently undercount the boundary hour |
 
 ### FINAL Placement
@@ -205,7 +205,7 @@ Why `delete_insert` over `append` or `merge` strategy?
 |-------|----------------------|-----|
 | `stg_trips` | **Yes** — `FROM trips_raw FINAL` | `trips_raw` is ReplacingMergeTree; it can have duplicate `trip_id` rows from migration script retries or post-cutover producer retries. `stg_trips` is the single enforcement point: deduplicate here so every downstream model (int_trips_enriched, fact_trips, agg_hourly_zone_trips) receives clean data |
 | `int_trips_enriched` | **No** | Reads from `stg_trips` (a view), not an RMT table; FINAL is irrelevant for views |
-| `fact_trips` | **No** (in the model body) | `delete_insert` keeps `fact_trips` clean after each completed run; adding FINAL inside the model would wastefully apply it to the `is_incremental()` subquery reading `max(pickup_at)` from `{{ this }}`. Dashboards and dbt tests use `FINAL` externally when querying `fact_trips` directly |
+| `fact_trips` | **No** (in the model body) | `delete_insert` keeps `fact_trips` clean after each completed run; adding FINAL inside the model would wastefully apply it to the `is_incremental()` subquery reading `max(updated_at)` from `{{ this }}`. Dashboards and dbt tests use `FINAL` externally when querying `fact_trips` directly |
 
 ---
 

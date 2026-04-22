@@ -36,7 +36,7 @@ Fill in the `?` cells:
 | Model | Layer | Update Pattern | Materialization | Why |
 |-------|-------|----------------|-----------------|-----|
 | `stg_trips` | staging | Read + clean from `trips_raw`; no writes to this model | ? | ? |
-| `stg_taxi_zones` | staging | Read + clean from `dim_taxi_zones` source; no writes | ? | ? |
+| `stg_taxi_zones` | staging | Read + clean from raw `taxi_zones` source (seeded by `scripts/00_seed_zones.sql`); no writes | ? | ? |
 | `int_trips_enriched` | intermediate | Joins `stg_trips` with zone, payment, vendor, and date dims | ? | ? |
 | `fact_trips` | analytics | One row per trip; trips can be corrected (fare adjustments re-insert same `trip_id`) | ? | ? |
 | `agg_hourly_zone_trips` | analytics | dbt recalculates the last 2 hours on every run and re-inserts results | ? | ? |

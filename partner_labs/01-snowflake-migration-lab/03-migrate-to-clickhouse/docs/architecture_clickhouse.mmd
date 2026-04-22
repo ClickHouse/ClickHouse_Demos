@@ -8,6 +8,7 @@ flowchart TB
 
         subgraph CH_DEFAULT ["default database"]
             TRIPS_RAW_CH[["trips_raw<br/>ReplacingMergeTree(_synced_at)<br/>ORDER BY (pickup_at, trip_id)"]]
+            TAXI_ZONES_SEED[["taxi_zones<br/>MergeTree · 265 rows<br/>seeded by scripts/00_seed_zones.sql"]]
         end
 
         subgraph CH_STAGING ["staging database · dbt views"]
@@ -35,8 +36,8 @@ flowchart TB
 
     PY_IN        -->|"batch INSERT (100K rows)"| TRIPS_RAW_CH
     PRD_CH       -.->|"post-cutover INSERT"| TRIPS_RAW_CH
-    TRIPS_RAW_CH -->|"dbt source"| STG_TRIPS
-    TRIPS_RAW_CH -->|"dbt source"| STG_ZONES
+    TRIPS_RAW_CH     -->|"dbt source"| STG_TRIPS
+    TAXI_ZONES_SEED  -->|"dbt source"| STG_ZONES
     STG_TRIPS    --> INT_TRIPS
     STG_ZONES    --> INT_TRIPS
     INT_TRIPS    -->|"delete_insert"| FACT_CH
@@ -58,7 +59,7 @@ flowchart TB
 
     class PY_IN source
     class PRD_CH srcDash
-    class TRIPS_RAW_CH,FACT_CH,AGG_CH,DIMS_CH,DICT_CH chTable
+    class TRIPS_RAW_CH,TAXI_ZONES_SEED,FACT_CH,AGG_CH,DIMS_CH,DICT_CH chTable
     class MV_CH chMV
     class STG_TRIPS,STG_ZONES,INT_TRIPS dbt
     class SF_DASH,CH_DASH biDash
