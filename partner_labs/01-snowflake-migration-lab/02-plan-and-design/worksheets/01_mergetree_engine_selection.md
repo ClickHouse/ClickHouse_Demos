@@ -37,6 +37,15 @@ Does the table receive UPDATE or DELETE operations?
         └── Yes → AggregatingMergeTree()
 ```
 
+### Staging Models Are Always Views
+
+In dbt + ClickHouse, staging models should be materialized as **views**, not tables. Views have zero storage cost and are always fresh — they are just saved SQL, not physical objects.
+
+The engine selection exercise below covers **analytics-layer dbt models** (fact tables, aggregates, dimensions) and the ClickHouse Materialized View. It does not include `trips_raw` or staging models:
+
+- **`trips_raw`** is a base ClickHouse table created directly by the migration script (`scripts/02_migrate_trips.py`) — not a dbt model. It uses `ReplacingMergeTree(_synced_at)` because the migration script may retry a batch and re-insert the same `trip_id`. After cutover, the live producer can also retry on transient failures; `_synced_at DateTime DEFAULT now()` ensures the most recent write wins.
+- **`stg_trips`** is a dbt **view** on top of `trips_raw`. It applies `SELECT ... FROM trips_raw FINAL` to resolve any unmerged duplicates before the data reaches downstream analytics models. Deduplication responsibility belongs here — not in a ReplacingMergeTree staging table.
+
 ---
 
 ## Exercise: Engine Selection for NYC Taxi Tables
@@ -51,7 +60,6 @@ Fill in the `?` cells:
 
 | Table | Update Pattern | Version Column | Recommended Engine | Reasoning |
 |-------|----------------|----------------|--------------------|-----------|
-| `trips_raw` | Python migration script writes rows in batches; the script may be retried, re-inserting the same `trip_id` | ? | ? | *(think: can the same trip_id appear twice?)* |
 | `fact_trips` | Trips can be corrected after the fact (fare adjustments, status changes) — same `trip_id` re-inserted with new values | ? | ? | ? |
 | `agg_hourly_zone_trips` | dbt recalculates the last 2 hours on each run and re-inserts results | ? | ? | ? |
 | `dim_taxi_zones` | dbt runs a full rebuild on each run (atomic table swap (full rebuild)) | — | ? | ? |
@@ -60,7 +68,6 @@ Fill in the `?` cells:
 | `mv_hourly_revenue` | ClickHouse REFRESHABLE MV recalculates on a schedule | — | ? | ? |
 
 **Hints:**
-- `trips_raw`: The Python migration script (`scripts/02_migrate_trips.py`) loads rows in batches and supports `--resume` for retries. A retried batch may re-insert rows with the same `trip_id`. After cutover, the live producer can also retry on transient failures. Is there a column that captures insertion time?
 - `fact_trips`: What does "same trip_id re-inserted with new values" mean for deduplication?
 - `agg_hourly_zone_trips`: What happens when dbt inserts a new row for `(2024-01-01 14:00, zone_id=1)` that already exists from the last run?
 - `dim_*` tables: dbt's `table` materialization in dbt-clickhouse does atomic table swap (full rebuild), replacing all rows on every run. Does this require deduplication?
@@ -85,7 +92,6 @@ Before checking the answer key, answer these questions in your own words:
 
 | Table | Update Pattern | Version Column | Recommended Engine | Reasoning |
 |-------|----------------|----------------|--------------------|-----------|
-| `trips_raw` | Migration retries + producer retries | `_synced_at` | `ReplacingMergeTree(_synced_at)` | The Python migration script may retry a batch and re-insert the same `trip_id`. After cutover, the live producer may also retry on transient failures. `_synced_at DateTime DEFAULT now()` is set automatically on INSERT — a later retry has a higher value, so RMT keeps the most recent write. `stg_trips` queries with `FINAL` to guarantee dedup before any analytics model sees the data. |
 | `fact_trips` | Upsert (trip corrections) | `updated_at` | `ReplacingMergeTree(updated_at)` | Same trip_id can arrive twice with different fare/status values. RMT keeps the row with the highest `updated_at`. Always query with `FINAL`. |
 | `agg_hourly_zone_trips` | Upsert (rolling 2-hr recalculation) | `updated_at` | `ReplacingMergeTree(updated_at)` | dbt recalculates the last 2 hours and re-inserts. Without RMT, old and new aggregates accumulate and double-count. `updated_at` set to `now()` on each dbt run ensures the latest values win. |
 | `dim_taxi_zones` | Full reload | — | `MergeTree()` | dbt's `table` materialization does atomic table swap (full rebuild), so there is never more than one generation of rows. No deduplication needed. |

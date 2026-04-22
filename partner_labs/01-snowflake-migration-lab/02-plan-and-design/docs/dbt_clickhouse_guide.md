@@ -148,7 +148,7 @@ Dashboard queries: SELECT ... FROM fact_trips FINAL  ← FINAL goes here (extern
 
 `stg_trips` is the single enforcement point for `trips_raw` deduplication. Every downstream model that reads `stg_trips` automatically gets clean, deduplicated source data. You don't need FINAL in `int_trips_enriched` or `fact_trips` because they read from `stg_trips` (a view, not an RMT table).
 
-Dashboard queries and dbt tests that read directly from `fact_trips` use FINAL externally. The model itself doesn't embed FINAL because it would apply to every scan inside the model's query — including the `is_incremental()` subquery that reads `max(pickup_at)` from `{{ this }}`.
+Dashboard queries and dbt tests that read directly from `fact_trips` use FINAL externally. The model itself doesn't embed FINAL because it would apply to every scan inside the model's query — including the `is_incremental()` subquery that reads `max(updated_at)` from `{{ this }}`.
 
 ### Performance impact of FINAL
 
@@ -226,6 +226,6 @@ SELECT ... FROM {{ source('raw', 'trips_raw') }} FINAL
 -- fact_trips.sql (incremental — no FINAL in model body)
 SELECT ... FROM {{ ref('int_trips_enriched') }}
 {% if is_incremental() %}
-WHERE pickup_at > (SELECT max(pickup_at) FROM {{ this }})
+WHERE updated_at > (SELECT max(updated_at) FROM {{ this }})
 {% endif %}
 ```
