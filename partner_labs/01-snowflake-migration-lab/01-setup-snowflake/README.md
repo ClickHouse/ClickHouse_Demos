@@ -171,7 +171,7 @@ The script always runs **incrementally** — it never does a `--full-refresh`, s
 |-------|-------|------|-------|
 | `stg_trips` | STAGING | View | Cleans types, flattens VARIANT |
 | `stg_taxi_zones` | STAGING | View | Zone dimension passthrough |
-| `int_trips_enriched` | STAGING | Ephemeral | All dimension joins |
+| `int_trips_enriched` | INTERMEDIATE | Ephemeral | All dimension joins |
 | `fact_trips` | ANALYTICS | Incremental | 50M rows, MERGE strategy |
 | `dim_*` | ANALYTICS | Table | 4 dimension tables |
 | `agg_hourly_zone_trips` | ANALYTICS | Incremental | MERGE aggregate |

@@ -53,17 +53,15 @@ Before starting, install the required tools:
 |------|---------|---------|
 | [Terraform](https://developer.hashicorp.com/terraform/install) | ≥ 1.6 | Provision Snowflake and ClickHouse Cloud infrastructure |
 | [Docker Desktop](https://www.docker.com/products/docker-desktop/) | ≥ 24 | Run the trip producer and Superset |
-| [Python](https://www.python.org/downloads/) | ≥ 3.10 | Migration script, dbt, and utility scripts |
+| [Python](https://www.python.org/downloads/) | 3.11–3.13 | Migration script, dbt, and utility scripts |
 | [dbt Core](https://docs.getdbt.com/docs/core/installation-overview) | ≥ 1.8 | Snowflake and ClickHouse pipeline |
 | [SnowSQL CLI](https://docs.snowflake.com/en/user-guide/snowsql-install-config) | ≥ 1.2 | Run SQL against Snowflake from the terminal |
 | [Snowflake account](https://signup.snowflake.com/) | Trial or paid — **no credit card required** | Source environment |
 | [ClickHouse Cloud account](https://clickhouse.cloud/signUp) | Trial or paid — **no credit card required** | Target environment |
 
-You will also need:
-
-```bash
-pip install dbt-snowflake dbt-clickhouse snowflake-connector-python clickhouse-connect
-```
+> **Python version matters:** dbt-snowflake requires Python **3.11, 3.12, or 3.13**. Python 3.14+ breaks dbt's `mashumaro` dependency. If your system Python is 3.14+, install 3.13 separately (e.g. `brew install python@3.13`).
+>
+> Package installation is covered in each part's README using an isolated virtualenv — do not run a bare `pip install` globally.
 
 ### Recommended Path
 

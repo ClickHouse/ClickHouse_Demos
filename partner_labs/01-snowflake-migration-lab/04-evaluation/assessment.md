@@ -39,20 +39,25 @@
 
 ---
 
-**Q2.** Your Snowflake pipeline uses this deduplication pattern:
+**Q2.** Your Snowflake pipeline uses this upsert pattern to keep `FACT_TRIPS` up to date when trips are corrected:
 
 ```sql
-SELECT *, ROW_NUMBER() OVER (PARTITION BY trip_id ORDER BY ingested_at DESC) AS rn
-FROM trips_raw
-QUALIFY rn = 1
+MERGE INTO ANALYTICS.FACT_TRIPS AS target
+USING (SELECT * FROM STAGING.STG_TRIPS
+       WHERE PICKUP_DATETIME > DATEADD('hour', -1, CURRENT_TIMESTAMP())) AS source
+ON target.TRIP_ID = source.TRIP_ID
+WHEN MATCHED THEN UPDATE SET
+    TOTAL_AMOUNT = source.TOTAL_AMOUNT,
+    UPDATED_AT   = source.UPDATED_AT
+WHEN NOT MATCHED THEN INSERT VALUES (source.*)
 ```
 
-Why does this query fail on ClickHouse without modification?
+Why can this not be directly ported to ClickHouse?
 
-- A. ClickHouse does not support window functions
-- B. `ROW_NUMBER()` has different partition semantics in ClickHouse
-- C. ClickHouse has no `QUALIFY` clause — the filter must be moved to a subquery
-- D. `PARTITION BY` inside a window function is only valid on MergeTree tables
+- A. ClickHouse supports `MERGE INTO` but requires the target table to use `ReplacingMergeTree`
+- B. ClickHouse has no `MERGE INTO` statement — upserts are handled by `ReplacingMergeTree` engine combined with dbt's `delete_insert` incremental strategy
+- C. ClickHouse's `MERGE INTO` requires a `PARTITION BY` clause to identify the target partition range
+- D. `MERGE INTO` is only supported on ClickHouse's `AggregatingMergeTree` engine
 
 **Your answer:** ___
 
@@ -181,30 +186,23 @@ What is the idiomatic ClickHouse approach for this upsert pattern?
 
 ### Part 3: Migration Execution & Validation
 
-**Q13.** The migration script `scripts/02_migrate_trips.py` is interrupted at 20M of 50M rows. You restart it with `--resume`. What does `--resume` do?
+**Q13.** Your Snowflake pipeline uses `HOURLY_AGG_TASK`, a Scheduled Task that runs a `MERGE INTO AGG_HOURLY_ZONE_TRIPS` statement every hour. What is the recommended ClickHouse equivalent for recalculating hourly aggregates on a schedule?
 
-- A. Re-reads all 50M rows from Snowflake and skips any already present in ClickHouse — reliable but slow
-- B. Reads `max(pickup_at)` from ClickHouse `trips_raw` and adds `WHERE pickup_at > {max}` to the Snowflake query
-- C. Reads the last committed row offset from a local checkpoint file written during the previous run
-- D. Starts from the beginning and relies on `ReplacingMergeTree` to deduplicate overlapping rows on compaction
+- A. A standard Materialized View on `trips_raw` — it updates `agg_hourly_zone_trips` automatically on every INSERT
+- B. A Refreshable Materialized View with `REFRESH EVERY 1 HOUR` — it re-executes a full SELECT and atomically replaces the result set on each cycle
+- C. An AggregatingMergeTree table — partial aggregate states merge automatically in the background without a scheduler
+- D. A dbt `table` model with a `+post-hook: "OPTIMIZE TABLE agg_hourly_zone_trips FINAL"` to trigger compaction after each run
 
 **Your answer:** ___
 
 ---
 
-**Q14.** After running `scripts/01_verify_migration.sh` post-cutover, you see:
+**Q14.** Your Snowflake `FACT_TRIPS` table is clustered on `PICKUP_AT::DATE`. You migrate to ClickHouse with `ORDER BY (toStartOfMonth(pickup_at), pickup_at, trip_id)`. A colleague asks why you added `toStartOfMonth(pickup_at)` as the leading key rather than using `pickup_at` alone. The correct explanation is:
 
-```
-ClickHouse default.trips_raw:  50,024,210 rows
-Snowflake NYC_TAXI_DB.RAW.TRIPS_RAW:  50,023,820 rows
-```
-
-ClickHouse has 390 more rows. What does this indicate?
-
-- A. Data corruption — ClickHouse has fabricated rows that do not exist in Snowflake
-- B. The migration script inserted duplicates — rerun with `--resume` to fill the gap
-- C. The ClickHouse producer is already running post-cutover and writing live trips directly to ClickHouse — this is expected
-- D. The parity check script is broken — row counts between the two systems should always be exactly equal
+- A. ClickHouse builds a dense index with one entry per distinct value in the first `ORDER BY` column — a raw `DateTime` with millions of distinct timestamps would create an index too large to fit in RAM
+- B. ClickHouse's sparse primary index stores one entry per 8,192 rows; a month prefix enables the index to skip entire months of data on monthly aggregation queries, while `pickup_at` alone provides only row-level granularity within each 8,192-row block
+- C. `toStartOfMonth()` is required by `ReplacingMergeTree` — version column deduplication only works correctly within month boundaries
+- D. A raw `DateTime` column cannot be the first key in `ORDER BY` in ClickHouse — it must be wrapped in a date-truncation function
 
 **Your answer:** ___
 
@@ -215,7 +213,7 @@ ClickHouse has 390 more rows. What does this indicate?
 - A. ClickHouse background merges completed between runs, improving sort order and reducing scan size
 - B. The OS page cache warmed the compressed data files on the first run; the second run is served from RAM
 - C. The `mv_hourly_revenue` Refreshable Materialized View refreshed between the two runs
-- D. ClickHouse's built-in query result cache returned the cached result on the second execution
+- D. ClickHouse's query result cache (`use_query_cache`) is enabled by default and returned the pre-computed result on the second execution
 
 **Your answer:** ___
 
@@ -232,23 +230,23 @@ ClickHouse has 390 more rows. What does this indicate?
 
 ---
 
-**Q17.** When provisioning ClickHouse Cloud with Terraform in Part 3, the provider source is:
+**Q17.** A customer needs to migrate 500 million rows from Snowflake to ClickHouse Cloud as quickly as possible. Which approach gives the highest throughput and is most commonly used in production migrations?
 
-- A. `hashicorp/clickhouse`
-- B. `ClickHouse/clickhouse`
-- C. `registry.terraform.io/snowflake-labs/clickhouse`
-- D. `grafana/clickhouse`
+- A. A Python script reading from Snowflake's cursor API in batches and writing via `clickhouse-connect`
+- B. Export Snowflake data to S3 as Parquet files using `COPY INTO @stage`, then ingest with `INSERT INTO ... SELECT * FROM s3('s3://...', 'Parquet')`
+- C. Use Snowflake's JDBC driver to stream rows directly to ClickHouse's HTTP interface without intermediate storage
+- D. Use `dbt run --full-refresh` pointed at both Snowflake and ClickHouse simultaneously to synchronize the tables
 
 **Your answer:** ___
 
 ---
 
-**Q18.** You ran `scripts/03_cutover.sh` and the ClickHouse producer started, but you discover all new trips are missing `pickup_location_id`. You need to roll back. What is the correct procedure?
+**Q18.** A data analyst queries `analytics.fact_trips` (no `FINAL`) and gets 49,998,201 rows. Ten minutes later, with no new inserts, the same query returns 49,998,198 rows. `SELECT COUNT() FROM analytics.fact_trips FINAL` consistently returns 49,998,198. What explains the initial higher count?
 
-- A. `docker rm nyc_taxi_ch_producer && docker start nyc_taxi_producer`
-- B. `docker stop nyc_taxi_ch_producer && docker start nyc_taxi_producer`
-- C. Re-run `scripts/03_cutover.sh` with a `--rollback` flag
-- D. Restore a Snowflake Time Travel snapshot of `TRIPS_RAW` and restart from Part 3 Step 1
+- A. ClickHouse Cloud replicates data across availability zones — the two queries hit different replicas with different replication lag
+- B. A background part merge completed between the two queries, deduplicating 3 rows that shared the same `trip_id` across separate unmerged parts — the first query counted all copies before the merge ran
+- C. The OS page cache returned stale results from the first query's scan of an older data snapshot
+- D. The `mv_hourly_revenue` Refreshable Materialized View deleted source rows from `fact_trips` during its refresh cycle
 
 **Your answer:** ___
 
@@ -308,6 +306,8 @@ A prospective customer has a `sessions` table that tracks user login sessions. E
 **Open Q2 — SQL Translation Challenge** *(5 pts)*
 
 Translate the following Snowflake SQL to valid ClickHouse SQL. After your translation, briefly explain each change you made and why.
+
+> **Constraint:** Write the equivalent **without `QUALIFY`** — use a subquery instead. This lab treats `QUALIFY` as a portability gap and uses the subquery form throughout, so that the pattern works identically across all SQL engines.
 
 ```sql
 -- Snowflake: top-earning vendor per borough in the last 30 days
