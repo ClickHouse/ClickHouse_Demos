@@ -1,5 +1,5 @@
 aws_region       = "us-east-1"
-instance_type    = "t3.xlarge"
+instance_type    = "t3.2xlarge"   # 8 vCPU / 32 GB — required for dual-workload stack
 ssh_key_name     = "my-key-pair"   # Name of your EC2 key pair (without .pem)
 allowed_ssh_cidr = "0.0.0.0/0"    # Restrict to your IP in production: "x.x.x.x/32"
 lab_repo_url     = "https://github.com/ClickHouse/clickhouse-partner-labs.git"

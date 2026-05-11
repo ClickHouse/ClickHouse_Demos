@@ -36,7 +36,7 @@ ENGINE = MergeTree
 ORDER BY prefix;
 
 -- Load sample data (run this from the directory containing geoip-sample-data.csv):
--- clickhouse client --query "INSERT INTO geoip_data FORMAT CSV" < geoip-sample-data.csv
+-- clickhouse client --query "INSERT INTO geoip_data FORMAT CSVWithNames" < geoip-sample-data.csv
 
 
 -- ── Step 2: Country-level dictionary ────────────────────────────────

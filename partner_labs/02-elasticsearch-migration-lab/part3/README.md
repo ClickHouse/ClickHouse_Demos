@@ -68,7 +68,7 @@ Set environment variables for the rest of the lab:
 ```bash
 # Copy and fill in once, then source before every session
 cp ../common/env.sh.example ../common/env.sh
-# edit ../common/env.sh with your CH_HOST, CH_PASSWORD, CH_ORG_ID, CH_API_KEY_*
+# edit ../common/env.sh with your CH_HOST and CH_PASSWORD (from Cloud console → Connect → Native protocol)
 source ../common/env.sh
 ```
 
@@ -95,7 +95,7 @@ clickhouse client \
     --host ${CH_HOST} --port 9440 \
     --user default --password ${CH_PASSWORD} --secure \
     --database otel \
-    --query "INSERT INTO geoip_data FORMAT CSV" \
+    --query "INSERT INTO geoip_data FORMAT CSVWithNames" \
     < clickhouse/geoip-sample-data.csv
 
 # 3. Reload dictionaries — they were created with an empty table; force reload now
@@ -261,7 +261,7 @@ This recreates the container using `docker compose -f ... -f docker/docker-compo
 
 Verify it started cleanly:
 ```bash
-docker logs docker-otelcol-demo-1 --tail=10
+docker logs "$(docker ps -qf name=otelcol-demo)" --tail=10
 # Expected: "Everything is ready. Begin running and processing data."
 # No "Failed to start component" or "connection refused" errors.
 ```
@@ -365,7 +365,7 @@ ORDER BY partition;
 
 > **Teaching point: Why ILM becomes one line of DDL**
 >
-> In Part 1, you configured a 3-phase ILM policy: rollover at 5GB/1d (hot), shrink + forcemerge at 7d (warm), delete at 30d. This required hot/warm node roles, shard allocation awareness, and ILM policy JSON.
+> In Part 1, you configured a 3-phase ILM policy: rollover at 5GB/1d (hot), shrink + forcemerge at 2d (warm), delete at 30d. This required hot/warm node roles, shard allocation awareness, and ILM policy JSON.
 >
 > In ClickHouse Cloud, the entire machinery collapses to one clause in the CREATE TABLE:
 > ```sql
