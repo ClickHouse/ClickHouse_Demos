@@ -1,0 +1,42 @@
+%%{init: {'theme':'default', 'flowchart': {'useMaxWidth': false, 'htmlLabels': true}}}%%
+flowchart LR
+    subgraph WL1["Workload 1: Logs"]
+        direction TB
+        gen1("web-access-generator")
+        gen2("app-log-generator")
+        gen3("infra-log-generator")
+        sapp["sample-app<br/>Flask + APM Agent"]
+        vol[("docker_log-data<br/>volume")]
+        fb["Filebeat"]
+        gen1 & gen2 & gen3 -- "writes JSON / syslog" --> vol
+        vol -. "tail" .-> fb
+    end
+
+    subgraph WL2["Workload 2: OTel Demo"]
+        direction TB
+        ms["16 microservices<br/>cart · checkout · frontend<br/>payment · shipping · …"]
+        otelcol["otelcol-demo<br/>OTel Collector Contrib"]
+        ms -- "OTLP gRPC/HTTP" --> otelcol
+    end
+
+    subgraph ELASTIC["Elasticsearch Stack"]
+        direction TB
+        apm["Elastic APM Server<br/>:8200"]
+        es[("Elasticsearch<br/>:9200")]
+        kibana["Kibana<br/>:5601"]
+        apm -- "writes" --> es
+        es -. "queries" .-> kibana
+    end
+
+    fb      -- "Beats protocol<br/>(ingest pipelines + ILM)" --> es
+    sapp    -- "APM events" --> apm
+    otelcol -- "OTLP HTTP" --> apm
+
+    style WL1     fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    style WL2     fill:#dcfce7,stroke:#16a34a,color:#14532d
+    style ELASTIC fill:#fef3c7,stroke:#d97706,color:#78350f
+    style fb      fill:#2563eb,color:#fff
+    style otelcol fill:#16a34a,color:#fff
+    style apm     fill:#d97706,color:#fff
+    style es      fill:#d97706,color:#fff
+    style kibana  fill:#d97706,color:#fff

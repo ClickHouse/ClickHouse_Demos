@@ -1,0 +1,101 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.0
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  elastic-apm-server:
+    image: docker.elastic.co/apm/apm-server:8.15.0
+    ports:
+      - "8200:8200"
+    command: apm-server -e -c /usr/share/apm-server/apm-server.yml
+    volumes:
+      - ./configs/apm-server.yml:/usr/share/apm-server/apm-server.yml:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.15.0
+    user: root
+    volumes:
+      - ./configs/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - log-data:/var/log/generators:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      es-bootstrap:
+        condition: service_completed_successfully
+    command: filebeat -e -strict.perms=false
+
+  es-bootstrap:
+    build:
+      context: ../scripts
+      dockerfile: Dockerfile.bootstrap
+    depends_on:
+      kibana:
+        condition: service_healthy
+    volumes:
+      - ../dashboards:/dashboards:ro
+    restart: on-failure
+
+  log-generator-web:
+    build:
+      context: ./log-generators/web
+    volumes:
+      - log-data:/var/log/generators
+
+  log-generator-app:
+    build:
+      context: ./log-generators/app
+    volumes:
+      - log-data:/var/log/generators
+
+  log-generator-infra:
+    build:
+      context: ./log-generators/infra
+    volumes:
+      - log-data:/var/log/generators
+
+  sample-app:
+    build:
+      context: ./sample-app
+    ports:
+      - "5000:5000"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://elastic-apm-server:8200
+    depends_on:
+      - elastic-apm-server
+
+volumes:
+  esdata:
+  log-data:

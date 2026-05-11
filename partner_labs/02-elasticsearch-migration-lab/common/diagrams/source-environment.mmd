@@ -1,0 +1,39 @@
+%%{init: {'theme':'default', 'flowchart': {'useMaxWidth': false, 'htmlLabels': true}}}%%
+flowchart LR
+
+  %% ───────────────────────────── Sources ──────────────────────────
+  subgraph Sources["Data Sources"]
+    direction TB
+    LG["Log generators<br/>(web / app / infra)"]
+    LV[("docker_log-data<br/>volume")]
+    LG -- "writes JSON / syslog" --> LV
+    Demo["OTel Demo<br/>16 microservices<br/>(frontend, cart,<br/>checkout, payment, …)"]
+  end
+
+  %% ───────────────────────────── Collectors / Agents ──────────────
+  subgraph Collectors["Collectors / Agents"]
+    direction TB
+    FB["<b>Filebeat</b><br/>(Beats agent)"]:::beats
+    OTD["<b>otelcol-demo</b><br/>(OTLP receivers,<br/>APM exporter)"]:::collector
+  end
+
+  %% ───────────────────────────── Elasticsearch backend ────────────
+  subgraph ESBackend["Elasticsearch backend"]
+    direction TB
+    APM["elastic-apm-server<br/>OTLP intake :8200"]
+    ES[("<b>Elasticsearch</b><br/>(single node)<br/><br/>logs-＊-lab<br/>logs-apm.app.＊<br/>traces-apm-＊<br/>metrics-apm.＊")]
+    Kibana["<b>Kibana</b><br/>dashboards +<br/>alerting"]
+    APM -- "writes" --> ES
+    Kibana -. "queries" .-> ES
+  end
+
+  %% ───────────────────────────── Wiring ───────────────────────────
+  LV -. "tail" .-> FB
+  Demo == "OTLP :4317/:4318" ==> OTD
+
+  FB == "Beats protocol" ==> ES
+  OTD == "OTLP HTTP :8200" ==> APM
+
+  %% ───────────────────────────── Styles ───────────────────────────
+  classDef beats     fill:#fef3c7,stroke:#b45309,stroke-width:2px,color:#78350f
+  classDef collector fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a

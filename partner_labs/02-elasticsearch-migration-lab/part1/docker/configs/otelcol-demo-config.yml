@@ -1,0 +1,38 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+      http:
+        endpoint: "0.0.0.0:4318"
+
+exporters:
+  # Part 1: route all telemetry from the OTel Demo services to the
+  # Elastic APM Server (which writes traces/logs/metrics to ES data streams).
+  # Part 3 swaps this container to a different config via a compose override
+  # (see part3/docker/docker-compose.otel-demo.{parallel,cutover}.yml) — this
+  # file is the immutable Part 1 baseline.
+  otlphttp/apm:
+    endpoint: http://elastic-apm-server:8200
+    tls:
+      insecure: true
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 500
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/apm]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/apm]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/apm]

@@ -1,0 +1,18 @@
+apm-server:
+  host: "0.0.0.0:8200"
+
+  # OTLP receiver - accepts traces, metrics, and logs via OTLP gRPC and HTTP
+  otlp:
+    grpc:
+      enabled: true
+      host: "0.0.0.0:8200"
+    http:
+      enabled: true
+      host: "0.0.0.0:8201"
+
+  # Disable Real User Monitoring (not needed for this lab)
+  rum:
+    enabled: false
+
+output.elasticsearch:
+  hosts: ["elasticsearch:9200"]

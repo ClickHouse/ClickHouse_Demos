@@ -1,0 +1,6 @@
+FROM curlimages/curl:8.5.0
+USER root
+RUN apk add --no-cache bash jq
+COPY es-bootstrap.sh /es-bootstrap.sh
+RUN chmod +x /es-bootstrap.sh
+ENTRYPOINT ["/es-bootstrap.sh"]

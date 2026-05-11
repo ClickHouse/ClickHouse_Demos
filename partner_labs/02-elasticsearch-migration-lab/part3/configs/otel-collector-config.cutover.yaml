@@ -1,0 +1,116 @@
+# ============================================================
+# OTel Collector Configuration — Cutover (Part 3, Step 10+)
+# ============================================================
+# Elasticsearch removed. ClickHouse Cloud is the sole destination
+# for all file-based logs (web access, application, infrastructure).
+#
+# This is the post-Step-10 counterpart to otel-collector-config.parallel.yaml.
+# The Step 10a swap is done by recreating the otelcol-lab container with
+# this file mounted instead of the .parallel.yaml — see README Step 10a.
+#
+# Prerequisites:
+#   1. Set environment variables before running:
+#        export CH_HOST=<your-clickhouse-cloud-host>
+#        export CH_PASSWORD=<your-clickhouse-password>
+#   2. ES decommissioned (Step 10d stops elasticsearch + kibana + apm-server).
+# ============================================================
+
+receivers:
+  # ── Web access logs (structured JSON) ──────────────────────────────
+  filelog/web:
+    include:
+      - /var/log/generators/web-access-*.log
+    start_at: end
+    operators:
+      - type: json_parser
+        timestamp:
+          parse_from: attributes["@timestamp"]
+          layout_type: gotime
+          layout: '2006-01-02T15:04:05.000Z07:00'
+      - type: move
+        from: attributes.service
+        to: resource["service.name"]
+
+  # ── Application logs (structured JSON with trace IDs) ───────────────
+  filelog/app:
+    include:
+      - /var/log/generators/app-*.log
+    start_at: end
+    operators:
+      - type: json_parser
+        timestamp:
+          parse_from: attributes["@timestamp"]
+          layout_type: gotime
+          layout: '2006-01-02T15:04:05.000Z07:00'
+      - type: move
+        from: attributes.service
+        to: resource["service.name"]
+
+  # ── Infrastructure logs (unstructured syslog) ───────────────────────
+  filelog/infra:
+    include:
+      - /var/log/generators/infra-*.log
+    start_at: end
+    operators:
+      - type: regex_parser
+        regex: '^(?P<timestamp>[A-Za-z]+\s+\d+\s+[\d:]+)\s+(?P<hostname>\S+)\s+(?P<process>[^:\[]+)(?:\[\d+\])?:\s+(?P<message>.*)$'
+        timestamp:
+          parse_from: attributes.timestamp
+          layout_type: strptime
+          layout: '%b %d %H:%M:%S'
+      - type: move
+        from: attributes.hostname
+        to: resource["service.name"]
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1000
+    send_batch_max_size: 2000
+
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+exporters:
+  # ── ClickHouse Cloud (sole destination after cutover) ──────────────
+  clickhouse:
+    endpoint: tcp://${CH_HOST}:9440?dial_timeout=60s&compress=lz4&secure=true
+    database: otel
+    username: default
+    password: ${CH_PASSWORD}
+    logs_table_name: otel_logs
+    traces_table_name: otel_traces
+    timeout: 30s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 1000
+    create_schema: false
+
+service:
+  pipelines:
+    logs/web:
+      receivers:   [filelog/web]
+      processors:  [memory_limiter, batch]
+      exporters:   [clickhouse]
+
+    logs/app:
+      receivers:   [filelog/app]
+      processors:  [memory_limiter, batch]
+      exporters:   [clickhouse]
+
+    logs/infra:
+      receivers:   [filelog/infra]
+      processors:  [memory_limiter, batch]
+      exporters:   [clickhouse]
+
+  telemetry:
+    logs:
+      level: info

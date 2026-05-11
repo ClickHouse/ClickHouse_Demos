@@ -1,0 +1,26 @@
+# Part 3 — Parallel run override for otelcol-demo
+#
+# Mounts the Part 3 parallel-run config at a different container path
+# (/etc/otelcol-contrib/parallel-run.yaml) and tells the collector to use it.
+# The Part 1 baseline config is still mounted at /etc/otelcol-contrib/config.yaml
+# but is unused — `command:` overrides which file the collector loads.
+#
+# This avoids editing part1/docker/configs/otelcol-demo-config.yml in place,
+# so a fresh `cleanup.sh && start from Part 1` always lands on a clean baseline.
+#
+# Usage (from part3/):
+#   source ../common/env.sh
+#   bash scripts/swap-otelcol-demo-config.sh parallel
+
+services:
+  otelcol-demo:
+    command: ["--config=/etc/otelcol-contrib/parallel-run.yaml"]
+    # ${PART3_CONFIG_DIR} is set to the absolute path of part3/configs/ by
+    # scripts/swap-otelcol-demo-config.sh. We use an absolute path because
+    # relative paths in overlay compose files are resolved against the
+    # project directory (part1/docker/), not this file's directory.
+    volumes:
+      - ${PART3_CONFIG_DIR}/otelcol-demo-config.parallel.yml:/etc/otelcol-contrib/parallel-run.yaml:ro
+    environment:
+      - CH_HOST=${CH_HOST}
+      - CH_PASSWORD=${CH_PASSWORD}

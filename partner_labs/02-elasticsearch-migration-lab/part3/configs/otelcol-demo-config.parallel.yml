@@ -1,0 +1,59 @@
+# Part 3 — Parallel run config for otelcol-demo
+#
+# Forwards traces/metrics/logs from the 16 OTel Demo services to BOTH:
+#   - Elastic APM Server (the existing ES backend, for parity comparison)
+#   - ClickHouse Cloud  (the new backend)
+#
+# This config is mounted into the otelcol-demo container by
+# part3/docker/docker-compose.otel-demo.parallel.yml. The Part 1 baseline
+# config (part1/docker/configs/otelcol-demo-config.yml) is never modified.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+      http:
+        endpoint: "0.0.0.0:4318"
+
+exporters:
+  otlphttp/apm:
+    endpoint: http://elastic-apm-server:8200
+    tls:
+      insecure: true
+
+  clickhouse:
+    endpoint: tcp://${CH_HOST}:9440?dial_timeout=60s&compress=lz4&secure=true
+    database: otel
+    username: default
+    password: ${CH_PASSWORD}
+    traces_table_name: otel_traces
+    logs_table_name: otel_logs
+    metrics_table_name: otel_metrics
+    create_schema: false
+    timeout: 30s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 500
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/apm, clickhouse]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/apm, clickhouse]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/apm, clickhouse]

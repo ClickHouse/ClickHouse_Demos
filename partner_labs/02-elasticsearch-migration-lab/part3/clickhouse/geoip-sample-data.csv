@@ -1,0 +1,402 @@
+prefix,country,city
+1.0.0.0/24,Australia,Brisbane
+1.0.1.0/24,China,Fuzhou
+1.0.2.0/23,China,Fuzhou
+1.0.4.0/22,Australia,Melbourne
+1.0.8.0/21,China,Guangzhou
+1.0.16.0/20,Japan,Tokyo
+1.0.32.0/19,China,Guangzhou
+1.0.64.0/18,Japan,Osaka
+1.0.128.0/17,Thailand,Bangkok
+1.1.0.0/24,China,Fuzhou
+1.1.1.0/24,Australia,Sydney
+1.2.0.0/16,China,Beijing
+1.4.0.0/14,China,Shanghai
+2.0.0.0/12,France,Paris
+2.16.0.0/12,Germany,Berlin
+2.32.0.0/11,Germany,Hamburg
+2.56.0.0/13,United Kingdom,London
+2.64.0.0/12,Italy,Rome
+2.80.0.0/12,Spain,Madrid
+2.96.0.0/13,Netherlands,Amsterdam
+3.0.0.0/15,United States,Ashburn
+3.2.0.0/15,United States,Seattle
+3.4.0.0/14,United States,Columbus
+3.8.0.0/13,United States,Ashburn
+3.16.0.0/12,United States,Columbus
+3.32.0.0/11,United States,Dallas
+3.64.0.0/10,United States,Ashburn
+3.128.0.0/9,United States,Seattle
+4.0.0.0/9,United States,Los Angeles
+4.128.0.0/10,United States,Chicago
+4.192.0.0/11,United States,New York
+5.0.0.0/15,Germany,Munich
+5.2.0.0/15,Germany,Berlin
+5.4.0.0/14,Sweden,Stockholm
+5.8.0.0/13,Russia,Moscow
+5.16.0.0/12,Netherlands,Amsterdam
+5.32.0.0/11,Belgium,Brussels
+5.64.0.0/10,Russia,Saint Petersburg
+5.128.0.0/9,Germany,Frankfurt
+5.180.0.0/14,Russia,Moscow
+6.0.0.0/7,United States,Laurel
+8.0.0.0/12,United States,Honolulu
+8.8.8.0/24,United States,Mountain View
+8.8.4.0/24,United States,Mountain View
+8.16.0.0/12,United States,Atlanta
+8.32.0.0/11,United States,Dallas
+8.64.0.0/13,United States,Atlanta
+8.128.0.0/10,United States,Washington
+8.192.0.0/11,United States,Atlanta
+9.0.0.0/8,United States,New York
+13.32.0.0/15,United States,Ashburn
+13.34.0.0/15,United States,Ashburn
+13.52.0.0/15,United States,San Jose
+13.54.0.0/15,Australia,Sydney
+13.56.0.0/14,United States,San Jose
+13.64.0.0/11,United States,Boydton
+13.96.0.0/13,Netherlands,Amsterdam
+13.104.0.0/14,United States,Redmond
+14.0.0.0/15,Japan,Tokyo
+14.2.0.0/15,Japan,Osaka
+14.128.0.0/10,Japan,Fukuoka
+14.192.0.0/11,South Korea,Seoul
+14.224.0.0/11,Vietnam,Hanoi
+17.0.0.0/8,United States,Cupertino
+18.64.0.0/10,United States,Ashburn
+18.128.0.0/10,United States,Seattle
+18.192.0.0/10,Germany,Frankfurt
+18.224.0.0/11,United States,Ashburn
+18.232.0.0/11,United States,Ashburn
+20.0.0.0/11,United States,Boydton
+20.32.0.0/11,Netherlands,Amsterdam
+20.64.0.0/10,United States,San Antonio
+20.128.0.0/10,United States,Boydton
+20.192.0.0/10,Singapore,Singapore
+20.224.0.0/11,United States,Boydton
+23.0.0.0/12,United States,Cambridge
+23.32.0.0/11,United States,San Jose
+23.192.0.0/11,United States,Cambridge
+34.0.0.0/10,United States,Council Bluffs
+34.64.0.0/10,South Korea,Seoul
+34.96.0.0/11,Belgium,Brussels
+34.128.0.0/10,Singapore,Singapore
+34.192.0.0/10,United States,Ashburn
+34.224.0.0/11,United States,Ashburn
+35.0.0.0/11,United States,Council Bluffs
+35.186.0.0/16,Australia,Sydney
+35.192.0.0/14,United States,Council Bluffs
+35.208.0.0/12,United States,Payette
+35.224.0.0/12,United States,Council Bluffs
+36.0.0.0/14,Japan,Tokyo
+36.4.0.0/14,China,Shanghai
+36.32.0.0/11,China,Beijing
+36.64.0.0/11,China,Guiyang
+40.64.0.0/10,Netherlands,Amsterdam
+40.112.0.0/13,United States,Boydton
+40.120.0.0/14,United States,Des Moines
+40.124.0.0/16,United States,San Antonio
+42.0.0.0/10,China,Beijing
+42.120.0.0/13,China,Shanghai
+43.128.0.0/10,Japan,Tokyo
+43.192.0.0/10,Singapore,Singapore
+44.192.0.0/11,United States,Ashburn
+45.0.0.0/17,United States,Dallas
+45.128.0.0/10,Russia,Moscow
+46.0.0.0/11,Netherlands,Amsterdam
+46.32.0.0/11,Germany,Frankfurt
+46.64.0.0/10,Russia,Moscow
+46.128.0.0/10,Czech Republic,Prague
+47.0.0.0/14,China,Hangzhou
+47.52.0.0/14,Hong Kong,Hong Kong
+47.128.0.0/10,Singapore,Singapore
+49.0.0.0/15,South Korea,Seoul
+49.64.0.0/10,South Korea,Busan
+49.192.0.0/11,Australia,Melbourne
+52.0.0.0/11,United States,Ashburn
+52.32.0.0/11,United States,Portland
+52.64.0.0/11,Australia,Sydney
+52.119.0.0/16,India,Mumbai
+52.192.0.0/11,Japan,Tokyo
+52.208.0.0/11,Ireland,Dublin
+52.224.0.0/11,United States,Ashburn
+54.0.0.0/11,United States,Ashburn
+54.64.0.0/11,Japan,Tokyo
+54.93.0.0/16,Germany,Frankfurt
+54.144.0.0/12,United States,Ashburn
+54.176.0.0/12,United States,San Jose
+54.192.0.0/12,United States,Seattle
+54.208.0.0/12,United States,Ashburn
+54.224.0.0/11,United States,Ashburn
+58.0.0.0/15,China,Beijing
+58.14.0.0/15,China,Jinan
+58.48.0.0/15,China,Wuhan
+58.96.0.0/13,Australia,Perth
+58.152.0.0/13,Japan,Tokyo
+58.176.0.0/13,Japan,Osaka
+59.0.0.0/13,China,Guangzhou
+59.32.0.0/11,South Korea,Seoul
+60.0.0.0/13,China,Shanghai
+60.32.0.0/11,China,Nanjing
+60.64.0.0/10,Japan,Nagoya
+60.128.0.0/10,Japan,Nagoya
+61.0.0.0/13,China,Guangzhou
+61.128.0.0/10,China,Chengdu
+61.192.0.0/11,Japan,Osaka
+62.0.0.0/11,Germany,Berlin
+62.32.0.0/11,France,Lyon
+62.64.0.0/10,Russia,Moscow
+62.128.0.0/10,Russia,Saint Petersburg
+62.192.0.0/10,Netherlands,Haarlem
+63.0.0.0/11,United States,Dallas
+63.64.0.0/12,United States,Seattle
+63.80.0.0/12,United States,New York
+64.0.0.0/10,Canada,Toronto
+64.64.0.0/11,United States,Dallas
+64.96.0.0/11,United States,Dallas
+64.128.0.0/10,United States,Chicago
+64.192.0.0/10,United States,New York
+65.0.0.0/11,United States,Chicago
+65.52.0.0/14,United States,Boydton
+65.168.0.0/13,United States,Chicago
+66.0.0.0/11,United States,New York
+66.96.0.0/11,United States,Dallas
+66.240.0.0/12,United States,Chicago
+67.0.0.0/11,United States,Chicago
+67.128.0.0/10,Canada,Montreal
+68.0.0.0/10,United States,Chicago
+68.64.0.0/11,United States,New York
+69.0.0.0/10,United States,Los Angeles
+70.0.0.0/11,United States,Dallas
+70.32.0.0/11,United States,Chicago
+71.0.0.0/10,United States,Los Angeles
+71.64.0.0/11,United States,Dallas
+72.0.0.0/10,United States,Chicago
+72.64.0.0/11,United States,Dallas
+73.0.0.0/8,United States,San Jose
+74.0.0.0/10,United States,Dallas
+74.64.0.0/11,United States,Chicago
+75.0.0.0/10,United States,Los Angeles
+76.0.0.0/10,United States,Nashville
+77.0.0.0/11,France,Paris
+77.32.0.0/11,United Kingdom,London
+77.64.0.0/10,Germany,Frankfurt
+77.128.0.0/10,Russia,Moscow
+77.192.0.0/10,Russia,Moscow
+78.0.0.0/11,Austria,Vienna
+78.32.0.0/11,Poland,Warsaw
+78.64.0.0/10,Italy,Milan
+78.128.0.0/10,Turkey,Istanbul
+78.192.0.0/10,Spain,Barcelona
+79.0.0.0/11,Germany,Munich
+79.32.0.0/11,France,Paris
+79.64.0.0/10,Spain,Madrid
+79.128.0.0/10,Russia,Moscow
+80.0.0.0/11,Germany,Frankfurt
+80.32.0.0/11,France,Marseille
+80.64.0.0/10,Netherlands,Rotterdam
+80.128.0.0/10,France,Paris
+80.192.0.0/10,United Kingdom,Manchester
+81.0.0.0/11,Spain,Madrid
+81.96.0.0/11,Italy,Rome
+81.128.0.0/10,Turkey,Ankara
+81.192.0.0/10,Sweden,Gothenburg
+82.0.0.0/11,Norway,Oslo
+82.64.0.0/10,Germany,Dusseldorf
+82.128.0.0/10,Russia,Moscow
+82.192.0.0/10,Iran,Tehran
+83.0.0.0/11,Germany,Cologne
+83.96.0.0/11,Switzerland,Zurich
+83.128.0.0/10,Saudi Arabia,Riyadh
+84.0.0.0/11,Spain,Valencia
+84.64.0.0/10,Czech Republic,Prague
+84.128.0.0/10,Romania,Bucharest
+84.192.0.0/10,Israel,Tel Aviv
+85.0.0.0/11,Germany,Berlin
+85.64.0.0/10,Russia,Moscow
+85.192.0.0/10,United Kingdom,London
+86.0.0.0/11,United Kingdom,London
+86.128.0.0/10,France,Strasbourg
+87.0.0.0/11,Germany,Hamburg
+87.128.0.0/10,Russia,Moscow
+88.0.0.0/11,Italy,Milan
+88.64.0.0/10,France,Bordeaux
+88.128.0.0/10,Spain,Seville
+89.0.0.0/11,Netherlands,The Hague
+89.64.0.0/10,Russia,Moscow
+89.128.0.0/10,Turkey,Istanbul
+90.0.0.0/11,France,Nice
+90.128.0.0/10,Portugal,Lisbon
+91.0.0.0/11,Netherlands,Amsterdam
+91.64.0.0/10,Russia,Moscow
+91.128.0.0/10,Belgium,Ghent
+91.192.0.0/10,Turkey,Istanbul
+92.0.0.0/11,Germany,Frankfurt
+92.64.0.0/10,France,Paris
+92.128.0.0/10,Russia,Saint Petersburg
+93.0.0.0/11,Germany,Berlin
+93.64.0.0/10,Spain,Madrid
+93.128.0.0/10,Russia,Moscow
+94.0.0.0/11,Russia,Moscow
+94.64.0.0/10,Netherlands,Amsterdam
+94.128.0.0/10,France,Paris
+95.0.0.0/11,Russia,Moscow
+95.64.0.0/10,Germany,Frankfurt
+95.128.0.0/10,United Kingdom,Birmingham
+96.0.0.0/11,United States,Dallas
+96.64.0.0/10,United States,Chicago
+96.128.0.0/10,Canada,Ottawa
+97.0.0.0/11,United States,Dallas
+97.64.0.0/10,United States,Los Angeles
+98.0.0.0/11,United States,Dallas
+98.64.0.0/10,United States,Atlanta
+99.0.0.0/11,United States,Dallas
+100.0.0.0/11,United States,Washington
+101.0.0.0/15,China,Beijing
+101.128.0.0/11,Japan,Tokyo
+101.192.0.0/11,South Korea,Seoul
+102.0.0.0/14,South Africa,Cape Town
+102.64.0.0/10,South Africa,Johannesburg
+103.0.0.0/13,India,Mumbai
+103.128.0.0/10,Singapore,Singapore
+104.0.0.0/14,United States,Ashburn
+104.16.0.0/12,United States,San Jose
+104.64.0.0/10,United States,Ashburn
+104.128.0.0/10,United States,Ashburn
+104.192.0.0/10,United States,Dallas
+105.0.0.0/12,South Africa,Johannesburg
+106.0.0.0/14,China,Shanghai
+106.64.0.0/10,Japan,Tokyo
+106.128.0.0/10,China,Beijing
+107.0.0.0/12,United States,Ashburn
+107.16.0.0/12,United States,New York
+107.128.0.0/10,United States,Ashburn
+108.0.0.0/13,United States,Chicago
+108.128.0.0/10,United States,Chicago
+109.0.0.0/11,Russia,Moscow
+109.64.0.0/10,Germany,Frankfurt
+109.128.0.0/10,Netherlands,Amsterdam
+110.0.0.0/13,Japan,Tokyo
+110.128.0.0/10,Australia,Sydney
+111.0.0.0/13,Japan,Osaka
+111.128.0.0/10,China,Hangzhou
+112.0.0.0/13,China,Beijing
+112.128.0.0/10,South Korea,Seoul
+113.0.0.0/13,China,Shanghai
+113.128.0.0/10,China,Guangzhou
+114.0.0.0/13,Japan,Tokyo
+114.128.0.0/10,China,Wuhan
+115.0.0.0/13,China,Nanjing
+116.0.0.0/12,China,Beijing
+116.192.0.0/11,Japan,Hiroshima
+117.0.0.0/13,China,Guangzhou
+118.0.0.0/12,China,Shanghai
+118.128.0.0/10,South Korea,Incheon
+119.0.0.0/13,Australia,Melbourne
+120.0.0.0/12,China,Beijing
+120.192.0.0/11,Japan,Sapporo
+121.0.0.0/13,Japan,Tokyo
+122.0.0.0/12,China,Shanghai
+122.128.0.0/10,South Korea,Daejeon
+123.0.0.0/13,China,Chengdu
+123.128.0.0/10,Japan,Tokyo
+124.0.0.0/12,China,Tianjin
+124.128.0.0/10,Japan,Nagoya
+125.0.0.0/13,China,Guangzhou
+126.0.0.0/14,Japan,Tokyo
+128.0.0.0/12,United States,Ames
+130.0.0.0/11,Brazil,Sao Paulo
+130.211.0.0/16,United States,Mountain View
+131.0.0.0/11,Netherlands,Eindhoven
+132.0.0.0/10,Brazil,Rio de Janeiro
+133.0.0.0/8,Japan,Tokyo
+134.0.0.0/10,United States,Stanford
+136.0.0.0/11,Canada,Montreal
+138.0.0.0/11,Australia,Brisbane
+139.0.0.0/11,Singapore,Singapore
+140.0.0.0/11,Taiwan,Taipei
+142.0.0.0/11,Canada,Toronto
+142.250.0.0/15,United States,Mountain View
+144.0.0.0/11,United States,Tucson
+146.0.0.0/11,United States,New York
+148.0.0.0/11,United States,Detroit
+149.0.0.0/11,United States,Ashburn
+150.0.0.0/11,United States,Los Angeles
+151.0.0.0/11,Italy,Naples
+152.0.0.0/11,United States,Springfield
+152.67.0.0/16,India,Mumbai
+154.0.0.0/11,South Africa,Cape Town
+156.0.0.0/11,United States,Dallas
+157.0.0.0/11,Brazil,Sao Paulo
+158.0.0.0/11,United States,San Jose
+159.0.0.0/11,Brazil,Brasilia
+160.0.0.0/11,United States,Ann Arbor
+161.0.0.0/11,Brazil,Campinas
+162.0.0.0/11,United States,Chicago
+163.0.0.0/11,Taiwan,Taipei
+164.0.0.0/11,United States,Reston
+165.0.0.0/11,United States,Dallas
+166.0.0.0/11,United States,New York
+167.0.0.0/11,United States,San Jose
+168.0.0.0/11,United States,Reston
+169.0.0.0/11,United States,Dallas
+170.0.0.0/11,Brazil,Sao Paulo
+171.0.0.0/11,China,Chengdu
+172.0.0.0/12,United States,Dallas
+173.0.0.0/11,United States,Seattle
+174.0.0.0/11,Canada,Vancouver
+175.0.0.0/11,China,Shanghai
+176.0.0.0/11,Germany,Berlin
+177.0.0.0/11,Brazil,Sao Paulo
+178.0.0.0/11,Russia,Moscow
+179.0.0.0/11,Brazil,Brasilia
+180.0.0.0/11,China,Shenzhen
+181.0.0.0/11,Brazil,Rio de Janeiro
+182.0.0.0/11,China,Beijing
+183.0.0.0/11,China,Shanghai
+184.0.0.0/11,United States,Dallas
+185.0.0.0/11,Netherlands,Amsterdam
+186.0.0.0/11,Brazil,Sao Paulo
+187.0.0.0/11,Brazil,Manaus
+188.0.0.0/11,Russia,Moscow
+189.0.0.0/11,Brazil,Sao Paulo
+190.0.0.0/11,Brazil,Brasilia
+191.0.0.0/11,Brazil,Rio de Janeiro
+192.0.0.0/14,United States,Mountain View
+192.30.252.0/22,United States,San Francisco
+192.168.0.0/16,Private,LAN
+193.0.0.0/11,Netherlands,Amsterdam
+194.0.0.0/11,France,Paris
+195.0.0.0/11,Russia,Moscow
+196.0.0.0/11,South Africa,Johannesburg
+197.0.0.0/11,Kenya,Nairobi
+198.0.0.0/11,United States,Dallas
+198.41.128.0/17,United States,San Jose
+199.0.0.0/11,United States,Dallas
+200.0.0.0/11,Brazil,Sao Paulo
+201.0.0.0/11,Brazil,Curitiba
+202.0.0.0/11,China,Beijing
+203.0.0.0/11,Australia,Canberra
+204.0.0.0/11,United States,Dallas
+205.0.0.0/11,Canada,Ottawa
+206.0.0.0/11,United States,San Francisco
+207.0.0.0/11,United States,Los Angeles
+208.0.0.0/11,United States,New York
+208.67.220.0/22,United States,San Francisco
+209.0.0.0/11,United States,Dallas
+210.0.0.0/12,Japan,Tokyo
+211.0.0.0/11,Australia,Sydney
+212.0.0.0/11,France,Paris
+213.0.0.0/11,Germany,Hamburg
+214.0.0.0/11,United States,Washington
+215.0.0.0/11,United States,Columbus
+216.0.0.0/11,United States,Chicago
+216.58.192.0/19,United States,Mountain View
+216.239.32.0/19,United States,Mountain View
+217.0.0.0/11,Germany,Frankfurt
+218.0.0.0/12,South Korea,Seoul
+219.0.0.0/11,South Korea,Busan
+220.0.0.0/12,Australia,Melbourne
+221.0.0.0/11,China,Beijing
+222.0.0.0/11,China,Shanghai
+223.0.0.0/11,China,Shenzhen

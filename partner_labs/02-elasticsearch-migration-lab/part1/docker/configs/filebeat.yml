@@ -1,0 +1,49 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/generators/web-access-*.log
+    json.keys_under_root: true
+    json.add_error_key: true
+    fields:
+      log_type: web_access
+    fields_under_root: true
+
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/generators/app-*.log
+    json.keys_under_root: true
+    json.add_error_key: true
+    fields:
+      log_type: application
+    fields_under_root: true
+
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/generators/infra-*.log
+    fields:
+      log_type: infrastructure
+    fields_under_root: true
+
+output.elasticsearch:
+  hosts: ["elasticsearch:9200"]
+  index: "logs-%{[log_type]}-lab"
+  pipelines:
+    - pipeline: "web-access-enrichment"
+      when.equals:
+        log_type: "web_access"
+    - pipeline: "app-log-enrichment"
+      when.equals:
+        log_type: "application"
+    - pipeline: "infra-log-parsing"
+      when.equals:
+        log_type: "infrastructure"
+
+setup.ilm.enabled: true
+setup.ilm.policy_name: "lab-observability-policy"
+setup.ilm.rollover_alias: "logs"
+
+setup.template.enabled: false  # We manage templates ourselves
+logging.level: info
