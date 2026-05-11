@@ -1,0 +1,56 @@
+%%{init: {'theme':'default', 'flowchart': {'useMaxWidth': false, 'htmlLabels': true}}}%%
+flowchart LR
+
+  %% ───────────────────────────── Sources ──────────────────────────
+  subgraph Sources["Data Sources"]
+    direction TB
+    LG["Log generators<br/>(web / app / infra)"]
+    LV[("docker_log-data<br/>volume")]
+    LG -- "writes" --> LV
+    Demo["OTel Demo<br/>16 microservices"]
+  end
+
+  %% ───────────────────────────── Collectors (cutover state) ───────
+  subgraph Collectors["Collectors (cutover)"]
+    direction TB
+    OTL["<b>otelcol-lab</b><br/>filelog → CH"]:::collector
+    OTD["<b>otelcol-demo</b><br/>OTLP → CH"]:::collector
+  end
+
+  %% ───────────────────────────── Stopped at cutover ───────────────
+  ESStopped["<s>ES + Kibana + APM Server</s><br/>❌ STOPPED at Step 10d"]:::stopped
+
+  %% ───────────────────────────── ClickHouse Cloud ─────────────────
+  subgraph CHBackend["ClickHouse Cloud · database = otel"]
+    direction TB
+    CHLOGS[("otel_logs<br/>(Null engine)")]
+    CHV2[("<b>otel_logs_v2</b><br/>MergeTree +<br/>MATERIALIZED enrichment<br/>columns")]
+    CHTR[("otel_traces")]
+    CHMETRICS[("otel_metrics_＊<br/>(gauge / sum /<br/>histogram / …)")]
+    CHAGGS[("alert_error_rate<br/>logs_summary_1min<br/>(AggMergeTree)")]
+    CHLOGS -- "MV" --> CHV2
+    CHV2 -. "MV" .-> CHAGGS
+  end
+
+  %% ───────────────────────────── HyperDX ──────────────────────────
+  subgraph UI["ClickStack UI"]
+    HDX["<b>HyperDX</b><br/>Search · Dashboards ·<br/>Service Map · Alerts ·<br/>AI Assistant"]:::hyperdx
+  end
+
+  %% ───────────────────────────── Wiring ───────────────────────────
+  LV -. "tail" .-> OTL
+  Demo == "OTLP :4317/:4318" ==> OTD
+
+  OTL == "native TLS :9440" ==> CHLOGS
+  OTD == "native TLS :9440" ==> CHLOGS
+  OTD ==> CHTR
+  OTD ==> CHMETRICS
+
+  CHV2  -. "query" .-> HDX
+  CHTR  -. "query" .-> HDX
+  CHMETRICS -. "query" .-> HDX
+
+  %% ───────────────────────────── Styles ───────────────────────────
+  classDef stopped   fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d,stroke-dasharray:5 5
+  classDef collector fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+  classDef hyperdx   fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#4c1d95

@@ -1,0 +1,167 @@
+# ============================================================
+# OTel Collector Configuration — Parallel Run (Part 3, Steps 3–10)
+# ============================================================
+# During the parallel run the collector dual-writes every log line:
+#   - Elasticsearch (the existing backend, into Filebeat's data streams)
+#   - ClickHouse Cloud (the new backend)
+#
+# Step 3a stops Filebeat *before* this collector starts so that the
+# `logs-*-lab` data streams have a single producer (this collector).
+# Without that stop, both Filebeat and the OTel Collector would write
+# the same lines to ES, doubling the document count.
+#
+# At cutover (Step 10a), the elasticsearch exporters and references in
+# pipelines are removed so ClickHouse becomes the sole destination.
+#
+# Prerequisites:
+#   1. Set environment variables before running:
+#        export CH_HOST=<your-clickhouse-cloud-host>
+#        export CH_PASSWORD=<your-clickhouse-password>
+#   2. Stop Filebeat (Step 3a):
+#        docker compose -f ../part1/docker/docker-compose.source.yml stop filebeat
+# ============================================================
+
+receivers:
+  # ── Web access logs (structured JSON) ──────────────────────────────
+  filelog/web:
+    include:
+      - /var/log/generators/web-access-*.log
+    start_at: end
+    operators:
+      - type: json_parser
+        timestamp:
+          parse_from: attributes["@timestamp"]
+          layout_type: gotime
+          layout: '2006-01-02T15:04:05.000Z07:00'
+      # Promote the JSON 'service' field to resource attribute service.name
+      # so it becomes ServiceName in the OTel log schema
+      - type: move
+        from: attributes.service
+        to: resource["service.name"]
+
+  # ── Application logs (structured JSON with trace IDs) ───────────────
+  filelog/app:
+    include:
+      - /var/log/generators/app-*.log
+    start_at: end
+    operators:
+      - type: json_parser
+        timestamp:
+          parse_from: attributes["@timestamp"]
+          layout_type: gotime
+          layout: '2006-01-02T15:04:05.000Z07:00'
+      # Promote the JSON 'service' field to resource attribute service.name
+      - type: move
+        from: attributes.service
+        to: resource["service.name"]
+
+  # ── Infrastructure logs (unstructured syslog) ───────────────────────
+  filelog/infra:
+    include:
+      - /var/log/generators/infra-*.log
+    start_at: end
+    operators:
+      - type: regex_parser
+        # [pid] is optional — kernel: messages lack it
+        regex: '^(?P<timestamp>[A-Za-z]+\s+\d+\s+[\d:]+)\s+(?P<hostname>\S+)\s+(?P<process>[^:\[]+)(?:\[\d+\])?:\s+(?P<message>.*)$'
+        timestamp:
+          parse_from: attributes.timestamp
+          layout_type: strptime
+          layout: '%b %d %H:%M:%S'
+      # Promote hostname to resource attribute service.name
+      - type: move
+        from: attributes.hostname
+        to: resource["service.name"]
+
+processors:
+  # Batch inserts for efficiency; 5s timeout prevents stale data on low-volume streams
+  batch:
+    timeout: 5s
+    send_batch_size: 1000
+    send_batch_max_size: 2000
+
+  # Memory limiter prevents OOM on burst traffic
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+exporters:
+  # ── ClickHouse Cloud ────────────────────────────────────────────────
+  # Uses native protocol with TLS (port 9440). ClickHouse Cloud requires secure=true.
+  # create_schema: false — we already created otel_logs and otel_traces in schema.sql.
+  clickhouse:
+    endpoint: tcp://${CH_HOST}:9440?dial_timeout=60s&compress=lz4&secure=true
+    database: otel
+    username: default
+    password: ${CH_PASSWORD}
+    logs_table_name: otel_logs      # Null table → MV → otel_logs_v2
+    traces_table_name: otel_traces
+    timeout: 30s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 1000
+    create_schema: false
+
+  # ── Elasticsearch (parallel-run target) ─────────────────────────────
+  # One exporter per data stream so each filelog pipeline writes to the
+  # same data stream Filebeat was writing to before Step 3a stopped it.
+  # mapping.mode: ecs converts OTel fields (Body, Attributes, ...) to
+  # the ECS-shaped documents the data stream's component templates expect.
+  # Removed entirely at Step 10a (cutover) — see README Step 10a.
+  elasticsearch/web:
+    endpoints: [http://elasticsearch:9200]
+    logs_index: logs-web_access-lab
+    mapping:
+      mode: ecs
+    retry:
+      enabled: true
+      max_requests: 5
+    timeout: 30s
+
+  elasticsearch/app:
+    endpoints: [http://elasticsearch:9200]
+    logs_index: logs-application-lab
+    mapping:
+      mode: ecs
+    retry:
+      enabled: true
+      max_requests: 5
+    timeout: 30s
+
+  elasticsearch/infra:
+    endpoints: [http://elasticsearch:9200]
+    logs_index: logs-infrastructure-lab
+    mapping:
+      mode: ecs
+    retry:
+      enabled: true
+      max_requests: 5
+    timeout: 30s
+
+service:
+  pipelines:
+    logs/web:
+      receivers:   [filelog/web]
+      processors:  [memory_limiter, batch]
+      exporters:   [clickhouse, elasticsearch/web]
+
+    logs/app:
+      receivers:   [filelog/app]
+      processors:  [memory_limiter, batch]
+      exporters:   [clickhouse, elasticsearch/app]
+
+    logs/infra:
+      receivers:   [filelog/infra]
+      processors:  [memory_limiter, batch]
+      exporters:   [clickhouse, elasticsearch/infra]
+
+  telemetry:
+    logs:
+      level: info

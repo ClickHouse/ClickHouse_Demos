@@ -1,0 +1,105 @@
+# ============================================================
+# Elasticsearch → ClickHouse Migration Lab — .gitignore
+# ============================================================
+# This file is scoped to the lab directory. The OTel demo
+# (part1/opentelemetry-demo/) has its own .gitignore for the
+# upstream project; rules below act as a safety net.
+# ============================================================
+
+# ── Secrets & per-partner config ────────────────────────────
+# common/env.sh holds the partner's CH_HOST, CH_PASSWORD, and
+# Cloud API credentials. Never commit. The .example template
+# (env.sh.example) IS committed and contains placeholders.
+common/env.sh
+**/.env
+!**/.env.example
+docs/*_design.md
+
+# ── Terraform (Part 1, optional infra-provisioning path) ────
+part1/terraform/.terraform/
+part1/terraform/.terraform.lock.hcl
+part1/terraform/*.tfstate
+part1/terraform/*.tfstate.backup
+part1/terraform/terraform.tfvars
+*.tfvars.json
+*.tfplan
+crash.log
+crash.*.log
+
+# ── Python (validation scripts, partner virtualenvs) ────────
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ── Node (in case anyone uses npm-based dashboard tooling) ──
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.npm/
+
+# ── Docker / Compose runtime artefacts ──────────────────────
+*.pid
+*.sock
+
+# ── Local logs and generated output ─────────────────────────
+# (Tracked artifacts: diagrams/*.png, images/*.png, *.md, *.sql,
+#  *.csv, validation-queries.sql, schema.sql, etc.)
+*.log
+!part3/clickhouse/*.csv          # explicitly keep geoip-sample-data.csv
+validation-output.txt
+*.out
+*.err
+
+# ── Editor / IDE ────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+
+# ── Vim / Emacs / nano swap & backup files ──────────────────
+*.swp
+*.swo
+*.swn
+*~
+.~lock.*#
+\#*\#
+.\#*
+
+# ── OS junk ─────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── Backup & temp files left by edits ───────────────────────
+*.bak
+*.orig
+*.tmp
+*.rej
+
+# ── Mermaid CLI render scratch (the *.png outputs ARE tracked) ─
+part3/diagrams/*.svg
+part3/diagrams/*.pdf
+
+# ── Local exports & ad-hoc scripts (use scripts/ for tracked ones) ─
+*.local.sh
+*.local.sql
+scratch/
+tmp/
+
+workshop-deck
+CLAUDE.md
+part3/VALIDATION*.md

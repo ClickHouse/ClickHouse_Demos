@@ -1,0 +1,61 @@
+%%{init: {'theme':'default', 'flowchart': {'useMaxWidth': false, 'htmlLabels': true}}}%%
+flowchart LR
+
+  %% ───────────────────────────── Sources ──────────────────────────
+  subgraph Sources["Data Sources"]
+    direction TB
+    LG["Log generators<br/>(web / app / infra)"]
+    LV[("docker_log-data<br/>volume")]
+    LG -- "writes JSON / syslog" --> LV
+    Demo["OTel Demo<br/>16 microservices<br/>(frontend, cart,<br/>checkout, payment, …)"]
+  end
+
+  %% ───────────────────────────── Collectors ───────────────────────
+  subgraph Collectors["Collectors"]
+    direction TB
+    OTL["<b>otelcol-lab</b><br/>(Step 3b — Docker container)<br/>filelog receivers<br/>fan-out exporter"]
+    OTD["<b>otelcol-demo</b><br/>(Step 3d — parallel-run config)<br/>OTLP receivers<br/>fan-out exporter"]
+  end
+
+  FB["<s>Filebeat</s><br/>❌ STOPPED at Step 3a"]:::stopped
+
+  %% ───────────────────────────── Backends ─────────────────────────
+  subgraph ESBackend["Elasticsearch (existing backend)"]
+    direction TB
+    APM["elastic-apm-server<br/>(OTLP intake :8200)"]
+    ES[("Elasticsearch<br/>logs-web_access-lab<br/>logs-application-lab<br/>logs-infrastructure-lab<br/>logs-apm.app.＊<br/>traces-apm-＊<br/>metrics-apm.＊")]
+    Kibana["Kibana<br/>localhost:5601"]
+    APM -- "writes" --> ES
+    Kibana -. "queries" .-> ES
+  end
+
+  subgraph CHBackend["ClickHouse Cloud (new backend)"]
+    direction TB
+    CHLOGS[("otel.otel_logs<br/>(Null engine)")]
+    CHV2[("otel.otel_logs_v2<br/>MergeTree<br/>+ enrichment columns")]
+    CHTR[("otel.otel_traces")]
+    CHMETRICS[("otel.otel_metrics_＊<br/>(gauge / sum /<br/>histogram / etc.)")]
+    CHLOGS -- "MV" --> CHV2
+  end
+
+  %% ───────────────────────────── Wiring ───────────────────────────
+  LV -. "tail (start_at: end)" .-> OTL
+  Demo == "OTLP gRPC :4317<br/>OTLP HTTP :4318" ==> OTD
+
+  OTL == "ECS docs<br/>elasticsearch/{web,app,infra}" ==> ES
+  OTL == "native TLS :9440<br/>logs_table_name: otel_logs" ==> CHLOGS
+
+  OTD == "OTLP HTTP :8200<br/>otlphttp/apm exporter" ==> APM
+  OTD == "native TLS :9440<br/>traces / metrics / logs" ==> CHLOGS
+  OTD ==> CHTR
+  OTD ==> CHMETRICS
+
+  %% ───────────────────────────── Styles ───────────────────────────
+  classDef stopped fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d,stroke-dasharray:5 5
+  classDef collector fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+  classDef chSink fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+  classDef esSink fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+
+  class OTL,OTD collector
+  class CHLOGS,CHV2,CHTR,CHMETRICS chSink
+  class ES esSink
