@@ -19,7 +19,7 @@ HyperDX is the built-in observability UI for ClickStack — bundled with every C
 
 ![Launch ClickStack from the Cloud console sidebar](images/01-launch-clickstack.png)
 
-> **What you should see in the SQL console first:** the `otel` database in the database picker (top centre) listing all 13 tables and 3 materialized views you created in Step 2 — `otel_logs`, `otel_logs_v2`, `otel_traces`, `otel_metrics_*`, `geoip_*`, `alert_error_rate*`, `logs_summary_1min*`. If any are missing, re-run `clickhouse/schema.sql` and `clickhouse/alert-tables.sql` before continuing.
+> **What you should see in the SQL console first:** the `otel` database in the database picker (top centre) listing the 11 tables, 3 materialized views, and 2 dictionaries you created in Step 2 — `otel_logs`, `otel_logs_v2`, `otel_traces`, `otel_metrics_*` (5 tables), `geoip_data` + `geoip_country`/`geoip_city` (1 table + 2 dictionaries), `alert_error_rate*`, `logs_summary_1min*`. If any are missing, re-run `clickhouse/dictionaries.sql`, `clickhouse/schema.sql`, and `clickhouse/alert-tables.sql` before continuing.
 
 ---
 
@@ -108,7 +108,7 @@ You should see:
 Things to try:
 
 - **Filter to one service:** click `inventory-service` (or any service) under the `ServiceName` facet — the table reloads filtered to that service in a fraction of a second.
-- **Search by string:** type `error` in the top search bar. ClickHouse's text indexes (the `tokenbf_v1` skip index in [schema.sql](clickhouse/schema.sql)) accelerate this dramatically vs. a full scan.
+- **Search by string:** type `error` in the top search bar. ClickHouse's text indexes (the `text(tokenizer='sparseGrams')` skip index on `Body` in [schema.sql](clickhouse/schema.sql)) accelerate this dramatically vs. a full scan.
 - **Inspect a row:** click any log row to expand the structured view — every `LogAttributes` map key becomes a clickable filter.
 
 > **Note on time-range:** the `start_at: end` setting in the file-based collector means historical lines that existed before Step 3b are not in `otel_logs_v2`. If "Last 24 hours" looks sparse in the early hours, that's expected — the data starts when the collector did.

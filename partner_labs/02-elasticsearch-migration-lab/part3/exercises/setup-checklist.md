@@ -29,7 +29,7 @@ Work through each step in the README and check it off as you go. Fill in the bla
 **Dictionaries first, then tables** — `otel_logs_v2` references `otel.geoip_country`/`otel.geoip_city` at CREATE time.
 
 - [ ] Ran `clickhouse/dictionaries.sql` (creates the `otel` database, `geoip_data` table, and empty dictionaries)
-- [ ] Loaded GeoIP CSV: `clickhouse client --database otel --query "INSERT INTO geoip_data FORMAT CSV" < clickhouse/geoip-sample-data.csv`
+- [ ] Loaded GeoIP CSV: `clickhouse client --database otel --query "INSERT INTO geoip_data FORMAT CSVWithNames" < clickhouse/geoip-sample-data.csv`
 - [ ] Reloaded dictionaries: `SYSTEM RELOAD DICTIONARY otel.geoip_country` and `SYSTEM RELOAD DICTIONARY otel.geoip_city`
   - [ ] `geoip_country` dictionary status = `LOADED` (in database `otel`)
   - [ ] `geoip_city` dictionary status = `LOADED` (in database `otel`)
@@ -90,7 +90,7 @@ Work through each step in the README and check it off as you go. Fill in the bla
   ```bash
   bash scripts/swap-otelcol-demo-config.sh parallel
   ```
-  - [ ] `docker logs docker-otelcol-demo-1 --tail=10` shows "Everything is ready. Begin running and processing data."
+  - [ ] `docker logs "$(docker ps -qf name=otelcol-demo)" --tail=10` shows "Everything is ready. Begin running and processing data."
   - [ ] No "Failed to start component" or "connection refused" errors
 
 ---

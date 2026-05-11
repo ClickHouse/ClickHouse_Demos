@@ -38,15 +38,32 @@ fi
 
 # ────────────────────────────────────────
 # Part 3: Target stack (OTel + HyperDX)
+# Part 3 uses two overlay compose files (parallel-run and cutover variants)
+# layered on top of Part 1's source + otel-demo compose files, plus a
+# standalone otelcol-lab container started via `docker run`.
 # ────────────────────────────────────────
-PART3_COMPOSE="$LAB_ROOT/part3/docker/docker-compose.target.yml"
-if [ -f "$PART3_COMPOSE" ]; then
-  echo "Stopping Part 3 target stack..."
-  docker compose -f "$PART3_COMPOSE" down -v --remove-orphans 2>/dev/null && \
-    echo "[DONE] Part 3 target stack removed." || \
-    echo "[SKIP] Part 3 stack not running."
-else
-  echo "[SKIP] Part 3 docker-compose.target.yml not found."
+PART1_SRC_COMPOSE="$LAB_ROOT/part1/docker/docker-compose.source.yml"
+PART1_OTEL_COMPOSE="$LAB_ROOT/part1/docker/docker-compose.otel-demo.yml"
+for PHASE in parallel cutover; do
+  OVERLAY="$LAB_ROOT/part3/docker/docker-compose.otel-demo.${PHASE}.yml"
+  if [ -f "$OVERLAY" ] && [ -f "$PART1_SRC_COMPOSE" ] && [ -f "$PART1_OTEL_COMPOSE" ]; then
+    echo "Stopping Part 3 ${PHASE} overlay..."
+    docker compose \
+      -f "$PART1_SRC_COMPOSE" \
+      -f "$PART1_OTEL_COMPOSE" \
+      -f "$OVERLAY" \
+      down -v --remove-orphans 2>/dev/null && \
+      echo "[DONE] Part 3 ${PHASE} overlay removed." || \
+      echo "[SKIP] Part 3 ${PHASE} overlay not running."
+  fi
+done
+
+# Standalone otelcol-lab container (started via `docker run`, not compose)
+if docker ps -a --format '{{.Names}}' | grep -q '^otelcol-lab$'; then
+  echo "Removing standalone otelcol-lab container..."
+  docker rm -f otelcol-lab >/dev/null && \
+    echo "[DONE] otelcol-lab container removed." || \
+    echo "[SKIP] otelcol-lab removal failed."
 fi
 
 # ────────────────────────────────────────

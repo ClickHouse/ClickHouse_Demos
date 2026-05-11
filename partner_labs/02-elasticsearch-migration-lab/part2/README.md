@@ -284,7 +284,7 @@ Before proceeding to [Part 3](../part3/README.md), verify:
 - [ ] Each data stream section includes a proposed ClickHouse table design (partition key, ORDER BY, materialized columns, TTL)
 - [ ] You have identified which ILM phases become unnecessary in ClickHouse Cloud and why
 - [ ] `exercises/query-translation.md` has working ClickHouse SQL for all 5 queries
-- [ ] `exercises/adr-template.md` has a rationale for each of the 6 decisions (not just a choice)
+- [ ] `exercises/adr-template.md` has a rationale for each of the 7 decisions (not just a choice)
 - [ ] You compared your worksheet and ADR answers against [solutions/](solutions/) and can explain any deliberate deviations
 
 ---

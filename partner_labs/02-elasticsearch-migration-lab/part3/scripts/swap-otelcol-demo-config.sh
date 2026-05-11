@@ -51,4 +51,4 @@ docker compose \
 
 echo
 echo "✓ otelcol-demo recreated with ${PHASE} config."
-echo "  Verify with: docker logs docker-otelcol-demo-1 --tail=20"
+echo "  Verify with: docker compose -f ../part1/docker/docker-compose.source.yml -f ../part1/docker/docker-compose.otel-demo.yml -f docker/docker-compose.otel-demo.${PHASE}.yml logs --tail=20 otelcol-demo"

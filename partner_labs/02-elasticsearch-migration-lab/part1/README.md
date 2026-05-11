@@ -6,14 +6,14 @@
 Stand up a production-realistic Elasticsearch observability stack with **two distinct workloads** — so you have a realistic "before" state with multiple migration paths to analyze in Parts 2–3.
 
 - **Workload 1**: Filebeat-based log collection — three log generators (web access, application, infrastructure) feeding Elasticsearch data streams via Filebeat and ingest pipelines.
-- **Workload 2**: OpenTelemetry Demo (Astronomy Shop) — 15+ microservices (Go, Java, .NET, Python, Rust, Node.js, PHP, Ruby) instrumented with OTel SDKs, sending traces/metrics/logs through an OTel Collector to Elastic APM Server.
+- **Workload 2**: OpenTelemetry Demo (Astronomy Shop) — 16 microservices (Go, Java, .NET, Python, Rust, Node.js, PHP, Ruby) instrumented with OTel SDKs, sending traces/metrics/logs through an OTel Collector to Elastic APM Server.
 
 ![Architecture Diagram](diagrams/architecture.png)
 
 ## What You'll Have at the End
 
 - Elasticsearch 8.15 running with security disabled (lab mode), receiving ~300 events/minute across 3 data streams (Workload 1)
-- Kibana 8.15 with 4 pre-built dashboards: Web Traffic Overview, Application Health, Infrastructure Overview, OTel Demo — APM Traces
+- Kibana 8.15 with 6 pre-built dashboards: Web Traffic Overview, Application Health, Infrastructure Overview, OTel Demo — APM Traces, OTel Demo — Latency, OTel Demo — Logs
 - Filebeat 8.15 collecting logs from 3 generators: web access (JSON), application (JSON), and infrastructure (syslog)
 - Elastic APM Server 8.15 receiving OTLP traces from both the sample Flask app and the full OTel Demo stack
 - 4 active ingest pipelines performing geoip enrichment, user-agent parsing, grok extraction, and scripted field normalization
@@ -86,7 +86,7 @@ docker compose -f docker-compose.source.yml up -d --build
 Expected output (containers starting up):
 
 ```
-[+] Running 9/9
+[+] Running 10/10
  ✔ Network docker_default       Created
  ✔ Container elasticsearch      Started
  ✔ Container kibana             Started
@@ -96,13 +96,14 @@ Expected output (containers starting up):
  ✔ Container log-generator-web  Started
  ✔ Container log-generator-app  Started
  ✔ Container log-generator-infra Started
+ ✔ Container sample-app         Started
 ```
 
 Allow 2–3 minutes for Elasticsearch to fully start and for the bootstrap container to finish configuring data streams, ILM policies, ingest pipelines, and Kibana dashboards.
 
 ### Step A.3: Start Workload 2 (OpenTelemetry Demo)
 
-> **Note:** Workload 2 requires ~9 GB RAM for 20+ microservices. Run this after Workload 1 is healthy.
+> **Note:** Workload 2 requires ~9 GB RAM for 16 microservices. Run this after Workload 1 is healthy.
 
 From the same `docker/` directory, add the OTel Demo services to the existing network:
 
@@ -194,7 +195,7 @@ Expected: `"count"` growing above 0 within 2 minutes.
 
 ## Option B: EC2 (Terraform)
 
-The Terraform configuration in `terraform/` provisions a `t3.2xlarge` EC2 instance (8 vCPU / 32 GB RAM), installs Docker and Docker Compose via user-data, sets `vm.max_map_count=262144` automatically, clones the lab repository, and starts the source stack. You do not need to set the kernel parameter manually.
+The Terraform configuration in `terraform/` provisions a `t3.2xlarge` EC2 instance (8 vCPU / 32 GB RAM), installs Docker and Docker Compose via user-data, sets `vm.max_map_count=262144` automatically, clones the lab repository, and starts **Workload 1** (the Elasticsearch stack). You do not need to set the kernel parameter manually. You will start Workload 2 (the OpenTelemetry Demo) yourself in Step B.4 after Workload 1 is healthy — the t3.2xlarge is sized for both.
 
 ### Step B.1: Copy the variables template
 
@@ -253,21 +254,47 @@ terraform output ssh_command
 ssh -i ~/.ssh/<key-name>.pem ec2-user@<EC2_PUBLIC_IP>
 ```
 
-Once connected, watch the Docker startup and bootstrap:
+Once connected, first check whether the EC2 user-data script has already started the stack for you:
 
 ```bash
-# Wait for Docker Compose to start (user-data runs this automatically)
-docker compose -f ~/lab/partner_labs/02-elasticsearch-migration-lab/part1/docker/docker-compose.source.yml \
-  logs -f es-bootstrap
+cd ~/lab/partner_labs/02-elasticsearch-migration-lab/part1/docker
+docker compose -f docker-compose.source.yml ps
+```
+
+- **If you see containers listed** (`elasticsearch`, `kibana`, `elastic-apm-server`, etc.) — user-data ran `docker compose up -d` automatically on first boot. Skip ahead.
+- **If you see nothing** — user-data is either still running, hasn't started yet, or failed. Wait 60–90 seconds, retry the `ps` command, and if it's still empty, start the stack yourself:
+
+```bash
+docker compose -f docker-compose.source.yml up -d
+```
+
+Then follow the bootstrap container's logs to confirm initialization completes:
+
+```bash
+docker compose -f docker-compose.source.yml logs -f es-bootstrap
 ```
 
 Expected final line: `es-bootstrap | [INFO] Bootstrap complete!`
 
-> **Note:** After `terraform apply` completes, the EC2 instance may still be running user-data (installing Docker, cloning the repo, starting containers). If SSH connects but Docker is not yet installed, wait 60–90 seconds and retry.
+Press `Ctrl-C` to stop following once you see it.
 
-### Step B.4: Verify from the EC2 instance
+### Step B.4: Start Workload 2 (OpenTelemetry Demo)
 
-Run these commands from inside the SSH session (use `localhost` — the services are not exposed to the internet by default on ports 9200/5601 via the security group, only port 5601/9200 from your allowed CIDR):
+> **Note:** Workload 2 requires ~9 GB RAM for 16 microservices. Run this only after Workload 1 is healthy and the `es-bootstrap` container has finished (Step B.3).
+
+From the same `docker/` directory inside the SSH session, add the OTel Demo services to the existing network:
+
+```bash
+docker compose -f docker-compose.source.yml -f docker-compose.otel-demo.yml up -d
+```
+
+> **How it works:** Both compose files share the same Docker Compose project and network. The `otelcol-demo` container collects all signals from the demo microservices and forwards them to the `elastic-apm-server` container started by Workload 1.
+
+This pulls ~1.5 GB of OTel Demo images on first run. Allow 3–5 minutes for all services to become healthy.
+
+### Step B.5: Verify from the EC2 instance
+
+Run these commands from inside the SSH session using `localhost`. From outside the EC2 instance, the security group restricts ports 9200 and 5601 to your allowed CIDR only — they are not open to the broader internet:
 
 ```bash
 # Cluster health
@@ -280,11 +307,23 @@ curl -s http://localhost:9200/_data_stream/logs-* | python3 -m json.tool | grep 
 curl -s "http://localhost:9200/logs-*/_count" | python3 -m json.tool
 ```
 
-You can also run the verification from your laptop using the public IP from `terraform output`:
+Confirm Workload 2 containers are running and APM traces are flowing:
+
+```bash
+# OTel demo containers (should list 16+ services like frontend, cartservice, otelcol-demo, etc.)
+docker compose -f docker-compose.source.yml -f docker-compose.otel-demo.yml ps
+
+# APM trace count (should be > 0 and growing 2 minutes after Workload 2 starts)
+curl -s "http://localhost:9200/traces-apm-*/_count" | python3 -m json.tool
+```
+
+You can also run the ES verification from your laptop using the public IP from `terraform output`:
 
 ```bash
 curl -s http://<EC2_PUBLIC_IP>:9200/_cluster/health | python3 -m json.tool
 ```
+
+> **Note on the OTel storefront UI:** The Astronomy Shop UI (port 8090) is not exposed in the default security group. To access it from your laptop, either open port 8090 in `terraform/main.tf` (and re-apply), or use SSH port-forwarding: `ssh -i ~/.ssh/<key-name>.pem -L 8090:localhost:8090 ec2-user@<EC2_PUBLIC_IP>`, then visit [http://localhost:8090](http://localhost:8090).
 
 ---
 
@@ -373,6 +412,8 @@ Expected output when all checks pass (run ~5 minutes after starting both workloa
 
 ## Troubleshooting
 
+> All commands below assume you are in `part1/docker/` (the same working directory used by the steps above). If you've changed directory, run `cd part1/docker` first.
+
 ### 1. Elasticsearch OOM / `vm.max_map_count` too low
 
 **Symptom:** The `elasticsearch` container exits immediately or repeatedly restarts. `docker compose logs elasticsearch` shows:
@@ -386,7 +427,7 @@ max virtual memory areas vm.max_map_count [65530] is too low, increase to at lea
 ```bash
 sudo sysctl -w vm.max_map_count=262144
 # Then restart the container:
-docker compose -f docker/docker-compose.source.yml restart elasticsearch
+docker compose -f docker-compose.source.yml restart elasticsearch
 ```
 
 **Fix (macOS):** This error should not occur on macOS — Docker Desktop sets this automatically. If you see it, restart Docker Desktop.
@@ -406,10 +447,10 @@ until curl -sf http://localhost:9200/_cluster/health > /dev/null 2>&1; do
 done
 
 # Re-run bootstrap
-docker compose -f docker/docker-compose.source.yml restart es-bootstrap
+docker compose -f docker-compose.source.yml restart es-bootstrap
 
 # Watch it complete
-docker compose -f docker/docker-compose.source.yml logs -f es-bootstrap
+docker compose -f docker-compose.source.yml logs -f es-bootstrap
 ```
 
 ---
