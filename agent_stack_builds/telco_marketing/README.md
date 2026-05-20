@@ -247,13 +247,19 @@ make setup-local
 
 This creates a `.env` file from `.env.local.example` and auto-generates all security keys.
 
-#### Step 2: Configure LLM API Key
+#### Step 2: Install Ollama and pull the model
 
-Edit `.env` and set your Google API key:
+Local mode runs the default `qwen3.5:2b` model via Ollama on the host (LibreChat reaches it through `host.docker.internal:11434`). No API key required.
 
 ```bash
-GOOGLE_KEY=your-google-api-key
+# macOS:
+brew install ollama
+# Other platforms: https://ollama.com/download
+
+ollama pull qwen3.5:2b
 ```
+
+The Ollama daemon starts automatically after install (macOS app / Homebrew service). On Linux, run `ollama serve` in a separate terminal if it isn't already running.
 
 #### Step 3: Generate Data
 
