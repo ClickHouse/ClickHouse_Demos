@@ -63,9 +63,9 @@ You'll need eight values total. Write them in a scratch buffer as you go.
      ```
      https://console.clickhouse.cloud/services/<SERVICE_UUID>
      ```
-   - **Organization UUID** — open the org switcher in the top-left of the console, or visit **Organization → Settings**. The URL becomes:
+   - **Organization UUID** — open **Organization → Settings** in the console. The URL becomes:
      ```
-     https://console.clickhouse.cloud/organizations/<ORG_UUID>/...
+     https://console.clickhouse.cloud/organizations/<ORG_UUID>
      ```
    Save **both**. They go straight into `librechat.hybrid.yaml` (Step 6) — not `.env`. They pin the remote MCP server to your one service so the LLM doesn't enumerate every org/service before querying.
 
