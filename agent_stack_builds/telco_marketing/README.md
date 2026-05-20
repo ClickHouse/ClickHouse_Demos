@@ -307,7 +307,7 @@ make setup-hybrid
 
 Edit `.env` and fill in:
 
-- **ClickHouse Cloud**: `CLICKHOUSE_HOST`, `CLICKHOUSE_PORT`, `CLICKHOUSE_USER`, `CLICKHOUSE_PASSWORD`. To pin the LLM to a single org/service (so it skips discovery), edit `librechat.hybrid.yaml`'s `serverInstructions` block directly with the two UUIDs from the Cloud console URL — LibreChat doesn't substitute env vars there.
+- **ClickHouse Cloud**: `CLICKHOUSE_HOST`, `CLICKHOUSE_PORT`, `CLICKHOUSE_USER`, `CLICKHOUSE_PASSWORD`. To pin the LLM to a single org/service (so it skips discovery), edit `librechat.hybrid.yaml`'s `serverInstructions` block directly with the two UUIDs — service UUID from the service-page URL, organization UUID from **Organization → Settings** (`console.clickhouse.cloud/organizations/<ORG_UUID>`). LibreChat doesn't substitute env vars in `serverInstructions`.
 - **Langfuse Cloud** (optional): `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL`
 - **LLM key**: `ANTHROPIC_API_KEY` (the hybrid presets target Claude 4.6 / Haiku 3.5)
 
