@@ -29,7 +29,6 @@ define SERVICE_TABLE
 	@LC_EMAIL=$$(grep -s '^LIBRECHAT_USER_EMAIL=' .env 2>/dev/null | cut -d= -f2) && \
 	 LC_PASS=$$(grep -s '^LIBRECHAT_USER_PASSWORD=' .env 2>/dev/null | cut -d= -f2) && \
 	 echo "  LibreChat    http://localhost:3080        $$LC_EMAIL / $$LC_PASS"
-	@echo "  LiteLLM      http://localhost:4000"
 	@echo "  ClickHouse   (cloud -- see .env)"
 	@echo "  Langfuse     (cloud -- see .env)"
 	@echo ""
