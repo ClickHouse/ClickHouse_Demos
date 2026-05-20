@@ -586,15 +586,15 @@ html, body { background: var(--canvas); }
     <li>Log in to <a href="https://console.clickhouse.cloud">console.clickhouse.cloud</a></li>
     <li>Create or pick a service — free <strong>Development</strong> tier works</li>
     <li><strong>Connect</strong> → <strong>HTTPS</strong> → grab host and password</li>
-    <li>Read both UUIDs straight from the URL:</li>
+    <li><strong>Service UUID</strong> — read from the service page URL: <code>console.clickhouse.cloud/services/&lt;SERVICE_UUID&gt;</code></li>
+    <li><strong>Organization UUID</strong> — open the org switcher in the top-left, or visit <strong>Organization → Settings</strong>; the URL will be <code>/organizations/&lt;ORG_UUID&gt;/…</code></li>
   </ol>
-  <pre><code class="language-text">https://console.clickhouse.cloud/organizations/ORG_UUID/services/SERVICE_UUID</code></pre>
   <div class="callout">
     Save both UUIDs — they go directly into <code>librechat.hybrid.yaml</code> in Step 06, <strong>not into <code>.env</code></strong> (LibreChat doesn't substitute env vars in <code>serverInstructions</code>).
   </div>
   <aside class="notes">
-    Live-demo the URL inspection on screen — it's the fastest way to grab the
-    org/service UUIDs.
+    Service UUID is in the service-page URL. Org UUID is NOT in the service URL —
+    grab it from the org switcher dropdown or the Organization settings page.
   </aside>
 </section>
 
