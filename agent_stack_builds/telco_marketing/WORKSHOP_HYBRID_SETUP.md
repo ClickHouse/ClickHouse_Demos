@@ -58,10 +58,15 @@ You'll need eight values total. Write them in a scratch buffer as you go.
 4. Pick the **HTTPS** tab. Note:
    - `CLICKHOUSE_HOST` — the hostname like `xxxxxxxxxx.region.aws.clickhouse.cloud`
    - `CLICKHOUSE_PASSWORD` — shown once at service creation (or reset under Settings → Connections)
-5. From the URL of the service page, grab the two UUIDs:
-   ```
-   https://console.clickhouse.cloud/organizations/<ORG_UUID>/services/<SERVICE_UUID>
-   ```
+5. Grab the two UUIDs from two different places:
+   - **Service UUID** — from the service-page URL:
+     ```
+     https://console.clickhouse.cloud/services/<SERVICE_UUID>
+     ```
+   - **Organization UUID** — open the org switcher in the top-left of the console, or visit **Organization → Settings**. The URL becomes:
+     ```
+     https://console.clickhouse.cloud/organizations/<ORG_UUID>/...
+     ```
    Save **both**. They go straight into `librechat.hybrid.yaml` (Step 6) — not `.env`. They pin the remote MCP server to your one service so the LLM doesn't enumerate every org/service before querying.
 
 ### 1b. Langfuse Cloud
