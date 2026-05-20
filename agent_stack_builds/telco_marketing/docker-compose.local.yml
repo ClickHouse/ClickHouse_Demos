@@ -33,7 +33,8 @@ services:
       - "9001:9000"
     volumes:
       - clickhouse_data:/var/lib/clickhouse
-      - ./clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+      # Quoted for Windows host paths that may contain spaces.
+      - "./clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql"
     environment:
       CLICKHOUSE_DB: telco
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
