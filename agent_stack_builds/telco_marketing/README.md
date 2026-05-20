@@ -179,8 +179,8 @@ Get up and running with everything in Docker:
 cd ClickHouse_Demos/agent_stack_builds/telco_marketing
 make setup-local
 # (Optional) Edit .env to set your LLM API key
-make start
 make generate-data
+make start
 make check-db
 ```
 
@@ -202,8 +202,8 @@ make setup-hybrid
 # Edit .env with your cloud credentials and LLM API key
 # Enable Remote MCP Server in ClickHouse Cloud console (Connect > Remote MCP Server)
 make init-schema
-make start
 make generate-data
+make start
 make check-db
 ```
 
@@ -255,21 +255,21 @@ Edit `.env` and set your Google API key:
 GOOGLE_KEY=your-google-api-key
 ```
 
-#### Step 3: Start Services
-
-```bash
-make start
-```
-
-This launches ClickHouse, Langfuse, LibreChat, the MCP server, and supporting services.
-
-#### Step 4: Generate Data
+#### Step 3: Generate Data
 
 ```bash
 make generate-data
 ```
 
-Populates ClickHouse with realistic telco data (takes 2-5 minutes for the default medium dataset).
+Brings up ClickHouse (which auto-loads the schema on first start in local mode), populates it with realistic telco data, then exits. Takes ~20-30 seconds for the default medium dataset.
+
+#### Step 4: Start Services
+
+```bash
+make start
+```
+
+This launches Langfuse, LibreChat, the MCP server, and the remaining supporting services. ClickHouse is already running from the previous step.
 
 #### Step 5: Verify
 
@@ -322,21 +322,21 @@ Push the database schema to your ClickHouse Cloud instance:
 make init-schema
 ```
 
-#### Step 4: Start Services
-
-```bash
-make start
-```
-
-This launches LibreChat and supporting services locally. The MCP connection to ClickHouse Cloud is handled by the remote MCP server.
-
-#### Step 5: Generate Data
+#### Step 4: Generate Data
 
 ```bash
 make generate-data
 ```
 
-The data generator connects to your ClickHouse Cloud instance and populates it.
+The data generator connects to your ClickHouse Cloud instance and populates it. Runs as a one-shot container; does not require LibreChat to be up.
+
+#### Step 5: Start Services
+
+```bash
+make start
+```
+
+This launches LibreChat and supporting services locally. The MCP connection to ClickHouse Cloud is handled by the remote MCP server, which now has the schema and data ready.
 
 #### Step 6: Use LibreChat
 
@@ -1586,8 +1586,8 @@ A `Makefile` is provided for easy management of the workshop environment. All co
 ```bash
 make setup-local
 # (Optional) Edit .env for LLM API keys
-make start
 make generate-data
+make start
 make check-db
 # Open http://localhost:3080
 ```
@@ -1598,8 +1598,8 @@ make check-db
 make setup-hybrid
 # Edit .env with cloud credentials + LLM API keys
 make init-schema
-make start
 make generate-data
+make start
 make check-db
 # Open http://localhost:3080
 ```
