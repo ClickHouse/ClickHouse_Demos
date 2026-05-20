@@ -11,32 +11,25 @@ interface:
   presets: false
 
 # ---------------------------------------------------------------------------
-# Endpoints: LiteLLM custom endpoint for Gemini models (traced via Langfuse)
-# and Agents endpoint for agent-based conversations.
+# Endpoints: Anthropic (direct Claude API) and Agents. LibreChat sends Langfuse
+# traces natively via LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY / LANGFUSE_BASE_URL
+# in .env -- no proxy required.
 # ---------------------------------------------------------------------------
 endpoints:
-  custom:
-    - name: "LiteLLM"
-      apiKey: "${LITELLM_MASTER_KEY}"
-      baseURL: "http://litellm:4000/v1"
-      headers:
-        langfuse_session_id: "{{LIBRECHAT_BODY_CONVERSATIONID}}"
-        langfuse_trace_user_id: "{{LIBRECHAT_USER_ID}}"
-        langfuse_trace_name: "telco-chat"
-      models:
-        default:
-          - "gemini-2.5-pro"
-          - "gemini-2.5-flash"
-          - "gemini-2.5-flash-lite"
-        fetch: false
-      dropParams:
-        - "stop"
   agents:
     recursionLimit: 50
     maxRecursionLimit: 100
     disableBuilder: false
     allowedProviders:
-      - google
+      - anthropic
+  anthropic:
+    titleConvo: true
+    titleModel: "claude-opus-4-6"
+    models:
+      - "claude-3-5-haiku-20241022"
+      - "claude-3-5-sonnet-v2@20241022"
+      - "claude-sonnet-4-6"
+      - "claude-opus-4-6"
 
 # ---------------------------------------------------------------------------
 # MCP Server Configuration (hybrid mode: ClickHouse Cloud remote MCP)
@@ -58,6 +51,11 @@ mcpServers:
     chatMenu: true
     startup: true
     serverInstructions: |
+      TARGET (skip discovery; pass these IDs directly to every tool call):
+      - organization_id: 9a091c8b-4552-4a0f-a6ad-cdadb53a6c6f
+      - service_id: 41d4c824-6228-445b-967b-e77e550b833c
+      Do NOT call get_organizations or get_services_list -- the user has multiple orgs/services and listing them wastes turns. Pass organization_id and service_id (above) to run_select_query, list_databases, list_tables, and any other tool that accepts them.
+
       Connected to ClickHouse Cloud database 'telco' with tables:
       - customers: customer profiles (customer_id, first_name, last_name, email, age, gender, city, state, segment, plan_type, monthly_spend, lifetime_value, churn_probability, is_churned, signup_date)
       - call_detail_records: usage events (cdr_id, customer_id, timestamp, event_type [voice_call/data_session], duration_seconds, data_mb, base_station_id, cost)
@@ -72,27 +70,27 @@ mcpServers:
       Write ClickHouse-compatible SQL. Use LIMIT for exploratory queries.
 
 # ---------------------------------------------------------------------------
-# Model Specifications: three Gemini models available as presets.
-# All models route through the LiteLLM proxy for Langfuse tracing.
+# Model Specifications: three Claude models available as presets.
+# Calls go directly to Anthropic's API. LibreChat traces every request
+# to Langfuse natively (configured via LANGFUSE_* env vars).
 # ---------------------------------------------------------------------------
 modelSpecs:
   enforce: true
   prioritize: true
   list:
     - name: "telco-analyst-pro"
-      label: "Gemini 2.5 Pro"
+      label: "Claude Opus 4.6"
       default: true
       description: "High capability for complex reasoning and analysis"
       mcpServers:
         - "clickhouse-cloud"
       preset:
-        endpoint: "LiteLLM"
-        model: "gemini-2.5-pro"
-        modelLabel: "Gemini 2.5 Pro"
-        temperature: 0.3
+        endpoint: "anthropic"
+        model: "claude-opus-4-6"
+        modelLabel: "Claude Opus 4.6"
         max_tokens: 8192
         greeting: |
-          Welcome to the Telco Analytics Assistant (Gemini 2.5 Pro).
+          Welcome to the Telco Analytics Assistant (Claude Opus 4.6).
           I can query the ClickHouse Cloud database to analyze customers, call records,
           network events, and marketing campaigns.
           Ask me anything about your telco data -- for example:
@@ -295,20 +293,19 @@ modelSpecs:
           - Design system: COLORS array provides 8 Material Design colors. The opts() helper standardizes chart options. CSS classes: .kpi (metric cards), .card (chart containers), .card-insight (per-chart caption), .section-header (visual dividers), .findings (insight panel), .finding (individual insight with left border).
           - For fewer or more KPIs, adjust grid-template-columns (e.g. repeat(3, 1fr) for 3 KPIs, repeat(5, 1fr) for 5). Same for charts: add or remove .card divs and Chart() calls as needed.
           - Everything goes in ONE artifact. Run all queries first, then build the infographic. Include markdown executive summary and data tables alongside the artifact.
-
+      artifacts: true
     - name: "telco-analyst-flash"
-      label: "Gemini 2.5 Flash"
+      label: "Claude Sonnet 4.6"
       description: "Fast model balancing intelligence and speed"
       mcpServers:
         - "clickhouse-cloud"
       preset:
-        endpoint: "LiteLLM"
-        model: "gemini-2.5-flash"
-        modelLabel: "Gemini 2.5 Flash"
-        temperature: 0.3
+        endpoint: "anthropic"
+        model: "claude-sonnet-4-6"
+        modelLabel: "Claude Sonnet 4.6"
         max_tokens: 8192
         greeting: |
-          Welcome to the Telco Analytics Assistant (Gemini 2.5 Flash).
+          Welcome to the Telco Analytics Assistant (Claude Sonnet 4.6).
           I can query the ClickHouse Cloud database to analyze customers, call records,
           network events, and marketing campaigns.
           Ask me anything about your telco data -- for example:
@@ -513,18 +510,17 @@ modelSpecs:
           - Everything goes in ONE artifact. Run all queries first, then build the infographic. Include markdown executive summary and data tables alongside the artifact.
 
     - name: "telco-analyst-lite"
-      label: "Gemini 2.5 Flash-Lite"
+      label: "Claude 3.5 Haiku"
       description: "Efficient model for quick queries at low cost"
       mcpServers:
         - "clickhouse-cloud"
       preset:
-        endpoint: "LiteLLM"
-        model: "gemini-2.5-flash-lite"
-        modelLabel: "Gemini 2.5 Flash-Lite"
-        temperature: 0.3
+        endpoint: "anthropic"
+        model: "claude-3-5-haiku-20241022"
+        modelLabel: "Claude 3.5 Haiku"
         max_tokens: 8192
         greeting: |
-          Welcome to the Telco Analytics Assistant (Gemini 2.5 Flash-Lite).
+          Welcome to the Telco Analytics Assistant (Claude 3.5 Haiku).
           I can query the ClickHouse Cloud database to analyze customers, call records,
           network events, and marketing campaigns.
           Ask me anything about your telco data -- for example:

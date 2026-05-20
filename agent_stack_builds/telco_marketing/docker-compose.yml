@@ -16,13 +16,11 @@ services:
         condition: service_started
       meilisearch:
         condition: service_started
-      litellm:
-        condition: service_healthy
     env_file:
       - .env
     volumes:
       - ./.env:/app/.env
-      - ./librechat.yaml:/app/librechat.yaml
+      - ./librechat.${DEPLOY_MODE}.yaml:/app/librechat.yaml
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3080/api/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 5s
@@ -32,7 +30,9 @@ services:
     networks:
       - telco-network
 
-  # MongoDB - LibreChat conversation store
+  # MongoDB - LibreChat conversation store.
+  # Pinned to 8.0.17: 8.0.23 refuses to start on Linux kernel 6.19+
+  # (Docker Desktop's VM kernel) -- see MongoDB SERVER-121912.
   mongodb:
     image: mongo:8.0.17
     container_name: telco-mongodb
@@ -43,36 +43,12 @@ services:
 
   # Meilisearch - LibreChat search
   meilisearch:
-    image: getmeili/meilisearch:v1.12.3
+    image: getmeili/meilisearch:v1.44.0
     container_name: telco-meilisearch
     environment:
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-masterkey}
     volumes:
       - meilisearch_data:/meili_data
-    networks:
-      - telco-network
-
-  # LiteLLM Proxy - routes all LLM calls for Langfuse tracing
-  litellm:
-    image: ghcr.io/berriai/litellm:main-stable
-    container_name: telco-litellm
-    ports:
-      - "4000:4000"
-    volumes:
-      - ./litellm_config.yaml:/app/config.yaml
-    command: ["--config", "/app/config.yaml", "--port", "4000"]
-    environment:
-      GOOGLE_KEY: ${GOOGLE_KEY:-}
-      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:-}
-      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
-      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
-      LANGFUSE_HOST: ${LANGFUSE_BASE_URL:-http://langfuse-web:3000}
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/readiness')"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
     networks:
       - telco-network
 
