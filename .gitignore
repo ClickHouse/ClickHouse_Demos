@@ -43,6 +43,7 @@ Thumbs.db
 .env
 .env.test
 .env.local
+.env.hybrid
 
 # Generated LibreChat config (built from templates by make start)
 agent_stack_builds/telco_marketing/librechat.yaml

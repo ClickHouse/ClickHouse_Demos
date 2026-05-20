@@ -59,7 +59,6 @@ setup-local:
 	 JWT_SECRET=$$(openssl rand -hex 32) && \
 	 JWT_REFRESH_SECRET=$$(openssl rand -hex 32) && \
 	 MEILI_MASTER_KEY=$$(openssl rand -hex 16) && \
-	 LITELLM_MK=$$(openssl rand -hex 32) && \
 	 sed -i.bak \
 	   -e "s|<generate-with-openssl-rand-hex-32>|$$LANGFUSE_SECRET|" \
 	   .env && \
@@ -84,9 +83,6 @@ setup-local:
 	 sed -i.bak \
 	   -e "0,/<generate-with-openssl-rand-hex-16>/s||$$MEILI_MASTER_KEY|" \
 	   .env && \
-	 sed -i.bak \
-	   -e "0,/<generate-with-openssl-rand-hex-32>/s||$$LITELLM_MK|" \
-	   .env && \
 	 rm -f .env.bak
 	@echo "[OK] Generated security keys"
 	@# Generate Langfuse API keys (same value written to both LANGFUSE_INIT_PROJECT_* and LANGFUSE_*)
@@ -105,7 +101,7 @@ setup-local:
 	@echo "  3. make generate-data"
 	@echo "  4. Open http://localhost:3080 (LibreChat)"
 	@echo ""
-	@echo "Langfuse tracing is auto-configured. ALL LLM calls are traced via LiteLLM."
+	@echo "Langfuse tracing is auto-configured. LibreChat sends traces directly to Langfuse."
 	@echo "Log in at http://localhost:3000 with admin@telco.local / admin123 after running 'make start'."
 
 setup-hybrid:
@@ -122,7 +118,6 @@ setup-hybrid:
 	 JWT_SECRET=$$(openssl rand -hex 32) && \
 	 JWT_REFRESH_SECRET=$$(openssl rand -hex 32) && \
 	 MEILI_MASTER_KEY=$$(openssl rand -hex 16) && \
-	 LITELLM_MK=$$(openssl rand -hex 32) && \
 	 sed -i.bak \
 	   -e "s|<generate-with-openssl-rand-hex-32>|$$CREDS_KEY|" \
 	   .env && \
@@ -137,9 +132,6 @@ setup-hybrid:
 	   .env && \
 	 sed -i.bak \
 	   -e "0,/<generate-with-openssl-rand-hex-16>/s||$$MEILI_MASTER_KEY|" \
-	   .env && \
-	 sed -i.bak \
-	   -e "0,/<generate-with-openssl-rand-hex-32>/s||$$LITELLM_MK|" \
 	   .env && \
 	 rm -f .env.bak
 	@echo "[OK] Generated LibreChat security keys"
@@ -159,8 +151,6 @@ setup-hybrid:
 # ---------------------------------------------------------------------------
 start:
 	@echo "Starting workshop services (mode: $(DEPLOY_MODE))..."
-	@cp librechat.$(DEPLOY_MODE).yaml librechat.yaml
-	@echo "[OK] Generated librechat.yaml from librechat.$(DEPLOY_MODE).yaml"
 	$(COMPOSE_CMD) up -d
 	@echo "[OK] Services started"
 	$(SERVICE_TABLE)
