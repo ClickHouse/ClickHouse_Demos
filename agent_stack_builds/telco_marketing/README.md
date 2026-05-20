@@ -59,15 +59,14 @@ This workshop demonstrates a complete, production-ready data stack for telecommu
 
 ## Important: LLM Provider Flexibility
 
-> **LibreChat calls the Gemini API directly and traces every request to Langfuse natively.** No LLM proxy is in the path.
+> **LibreChat calls each mode's LLM directly and traces every request to Langfuse natively.** No LLM proxy is in the path.
 
-The default configuration uses Google Gemini models (gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-lite) configured under the built-in `google` endpoint in `librechat.local.yaml` / `librechat.hybrid.yaml`. Set your `GOOGLE_KEY` in `.env` to get started.
+The default model depends on your deployment mode:
 
-To use a different provider (OpenAI, Anthropic, etc.), enable the corresponding endpoint in the librechat yaml and set the matching API key in `.env`. See the [LibreChat endpoints docs](https://www.librechat.ai/docs/configuration/librechat_yaml/object_structure) for the full list.
+- **Local mode**: `qwen3.5:2b` running via Ollama on the host. LibreChat reaches Ollama at `host.docker.internal:11434`. No API key required.
+- **Hybrid mode**: Anthropic's Claude family (Opus 4.6 default, Sonnet 4.6, Haiku 3.5). Set your `ANTHROPIC_API_KEY` in `.env` to get started.
 
-### Vertex AI Support
-
-LibreChat supports **Google Vertex AI** as an alternative to direct API keys. To enable it, mount a service-account JSON file at `auth.json` and uncomment `GOOGLE_SERVICE_KEY_FILE` / `GOOGLE_LOC` in `.env`. See the [LibreChat Google docs](https://www.librechat.ai/docs/configuration/pre_configured_ai/google) for details.
+To swap models or providers, edit the matching endpoint block and `modelSpecs` list in `librechat.local.yaml` or `librechat.hybrid.yaml`. LibreChat supports OpenAI, Google (Gemini + Vertex AI), Bedrock, and many more — see the [LibreChat endpoints docs](https://www.librechat.ai/docs/configuration/librechat_yaml/object_structure) for the full list.
 
 The MCP integration (ClickHouse queries) and Langfuse tracing work identically regardless of which LLM provider you use.
 
@@ -107,7 +106,7 @@ flowchart TB
         LC --> MCP
         MCP --> CH
     end
-    LC --> GEMINI[Gemini API]
+    LC --> OLLAMA[Ollama qwen3.5:2b<br/>on host :11434]
     USER[User] --> LC
 
     style LC fill:#4285F4,stroke:#1a73e8,color:#fff
@@ -115,7 +114,7 @@ flowchart TB
     style CH fill:#FBBC04,stroke:#e0a800,color:#000
     style LF fill:#34A853,stroke:#2a8a43,color:#fff
     style DG fill:#E8710A,stroke:#c25f08,color:#fff
-    style GEMINI fill:#EA4335,stroke:#c5362a,color:#fff
+    style OLLAMA fill:#1F1F1F,stroke:#000,color:#fff
     style USER fill:#F538A0,stroke:#d42e87,color:#fff
     style Docker fill:#e8f0fe,stroke:#4285F4,color:#000
 ```
@@ -136,7 +135,7 @@ flowchart TB
         LF[Langfuse Cloud]
         RMCP --> CH
     end
-    LC --> GEMINI[Gemini API]
+    LC --> ANTHROPIC[Anthropic API<br/>Claude 4.6]
     LC --> LF
     USER[User] --> LC
     LC --> RMCP
@@ -147,7 +146,7 @@ flowchart TB
     style RMCP fill:#04696B,stroke:#035354,color:#fff
     style CH fill:#FBBC04,stroke:#e0a800,color:#000
     style LF fill:#34A853,stroke:#2a8a43,color:#fff
-    style GEMINI fill:#EA4335,stroke:#c5362a,color:#fff
+    style ANTHROPIC fill:#D97757,stroke:#a8543d,color:#fff
     style USER fill:#F538A0,stroke:#d42e87,color:#fff
     style Docker fill:#e8f0fe,stroke:#4285F4,color:#000
     style Cloud fill:#fef7e0,stroke:#FBBC04,color:#000
@@ -178,7 +177,8 @@ Get up and running with everything in Docker:
 ```bash
 cd ClickHouse_Demos/agent_stack_builds/telco_marketing
 make setup-local
-# (Optional) Edit .env to set your LLM API key
+# Install Ollama on the host and pull the local-mode model:
+#   brew install ollama && ollama pull qwen3.5:2b
 make generate-data
 make start
 make check-db
@@ -199,7 +199,7 @@ Connect to ClickHouse Cloud (with remote MCP server) and Langfuse Cloud:
 ```bash
 cd ClickHouse_Demos/agent_stack_builds/telco_marketing
 make setup-hybrid
-# Edit .env with your cloud credentials and LLM API key
+# Edit .env with your ClickHouse Cloud creds and your ANTHROPIC_API_KEY
 # Enable Remote MCP Server in ClickHouse Cloud console (Connect > Remote MCP Server)
 make init-schema
 make generate-data
@@ -226,7 +226,9 @@ Before you begin, ensure you have the following installed:
 - **Docker and Docker Compose**: For running the containerized services. [Install Docker](https://docs.docker.com/get-docker/)
 - **Git**: For cloning the workshop repository. [Install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - **make and openssl**: For running Makefile commands (pre-installed on macOS and most Linux distros)
-- **An LLM API key**: At least one of Anthropic, OpenAI, or Google API key
+- **An LLM**:
+  - Local mode: [Ollama](https://ollama.com) installed on the host with `qwen3.5:2b` pulled (no API key needed).
+  - Hybrid mode: an `ANTHROPIC_API_KEY` in `.env` (or swap to OpenAI/Google by editing `librechat.hybrid.yaml`).
 
 **Windows users**: Use [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) (Windows Subsystem for Linux) with Ubuntu. Install [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) with WSL2 backend enabled. All `make` commands run inside the WSL terminal. Ensure `make`, `openssl`, and `git` are installed in WSL (`sudo apt install make openssl git`).
 
@@ -247,13 +249,19 @@ make setup-local
 
 This creates a `.env` file from `.env.local.example` and auto-generates all security keys.
 
-#### Step 2: Configure LLM API Key
+#### Step 2: Install Ollama and pull the model
 
-Edit `.env` and set your Google API key:
+Local mode runs the default `qwen3.5:2b` model via Ollama on the host (LibreChat reaches it through `host.docker.internal:11434`). No API key required.
 
 ```bash
-GOOGLE_KEY=your-google-api-key
+# macOS:
+brew install ollama
+# Other platforms: https://ollama.com/download
+
+ollama pull qwen3.5:2b
 ```
+
+The Ollama daemon starts automatically after install (macOS app / Homebrew service). On Linux, run `ollama serve` in a separate terminal if it isn't already running.
 
 #### Step 3: Generate Data
 
@@ -299,9 +307,9 @@ make setup-hybrid
 
 Edit `.env` and fill in:
 
-- **ClickHouse Cloud**: `CLICKHOUSE_HOST`, `CLICKHOUSE_PORT`, `CLICKHOUSE_USER`, `CLICKHOUSE_PASSWORD`
-- **Langfuse Cloud** (optional): `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_HOST`
-- **LLM API key**: At least one provider
+- **ClickHouse Cloud**: `CLICKHOUSE_HOST`, `CLICKHOUSE_PORT`, `CLICKHOUSE_USER`, `CLICKHOUSE_PASSWORD`, plus `CH_ORG_ID` and `CH_SERVICE_ID` (so the LLM skips org/service discovery — see Cloud console URL for the UUIDs).
+- **Langfuse Cloud** (optional): `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL`
+- **LLM key**: `ANTHROPIC_API_KEY` (the hybrid presets target Claude 4.6 / Haiku 3.5)
 
 #### Step 2b: Enable ClickHouse Cloud Remote MCP Server
 
@@ -479,9 +487,14 @@ LibreChat is the AI chat frontend for this workshop. It connects to ClickHouse v
 
 ### Model Configuration
 
-Three Gemini models are available as presets in the LibreChat sidebar: Gemini 2.5 Pro, Gemini 2.5 Flash, and Gemini 2.5 Flash-Lite. LibreChat calls them via the built-in `google` endpoint and traces every request to Langfuse natively.
+Default presets in the LibreChat sidebar depend on deployment mode:
 
-To change the available models, edit the `google.models.default` list and the matching `modelSpecs` entries in `librechat.local.yaml` or `librechat.hybrid.yaml`. Then restart: `make restart`
+| Mode   | Provider  | Default preset            | Other presets                         |
+| :----- | :-------- | :------------------------ | :------------------------------------ |
+| Local  | Ollama    | `Qwen3.5 2B (Ollama)`     | _(one preset; clone in yaml to add)_  |
+| Hybrid | Anthropic | `Claude Opus 4.6`         | `Claude Sonnet 4.6`, `Claude 3.5 Haiku` |
+
+To change the available models, edit the matching endpoint block (`custom: [Ollama]` for local, `anthropic` for hybrid) and the corresponding `modelSpecs` entries in `librechat.local.yaml` or `librechat.hybrid.yaml`. Then restart LibreChat with `docker restart telco-librechat` — the yaml is bind-mounted directly, no rebuild needed.
 
 ### System Prompt (Prompt Engineering)
 
@@ -508,7 +521,7 @@ Langfuse provides observability for LLM interactions -- tracing every agent run,
 
 LibreChat ships with first-class Langfuse support: set `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_BASE_URL` in `.env` and LibreChat sends a trace for every chat message it generates. No proxy sits between LibreChat and the LLM.
 
-- **Gemini presets** (Gemini 2.5 Pro, Flash, Flash-Lite): LibreChat calls Google's Gemini API directly and emits a Langfuse trace per response.
+- **modelSpecs presets**: LibreChat calls the configured provider directly (Ollama in local mode, Anthropic in hybrid mode) and emits a Langfuse trace per response.
 - **Agents endpoint**: Each agent run -- including LLM generations and MCP tool calls -- is traced in the same Langfuse project.
 
 Both paths are available simultaneously -- users switch between them via the sidebar endpoint menu. See the [LibreChat Langfuse docs](https://www.librechat.ai/docs/configuration/langfuse) for details.
@@ -527,8 +540,9 @@ To get Langfuse traces, create an agent in LibreChat's Agent Builder:
 3. Click **Create Agent** (or the "+" button).
 4. Configure the agent:
    - **Name**: `Telco Analyst`
-   - **Model Provider**: Select `Google`
-   - **Model**: Choose `gemini-2.5-flash` (or `gemini-2.5-pro` for complex analysis)
+   - **Model Provider** / **Model**:
+     - Local mode: provider `Ollama`, model `qwen3.5:2b`.
+     - Hybrid mode: provider `Anthropic`, model `claude-sonnet-4-6` (or `claude-opus-4-6` for complex analysis).
    - **Tools**: Click **Add Tools**, then select the **clickhouse-telco** MCP server (local mode) or **clickhouse-cloud** (hybrid mode). This gives the agent access to ClickHouse query tools.
    - **System Prompt**: Paste the core instructions so the agent knows the database schema and SQL rules. A minimal example:
      ```
@@ -1585,7 +1599,7 @@ A `Makefile` is provided for easy management of the workshop environment. All co
 
 ```bash
 make setup-local
-# (Optional) Edit .env for LLM API keys
+# Install Ollama + pull model: brew install ollama && ollama pull qwen3.5:2b
 make generate-data
 make start
 make check-db
@@ -1596,7 +1610,7 @@ make check-db
 
 ```bash
 make setup-hybrid
-# Edit .env with cloud credentials + LLM API keys
+# Edit .env: ClickHouse Cloud creds, CH_ORG_ID / CH_SERVICE_ID, ANTHROPIC_API_KEY
 make init-schema
 make generate-data
 make start
