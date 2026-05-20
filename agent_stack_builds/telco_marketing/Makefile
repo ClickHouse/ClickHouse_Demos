@@ -97,8 +97,8 @@ setup-local:
 	@echo ""
 	@echo "Next steps:"
 	@echo "  1. Edit .env to set your GOOGLE_KEY (required for Gemini models)"
-	@echo "  2. make start"
-	@echo "  3. make generate-data"
+	@echo "  2. make generate-data"
+	@echo "  3. make start"
 	@echo "  4. Open http://localhost:3080 (LibreChat)"
 	@echo ""
 	@echo "Langfuse tracing is auto-configured. LibreChat sends traces directly to Langfuse."
@@ -142,8 +142,8 @@ setup-hybrid:
 	@echo "  3. Edit .env and fill in your Langfuse Cloud credentials (optional)"
 	@echo "  4. Edit .env and set your GOOGLE_KEY (required for Gemini models)"
 	@echo "  5. make init-schema"
-	@echo "  6. make start"
-	@echo "  7. make generate-data"
+	@echo "  6. make generate-data"
+	@echo "  7. make start"
 	@echo "  8. Open http://localhost:3080 (LibreChat)"
 
 # ---------------------------------------------------------------------------
@@ -287,5 +287,5 @@ clean:
 		$(COMPOSE_CMD) down -v --remove-orphans; \
 		rm -f librechat.yaml; \
 		echo "[OK] All services stopped, volumes removed, and generated files deleted."; \
-		echo "     To start fresh: make start && make generate-data"; \
+		echo "     To start fresh: make generate-data && make start"; \
 	fi
