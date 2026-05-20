@@ -916,27 +916,6 @@ marketing_campaigns    100</code></pre>
 </section>
 
 <!-- =========================================================== -->
-<!-- Slide 21: Troubleshooting                                   -->
-<!-- =========================================================== -->
-<section data-background-color="#0a0a0a">
-  <span class="label">Reference</span>
-  <h2>Common gotchas</h2>
-  <table>
-    <tr><th>Symptom</th><th>Fix</th></tr>
-    <tr><td>LibreChat exited (1), logs say <code>ENOTFOUND mongodb</code></td><td>Mongo crashed — confirm <code>mongo:8.0.17</code> pin (newer fails on kernel 6.19+)</td></tr>
-    <tr><td>"agent_id is required in request body"</td><td><code>ENDPOINTS=agents,anthropic</code> in <code>.env</code>, then restart</td></tr>
-    <tr><td>"temperature is not supported when thinking is enabled"</td><td>Remove <code>temperature:</code> from modelSpec preset</td></tr>
-    <tr><td>Claude lists every org/service before querying</td><td>Re-do Step 06 with your real UUIDs</td></tr>
-    <tr><td>OAuth loops / doesn't appear</td><td>Allow popups for localhost; remove MCP connection in LibreChat &amp; re-trigger</td></tr>
-    <tr><td>Langfuse shows no traces</td><td>Verify <code>LANGFUSE_*</code> keys, then <code>docker restart telco-librechat</code></td></tr>
-  </table>
-  <aside class="notes">
-    All of these happened during real workshop runs. Have the bullet points ready;
-    most attendees won't admit they're stuck.
-  </aside>
-</section>
-
-<!-- =========================================================== -->
 <!-- Slide 22: Tear-down & next                                  -->
 <!-- =========================================================== -->
 <section data-background-color="#0a0a0a">

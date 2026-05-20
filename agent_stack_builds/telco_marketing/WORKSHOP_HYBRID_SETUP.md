@@ -278,21 +278,6 @@ ClickHouse Cloud and Langfuse data persist regardless — clean those up in thei
 
 ---
 
-## Troubleshooting
-
-| Symptom | Diagnosis | Fix |
-| :--- | :--- | :--- |
-| `make init-schema` errors with SSL/auth | Wrong host or password in `.env` | Re-copy from Cloud console → Connect tab |
-| LibreChat exited (1) on `make start`, logs show `getaddrinfo ENOTFOUND mongodb` | Mongo container died first; usually a kernel-compat issue | Confirm `docker-compose.yml` pins `mongo:8.0.17`. Newer 8.0.x fails on Docker Desktop's kernel 6.19+. |
-| Chat replies "agent_id is required in request body" | `.env` doesn't include `anthropic` in `ENDPOINTS` | Set `ENDPOINTS=agents,anthropic` and `docker restart telco-librechat`. |
-| Chat errors "temperature is not supported when thinking is enabled" | Claude 4.x with extended thinking rejects `temperature` | Remove `temperature:` from the modelSpec preset (already removed in shipped `librechat.hybrid.yaml`). |
-| Claude lists every org/service before querying | `serverInstructions` still has placeholder UUIDs | Re-do Step 6 with your real org/service UUIDs from the Cloud console URL. |
-| OAuth window doesn't appear / loops | Browser blocking popup, or stale token | Allow popups for localhost; remove the connection in LibreChat MCP settings and re-trigger a tool call. |
-| Langfuse shows no traces | `LANGFUSE_*` keys wrong, or restart needed | Verify keys, then `docker restart telco-librechat`. |
-| `make start` complains about a path with spaces | Repo path has spaces and a tool didn't quote it | The compose file now quotes bind mounts; if you wrote a custom volume, wrap it in `"..."`. |
-
----
-
 ## Presenter notes
 
 - **Total budget:** 25 minutes hands-on + 5 minutes demo prompts. Aim to be at "first chat reply" by minute 20.
