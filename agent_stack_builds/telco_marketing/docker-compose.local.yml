@@ -26,7 +26,7 @@ services:
 
   # ClickHouse Database (local) - used by both telco demo and Langfuse
   clickhouse:
-    image: clickhouse/clickhouse-server:25.8
+    image: clickhouse/clickhouse-server:26.3
     container_name: telco-clickhouse
     ports:
       - "8124:8123"
@@ -49,7 +49,7 @@ services:
 
   # Langfuse PostgreSQL Backend
   langfuse-db:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: telco-langfuse-db
     environment:
       POSTGRES_USER: ${LANGFUSE_DB_USER:-langfuse}
@@ -106,7 +106,7 @@ services:
 
   # Langfuse Worker - background event processing
   langfuse-worker:
-    image: langfuse/langfuse-worker:3.155.1
+    image: langfuse/langfuse-worker:3.174.1
     container_name: telco-langfuse-worker
     restart: unless-stopped
     depends_on:
@@ -157,7 +157,7 @@ services:
 
   # Langfuse Web - UI and API
   langfuse-web:
-    image: langfuse/langfuse:3.155.1
+    image: langfuse/langfuse:3.174.1
     container_name: telco-langfuse-web
     restart: unless-stopped
     depends_on:
@@ -187,8 +187,8 @@ services:
     networks:
       - telco-network
 
-  # Override: LiteLLM waits for Langfuse web in local mode
-  litellm:
+  # Override: LibreChat waits for Langfuse web in local mode (tracing target)
+  librechat:
     depends_on:
       langfuse-web:
         condition: service_started

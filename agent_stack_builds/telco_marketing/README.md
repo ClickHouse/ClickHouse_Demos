@@ -46,10 +46,9 @@ This workshop demonstrates a complete, production-ready data stack for telecommu
 
 ### What You'll Learn
 
-- **ClickHouse 25.8**: High-performance, column-oriented SQL database for real-time analytics on massive datasets
-- **LibreChat**: Open-source AI chat frontend supporting multiple LLM providers and MCP integrations
+- **ClickHouse 26.3**: High-performance, column-oriented SQL database for real-time analytics on massive datasets
+- **LibreChat**: Open-source AI chat frontend supporting multiple LLM providers and MCP integrations, with built-in Langfuse tracing
 - **Model Context Protocol (MCP)**: Standardized protocol enabling LLMs to securely query ClickHouse
-- **LiteLLM**: LLM proxy that routes all model calls through a single point for Langfuse tracing
 - **Langfuse** (local mode): Open-source LLMOps platform for tracing, debugging, and monitoring LLM applications
 - **Docker**: Easy, reproducible setup of all components
 - **Two Deployment Modes**: Run entirely local or connect to ClickHouse Cloud (with remote MCP) and Langfuse Cloud
@@ -60,17 +59,17 @@ This workshop demonstrates a complete, production-ready data stack for telecommu
 
 ## Important: LLM Provider Flexibility
 
-> **All LLM calls are routed through a LiteLLM proxy for full Langfuse tracing.**
+> **LibreChat calls the Gemini API directly and traces every request to Langfuse natively.** No LLM proxy is in the path.
 
-The default configuration uses Google Gemini models (gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-lite) defined in `litellm_config.yaml`. Set your `GOOGLE_KEY` in `.env` to get started.
+The default configuration uses Google Gemini models (gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-lite) configured under the built-in `google` endpoint in `librechat.local.yaml` / `librechat.hybrid.yaml`. Set your `GOOGLE_KEY` in `.env` to get started.
 
-To use a different provider, edit `litellm_config.yaml` and update the model list. LiteLLM supports 100+ LLM providers. See the [LiteLLM documentation](https://docs.litellm.ai/docs/providers) for details.
+To use a different provider (OpenAI, Anthropic, etc.), enable the corresponding endpoint in the librechat yaml and set the matching API key in `.env`. See the [LibreChat endpoints docs](https://www.librechat.ai/docs/configuration/librechat_yaml/object_structure) for the full list.
 
 ### Vertex AI Support
 
-LiteLLM also supports **Google Vertex AI** as an alternative to direct API keys. To use Vertex AI, update the model entries in `litellm_config.yaml` to use the `vertex_ai/` prefix instead of `gemini/` and configure the appropriate credentials. See the [LiteLLM Vertex AI docs](https://docs.litellm.ai/docs/providers/vertex) for details.
+LibreChat supports **Google Vertex AI** as an alternative to direct API keys. To enable it, mount a service-account JSON file at `auth.json` and uncomment `GOOGLE_SERVICE_KEY_FILE` / `GOOGLE_LOC` in `.env`. See the [LibreChat Google docs](https://www.librechat.ai/docs/configuration/pre_configured_ai/google) for details.
 
-The MCP integration (ClickHouse queries) works identically regardless of which LLM provider you use.
+The MCP integration (ClickHouse queries) and Langfuse tracing work identically regardless of which LLM provider you use.
 
 [Back to Top](#table-of-contents)
 
@@ -100,21 +99,18 @@ All services run in Docker on your machine.
 flowchart TB
     subgraph Docker["Docker Compose Environment"]
         LC[LibreChat :3080]
-        LITE[LiteLLM :4000]
         MCP[MCP ClickHouse :8001]
         CH[(ClickHouse :8124)]
         LF[Langfuse :3000]
         DG[Data Generator]
-        LC --> LITE
-        LITE --> LF
+        LC --> LF
         LC --> MCP
         MCP --> CH
     end
-    LITE --> GEMINI[Gemini API]
+    LC --> GEMINI[Gemini API]
     USER[User] --> LC
 
     style LC fill:#4285F4,stroke:#1a73e8,color:#fff
-    style LITE fill:#8430CE,stroke:#6a1fb0,color:#fff
     style MCP fill:#04696B,stroke:#035354,color:#fff
     style CH fill:#FBBC04,stroke:#e0a800,color:#000
     style LF fill:#34A853,stroke:#2a8a43,color:#fff
@@ -132,9 +128,7 @@ ClickHouse Cloud (with its remote MCP server) and Langfuse Cloud run remotely. L
 flowchart TB
     subgraph Docker["Docker Compose (Local)"]
         LC[LibreChat :3080]
-        LITE[LiteLLM :4000]
         DG[Data Generator]
-        LC --> LITE
     end
     subgraph Cloud["Cloud Services"]
         RMCP[ClickHouse Remote MCP]
@@ -142,14 +136,13 @@ flowchart TB
         LF[Langfuse Cloud]
         RMCP --> CH
     end
-    LITE --> GEMINI[Gemini API]
-    LITE --> LF
+    LC --> GEMINI[Gemini API]
+    LC --> LF
     USER[User] --> LC
     LC --> RMCP
     DG --> CH
 
     style LC fill:#4285F4,stroke:#1a73e8,color:#fff
-    style LITE fill:#8430CE,stroke:#6a1fb0,color:#fff
     style DG fill:#E8710A,stroke:#c25f08,color:#fff
     style RMCP fill:#04696B,stroke:#035354,color:#fff
     style CH fill:#FBBC04,stroke:#e0a800,color:#000
@@ -168,8 +161,7 @@ flowchart TB
 | **Database**            | ClickHouse                  | High-performance column-oriented SQL database for real-time analytics       |
 | **MCP Bridge (local)**  | mcp/clickhouse              | Translates MCP tool calls into ClickHouse SQL queries (local mode only)     |
 | **MCP Bridge (hybrid)** | ClickHouse Cloud Remote MCP | Fully managed MCP server at mcp.clickhouse.cloud (hybrid mode)              |
-| **LLM Proxy**           | LiteLLM                     | Routes all LLM calls through a proxy for Langfuse tracing                   |
-| **LLMOps**              | Langfuse (optional)         | Tracing, debugging, and monitoring LLM interactions                         |
+| **LLMOps**              | Langfuse (optional)         | Tracing, debugging, and monitoring LLM interactions (LibreChat traces natively) |
 | **Data Generator**      | Python                      | Generates realistic telco data (customers, CDRs, network events, campaigns) |
 | **Orchestration**       | Docker Compose              | Multi-container application with base + local overlay pattern               |
 
@@ -198,7 +190,6 @@ After `make start`, the following services are available:
 | :--------- | :-------------------- | :------------------------------ |
 | LibreChat  | http://localhost:3080 | admin@telco.local / workshop123 |
 | Langfuse   | http://localhost:3000 | admin@telco.local / admin123    |
-| LiteLLM    | http://localhost:4000 | --                              |
 | ClickHouse | http://localhost:8124 | default / clickhouse            |
 
 ### Hybrid Deployment
@@ -221,7 +212,6 @@ After `make start`, the following services are available:
 | Service   | URL                   | Credentials                     |
 | :-------- | :-------------------- | :------------------------------ |
 | LibreChat | http://localhost:3080 | admin@telco.local / workshop123 |
-| LiteLLM   | http://localhost:4000 | --                              |
 
 [Back to Top](#table-of-contents)
 
@@ -271,7 +261,7 @@ GOOGLE_KEY=your-google-api-key
 make start
 ```
 
-This launches ClickHouse, Langfuse, LibreChat, LiteLLM, MCP server, and supporting services.
+This launches ClickHouse, Langfuse, LibreChat, the MCP server, and supporting services.
 
 #### Step 4: Generate Data
 
@@ -338,7 +328,7 @@ make init-schema
 make start
 ```
 
-This launches LibreChat, LiteLLM, and supporting services locally. The MCP connection to ClickHouse Cloud is handled by the remote MCP server.
+This launches LibreChat and supporting services locally. The MCP connection to ClickHouse Cloud is handled by the remote MCP server.
 
 #### Step 5: Generate Data
 
@@ -489,9 +479,9 @@ LibreChat is the AI chat frontend for this workshop. It connects to ClickHouse v
 
 ### Model Configuration
 
-Three Gemini models are available as presets in the LibreChat sidebar: Gemini 2.5 Pro, Gemini 2.5 Flash, and Gemini 2.5 Flash-Lite. All calls route through the LiteLLM proxy for Langfuse tracing.
+Three Gemini models are available as presets in the LibreChat sidebar: Gemini 2.5 Pro, Gemini 2.5 Flash, and Gemini 2.5 Flash-Lite. LibreChat calls them via the built-in `google` endpoint and traces every request to Langfuse natively.
 
-To change the available models, edit `litellm_config.yaml` and the corresponding `librechat.local.yaml` or `librechat.hybrid.yaml` template. Then restart: `make restart`
+To change the available models, edit the `google.models.default` list and the matching `modelSpecs` entries in `librechat.local.yaml` or `librechat.hybrid.yaml`. Then restart: `make restart`
 
 ### System Prompt (Prompt Engineering)
 
@@ -516,12 +506,12 @@ Langfuse provides observability for LLM interactions -- tracing every agent run,
 
 ### How Tracing Works
 
-All LLM calls are routed through a **LiteLLM proxy** which automatically logs every request and response to Langfuse. This means ALL conversations are traced -- both the Gemini model presets and the Agents endpoint.
+LibreChat ships with first-class Langfuse support: set `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_BASE_URL` in `.env` and LibreChat sends a trace for every chat message it generates. No proxy sits between LibreChat and the LLM.
 
-- **Gemini presets** (Gemini 2.5 Pro, Flash, Flash-Lite): Calls go through LiteLLM, which logs to Langfuse automatically.
-- **Agents endpoint**: Traced via both the LangChain/LangGraph pipeline (detailed agent traces) and LiteLLM (LLM call-level traces).
+- **Gemini presets** (Gemini 2.5 Pro, Flash, Flash-Lite): LibreChat calls Google's Gemini API directly and emits a Langfuse trace per response.
+- **Agents endpoint**: Each agent run -- including LLM generations and MCP tool calls -- is traced in the same Langfuse project.
 
-Both paths are available simultaneously -- users switch between them via the sidebar endpoint menu.
+Both paths are available simultaneously -- users switch between them via the sidebar endpoint menu. See the [LibreChat Langfuse docs](https://www.librechat.ai/docs/configuration/langfuse) for details.
 
 ### Accessing Langfuse
 
@@ -583,7 +573,7 @@ The workshop uses a ClickHouse database named `telco` with four main tables and 
 | Table                 | Purpose                              | Typical Row Count (medium)                                |
 | :-------------------- | :----------------------------------- | :-------------------------------------------------------- |
 | `customers`           | Customer profiles and attributes     | 10,000 (configurable)                                     |
-| `call_detail_records` | Usage records (calls, data sessions) | ~3,000,000 (30 days x 10,000 customers x ~10 records/day) |
+| `call_detail_records` | Usage records (calls, data sessions) | ~7,800,000 (30 days x 10,000 customers x ~26 records/day) |
 | `network_events`      | Network performance and anomalies    | ~300,000 (30 days x 10,000 events/day)                    |
 | `marketing_campaigns` | Campaign metadata and performance    | 100 (configurable)                                        |
 
@@ -926,12 +916,12 @@ You can customize the data generation volume using either t-shirt size presets o
 
 Set the `DATA_SIZE` environment variable to use a preset profile. When `DATA_SIZE` is set, individual `NUM_*` variables are ignored.
 
-| Size     | Customers | Days | Campaigns | Events/Day | ~CDRs       | ~Network Events |
-| :------- | :-------- | :--- | :-------- | :--------- | :---------- | :-------------- |
-| `small`  | 1,000     | 7    | 10        | 500        | ~70,000     | 3,500           |
-| `medium` | 10,000    | 30   | 100       | 10,000     | ~3,000,000  | 300,000         |
-| `large`  | 50,000    | 60   | 500       | 25,000     | ~30,000,000 | 1,500,000       |
-| `2xl`    | 100,000   | 90   | 1,000     | 50,000     | ~90,000,000 | 4,500,000       |
+| Size     | Customers | Days | Campaigns | Events/Day | ~CDRs        | ~Network Events |
+| :------- | :-------- | :--- | :-------- | :--------- | :----------- | :-------------- |
+| `small`  | 1,000     | 7    | 10        | 500        | ~180,000     | 3,500           |
+| `medium` | 10,000    | 30   | 100       | 10,000     | ~7,800,000   | 300,000         |
+| `large`  | 50,000    | 60   | 500       | 25,000     | ~78,000,000  | 1,500,000       |
+| `2xl`    | 100,000   | 90   | 1,000     | 50,000     | ~234,000,000 | 4,500,000       |
 
 **Usage with preset:**
 
@@ -1507,7 +1497,6 @@ make generate-data
 
 ```bash
 lsof -i :3080  # LibreChat
-lsof -i :4000  # LiteLLM proxy
 lsof -i :8124  # ClickHouse (local mode)
 lsof -i :3000  # Langfuse (local mode)
 lsof -i :8001  # MCP server (local mode)
@@ -1654,9 +1643,8 @@ This repository contains the following components:
 | :----------------------------- | :------------------------------------------------------------------------------------- |
 | **`data-generator/`**          | Python script to generate realistic telco data                                         |
 | **`clickhouse/`**              | ClickHouse database initialization script                                              |
-| **`docker-compose.yml`**       | Base Docker Compose file (LibreChat, LiteLLM, data-generator, and supporting services) |
+| **`docker-compose.yml`**       | Base Docker Compose file (LibreChat, data-generator, and supporting services)          |
 | **`docker-compose.local.yml`** | Local overlay (ClickHouse, MCP server, Langfuse)                                       |
-| **`litellm_config.yaml`**      | LiteLLM proxy config: Gemini models + Langfuse callback                                |
 | **`librechat.local.yaml`**     | LibreChat MCP config for local mode (local MCP container)                              |
 | **`librechat.hybrid.yaml`**    | LibreChat MCP config for hybrid mode (ClickHouse Cloud remote MCP)                     |
 | **`.env.local.example`**       | Environment template for local deployment                                              |
