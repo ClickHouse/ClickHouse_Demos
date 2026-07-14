@@ -347,7 +347,8 @@ Run through this checklist - it is the exact set of things later modules assume:
 
 - `docker compose ps` shows the app services healthy, and the front end loads at
   [localhost:8080](http://localhost:8080).
-- The API docs answer at [localhost:8000/api/docs](http://localhost:8000/api/docs).
+- The API docs (FastAPI Swagger) answer at [localhost:8000/docs](http://localhost:8000/docs)
+  on the backend port (use your `BACKEND_HOST_PORT` if you overrode it).
 - Your agent gives a grounded answer using the ClickHouse skills (for example, the
   ReplacingMergeTree question from Step 6).
 - Your agent, over MCP, answers "list my databases" against your Cloud service.

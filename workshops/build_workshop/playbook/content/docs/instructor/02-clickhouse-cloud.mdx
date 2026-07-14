@@ -13,8 +13,9 @@ keep talking while it loads.
 
 ## Talk track
 
-- This is the first "wow": the same Historical query that was sluggish is now
-  sub-second on ClickHouse.
+- This is the first "wow" and the first time the dashboards show data at all: the
+  Historical dashboard, backed by the freshly seeded ~3M-row ClickHouse table, returns
+  wide-range aggregations in well under a second.
 - Explain why ClickHouse is fast on this shape of query (columnar, `ORDER BY`-aligned
   scans) at a level matched to the room.
 - TODO: expand.

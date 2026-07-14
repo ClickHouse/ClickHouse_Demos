@@ -5,16 +5,17 @@ description: Build the taxi schema on your Cloud service, seed historical data f
 
 ## Starting point
 
-You are on `main` — no checkout needed. Budget about **15 minutes**.
+You are on `build-workshop-v1` — no checkout needed. Budget about **15 minutes**.
 
 Prerequisites: your ClickHouse Cloud service created and its host and password in
 `.env.workshop` (module 00).
 
 ## Why
 
-The Historical dashboard is doing large aggregations, and the bundled database is not
-built for that. ClickHouse is. In this module you move the analytics workload onto a
-real ClickHouse Cloud service and feel the difference on the same queries.
+The app has no analytics data yet — module 01 was a tour of an empty UI. In this module
+you give it a real warehouse: create the taxi schema on ClickHouse Cloud, seed it with
+historical trip data, and point the back end at it. This is where the dashboards first
+light up.
 
 ## Goal
 
@@ -101,15 +102,16 @@ idle-scale to zero and take a few seconds to wake.)
 
 ## Step 5 — Feel the query speed
 
-Open the Historical dashboard again and run the same wide-range query you ran in module
-01. Then ask your agent your own analytical question against the data — this is your
-open step.
+Open the Historical dashboard. Now that ClickHouse Cloud is seeded, the charts render —
+try a wide date range and watch the seeded historical data (a few million rows) come back
+in well under a second. Then ask your agent your own analytical question against the
+data — this is your open step.
 
 ## How to verify you are done
 
 - Your Cloud service lists the taxi tables with rows in them.
-- The Historical dashboard renders from ClickHouse and is noticeably faster on wide
-  ranges.
+- The Historical dashboard now renders from ClickHouse, returning wide-range queries in
+  well under a second.
 - Your own analytical question returns a sensible answer.
 
 ## Wrap-up

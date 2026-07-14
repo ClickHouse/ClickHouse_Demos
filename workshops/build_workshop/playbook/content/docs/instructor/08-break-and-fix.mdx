@@ -20,12 +20,12 @@ rehearsal so the wrap-up is not squeezed.
 - Describe the symptom, not the cause, and let the agents converge from telemetry.
 - Consider showing several attendees' diagnoses side by side on the projector.
 - Run one fault at a time. Teach in the order 02 -> 03 -> 01 (clearest telemetry signal
-  first, most subtle last); `git checkout main` and rebuild between faults.
+  first, most subtle last); `git checkout build-workshop-v1` and rebuild between faults.
 
 ## Answer key
 
 Do not share this section with learners; it lives in the playbook only and is never
-committed to the app repo. Each fault is one small change on its own branch off `main`;
+committed to the app repo. Each fault is one small change on its own branch off `build-workshop-v1`;
 the fix is to revert it. Run one fault at a time. Recommended teaching order and rough
 diagnosis times: fault 02 first (5-10 min, warm-up, the trace tells all), fault 03 second
 (10-20 min, deeper ClickHouse reasoning), fault 01 last (5-15 min, curveball — the backend
@@ -34,7 +34,7 @@ is innocent).
 Shared reset for every fault:
 
 ```bash
-git checkout main && docker compose --env-file .env.workshop \
+git checkout build-workshop-v1 && docker compose --env-file .env.workshop \
   -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
 ```
 
@@ -123,7 +123,7 @@ with the HTML document rather than a 404, so `r.ok` passes and `r.json()` throws
 
 ## Reset steps
 
-- `git checkout main` restores the complete app for anyone stranded.
+- `git checkout build-workshop-v1` restores the complete app for anyone stranded.
 - Re-inject a fault by checking out one of `fault/01-map-not-loading` /
   `fault/02-zone-stats-500` / `fault/03-slow-dashboard` and rebuilding with the workshop
   plus otel compose files.
