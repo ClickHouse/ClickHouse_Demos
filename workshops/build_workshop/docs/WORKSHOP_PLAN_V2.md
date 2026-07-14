@@ -24,22 +24,25 @@ Foundation-app owner — slides + foundation app (internal dev repo; public URL 
 ## 2. Target architecture (per participant)
 
 ```
-PARTICIPANT LAPTOP                          SHARED (instructor-hosted)
+PARTICIPANT LAPTOP                          PARTICIPANT'S TRIAL ORG
 +----------------------------------+        +--------------------------------+
-| App (Docker, 3-4 containers):    |        | Managed Postgres (ONE instance)|
-|   frontend (nginx)  backend      |--SQL-->|   DB per participant:          |
-|   pg-trip-writer (data gen) -----+--------|   taxi_p01 ... taxi_p35        |
-|   otel-collector (ClickStack)    |        |   publication + user per DB    |
-| Coding agent + CH skills + MCP   |        +-------------+------------------+
-+---------------+------------------+                      | logical replication
-                | OTLP (traces/logs)                      v
-                |            PARTICIPANT'S CLICKHOUSE CLOUD (trial)
+| App (Docker, 3-4 containers):    |        | Own Postgres managed by CH     |
+|   frontend (nginx)  backend      |--SQL-->|   (clickhousectl create):      |
+|   pg-trip-writer (data gen) -----+--------|   realtime_trips + pub_taxi    |
+|   otel-collector (ClickStack)    |        +-------------+------------------+
+| Coding agent + CH skills + MCP   |                      | logical replication
++---------------+------------------+                      v
+                | OTLP (traces/logs)   PARTICIPANT'S CLICKHOUSE CLOUD (same trial org)
                 +----------> service: nyc_tlc_data tables (seeded via url()
                              + ClickPipes CDC destination) + ClickStack/HyperDX
                              + ClickHouse Agents (ai.clickhouse.cloud)
                                           |
         In-app AI chat --OpenAI API-->  answers    traces --> LANGFUSE CLOUD
                                                               (participant's free org)
+
+FALLBACK (instructor-hosted, only if managed Postgres is unavailable in an org):
+one shared managed Postgres with a per-participant database + role + publication
+(taxi_p01..pNN), handed out on slips — see infra/.
 ```
 
 Local footprint after the slim-down: 3-4 containers, ~1-1.5 GB images, <1 GB RAM
@@ -52,25 +55,35 @@ key (chat runtime), their coding agent. All keys live in one `.env`.
 
 ## 3. Key design decisions
 
-**D1 — Shared managed Postgres, per-participant DATABASE.** One instructor-hosted
-instance; script provisions `taxi_pNN` databases each with the `realtime_trips`
-table, a scoped `clickpipes_user`, and a pre-created publication. Participants' local
-generators write to their own DB; their ClickPipe decodes only their DB's WAL.
-Requirements (verified): wal_level=logical, max_replication_slots and max_wal_senders
-raised to ~50 (defaults are 10 — will not work), max_connections 300+ (30 concurrent
-initial snapshots use ~4-6 connections each), modest max_slot_wal_keep_size (10-20 GB)
-as the safety valve — a stalled participant pipe gets invalidated and resyncs instead
-of filling the disk. No PgBouncer/pooler in the path (unsupported for CDC). No
-documented limit on pipes-per-source; the only documented pipe-count threshold is
-destination-side (irrelevant — each lands in its own service).
+**D1 — Per-participant Postgres managed by ClickHouse (shared instance = fallback).**
+Each participant creates their OWN managed Postgres in their own trial org
+(`clickhousectl cloud postgres create`, module 03); their local generator writes to it
+and their ClickPipe reads its WAL — Postgres and pipe in the same org, no cross-org
+setup. This dissolves the slot gate: one participant needs exactly one replication slot,
+and every managed instance ships `wal_level=logical` with 10 slots (plus 10 wal_senders,
+500 connections) by default, so there is nothing to raise. It also removes the shared
+blast radius (no one participant's stalled slot touches another) and the per-slip handout.
 
-Provider: **Postgres managed by ClickHouse** is the on-brand first choice (beta,
-public TLS endpoint, CDC ClickPipes included free) — GATE: verify max_replication_slots
-is raisable and that participants' trial-org ClickPipes can point at it cross-org.
-Fallback (proven, documented in ClickHouse's own CDC guides): **RDS** (custom
-parameter group, slots to 50, ~$0.07/hr) or **Supabase** (CLI-settable slots, direct
-connection not the pooler). Neon is ruled out (slots fixed at 10, inactive slots
-deleted after ~40h).
+Verified live (2026-07-14): `clickhousectl cloud postgres create --name <n> --region <r>
+--size m8gd.large --pg-version 17 --ha-type none` works with API-key auth and prints a
+one-time password + hostname (sizes are instance-type names — m8gd.large valid, m7i.*
+not). The beta status APIs (`postgres get`/`list`) can return FORBIDDEN/empty, so
+readiness = poll a real psql/TCP connect — the app's own generator is that probe — not
+the API. Defaults observed: wal_level=logical, max_replication_slots=10,
+max_wal_senders=10, max_connections=500.
+
+FALLBACK — shared managed Postgres pool. For participants whose org cannot create a
+managed Postgres (beta availability varies), the instructor runs ONE shared instance with
+a per-participant database + scoped role + pre-created publication (`infra/`), handed out
+on slips. THIS is where the slot gate lives: 30+ pipes on one instance needs
+max_replication_slots/max_wal_senders raised to ~50 and max_connections to 300+ — and on
+managed Postgres that patch is a known beta gap (FORBIDDEN; raise via console/support),
+so the documented fallback-of-the-fallback is **RDS** (custom parameter group, slots to
+50, ~$0.07/hr) or **Supabase** (CLI-settable slots, DIRECT connection not the pooler).
+Neon is ruled out (slots fixed at 10, inactive slots deleted after ~40h). No
+PgBouncer/pooler in the CDC path. The `max_slot_wal_keep_size` WAL safety valve is
+best-effort only: it reads back as -1 (unlimited) on live managed instances because the
+patch is blocked.
 
 **D2 — CDC is the ingestion star, with two escape hatches.** ClickPipes auto-creates
 destination tables as ReplacingMergeTree(_peerdb_version) with _peerdb_* columns —
@@ -135,7 +148,7 @@ file-path-named steps -> How to verify -> End state), modules table as syllabus.
 | 0:00-0:10 | Intro | Cold open (the finished thing, 3 min) + framing. Slides: foundation-app owner |
 | 0:10-0:40 | 00 Setup | Accounts verified (prework), CHC service create + API key + chctl login, Langfuse org, keys into .env, docker compose up, agent skills + MCP wired |
 | 0:40-1:05 | 01 Base App + 02 ClickHouse Cloud | Tour app; schema to Cloud; seed historical data via url() (1-3 months yellow parquet); backend flips to Cloud; feel the dashboard speed |
-| 1:05-1:30 | 03 Realtime CDC | Start your generator (writes to your DB on shared PG); create Postgres CDC ClickPipe (console wizard); snapshot then streaming; Ops dashboard goes live. Hard checkpoint |
+| 1:05-1:30 | 03 Realtime CDC | Create your own managed Postgres (clickhousectl); start your generator (writes to it, and the generator log is the readiness probe); create Postgres CDC ClickPipe (console wizard); snapshot then streaming; Ops dashboard goes live. Hard checkpoint |
 | 1:30-1:35 | Break | Telemetry and CDC keep flowing |
 | 1:35-1:50 | 04 ClickHouse Agents | Agent over your taxi data at ai.clickhouse.cloud; conversational exploration; share prompts that produce insights |
 | 1:50-2:10 | 05 ClickStack | OTel overlay on; traces/logs in HyperDX; walk a trace from dashboard click to ClickHouse query |
@@ -164,10 +177,13 @@ stranded; hard pivot rules at 1:30 and 2:45.
 
 ## 6. Verification gates before the dry run
 
-1. ClickHouse Managed Postgres: slots raisable to 50? cross-org participant pipes
-   accepted? (D1 gate; else RDS.)
+1. PRIMARY (D1) gate: can a fresh TRIAL org create a managed Postgres instance
+   (`clickhousectl cloud postgres create`) and reach it via psql? Verify at the dry run
+   on a clean trial org — this is the gate that matters now. FALLBACK gate: on one
+   shared instance, are slots raisable to 50 for 30+ pipes? (else RDS/Supabase.)
 2. 10 concurrent ClickPipes CDC against the shared PG: snapshot contention, slot
-   stability, decode CPU. (D2 gate; else S3-pipe fallback.)
+   stability, decode CPU. (D2 gate; now relevant only to the shared FALLBACK pool —
+   the primary path is one pipe per own instance — else S3-pipe fallback.)
 3. ClickStack MCP live tool names match the clickstack_* list (from HyperDX repo, not
    docs) and OTEL_EXPORTER_OTLP_HEADERS auth works against the collector.
 4. ClickHouse Agents on a fresh trial org: enablement, consent dialog, any quotas.
@@ -184,4 +200,5 @@ stranded; hard pivot rules at 1:30 and 2:45.
 CDC pipe: ~$0.10-0.20/hr compute + cents of ingest — under $1 for the session; pipes
 keep waking idled services, so module 09 includes "delete your pipe" cleanup. The
 whole workshop consumes a few dollars of the $300 trial. Langfuse: $0 (Hobby). OpenAI:
-well under $5. Shared PG: instructor-side, ~$5-25 for the day depending on provider.
+well under $5. Own managed Postgres: cents of the same trial for the session. Shared PG
+(fallback only): instructor-side, ~$5-25 for the day depending on provider.
