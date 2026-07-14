@@ -1,4 +1,6 @@
 slides
+# Participant's filled-in env (real credentials); only the .example is tracked.
+.env.workshop
 __pycache__/
 .venv/
 .pytest_cache/
