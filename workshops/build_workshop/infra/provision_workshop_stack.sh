@@ -8,13 +8,17 @@
 # prove the whole chain end to end — the same chain participants build by hand.
 #
 # Subcommands:
-#   PG:   create-pg | configure-pg | verify-pg
+#   PG:   create-pg | wait-pg | configure-pg | verify-pg
 #   Slots: provision (participants 01..N) | provision-demo (slot 00) | slips
 #   CH:   create-ch | schema
-#   CDC:  create-pipe | wait-pipe | verify-sync
-#   All:  e2e   (create-pg -> configure-pg -> provision-demo -> create-ch
-#                -> schema -> create-pipe -> wait-pipe -> schema -> verify-sync)
+#   CDC:  create-pipe | wait-pipe | create-mv | verify-sync
+#   All:  e2e   (create-pg -> wait-pg -> configure-pg -> provision-demo -> create-ch
+#                -> schema -> create-pipe -> wait-pipe -> create-mv -> verify-sync)
 #   Down: teardown (participant slots) | delete-pipe | delete-ch | delete-pg
+#
+# E2E-verified 2026-07-14 against a live org (see infra/README.md for findings).
+# For the reliable ClickHouse query path, export CH_HOST and CH_PASSWORD from the
+# create-ch output (the chctl Query API fails on orgs not migrated to Custom Roles).
 #
 # Auth: org API key (write ops; browser OAuth is read-only):
 #   export CLICKHOUSE_CLOUD_API_KEY=...  CLICKHOUSE_CLOUD_API_SECRET=...
@@ -30,7 +34,7 @@
 #
 # Tunables:
 #   PARTICIPANTS=35  DB_PREFIX=taxi_p  PUB_PREFIX=pub_  OUT_DIR=./out
-#   PG_SERVICE_NAME=build-workshop-shared-pg  PG_REGION=us-east-1  PG_SIZE=m7i.xlarge  PG_VERSION=17
+#   PG_SERVICE_NAME=build-workshop-shared-pg  PG_REGION=us-east-1  PG_SIZE=m8gd.large  PG_VERSION=17
 #   CH_SERVICE_NAME=build-workshop-demo-ch    CH_REGION=$PG_REGION
 #   SCHEMA_FILE=../app/db/cloud/001_cloud_schema.sql
 #
@@ -53,7 +57,7 @@ ADMIN_PGSSLMODE="${ADMIN_PGSSLMODE:-require}"
 
 PG_SERVICE_NAME="${PG_SERVICE_NAME:-build-workshop-shared-pg}"
 PG_REGION="${PG_REGION:-us-east-1}"
-PG_SIZE="${PG_SIZE:-m7i.xlarge}"
+PG_SIZE="${PG_SIZE:-m8gd.large}"
 PG_VERSION="${PG_VERSION:-17}"
 
 CH_SERVICE_NAME="${CH_SERVICE_NAME:-build-workshop-demo-ch}"
@@ -83,11 +87,20 @@ psqla() {
     --set ON_ERROR_STOP=1 "$@"
 }
 
-# chq <sql> — run a query on the demo ClickHouse service (API-key auth; the
-# Query API endpoint is auto-provisioned on first use and supports DDL).
+# chq <sql> — run a query on the demo ClickHouse service.
+# Preferred path: clickhouse client against the service endpoint (set CH_HOST +
+# CH_PASSWORD from the create-ch output). Fallback: the chctl Query API — but
+# note (verified live) chctl 0.3.1's auto-provisioning fails on organizations
+# that have not migrated to Custom Roles ("Use 'roles' instead of
+# 'assignedRoleIds'"), so the client path is the reliable one.
 chq() {
-  clickhousectl cloud service query --id "${CH_SERVICE_ID:?set CH_SERVICE_ID}" \
-    --format TabSeparated --query "$1"
+  if [ -n "${CH_HOST:-}" ] && [ -n "${CH_PASSWORD:-}" ]; then
+    clickhouse client --host "$CH_HOST" --secure --password "$CH_PASSWORD" \
+      --format TabSeparated --query "$1"
+  else
+    clickhousectl cloud service query --id "${CH_SERVICE_ID:?set CH_SERVICE_ID or CH_HOST+CH_PASSWORD}" \
+      --format TabSeparated --query "$1"
+  fi
 }
 
 # json_field <key> — best-effort extraction of a field from JSON on stdin.
@@ -131,20 +144,48 @@ cmd_create_pg() {
     --name "$PG_SERVICE_NAME" --region "$PG_REGION" \
     --size "$PG_SIZE" --pg-version "$PG_VERSION" --ha-type none
   echo ""
-  echo ">> Next: export PG_SERVICE_ID (clickhousectl cloud postgres list --json),"
-  echo "   export ADMIN_PGHOST (from postgres get) and ADMIN_PGPASSWORD, then: $0 configure-pg"
+  echo ">> Copy id/hostname/password from the JSON above into your environment:"
+  echo "     export PG_SERVICE_ID=<id>  ADMIN_PGHOST=<hostname>  ADMIN_PGPASSWORD=<password>"
+  echo ">> VERIFIED LIVE (beta caveat): 'postgres get/list/config patch/delete' can"
+  echo "   return FORBIDDEN or empty on orgs without the managed-Postgres read"
+  echo "   entitlement — the create response above is the source of truth. The"
+  echo "   instance accepts connections within ~a minute: $0 wait-pg"
+}
+
+cmd_wait_pg() {
+  need psql; admin_env_required
+  echo ">> Waiting for Postgres to accept connections (up to 10 minutes)"
+  local i
+  for i in $(seq 1 40); do
+    if psqla postgres -c "SELECT 1" >/dev/null 2>&1; then
+      echo ">> Postgres is up: $(psqla postgres -c "SELECT version()" | cut -c1-60)"
+      return 0
+    fi
+    echo "   [$i] not ready yet"
+    sleep 15
+  done
+  echo "ERROR: Postgres did not become reachable" >&2; exit 1
 }
 
 cmd_configure_pg() {
   need clickhousectl
   : "${PG_SERVICE_ID:?set PG_SERVICE_ID (clickhousectl cloud postgres list --json)}"
   echo ">> Patching runtime config on $PG_SERVICE_ID"
-  clickhousectl cloud postgres config patch "$PG_SERVICE_ID" \
+  if clickhousectl cloud postgres config patch "$PG_SERVICE_ID" \
     --set "max_replication_slots=$TARGET_SLOTS" \
     --set "max_wal_senders=$TARGET_WAL_SENDERS" \
     --set "max_connections=$TARGET_CONNECTIONS" \
-    --set "max_slot_wal_keep_size=$TARGET_SLOT_WAL_KEEP_MB"
-  echo ">> If verify-pg shows old values, restart: clickhousectl cloud postgres restart $PG_SERVICE_ID"
+    --set "max_slot_wal_keep_size=$TARGET_SLOT_WAL_KEEP_MB"; then
+    echo ">> If verify-pg shows old values, restart: clickhousectl cloud postgres restart $PG_SERVICE_ID"
+  else
+    echo ">> WARNING: config patch failed (VERIFIED LIVE: returns FORBIDDEN on orgs"
+    echo "   without the managed-Postgres config entitlement, and ALTER SYSTEM is"
+    echo "   blocked in this environment). Raise max_replication_slots/max_wal_senders"
+    echo "   via the Cloud console Settings tab for the Postgres service, or via"
+    echo "   ClickHouse support. Instance defaults observed live: wal_level=logical,"
+    echo "   slots=10, senders=10, max_connections=500 — 10 slots is enough for a"
+    echo "   demo/e2e but NOT for a full workshop; this is the D1 provider gate."
+  fi
 }
 
 cmd_verify_pg() {
@@ -158,7 +199,7 @@ cmd_verify_pg() {
   [ "$(psqla postgres -c "SHOW max_replication_slots")" -ge "$TARGET_SLOTS" ] || { echo "   FAIL: max_replication_slots < $TARGET_SLOTS"; ok=0; }
   [ "$(psqla postgres -c "SHOW max_wal_senders")" -ge "$TARGET_WAL_SENDERS" ] || { echo "   FAIL: max_wal_senders < $TARGET_WAL_SENDERS"; ok=0; }
   echo ">> Replication slots:"
-  psqla postgres --align --field-separator ' | ' -c \
+  psqla postgres --field-separator ' | ' -c \
     "SELECT slot_name, database, active,
             pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)) AS retained_wal
      FROM pg_replication_slots ORDER BY slot_name" || true
@@ -281,28 +322,75 @@ cmd_create_ch() {
     --min-replica-memory-gb 8 --max-replica-memory-gb 8 --num-replicas 1 \
     --idle-scaling true --idle-timeout-minutes 15
   echo ""
-  echo ">> Next: export CH_SERVICE_ID (clickhousectl cloud service list --json), then: $0 schema"
+  echo ">> Next: from the JSON above export CH_SERVICE_ID (service.id), and for the"
+  echo "   reliable query path also CH_HOST (https endpoint host) and CH_PASSWORD"
+  echo "   (top-level password, shown once). Then: $0 schema"
 }
 
 cmd_schema() {
   need clickhousectl
   : "${CH_SERVICE_ID:?set CH_SERVICE_ID (clickhousectl cloud service list --json)}"
   [ -f "$SCHEMA_FILE" ] || { echo "ERROR: schema file not found: $SCHEMA_FILE" >&2; exit 1; }
-  echo ">> Applying $SCHEMA_FILE to service $CH_SERVICE_ID"
-  # Before the ClickPipe's initial snapshot creates nyc_tlc_data.realtime_trips,
-  # the file's trailing CDC materialized view fails with UNKNOWN_TABLE. That is
-  # the documented run order: base objects now, re-run after wait-pipe for the MV.
-  if clickhousectl cloud service query --id "$CH_SERVICE_ID" --queries-file "$SCHEMA_FILE"; then
-    echo ">> Schema applied fully (including the CDC materialized view)."
+  echo ">> Applying $SCHEMA_FILE"
+  # Before the ClickPipe's initial snapshot creates the CDC source table, the
+  # file's trailing materialized view fails with UNKNOWN_TABLE. That is the
+  # documented run order: base objects now, create-mv after wait-pipe.
+  local applied=0
+  if [ -n "${CH_HOST:-}" ] && [ -n "${CH_PASSWORD:-}" ]; then
+    need clickhouse
+    clickhouse client --host "$CH_HOST" --secure --password "$CH_PASSWORD" \
+      --multiquery < "$SCHEMA_FILE" && applied=1 || true
   else
-    if [ "$(chq "SELECT count() FROM system.tables WHERE database = 'nyc_tlc_data' AND name = 'taxi_trips'")" = "1" ]; then
-      echo ">> Base schema applied. The CDC materialized view is pending the ClickPipe"
-      echo "   snapshot (expected before create-pipe) — re-run '$0 schema' after wait-pipe."
-    else
-      echo "ERROR: schema application failed before base tables were created." >&2
-      exit 1
-    fi
+    clickhousectl cloud service query --id "$CH_SERVICE_ID" --queries-file "$SCHEMA_FILE" && applied=1 || true
   fi
+  if [ "$applied" = "1" ]; then
+    echo ">> Schema applied fully."
+  elif [ "$(chq "SELECT count() FROM system.tables WHERE database = 'nyc_tlc_data' AND name = 'taxi_trips'")" = "1" ]; then
+    echo ">> Base schema applied. The static CDC materialized view failed as expected"
+    echo "   before the pipe exists — run '$0 create-mv' after wait-pipe (it targets"
+    echo "   the pipe's ACTUAL destination table, which for CLI-created pipes lands"
+    echo "   in the 'default' database)."
+  else
+    echo "ERROR: schema application failed before base tables were created." >&2
+    exit 1
+  fi
+}
+
+cmd_create_mv() {
+  # VERIFIED LIVE: a CLI-created pipe always lands its destination table in the
+  # 'default' database (the --table-mapping target does NOT accept a database
+  # qualifier — a qualified name becomes a literal table name). The console
+  # wizard is the only place to choose the destination database. So the MV is
+  # created here against the DETECTED location instead of assuming
+  # nyc_tlc_data.realtime_trips.
+  local loc db tbl
+  loc="$(chq "SELECT database || ' ' || name FROM system.tables WHERE name = 'realtime_trips' AND database != 'nyc_tlc_data' LIMIT 1")"
+  if [ -z "$loc" ]; then
+    loc="$(chq "SELECT database || ' ' || name FROM system.tables WHERE name = 'realtime_trips' LIMIT 1")"
+  fi
+  [ -n "$loc" ] || { echo "ERROR: realtime_trips not found — has the pipe finished its snapshot? ($0 wait-pipe)" >&2; exit 1; }
+  read -r db tbl <<< "$loc"
+  echo ">> CDC destination detected: $db.$tbl — creating MV into nyc_tlc_data.taxi_trips"
+  chq "
+CREATE MATERIALIZED VIEW IF NOT EXISTS nyc_tlc_data.realtime_trips_to_taxi_trips_mv
+TO nyc_tlc_data.taxi_trips
+AS SELECT
+  'yellow' AS car_type,
+  pickup_datetime AS pickup_datetime,
+  dropoff_datetime AS dropoff_datetime,
+  toInt16(vendor_id) AS vendor_id,
+  toInt16(passenger_count) AS passenger_count,
+  trip_distance AS trip_distance,
+  toInt32(pickup_location_id) AS pickup_location_id,
+  toInt32(dropoff_location_id) AS dropoff_location_id,
+  toInt16(payment_type) AS payment_type,
+  fare_amount AS fare_amount,
+  tip_amount AS tip_amount,
+  total_amount AS total_amount,
+  'realtime_cdc' AS filename
+FROM $db.$tbl
+WHERE _peerdb_is_deleted = 0"
+  echo ">> MV created."
 }
 
 # --------------------------------------------------------------------------
@@ -325,10 +413,13 @@ cmd_create_pipe() {
     --table-mapping "public.realtime_trips:realtime_trips"
   echo ""
   echo ">> Note the pipe id above, export PIPE_ID=<id>, then: $0 wait-pipe"
-  echo ">> VERIFY-LIVE: confirm which DATABASE the destination table landed in"
-  echo "   (wait-pipe reports it). The app and MV expect nyc_tlc_data.realtime_trips;"
-  echo "   if it landed elsewhere, recreate the pipe in the console choosing the"
-  echo "   nyc_tlc_data destination database."
+  echo ">> VERIFIED LIVE: CLI-created pipes land the destination table in the"
+  echo "   'default' database (--table-mapping does not accept a database"
+  echo "   qualifier; only the console wizard offers destination-database choice)."
+  echo "   That is fine: '$0 create-mv' wires the MV to the detected location."
+  echo ">> Also verified: 'clickpipe delete' can print 'Internal error' yet still"
+  echo "   succeed — confirm with 'clickpipe list'. Deleting a pipe DOES drop its"
+  echo "   replication slot on the source."
 }
 
 cmd_wait_pipe() {
@@ -346,8 +437,11 @@ cmd_wait_pipe() {
     esac
     sleep 15
   done
-  echo ">> Destination table location (expect database nyc_tlc_data):"
-  chq "SELECT database, name, engine FROM system.tables WHERE name = 'realtime_trips' FORMAT TabSeparated" || true
+  echo ">> Destination table location (CLI pipes land in 'default'; engine observed"
+  echo "   live is plain (Shared)MergeTree with _peerdb_synced_at/_peerdb_is_deleted/"
+  echo "   _peerdb_version columns):"
+  chq "SELECT database, name, engine FROM system.tables WHERE name = 'realtime_trips'" || true
+  echo ">> Next: $0 create-mv"
 }
 
 cmd_verify_sync() {
@@ -369,13 +463,21 @@ cmd_verify_sync() {
   echo "   Postgres rows now: $pg_count"
 
   echo ">> Polling ClickHouse for CDC arrival (sync interval defaults to 60s)"
+  # Locate the pipe's destination table (CLI pipes: default.realtime_trips).
+  # No FINAL: observed live, the destination engine is plain (Shared)MergeTree,
+  # where FINAL is not supported; the loadgen is append-only so a plain count
+  # with the _peerdb_is_deleted filter is correct either way.
+  local loc cdb ctbl
+  loc="$(chq "SELECT database || ' ' || name FROM system.tables WHERE name = 'realtime_trips' AND database != 'nyc_tlc_data' LIMIT 1" 2>/dev/null || true)"
+  [ -n "$loc" ] || loc="default realtime_trips"
+  read -r cdb ctbl <<< "$loc"
   local i
   for i in $(seq 1 20); do
-    rows="$(chq "SELECT count() FROM nyc_tlc_data.realtime_trips FINAL WHERE _peerdb_is_deleted = 0" 2>/dev/null || echo 0)"
-    echo "   [$i] nyc_tlc_data.realtime_trips: ${rows:-0} rows (target $pg_count)"
+    rows="$(chq "SELECT count() FROM $cdb.$ctbl WHERE _peerdb_is_deleted = 0" 2>/dev/null || echo 0)"
+    echo "   [$i] $cdb.$ctbl: ${rows:-0} rows (target $pg_count)"
     if [ "${rows:-0}" -ge "$pg_count" ] 2>/dev/null; then
       echo ">> CDC SYNC VERIFIED: Postgres -> ClickPipes -> ClickHouse is flowing."
-      echo ">> MV fan-out into taxi_trips (requires the schema re-run after wait-pipe):"
+      echo ">> MV fan-out into taxi_trips (requires '$0 create-mv' after wait-pipe):"
       chq "SELECT count() FROM nyc_tlc_data.taxi_trips WHERE filename = 'realtime_cdc'" || true
       return 0
     fi
@@ -402,8 +504,9 @@ cmd_e2e() {
     echo "  $0 e2e"
     exit 0
   fi
-  echo "Step 2/8 configure-pg";   [ -n "${PG_SERVICE_ID:-}" ] && cmd_configure_pg || echo "   (skipped: PG_SERVICE_ID not set — external provider assumed)"
-  echo "Step 3/8 verify-pg";      cmd_verify_pg
+  echo "Step 1/8 wait-pg";        cmd_wait_pg
+  echo "Step 2/8 configure-pg";   { [ -n "${PG_SERVICE_ID:-}" ] && cmd_configure_pg; } || echo "   (skipped: PG_SERVICE_ID not set — external provider assumed)"
+  echo "Step 3/8 verify-pg";      cmd_verify_pg || echo "   (verify-pg flagged targets not met — OK for a demo/e2e run; see configure-pg output)"
   echo "Step 4/8 provision-demo"; cmd_provision_demo
   if [ -z "${CH_SERVICE_ID:-}" ]; then
     echo "Step 5/8 create-ch"; cmd_create_ch
@@ -420,7 +523,7 @@ cmd_e2e() {
     exit 0
   fi
   echo "Step 7/8 wait-pipe";      cmd_wait_pipe
-  echo "Step 7/8 schema (MV)";    cmd_schema
+  echo "Step 7/8 create-mv";      cmd_create_mv
   echo "Step 8/8 verify-sync";    cmd_verify_sync
   echo ""
   echo "=== E2E COMPLETE: shared PG configured, demo service live, CDC verified ==="
@@ -457,19 +560,36 @@ cmd_delete_pipe() {
 }
 
 cmd_delete_ch() {
-  need clickhousectl
+  need clickhousectl; need python3
   : "${CH_SERVICE_ID:?set CH_SERVICE_ID}"
+  # VERIFIED LIVE: a running service cannot be deleted (CONFLICT) — stop first.
+  echo ">> Stopping service $CH_SERVICE_ID before delete"
+  clickhousectl cloud service stop "$CH_SERVICE_ID" >/dev/null 2>&1 || true
+  local i state
+  for i in $(seq 1 30); do
+    state="$(clickhousectl cloud service get "$CH_SERVICE_ID" --json 2>/dev/null | json_field state || true)"
+    echo "   [$i] state: ${state:-unknown}"
+    [ "$state" = "stopped" ] && break
+    sleep 10
+  done
   clickhousectl cloud service delete "$CH_SERVICE_ID"
 }
 
 cmd_delete_pg() {
   need clickhousectl
   : "${PG_SERVICE_ID:?set PG_SERVICE_ID}"
-  clickhousectl cloud postgres delete "$PG_SERVICE_ID"
+  if ! clickhousectl cloud postgres delete "$PG_SERVICE_ID"; then
+    echo ">> WARNING: postgres delete failed (VERIFIED LIVE: returns FORBIDDEN on"
+    echo "   orgs without the managed-Postgres management entitlement). Delete the"
+    echo "   service '$PG_SERVICE_NAME' from the ClickHouse Cloud console instead —"
+    echo "   it bills hourly until removed."
+    exit 1
+  fi
 }
 
 case "${1:-}" in
   create-pg)       cmd_create_pg ;;
+  wait-pg)         cmd_wait_pg ;;
   configure-pg)    cmd_configure_pg ;;
   verify-pg)       cmd_verify_pg ;;
   provision)       cmd_provision ;;
@@ -479,6 +599,7 @@ case "${1:-}" in
   schema)          cmd_schema ;;
   create-pipe)     cmd_create_pipe ;;
   wait-pipe)       cmd_wait_pipe ;;
+  create-mv)       cmd_create_mv ;;
   verify-sync)     cmd_verify_sync ;;
   e2e)             cmd_e2e ;;
   teardown)        cmd_teardown ;;
