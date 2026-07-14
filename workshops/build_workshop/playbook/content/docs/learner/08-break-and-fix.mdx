@@ -1,0 +1,91 @@
+---
+title: 08 Break and fix
+description: Check out a fault branch, watch something break, diagnose it with the AI SRE via ClickStack, and apply the fix.
+---
+
+## Starting point
+
+This is the only module with a branch switch. Pick one of the fault branches, check it
+out, and rebuild the stack with the observability overlay so the failure shows up in
+telemetry:
+
+```bash
+git checkout fault/01-map-not-loading   # or fault/02-zone-stats-500, or fault/03-slow-dashboard
+docker compose --env-file .env.workshop \
+  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
+```
+
+When you are done, return to the complete app with `git checkout main`.
+
+Prerequisites: ClickStack telemetry (module 05) and your agent connected to the
+ClickStack MCP with a dashboard and alert (module 06).
+
+## Why
+
+This is the finale, and the point of the whole session. You inject a realistic fault,
+then use everything you built — the telemetry, the dashboard, the MCP-connected agent —
+to find the root cause the way an on-call engineer would, with the AI doing the heavy
+lifting.
+
+## Goal
+
+Diagnose the injected fault from telemetry alone, using your AI SRE, then apply the fix
+and confirm the app recovers.
+
+## Step 1 — Introduce the fault
+
+### fault branch
+
+The three fault branches each break a different part of the app:
+
+- `fault/01-map-not-loading` — the map fails to load.
+- `fault/02-zone-stats-500` — a zone-stats endpoint returns 500s.
+- `fault/03-slow-dashboard` — the dashboard becomes slow.
+
+Check one out (see Starting point) and let the stack run long enough for the symptom to
+surface in the dashboards and in ClickStack.
+
+<Callout type="warn">
+  TODO: the exact symptom detail and the answer key for each fault branch are documented
+  in the instructor track once the fault-injection task finalizes them.
+</Callout>
+
+## Step 2 — Diagnose with the AI SRE
+
+Point your agent at the ClickStack MCP and describe the symptom, not the cause:
+
+```text
+Something is wrong with the app: users are seeing errors. Using the clickstack MCP,
+investigate the traces and logs, localize the failure, and tell me the root cause with
+the evidence.
+```
+
+Then ask your own follow-up question about blast radius or timeline — this is your open
+step.
+
+## Step 3 — Apply the fix
+
+### `backend/` or `frontend/`
+
+Once you and the agent agree on the root cause, apply the fix (compare against `main` if
+you want the reference). Rebuild the affected service:
+
+```bash
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
+```
+
+## How to verify you are done
+
+- The agent named the correct root cause and cited telemetry as evidence.
+- After the fix, the error signal on your SRE dashboard returns to baseline.
+- The alert from module 06 clears.
+
+## Wrap-up
+
+You just ran an incident end to end: detection, AI-assisted diagnosis from telemetry,
+and remediation — on a system you built during the same session.
+
+## End state
+
+The incident is resolved and the app is healthy. Continue to
+[09 Wrap-up](/docs/learner/09-wrap-up) to review and take it home.

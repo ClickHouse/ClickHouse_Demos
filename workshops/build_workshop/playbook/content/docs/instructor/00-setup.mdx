@@ -1,0 +1,34 @@
+---
+title: 00 Setup
+description: Instructor notes for module 00 — timing, talk track, common failures, and reset steps.
+---
+
+Facilitator companion to the learner lesson [00 Setup](/docs/learner/00-setup).
+
+## Timing
+
+TODO: minute budget from rehearsal. Kick off the fire-and-wait steps (create service,
+`docker compose up`) before or during the opening talk so they run underneath it.
+
+## Talk track
+
+- Frame the session: they will move an existing app onto ClickHouse Cloud, and the agent
+  does the building.
+- Emphasize copying the service password the instant it is shown (module 02), and that
+  `.env` is the single source of config.
+- TODO: expand.
+
+## Common failures
+
+- Work email already attached to an existing ClickHouse org, so no trial credits appear.
+  Steer to a personal email (surfaced in prework).
+- Coding agent cannot add MCP servers due to corporate policy (surfaced by the prework
+  smoke test).
+- `docker compose up` fails because Docker is under-allocated (needs 6 GB+).
+- TODO: add failures seen in the dry run.
+
+## Reset steps
+
+- Point a stuck attendee at the loaner Cloud service pool if their trial is unusable.
+- Re-run `cp .env.example .env` and re-fill; confirm no stray committed `.env`.
+- TODO: confirm reset commands.

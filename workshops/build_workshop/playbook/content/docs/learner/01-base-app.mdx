@@ -1,0 +1,78 @@
+---
+title: 01 Base app
+description: Tour the running NYC-taxi app so you understand what you are about to move onto ClickHouse Cloud.
+---
+
+## Starting point
+
+You are on `main` (cloned in module 00) — no checkout needed. The workshop stack you
+started in module 00 should still be running.
+
+Prerequisites: module 00 complete, the stack healthy, the front end reachable at
+`http://localhost:8080/`.
+
+## Why
+
+You cannot improve what you have not seen. Before you touch ClickHouse Cloud, spend a
+few minutes understanding the app: what the two dashboards show, where the numbers come
+from, and where the AI chat panel lives. This is the only module with nothing to build,
+and that is deliberate.
+
+## Goal
+
+Be able to describe, in one sentence each, what the Ops dashboard shows, what the
+Historical dashboard shows, and where the app's data currently comes from.
+
+## Step 1 — Open the Ops dashboard
+
+### `frontend/`
+
+Open `http://localhost:8080/`. This is the Ops dashboard: live operational metrics for
+the ride-hailing business (recent trips, active zones, near-real-time aggregates). Note
+how responsive it feels and what it is counting.
+
+## Step 2 — Open the Historical dashboard
+
+### `frontend/`
+
+Open `http://localhost:8080/historical`. This dashboard runs large-range aggregations
+and drilldowns over historical trip data. Try a wide date range and watch how the query
+behaves against the bundled database.
+
+## Step 3 — Find the chat panel and trace the data flow
+
+### `backend/`
+
+Locate the AI chat panel in the UI (you wire it to a real model in module 07). Then look
+at how the front end calls the FastAPI back end, and how the back end queries its
+database today.
+
+```text
+React front end  ->  FastAPI back end  ->  database (local today, ClickHouse Cloud soon)
+                                        ->  Postgres (operational source of truth)
+```
+
+Ask your coding agent to summarize the analytics endpoints:
+
+```text
+Read the FastAPI backend and list each analytics endpoint, what it returns, and which
+table it reads from.
+```
+
+## How to verify you are done
+
+- You have loaded both dashboards and seen data render.
+- You can name the app's current data source (before any Cloud work).
+- You know where the chat panel is, even though it is not wired to a model yet.
+
+## Wrap-up
+
+You have a mental model of the app: two dashboards, a FastAPI API, a source Postgres,
+and a chat panel waiting to be connected. Every later module changes one part of this
+picture.
+
+## End state
+
+You understand the running app. Continue to
+[02 ClickHouse Cloud](/docs/learner/02-clickhouse-cloud) to give it a real analytics
+warehouse.

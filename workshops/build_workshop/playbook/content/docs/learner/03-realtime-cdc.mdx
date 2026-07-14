@@ -1,0 +1,99 @@
+---
+title: 03 Real-time CDC
+description: Stream live rows from a shared managed Postgres into ClickHouse with a Postgres CDC ClickPipe, and watch the Ops dashboard go live.
+---
+
+## Starting point
+
+You are on `main` — no checkout needed.
+
+Prerequisites: module 02 complete (Cloud service seeded, back end reading from
+ClickHouse).
+
+## Why
+
+The Ops dashboard needs fresh data. Rather than build a bespoke pipeline, you use a
+Postgres CDC ClickPipe: it reads the write-ahead log of the shared managed Postgres and
+replicates changes into ClickHouse continuously. Your dashboard goes from static to
+live without any custom ingestion code.
+
+## Goal
+
+A running Postgres CDC ClickPipe replicating the trips stream from the shared managed
+Postgres into your ClickHouse Cloud service, with your data generator producing new rows
+and the Ops dashboard updating.
+
+## Step 1 — Start the ClickPipe wizard
+
+In the ClickHouse Cloud console, go to **Data Sources -> Set up a ClickPipe ->
+Postgres CDC**. Point it at the shared managed Postgres and select the
+`public.realtime_trips` table as the source.
+
+<Callout type="warn">
+  TODO: the shared managed Postgres host, database, replication user, and
+  publication/slot details land with the workshop infrastructure. Fill them in here once
+  provisioned.
+</Callout>
+
+## Step 2 — Accept the destination mapping
+
+The wizard auto-creates the destination table as
+`ENGINE = ReplacingMergeTree(_peerdb_version)` with `_peerdb_synced_at`,
+`_peerdb_is_deleted`, and `_peerdb_version` bookkeeping columns. Pin the destination to
+database `nyc_tlc_data` and keep the source table name, which yields
+`nyc_tlc_data.realtime_trips`.
+
+### `db/cloud/001_cloud_schema.sql`
+
+After the ClickPipe's initial snapshot creates `realtime_trips`, confirm the column
+types and create the materialized view that feeds `taxi_trips`:
+
+```sql
+DESCRIBE nyc_tlc_data.realtime_trips;   -- expect the PeerDB mapping:
+                                        --   timestamptz     -> DateTime64(6)
+                                        --   int2/int4/int8  -> Int16/Int32/Int64
+-- Then run realtime_trips_to_taxi_trips_mv from the schema file. It selects from
+-- realtime_trips into taxi_trips WHERE _peerdb_is_deleted = 0. An MV fires per inserted
+-- block, so no FINAL is needed; the loadgen is append-only, so no version churn occurs.
+```
+
+## Step 3 — Start your data generator
+
+### `docker-compose.workshop.yml`
+
+The workshop stack includes `pg-trip-writer`, which writes synthetic trips into the
+source Postgres so CDC has a live stream. It starts with the stack and is throttled low
+(`RATE_PER_SEC=2`, `BATCH_SIZE=10`) because one shared Postgres may be fed by many
+generators at once.
+
+```bash
+# already running with the workshop stack; to (re)start just the generator:
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d pg-trip-writer
+# to turn it off entirely:
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d --scale pg-trip-writer=0
+```
+
+For the shared managed Postgres, set `PGHOST` and `PGSSLMODE=require` in `.env.workshop`
+(the local fallback uses `PGHOST=postgres` and `PGSSLMODE=prefer`).
+
+## Step 4 — Watch the Ops dashboard go live
+
+Open the Ops dashboard at `http://localhost:8080/` and watch counts move as new trips
+flow Postgres -> ClickPipe -> ClickHouse -> dashboard.
+
+## How to verify you are done
+
+- The ClickPipe shows an active, replicating state in the console.
+- The destination table row count in ClickHouse increases over time.
+- The Ops dashboard updates without a manual refresh.
+
+## Wrap-up
+
+You now have both halves of the data plane on ClickHouse: seeded history from module 02
+and a live CDC stream from this module. The app is fully backed by ClickHouse Cloud.
+
+## End state
+
+Live data is flowing into ClickHouse. Continue to
+[04 ClickHouse Agents](/docs/learner/04-clickhouse-agents) to query it in natural
+language.

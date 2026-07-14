@@ -1,0 +1,98 @@
+---
+title: 07 Chat and Langfuse
+description: Use the in-app AI chat and follow its traces, generations, and costs in Langfuse Cloud.
+---
+
+## Starting point
+
+You are on `main` — no checkout needed. The chat feature is already built into the app on
+`main`; this module configures it and traces it.
+
+Prerequisites: a Langfuse project with keys in `.env.workshop` and an OpenAI key
+(module 00).
+
+## Why
+
+The app has had a chat panel since module 01. Now you connect it to a real model and,
+crucially, instrument it so every conversation is traced. Langfuse gives you the traces,
+generations, token usage, and cost for each chat turn — the observability you need to
+run an AI feature in production.
+
+There is a nice symmetry here: Langfuse became a ClickHouse company in January 2026 and
+runs on ClickHouse. The traces you are about to inspect are themselves stored in
+ClickHouse.
+
+## Goal
+
+The in-app chat answers questions using the LLM, and each turn appears in your Langfuse
+project as a trace with its generation, tokens, and cost.
+
+## Step 1 — Wire the chat back end to the model and Langfuse
+
+### `.env.workshop`
+
+The chat back end (`backend/app/chat.py`, `backend/app/chat_service.py`) reads these from
+the environment. Fill them in `.env.workshop`:
+
+```bash
+OPENAI_API_KEY=sk-...
+LLM_MODEL=gpt-4o-mini                 # any JSON-mode-capable chat model
+LLM_BASE_URL=https://api.openai.com/v1
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_BASE_URL=https://us.cloud.langfuse.com   # EU: https://cloud.langfuse.com
+```
+
+Restart the back end:
+
+```bash
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d --build backend
+```
+
+<Callout title="How the tracing is wired (Langfuse v4)">
+  The chat service uses the Langfuse v4 SDK. One chat turn runs inside an
+  `@observe(name="chat")` span, and the OpenAI call goes through the `langfuse.openai`
+  drop-in wrapper, so the completion is captured automatically as a generation with its
+  model, latency, token usage, and cost. `conversation_id` is attached as a Langfuse
+  session (via `propagate_attributes`), so multi-turn chats group into one timeline.
+  Without Langfuse keys, tracing is a silent no-op. `LANGFUSE_BASE_URL` is the v4 env
+  name (v4 renamed `LANGFUSE_HOST`, still accepted as a fallback).
+</Callout>
+
+## Step 2 — Chat in the app
+
+Open the chat panel in the front end and ask a few questions about the ride-hailing data
+(for example "top 10 pickup zones by trips in July 2022"). The panel always shows the SQL
+the model generated alongside the answer. Watch for real answers rather than the
+placeholder. (Without `OPENAI_API_KEY`, `POST /api/chat` returns a 503 setup hint and the
+rest of the app is unaffected.)
+
+## Step 3 — Follow the trace in Langfuse
+
+Open your Langfuse project and look at three views:
+
+- **Traces** — one trace per chat turn, named `chat`. Open it to see the prompt (schema
+  plus your question) and the model's JSON output.
+- **Generations** — the OpenAI call with its token counts and USD cost.
+- **Sessions** — turns that share a `conversation_id` grouped into one conversation.
+
+If traces do not appear, confirm `LANGFUSE_BASE_URL` matches your project's region and
+that both keys are set on the back end.
+
+## How to verify you are done
+
+- The chat panel returns real model answers.
+- Each chat turn produces a trace in Langfuse.
+- You can read the token usage and cost for a turn.
+
+## Wrap-up
+
+The app now has a traced AI feature: you can see exactly what each conversation cost and
+how it behaved. You have observability on both the app's infrastructure (ClickStack) and
+its AI (Langfuse).
+
+## End state
+
+The in-app chat is live and fully traced. Continue to
+[08 Break and fix](/docs/learner/08-break-and-fix), where something goes wrong on
+purpose.

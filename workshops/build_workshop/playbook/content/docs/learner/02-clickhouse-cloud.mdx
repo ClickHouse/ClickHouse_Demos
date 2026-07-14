@@ -1,0 +1,121 @@
+---
+title: 02 ClickHouse Cloud
+description: Create your Cloud service, build the taxi schema, seed historical data from object storage, and point the back end at ClickHouse.
+---
+
+## Starting point
+
+You are on `main` — no checkout needed.
+
+Prerequisites: a ClickHouse Cloud account with trial credits (module 00).
+
+## Why
+
+The Historical dashboard is doing large aggregations, and the bundled database is not
+built for that. ClickHouse is. In this module you move the analytics workload onto a
+real ClickHouse Cloud service and feel the difference on the same queries.
+
+## Goal
+
+A running ClickHouse Cloud service with the taxi schema created and seeded with
+historical trip data, and the app's back end reading from it.
+
+## Step 1 — Create your Cloud service
+
+In the ClickHouse Cloud console, create a service. Copy the password the moment it is
+shown; it is displayed only once. Note the HTTPS endpoint.
+
+### `.env.workshop`
+
+Fill in the values you just obtained. `CLICKHOUSE_HOST` is the bare hostname — no
+scheme, no port:
+
+```bash
+CLICKHOUSE_HOST=<your-service>.<region>.<cloud>.clickhouse.cloud
+CLICKHOUSE_PORT=8443
+CLICKHOUSE_USER=default
+CLICKHOUSE_PASSWORD=<the password shown once at creation>
+CLICKHOUSE_DATABASE=nyc_tlc_data
+CLICKHOUSE_SECURE=true
+```
+
+## Step 2 — Create the schema
+
+### `db/cloud/001_cloud_schema.sql`
+
+The workshop ships an idempotent schema file. First create the destination database,
+then run the schema against your service (Cloud SQL console, `clickhousectl`, or your
+agent):
+
+```sql
+CREATE DATABASE IF NOT EXISTS nyc_tlc_data;
+-- then run db/cloud/001_cloud_schema.sql, which creates:
+--   taxi_zones, fhv_trips, taxi_trips           (ENGINE = MergeTree; Cloud backs these
+--                                                 with SharedMergeTree transparently, so
+--                                                 no ON CLUSTER / Replicated* is needed)
+--   taxi_trips_expanded, fhv_trips_expanded     (enrichment views)
+--   realtime_trips_to_taxi_trips_mv             (the CDC materialized view, used in 03)
+```
+
+<Callout>
+  The `realtime_trips_to_taxi_trips_mv` materialized view reads from
+  `nyc_tlc_data.realtime_trips`, which the module 03 ClickPipe creates. Create the base
+  tables and views now; the MV lands in module 03 after the ClickPipe's initial snapshot
+  exists.
+</Callout>
+
+## Step 3 — Seed historical data from object storage
+
+### `db/cloud/001_cloud_schema.sql` (seed section)
+
+The bottom of the schema file has concrete `url()` seeds you run by hand — straight from
+public object storage, no local import step. They load `taxi_zones` from the public TLC
+zone-lookup CSV and a month of yellow-taxi trips from the public TLC parquet exports:
+
+```sql
+-- taxi_zones from the TLC zone-lookup CSV, and a yellow-taxi month, for example:
+--   INSERT INTO nyc_tlc_data.taxi_trips
+--   SELECT ... FROM url('https://.../yellow_tripdata_2022-07.parquet', Parquet);
+-- Widen the brace list ({2022-07,2022-08,2022-09}) for more months.
+```
+
+This gives the Historical dashboard real volume.
+
+## Step 4 — Point the back end at ClickHouse
+
+### `docker-compose.workshop.yml`
+
+The workshop back end is already env-driven — no code change is required. Pointing it at
+Cloud is just supplying the `CLICKHOUSE_*` values in `.env.workshop` and (re)starting the
+workshop stack:
+
+```bash
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
+```
+
+(The back end infers TLS from `CLICKHOUSE_PORT=8443`, and `CLICKHOUSE_SECURE=true` makes
+it explicit. It also allows a longer first-connect timeout because a Cloud service can
+idle-scale to zero and take a few seconds to wake.)
+
+## Step 5 — Feel the query speed
+
+Open the Historical dashboard again and run the same wide-range query you ran in module
+01. Then ask your agent your own analytical question against the data — this is your
+open step.
+
+## How to verify you are done
+
+- Your Cloud service lists the taxi tables with rows in them.
+- The Historical dashboard renders from ClickHouse and is noticeably faster on wide
+  ranges.
+- Your own analytical question returns a sensible answer.
+
+## Wrap-up
+
+The historical analytics workload now runs on ClickHouse Cloud, seeded directly from
+object storage. What is still missing is fresh data: the Ops dashboard is not live yet.
+
+## End state
+
+Historical data is on ClickHouse and the back end reads from it. Continue to
+[03 Real-time CDC](/docs/learner/03-realtime-cdc) to stream live rows in.
