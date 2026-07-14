@@ -43,16 +43,18 @@ PARTICIPANTS=35 ./provision_workshop_stack.sh provision
 
 | Stage | Command | What it does |
 |---|---|---|
-| PG | `create-pg` | Create the Postgres service managed by ClickHouse (beta). Admin password prints once |
-| PG | `configure-pg` | Patch runtime config: slots/senders/connections/WAL cap (targets below) |
+| PG | `create-pg` | Create the Postgres service managed by ClickHouse (beta). Admin password prints once; the create response is the source of truth for id/host/password |
+| PG | `wait-pg` | Poll real connectivity (psql SELECT 1) until the instance is up — do not rely on the beta status API |
+| PG | `configure-pg` | Patch runtime config: slots/senders/connections/WAL cap (targets below). Tolerates the beta FORBIDDEN gap with console/support guidance |
 | PG | `verify-pg` | SHOW the settings, fail if below targets, list live slots + retained WAL |
 | Slots | `provision` | Participant slots 01..N: database + login role (with REPLICATION) + CDC table + pre-created publication. Idempotent; existing passwords kept |
 | Slots | `provision-demo` | Slot 00, used by the demo pipe |
 | Slots | `slips` | Regenerate the printable per-participant hand-outs from the CSV |
 | CH | `create-ch` | Create the demo ClickHouse service (1 x 8 GB, idle-scaling) |
-| CH | `schema` | Apply `app/db/cloud/001_cloud_schema.sql` via the Query API. Before the pipe exists, the trailing CDC materialized view is expected to be pending — re-run after `wait-pipe` |
-| CDC | `create-pipe` | Postgres CDC ClickPipe: demo slot -> demo service, using the pre-created publication |
-| CDC | `wait-pipe` | Poll pipe state until running; report which database the destination table landed in |
+| CH | `schema` | Apply `app/db/cloud/001_cloud_schema.sql` (clickhouse client when CH_HOST/CH_PASSWORD are set, else the chctl Query API). Before the pipe exists, the trailing static MV is expected to be pending — run `create-mv` after `wait-pipe` |
+| CDC | `create-pipe` | Postgres CDC ClickPipe: demo slot -> demo service, using the pre-created publication. CLI pipes land the destination table in the `default` database |
+| CDC | `wait-pipe` | Poll pipe state until running; report where the destination table landed |
+| CDC | `create-mv` | Detect the pipe's actual destination table and create the MV from it into `nyc_tlc_data.taxi_trips` |
 | CDC | `verify-sync` | Insert marker rows into Postgres, poll ClickHouse until they arrive, then check the MV fan-out into `taxi_trips` |
 | All | `e2e` | The whole chain in order, pausing wherever an id or one-time credential must be exported |
 | Down | `teardown` | Drop participant slots: leftover replication slots, databases, roles |
@@ -85,18 +87,48 @@ endpoint — poolers are not supported for CDC). Then export the `ADMIN_PG*`
 variables and use `provision`/`verify-pg`/`create-pipe`/`verify-sync`/`teardown`
 unchanged.
 
-## VERIFY-LIVE notes (confirm on the first real run)
+## Live e2e results (run 2026-07-14 against a real org)
 
-1. `postgres config patch` acceptance of all four parameters and whether a
-   restart is needed (`postgres restart <id>`), since managed-Postgres editable
-   parameters are still beta.
-2. The destination DATABASE of a CLI-created pipe: the app and the MV expect
-   `nyc_tlc_data.realtime_trips`; `wait-pipe` prints where the table actually
-   landed. If it lands elsewhere, recreate the pipe in the console choosing the
-   `nyc_tlc_data` destination database (the wizard has an explicit destination
-   step; the CLI's `--table-mapping` does not take a database qualifier).
-3. Pipe state strings polled by `wait-pipe` (expects Running/Completed;
-   fails on Failed/Error).
+The full chain was executed end to end: managed Postgres created via chctl,
+demo slot provisioned, ClickHouse service created, schema applied, CDC pipe
+created, and 5 marker rows inserted into Postgres arrived in ClickHouse within
+one sync interval and were fanned into `taxi_trips` by the MV. Teardown
+verified (pipe, slot, demo databases, service). Findings now baked into the
+script:
+
+1. Valid managed-Postgres sizes are instance-type names (m8gd.large default
+   now; m7i.* is NOT valid — the API returns the allowed list on error).
+2. `postgres get/list/config patch/delete` returned FORBIDDEN or empty on the
+   test org (beta entitlement gap) even though `create` works. The create
+   response is the source of truth for id/host/password; `wait-pg` polls real
+   connectivity instead of the API. `ALTER SYSTEM` is blocked in the managed
+   environment.
+3. Instance defaults observed: `wal_level=logical` (CDC-ready out of the box),
+   `max_connections=500`, but `max_replication_slots=10` and
+   `max_wal_senders=10` — enough for a demo, NOT for 30+ participants. THE D1
+   GATE: raising slots requires the console Settings tab or ClickHouse support;
+   confirm before committing to managed Postgres for the full room, else RDS.
+4. The chctl Query API (`cloud service query`) fails on orgs not migrated to
+   Custom Roles ("Use 'roles' instead of 'assignedRoleIds'"). The script
+   prefers `clickhouse client` whenever CH_HOST + CH_PASSWORD are exported.
+5. CLI-created pipes ALWAYS land the destination table in the `default`
+   database; `--table-mapping` does not accept a database qualifier (a
+   qualified name becomes a literal table name). Only the console wizard
+   offers destination-database choice. `create-mv` therefore detects the
+   actual location and wires the MV to it.
+6. The destination engine observed was plain (Shared)MergeTree ORDER BY id
+   with `_peerdb_synced_at DateTime64(9)`, `_peerdb_is_deleted UInt8`,
+   `_peerdb_version UInt64` (docs describe ReplacingMergeTree — the console
+   path may differ; the MV filters `_peerdb_is_deleted = 0` and works with
+   both; no FINAL is used anywhere).
+7. Pipe lifecycle: Provisioning -> Running in about 2-3 minutes for a tiny
+   table; `clickpipe delete` can print "Internal error" yet still succeed
+   (confirm with `clickpipe list`); deleting a pipe DOES drop its replication
+   slot on the source.
+8. A running ClickHouse service cannot be deleted (CONFLICT) — `delete-ch`
+   now stops it, waits for `stopped`, then deletes.
+9. End-to-end latency observed: marker rows visible in ClickHouse within
+   ~60 seconds (the default sync interval).
 
 ## Day-of and teardown
 
