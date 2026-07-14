@@ -1,15 +1,29 @@
-# Workshop infrastructure provisioning (instructor)
+# Workshop infrastructure — instructor demo stack + FALLBACK pool
 
-`provision_workshop_stack.sh` stands up the full chain with clickhousectl (chctl):
-the shared **Postgres** every participant's CDC ClickPipe reads from, a demo
-**ClickHouse** Cloud service, and the **CDC ClickPipe** between them — then proves
-data is syncing end to end. The same chain participants build by hand during the
-workshop, so running `e2e` before the event is also the dry run of the whole flow.
+**Primary participant path: each participant creates their OWN Postgres managed by
+ClickHouse in their own trial org (module 03), not a shared instance.** One participant
+needs exactly one replication slot, and every managed instance ships `wal_level=logical`
+with 10 replication slots by default, so the "raise `max_replication_slots`" gate that
+dominates this script does NOT apply to participants. It applies only to the shared
+fallback pool below (many pipes on one instance).
+
+This script is therefore two things:
+
+1. The **instructor demo stack** — an end-to-end `e2e` run (managed Postgres -> demo
+   ClickHouse service -> CDC ClickPipe -> verified sync) that is also the pre-event dry
+   run of the flow participants build by hand.
+2. A **shared FALLBACK Postgres pool** — a per-participant database + role + publication,
+   handed out on slips to anyone whose org cannot create a managed Postgres (beta
+   availability varies).
+
+`provision_workshop_stack.sh` stands up the chain with clickhousectl (chctl): the
+**Postgres** the demo/fallback ClickPipes read from, a demo **ClickHouse** Cloud service,
+and the **CDC ClickPipe** between them — then proves data is syncing end to end.
 
 ```
-shared managed Postgres            demo ClickHouse Cloud service
+managed Postgres (demo + FALLBACK)          demo ClickHouse Cloud service
   taxi_p00 (demo slot)  --ClickPipes CDC-->  nyc_tlc_data.realtime_trips
-  taxi_p01 ... taxi_pNN (one DB + role + publication per participant)
+  taxi_p01 ... taxi_pNN (fallback: one DB + role + publication per participant)
 ```
 
 ## Prerequisites
@@ -35,8 +49,13 @@ cd workshops/build_workshop/infra
 # PG_SERVICE_ID, then CH_SERVICE_ID, then PIPE_ID). Re-run e2e after each
 # export; completed steps are skipped or are idempotent.
 
-# When e2e prints "E2E COMPLETE", provision the participant slots:
+# When e2e prints "E2E COMPLETE", provision the shared FALLBACK slots (only needed
+# for participants who cannot create their own managed Postgres):
 PARTICIPANTS=35 ./provision_workshop_stack.sh provision
+
+# Need more capacity on the day? START_SLOT (default 1) adds slots without
+# re-touching lower ones (existing passwords are kept either way):
+START_SLOT=36 PARTICIPANTS=50 ./provision_workshop_stack.sh provision
 ```
 
 ## Subcommands
@@ -47,7 +66,7 @@ PARTICIPANTS=35 ./provision_workshop_stack.sh provision
 | PG | `wait-pg` | Poll real connectivity (psql SELECT 1) until the instance is up — do not rely on the beta status API |
 | PG | `configure-pg` | Patch runtime config: slots/senders/connections/WAL cap (targets below). Tolerates the beta FORBIDDEN gap with console/support guidance |
 | PG | `verify-pg` | SHOW the settings, fail if below targets, list live slots + retained WAL |
-| Slots | `provision` | Participant slots 01..N: database + login role (with REPLICATION) + CDC table + pre-created publication. Idempotent; existing passwords kept |
+| Slots | `provision` | Fallback slots `START_SLOT`..N (default 1..N): database + login role (with REPLICATION) + CDC table + pre-created publication. Idempotent; existing passwords kept. Raise `START_SLOT` to add capacity later without re-touching lower slots (e.g. `START_SLOT=36 PARTICIPANTS=50`) |
 | Slots | `provision-demo` | Slot 00, used by the demo pipe |
 | Slots | `slips` | Regenerate the printable per-participant hand-outs from the CSV |
 | CH | `create-ch` | Create the demo ClickHouse service (1 x 8 GB, idle-scaling) |
@@ -60,15 +79,27 @@ PARTICIPANTS=35 ./provision_workshop_stack.sh provision
 | Down | `teardown` | Drop participant slots: leftover replication slots, databases, roles |
 | Down | `delete-pipe` / `delete-ch` / `delete-pg` | Delete the demo pipe, demo service, shared Postgres |
 
-## Postgres targets (applied by `configure-pg`, enforced by `verify-pg`)
+## Postgres targets — shared FALLBACK pool only
 
-| Setting | Value | Why |
-|---|---|---|
-| `max_replication_slots` | 50 | one slot per participant pipe + resync headroom (a resync creates a new slot) |
-| `max_wal_senders` | 50 | must be >= slots |
-| `max_connections` | 300 | ~30 concurrent ClickPipes initial snapshots use 4-6 connections each |
-| `max_slot_wal_keep_size` | 20480 MB | safety valve: a stalled pipe gets its slot invalidated (that participant resyncs) instead of filling the disk |
-| `wal_level` | logical | verified only — required for CDC |
+These matter only for the shared fallback pool (many pipes on one instance). A
+participant's own managed Postgres needs none of this beyond the `wal_level=logical`
+default. `configure-pg` applies all five; `verify-pg` FAILs on only **three**
+(`wal_level`, `max_replication_slots`, `max_wal_senders`) and merely displays the other
+two.
+
+| Setting | Value | `verify-pg` | Why |
+|---|---|---|---|
+| `wal_level` | logical | FAIL if not | required for CDC (the managed default is already logical) |
+| `max_replication_slots` | 50 | FAIL if `<` | one slot per fallback pipe + resync headroom (a resync creates a new slot) |
+| `max_wal_senders` | 50 | FAIL if `<` | must be >= slots |
+| `max_connections` | 300 | shown only | ~30 concurrent ClickPipes initial snapshots use 4-6 connections each |
+| `max_slot_wal_keep_size` | 20480 MB | shown only | intended WAL safety valve — but see the day-of caveat: on live managed instances the patch is blocked and this reads back as `-1` (unlimited), so the valve may not be active |
+
+Raising slots/senders on a managed instance is a **known beta gap**: the config patch
+returns FORBIDDEN and `ALTER SYSTEM` is blocked, so a default instance FAILs `verify-pg`
+at 10 slots. That is fine for the demo/e2e run and for participants' own instances (one
+slot each); for the shared fallback at 30+ participants, raise them via the Cloud console
+Postgres Settings tab or ClickHouse support. `verify-pg` prints this same hint on failure.
 
 ## Outputs
 
@@ -105,9 +136,11 @@ script:
    environment.
 3. Instance defaults observed: `wal_level=logical` (CDC-ready out of the box),
    `max_connections=500`, but `max_replication_slots=10` and
-   `max_wal_senders=10` — enough for a demo, NOT for 30+ participants. THE D1
-   GATE: raising slots requires the console Settings tab or ClickHouse support;
-   confirm before committing to managed Postgres for the full room, else RDS.
+   `max_wal_senders=10` — plenty for one participant's OWN instance (the primary
+   path: one slot each), and enough for the demo/e2e, but NOT for a shared instance
+   feeding 30+ pipes. Raising slots requires the console Settings tab or ClickHouse
+   support; this gate now applies only to the shared FALLBACK pool (else RDS for
+   the fallback).
 4. The chctl Query API (`cloud service query`) fails on orgs not migrated to
    Custom Roles ("Use 'roles' instead of 'assignedRoleIds'"). The script
    prefers `clickhouse client` whenever CH_HOST + CH_PASSWORD are exported.
@@ -132,9 +165,15 @@ script:
 
 ## Day-of and teardown
 
-- Morning of: `verify-pg` (settings + live slots + retained WAL per slot).
-- A participant whose pipe stalls past the WAL cap just resyncs their pipe; the
-  instance is protected by `max_slot_wal_keep_size`.
-- After the event: participants delete their pipes (module 09), then
-  `teardown`, then `delete-pipe`/`delete-ch`/`delete-pg` as desired. Destroy
-  `infra/out/` and printed slips — they contain credentials.
+- Morning of (fallback pool only): `verify-pg` (settings + live slots + retained WAL per
+  slot).
+- A fallback participant whose pipe stalls just resyncs it. CAVEAT: the
+  `max_slot_wal_keep_size` safety valve may NOT be active — on live managed instances the
+  config patch is blocked and the value reads back as `-1` (unlimited), so a badly stalled
+  slot can retain WAL without a cap. Watch the retained-WAL column in `verify-pg` and drop
+  invalidated slots manually if needed.
+- After the event: participants on the primary path delete their own managed Postgres
+  (module 09 / `clickhousectl cloud postgres delete`). For the instructor stack:
+  participants delete their pipes, then `teardown`, then
+  `delete-pipe`/`delete-ch`/`delete-pg` as desired. Destroy `infra/out/` and printed
+  slips — they contain credentials.

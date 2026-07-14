@@ -33,7 +33,9 @@
 #   PIPE_ID         demo ClickPipe id             (printed by create-pipe)
 #
 # Tunables:
-#   PARTICIPANTS=35  DB_PREFIX=taxi_p  PUB_PREFIX=pub_  OUT_DIR=./out
+#   PARTICIPANTS=35  START_SLOT=1  DB_PREFIX=taxi_p  PUB_PREFIX=pub_  OUT_DIR=./out
+#   (provision does slots START_SLOT..PARTICIPANTS — raise START_SLOT to add capacity
+#    later without re-touching lower slots)
 #   PG_SERVICE_NAME=build-workshop-shared-pg  PG_REGION=us-east-1  PG_SIZE=m8gd.large  PG_VERSION=17
 #   CH_SERVICE_NAME=build-workshop-demo-ch    CH_REGION=$PG_REGION
 #   SCHEMA_FILE=../app/db/cloud/001_cloud_schema.sql
@@ -43,6 +45,7 @@
 set -euo pipefail
 
 PARTICIPANTS="${PARTICIPANTS:-35}"
+START_SLOT="${START_SLOT:-1}"
 DB_PREFIX="${DB_PREFIX:-taxi_p}"
 PUB_PREFIX="${PUB_PREFIX:-pub_}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -191,13 +194,21 @@ cmd_configure_pg() {
 cmd_verify_pg() {
   need psql; admin_env_required
   echo ">> Instance settings:"
-  local k ok=1
+  local k ok=1 slot_gap=0
   for k in wal_level max_replication_slots max_wal_senders max_connections max_slot_wal_keep_size; do
     echo "   $k = $(psqla postgres -c "SHOW $k")"
   done
   [ "$(psqla postgres -c "SHOW wal_level")" = "logical" ] || { echo "   FAIL: wal_level must be logical"; ok=0; }
-  [ "$(psqla postgres -c "SHOW max_replication_slots")" -ge "$TARGET_SLOTS" ] || { echo "   FAIL: max_replication_slots < $TARGET_SLOTS"; ok=0; }
-  [ "$(psqla postgres -c "SHOW max_wal_senders")" -ge "$TARGET_WAL_SENDERS" ] || { echo "   FAIL: max_wal_senders < $TARGET_WAL_SENDERS"; ok=0; }
+  [ "$(psqla postgres -c "SHOW max_replication_slots")" -ge "$TARGET_SLOTS" ] || { echo "   FAIL: max_replication_slots < $TARGET_SLOTS"; ok=0; slot_gap=1; }
+  [ "$(psqla postgres -c "SHOW max_wal_senders")" -ge "$TARGET_WAL_SENDERS" ] || { echo "   FAIL: max_wal_senders < $TARGET_WAL_SENDERS"; ok=0; slot_gap=1; }
+  if [ "$slot_gap" = "1" ]; then
+    echo "   NOTE: this slot/sender shortfall is a known managed-Postgres beta gap"
+    echo "     (config patch returns FORBIDDEN, ALTER SYSTEM is blocked). It is needed"
+    echo "     ONLY for the SHARED fallback pool at 30+ participants — a participant's"
+    echo "     OWN instance needs just one slot and the 10 defaults are plenty. Raise"
+    echo "     these via the Cloud console Postgres Settings tab or ClickHouse support"
+    echo "     before a full shared run."
+  fi
   echo ">> Replication slots:"
   psqla postgres --field-separator ' | ' -c \
     "SELECT slot_name, database, active,
@@ -265,8 +276,11 @@ ensure_csv() {
 cmd_provision() {
   need psql; need openssl; admin_env_required; ensure_csv
   local i
-  for i in $(seq 1 "$PARTICIPANTS"); do provision_slot "$(pnum "$i")"; done
-  echo ">> $PARTICIPANTS participant slots ready. Credentials: $CSV (mode 600)"
+  # START_SLOT (default 1) lets you add capacity later without re-touching lower
+  # slots: e.g. START_SLOT=36 PARTICIPANTS=50 provisions 36..50 only. provision_slot
+  # is idempotent, so overlapping ranges keep existing passwords.
+  for i in $(seq "$START_SLOT" "$PARTICIPANTS"); do provision_slot "$(pnum "$i")"; done
+  echo ">> participant slots ${START_SLOT}..${PARTICIPANTS} ready. Credentials: $CSV (mode 600)"
   cmd_slips
 }
 
