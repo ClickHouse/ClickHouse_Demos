@@ -6,11 +6,13 @@
 -- ClickHouse Cloud service, e.g. from the Cloud SQL console, clickhousectl, or
 -- your agent. Every statement is idempotent: re-running it is safe.
 --
--- RUN ORDER: the base tables/views are safe to run at any time. The CDC
--- materialized view near the bottom reads from nyc_tlc_data.realtime_trips,
--- which the ClickPipe creates -- so run this file (or at least that MV) AFTER
--- the ClickPipe's initial snapshot exists. The ClickPipe only needs the
--- nyc_tlc_data database, which the CREATE DATABASE below provides.
+-- RUN ORDER: this file is safe to run at any time and applies cleanly on a fresh
+-- service -- it creates only base tables/views. The CDC materialized view, which
+-- must run AFTER the ClickPipe's initial snapshot creates its destination table,
+-- lives in db/cloud/003_cdc_mv.sql (kept separate so this schema file never fails
+-- with UNKNOWN_TABLE on a service where the pipe does not exist yet). The
+-- ClickPipe only needs the nyc_tlc_data database, which the CREATE DATABASE below
+-- provides.
 --
 -- Notes for ClickHouse Cloud:
 --   * `ENGINE = MergeTree` is transparently backed by SharedMergeTree on Cloud;
@@ -21,7 +23,8 @@
 --     Load reference/historical data from remote sources instead -- see the
 --     optional seeding block at the bottom of this file.
 --   * Real-time trips arrive via ClickPipes (Postgres -> ClickHouse Cloud), not
---     via the local Kafka/Debezium path. See the CDC section below.
+--     via the local Kafka/Debezium path. The CDC materialized view lives in
+--     db/cloud/003_cdc_mv.sql (run it after the ClickPipe snapshot exists).
 -- ===========================================================================
 
 CREATE DATABASE IF NOT EXISTS nyc_tlc_data;
@@ -160,65 +163,18 @@ FROM nyc_tlc_data.taxi_trips;
 -- ===========================================================================
 -- Real-time CDC via ClickPipes
 -- ---------------------------------------------------------------------------
--- In the LOCAL stack, Debezium + Kafka Connect sank Postgres CDC into a landing
--- table (realtime_trips_cdc) and a materialized view fanned those rows into
--- nyc_tlc_data.taxi_trips, which is what every dashboard queries.
+-- In the WORKSHOP, ClickPipes (Postgres -> ClickHouse Cloud) replaces the local
+-- Kafka/Debezium path, and a materialized view fans new CDC rows into
+-- nyc_tlc_data.taxi_trips so the existing dashboards keep working unchanged.
 --
--- In the WORKSHOP, ClickPipes replaces Kafka/Debezium. When you create a
--- ClickPipe from the shared managed Postgres table `public.realtime_trips` and
--- keep the default destination table name, ClickPipes CREATES the table
--- `nyc_tlc_data.realtime_trips` for you. ClickPipes/PeerDB destinations are
--- always ENGINE = ReplacingMergeTree(_peerdb_version) and carry three extra
--- bookkeeping columns:
---     _peerdb_synced_at  DateTime64(9)
---     _peerdb_is_deleted Int8
---     _peerdb_version    Int64
--- Because of that, ad-hoc queries against nyc_tlc_data.realtime_trips should use
--- FINAL and filter soft-deletes, e.g.
---     SELECT * FROM nyc_tlc_data.realtime_trips FINAL WHERE _peerdb_is_deleted = 0;
---
--- The materialized view below fans new CDC rows into taxi_trips so the existing
--- dashboards keep working unchanged. Notes:
---   * An MV fires per inserted block, so it does NOT need FINAL; we only filter
---     out soft-deletes with WHERE _peerdb_is_deleted = 0. The loadgen is
---     append-only (INSERT only), so updates/deletes are not expected in the
---     workshop and ReplacingMergeTree version churn does not occur.
---   * Column names below assume the workshop-standard ClickPipe: destination
---     database nyc_tlc_data, table name kept as realtime_trips (the playbook
---     tells participants to pick nyc_tlc_data and keep the source table name in
---     the wizard's tables step). Confirm the column TYPES live with
---     `DESCRIBE nyc_tlc_data.realtime_trips` -- the expected PeerDB mapping is
---     timestamptz -> DateTime64(6), int2 -> Int16, int4 -> Int32,
---     int8 -> Int64, double precision -> Float64, text -> String.
---
--- IMPORTANT: the CREATE below references nyc_tlc_data.realtime_trips, so it only
--- succeeds AFTER the ClickPipe's initial snapshot has created that table. Run
--- this whole file once the ClickPipe is live (the ClickPipe itself only needs
--- the nyc_tlc_data database, which the CREATE DATABASE at the top provides).
--- The statement is idempotent (CREATE MATERIALIZED VIEW IF NOT EXISTS).
+-- That materialized view is NOT defined here. It references the ClickPipe's
+-- destination table, which does not exist until the pipe's initial snapshot
+-- runs, so inlining it made this schema file fail with UNKNOWN_TABLE on a fresh
+-- service. It now lives in db/cloud/003_cdc_mv.sql -- run that file AFTER the
+-- ClickPipe exists. It documents where the destination table lands (console
+-- wizard -> nyc_tlc_data.realtime_trips; clickhousectl CLI -> default.realtime_trips)
+-- and the observed engine (console: ReplacingMergeTree; CLI: plain MergeTree).
 -- ===========================================================================
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS nyc_tlc_data.realtime_trips_to_taxi_trips_mv
-TO nyc_tlc_data.taxi_trips
-AS
-SELECT
-  car_type,
-  CAST(vendor_id AS UInt16) AS vendor_id,
-  -- ClickPipes delivers Postgres timestamptz as DateTime64; cast to the UTC
-  -- DateTime used by taxi_trips.
-  CAST(pickup_datetime AS DateTime('UTC')) AS pickup_datetime,
-  CAST(dropoff_datetime AS DateTime('UTC')) AS dropoff_datetime,
-  CAST(pickup_location_id AS UInt16) AS pickup_location_id,
-  CAST(dropoff_location_id AS UInt16) AS dropoff_location_id,
-  CAST(passenger_count AS UInt16) AS passenger_count,
-  trip_distance AS trip_distance,
-  CAST(payment_type AS UInt16) AS payment_type,
-  fare_amount AS fare_amount,
-  tip_amount AS tip_amount,
-  total_amount AS total_amount,
-  'realtime_cdc' AS filename
-FROM nyc_tlc_data.realtime_trips
-WHERE _peerdb_is_deleted = 0;
 
 -- ===========================================================================
 -- Optional seeding (reference + historical data)

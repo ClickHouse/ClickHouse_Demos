@@ -70,7 +70,7 @@ START_SLOT=36 PARTICIPANTS=50 ./provision_workshop_stack.sh provision
 | Slots | `provision-demo` | Slot 00, used by the demo pipe |
 | Slots | `slips` | Regenerate the printable per-participant hand-outs from the CSV |
 | CH | `create-ch` | Create the demo ClickHouse service (1 x 8 GB, idle-scaling) |
-| CH | `schema` | Apply `app/db/cloud/001_cloud_schema.sql` (clickhouse client when CH_HOST/CH_PASSWORD are set, else the chctl Query API). Before the pipe exists, the trailing static MV is expected to be pending — run `create-mv` after `wait-pipe` |
+| CH | `schema` | Apply `app/db/cloud/001_cloud_schema.sql` (base tables + views; clickhouse client when CH_HOST/CH_PASSWORD are set, else the chctl Query API). Applies cleanly on a fresh service; the CDC MV is separate — `create-mv` after `wait-pipe`, or `app/db/cloud/003_cdc_mv.sql` by hand |
 | CDC | `create-pipe` | Postgres CDC ClickPipe: demo slot -> demo service, using the pre-created publication. CLI pipes land the destination table in the `default` database |
 | CDC | `wait-pipe` | Poll pipe state until running; report where the destination table landed |
 | CDC | `create-mv` | Detect the pipe's actual destination table and create the MV from it into `nyc_tlc_data.taxi_trips` |
