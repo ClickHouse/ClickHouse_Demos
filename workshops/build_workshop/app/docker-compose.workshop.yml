@@ -50,6 +50,14 @@ services:
       - ./db/postgres/init:/docker-entrypoint-initdb.d:ro
       - ./db/sample:/sample:ro
       - postgres_data:/var/lib/postgresql/data
+    # pg_isready ships in the postgres image. $$ keeps the var for the container
+    # shell to expand (compose would otherwise interpolate it at config time).
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   backend:
     build:
@@ -80,6 +88,20 @@ services:
       - LANGFUSE_BASE_URL=${LANGFUSE_BASE_URL:-https://us.cloud.langfuse.com}
     ports:
       - "${BACKEND_HOST_PORT:-8000}:8000"
+    # python:3.11-slim has no curl/wget, so probe with python3 + urllib. /api/health
+    # returns 200 as soon as the API serves (it reports ClickHouse status in the body
+    # rather than failing), so this reflects "the API is up". start_period is generous
+    # because the first health probe can wait on a ClickHouse Cloud idle-wake (~5-30s).
+    healthcheck:
+      test:
+        - CMD
+        - python3
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=8)"
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   frontend:
     build:
@@ -91,6 +113,13 @@ services:
       - backend
     ports:
       - "${FRONTEND_HOST_PORT:-8080}:8080"
+    # nginx:alpine ships wget; a 200 for / (the SPA index) means nginx is serving.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # Writes synthetic trips into Postgres; ClickPipes captures them Cloud-side.
   # Defaults to the local `postgres` service. Point PG* at the shared managed
