@@ -26,6 +26,15 @@ ENV_FILE="$SCRIPT_DIR/.env.workshop"
 EXAMPLE_FILE="$SCRIPT_DIR/.env.workshop.example"
 PREFLIGHT_CTR="ch-workshop-preflight"
 
+# Capture the calling shell's values for the vars docker compose interpolates,
+# BEFORE anything else runs, so the shell-vs-.env.workshop override check can tell
+# whether an exported shell value would silently win over the file (see that
+# section below). Unset -> empty, which the check treats as "not overriding".
+SHELL_OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+SHELL_LANGFUSE_PUBLIC_KEY="${LANGFUSE_PUBLIC_KEY:-}"
+SHELL_LANGFUSE_SECRET_KEY="${LANGFUSE_SECRET_KEY:-}"
+SHELL_CLICKHOUSE_PASSWORD="${CLICKHOUSE_PASSWORD:-}"
+
 # --- Output helpers --------------------------------------------------------
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
   C_PASS=$'\033[32m'; C_WARN=$'\033[33m'; C_FAIL=$'\033[31m'; C_DIM=$'\033[2m'; C_RST=$'\033[0m'
@@ -198,6 +207,22 @@ check_port() {
   else
     pass "port $port ($var) is free$note"
   fi
+}
+
+# check_shell_override VAR SHELL_VALUE -- warn if an exported shell value would
+# silently win over .env.workshop. docker compose resolves ${VAR} from the shell
+# environment BEFORE the --env-file, so a value exported in the calling shell
+# overrides a blank/different line in .env.workshop -- e.g. an exported
+# OPENAI_API_KEY makes the app do real LLM calls even though the file looks empty.
+check_shell_override() {
+  local var="$1" shell_v="$2" file_v
+  [ -n "$shell_v" ] || return 0
+  file_v=$(env_get "$var")
+  if [ "$shell_v" != "$file_v" ]; then
+    warn "$var is set in your shell and differs from .env.workshop" \
+         "docker compose uses the shell value (it overrides .env.workshop via interpolation), so the file is ignored for $var -- run 'unset $var' or set the same value in .env.workshop"
+  fi
+  return 0
 }
 
 # ===========================================================================
@@ -386,6 +411,17 @@ else
     warn "port checks below use the example defaults (8080/8000/5432/5050/4317/4318)" \
          "create .env.workshop so preflight checks your real, effective ports"
   fi
+fi
+
+# --- Shell environment vs .env.workshop ------------------------------------
+section "Shell environment vs .env.workshop"
+_warns_before=$WARN_COUNT
+check_shell_override OPENAI_API_KEY "$SHELL_OPENAI_API_KEY"
+check_shell_override LANGFUSE_PUBLIC_KEY "$SHELL_LANGFUSE_PUBLIC_KEY"
+check_shell_override LANGFUSE_SECRET_KEY "$SHELL_LANGFUSE_SECRET_KEY"
+check_shell_override CLICKHOUSE_PASSWORD "$SHELL_CLICKHOUSE_PASSWORD"
+if [ "$WARN_COUNT" -eq "$_warns_before" ]; then
+  pass "no shell variable is shadowing .env.workshop (OPENAI_API_KEY, LANGFUSE_*, CLICKHOUSE_PASSWORD)"
 fi
 
 # --- Host ports ------------------------------------------------------------
