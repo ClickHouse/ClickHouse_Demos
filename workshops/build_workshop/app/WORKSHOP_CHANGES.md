@@ -10,8 +10,9 @@ run in the ClickHouse BUILD workshop, where each participant:
   Connect pipeline;
 - still keeps a **local Postgres** available as a fallback for offline dev.
 
-Local development (the original `docker-compose.yml`) is unchanged and keeps
-working exactly as before.
+The workshop tree ships only the workshop path; the original full local stack
+(local ClickHouse, Kafka/Debezium CDC, dataset loaders) lives in the upstream
+demo repo and is not included here.
 
 ## What changed and why
 
@@ -25,8 +26,8 @@ working exactly as before.
 - `CLICKHOUSE_SECURE` is a tri-state (`true` / `false` / unset). **When unset it
   is inferred from the port**: `8443`/`443` implies TLS, anything else (e.g. the
   local `8123`) implies plain HTTP. An explicit value always wins.
-  - Why: the original `docker-compose.yml` sets `CLICKHOUSE_PORT=8123` and never
-    sets `CLICKHOUSE_SECURE`, and per the task it must not be edited. A blind
+  - Why: the upstream demo's compose sets `CLICKHOUSE_PORT=8123` and never
+    sets `CLICKHOUSE_SECURE`. A blind
     `secure=true` default would break local dev; the port-based inference lets
     local (`8123`) and Cloud (`8443`) both work with zero extra config, while
     still honoring an explicit `CLICKHOUSE_SECURE` when set.
@@ -40,8 +41,8 @@ their names and defaults.
 
 ### 2. Standalone workshop compose
 
-`docker-compose.workshop.yml` (new, self-contained -- does **not** extend
-`docker-compose.yml`)
+`docker-compose.workshop.yml` (self-contained -- does **not** extend the
+upstream demo's compose)
 
 Contains only:
 
@@ -80,19 +81,19 @@ psycopg3/libpq honors it natively, so no code change is needed; set
 
 `db/cloud/001_cloud_schema.sql` (new)
 
-Idempotent DDL adapted from `db/init/001_schema.sql` for a participant to run
+Idempotent DDL adapted from the upstream demo's local schema for a participant to run
 once against their Cloud service (Cloud SQL console, `clickhousectl`, or agent):
 
 - Same `taxi_zones`, `fhv_trips`, `taxi_trips` tables and `*_expanded` views.
 - Plain `ENGINE = MergeTree` retained -- Cloud transparently backs these with
   SharedMergeTree; no `ON CLUSTER` / `Replicated*` needed.
-- **No local `file()` reads.** The local seed (`db/init/002_sample_data.sql`)
-  reads `file('sample/...')` from `user_files`, which does not exist on Cloud.
+- **No local `file()` reads.** The upstream demo's local seed reads
+  `file('sample/...')` from `user_files`, which does not exist on Cloud.
   The file instead includes concrete (commented) `url()` seeds to run by hand:
   `taxi_zones` from the public TLC zone-lookup CSV, and a one-month yellow-taxi
   subset from the public TLC parquet exports
   (`yellow_tripdata_2022-07.parquet`), with the column mapping and borough
-  enrichment cribbed from `nyc_taxi_data/.../load_yellow_trips.sql`. This gives
+  enrichment cribbed from the upstream demo's dataset loader. This gives
   the Historical dashboard real volume. Widen the brace list
   (`{2022-07,2022-08,2022-09}`) for more months.
 - The CDC path into `taxi_trips` is kept as the original **materialized-view

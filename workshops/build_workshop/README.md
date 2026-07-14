@@ -14,7 +14,7 @@ Work on this workshop happens on the `build-workshop-v1` branch.
 |---|---|
 | `app/` | The foundation app participants run locally: React frontend, FastAPI backend, Postgres + data generator, ClickStack OTel overlay. Workshop entrypoint: `docker-compose.workshop.yml` + `.env.workshop.example`. See `app/WORKSHOP_CHANGES.md`, `app/CHAT_FEATURE.md`, `app/OBSERVABILITY.md`. |
 | `playbook/` | The published follow-along playbook (Next.js + Fumadocs; dual learner/instructor tracks; deploys to demohouse.cloud/workshop). Requires Node >= 22.12 to build. |
-| `docs/` | Planning and facilitation documents: `WORKSHOP_PLAN_V2.md` (current plan: architecture, agenda, decisions, verification gates), `INSTRUCTOR_SETUP.md`, `PARTICIPANT_PREWORK.md`. `WORKSHOP_PLAN.md` is the superseded v1 plan, kept for reference. |
+| `docs/` | `WORKSHOP_PLAN_V2.md` — the workshop plan: architecture, agenda, decisions, and pre-delivery verification gates. |
 
 ## Fault branches (module 08, break and fix)
 
