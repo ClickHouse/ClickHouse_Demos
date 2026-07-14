@@ -6,12 +6,14 @@ description: Review what you built, take it home, and learn how to extend it to 
 ## Starting point
 
 You are on `main` — the complete app you have been configuring all session. If you
-checked out a fault branch in module 08, `git checkout main` returns you here.
+checked out a fault branch in module 08, `git checkout main` returns you here. Budget
+about **10 minutes**.
 
 ## Why
 
-Three hours of building goes by fast. This module makes what you did explicit, so you
-can explain it to your team and rebuild it against your own systems.
+You leave with a running prototype and this repo to show your team. Three hours of
+building goes by fast, so this module makes what you did explicit: what you can demo, what
+keeps running after today, and the one change that repoints it at your own systems.
 
 ## Goal
 
@@ -33,13 +35,20 @@ You took the NYC-taxi app and:
 
 ## Step 2 — Take it home
 
-Your ClickHouse Cloud trial lasts 30 days. Everything you built keeps running: the
-service, the CDC pipe, the dashboards, the traces. Save your `.env` (privately) and the
-repo so you can come back to it.
+Your ClickHouse Cloud trial lasts 30 days, and everything you built keeps running on it:
+the service, the CDC pipe, the dashboards, the traces. The repository is yours to keep;
+save your `.env.workshop` privately so you can come back to it. That is enough to walk
+your team through five things live:
+
+- a real-time operational dashboard on ClickHouse Cloud (modules 02-03),
+- a change-data-capture pipeline streaming from managed Postgres (module 03),
+- conversational BI over your data with ClickHouse Agents (module 04),
+- an AI-built SRE dashboard and alert over your telemetry (modules 05-06),
+- and an in-app AI chat traced end to end in Langfuse (module 07).
 
 ## Step 3 — Extend it to your own data
 
-### `db/` and `.env`
+### `db/` and `.env.workshop`
 
 The shortest path to value is to repoint the pipeline at your own systems:
 
