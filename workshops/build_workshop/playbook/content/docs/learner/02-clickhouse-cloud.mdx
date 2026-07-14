@@ -64,18 +64,22 @@ CREATE DATABASE IF NOT EXISTS nyc_tlc_data;
 
 ## Step 3 — Seed historical data from object storage
 
-### `db/cloud/001_cloud_schema.sql` (seed section)
+### `db/cloud/002_seed_historical.sql`
 
-The bottom of the schema file has concrete `url()` seeds you run by hand — straight from
-public object storage, no local import step. They load `taxi_zones` from the public TLC
-zone-lookup CSV and a month of yellow-taxi trips from the public TLC parquet exports:
+The workshop ships a runnable seed file — no uncommenting, no local import step. It loads
+`taxi_zones` from the public TLC zone-lookup CSV and a month of yellow-taxi trips from the
+public TLC parquet exports, straight from object storage. Run it once against your service,
+after the schema file:
 
-```sql
--- taxi_zones from the TLC zone-lookup CSV, and a yellow-taxi month, for example:
---   INSERT INTO nyc_tlc_data.taxi_trips
---   SELECT ... FROM url('https://.../yellow_tripdata_2022-07.parquet', Parquet);
--- Widen the brace list ({2022-07,2022-08,2022-09}) for more months.
+```bash
+clickhouse client --host <your-service>.<region>.<cloud>.clickhouse.cloud --port 9440 --secure \
+  --user default --password '<password>' --multiquery < db/cloud/002_seed_historical.sql
 ```
+
+Or paste both statements into the Cloud SQL console (zones first, then trips). Both are
+idempotent — each is guarded by a `count() = 0` check — so re-running the file cannot
+double-load. To add more months, copy the second statement with the next month's file name
+(each month is ~3M rows, so keep it small for a workshop service).
 
 This gives the Historical dashboard real volume.
 

@@ -9,10 +9,40 @@ ingestion is Postgres CDC via ClickPipes.
 Follow the playbook (`../playbook`, published at demohouse.cloud/workshop) from
 module 00 — it walks through every step below in order.
 
+## Requirements
+
+- A Docker engine — Docker Desktop, OrbStack, or Colima — running, with **Compose
+  v2** (the `docker compose` subcommand; the legacy `docker-compose` v1 is not
+  enough) and at least **6 GB of memory** allocated to it (Docker Desktop:
+  Settings > Resources). The stack may not come up healthy with less.
+- Roughly **10 GB of free disk** for images and volumes.
+- **macOS** (Apple Silicon or Intel), **Linux**, or **Windows via WSL2**. All
+  images are multi-arch, so there is no platform-emulation warning on Apple
+  Silicon.
+- A **ClickHouse Cloud** service (its host and password go in `.env.workshop`),
+  plus `curl` and `git`.
+
+Host ports (override any of these in `.env.workshop` if it is already taken —
+`preflight.sh` tells you which one and suggests a free port):
+
+| Service | Default host port | Override var |
+|---|---|---|
+| Frontend (UI) | 8080 | `FRONTEND_HOST_PORT` |
+| Backend API | 8000 | `BACKEND_HOST_PORT` |
+| Postgres (local fallback) | 5432 | `POSTGRES_HOST_PORT` |
+| pgAdmin (`--profile tools`) | 5050 | `PGADMIN_HOST_PORT` |
+| OTel gRPC (otel overlay) | 4317 | `OTEL_GRPC_HOST_PORT` |
+| OTel HTTP (otel overlay) | 4318 | `OTEL_HTTP_HOST_PORT` |
+
 ## Run
+
+Run the preflight check first — it verifies Docker, the effective ports, your
+`.env.workshop`, and Cloud connectivity, and must report `READY` before you start:
 
 ```bash
 cp .env.workshop.example .env.workshop     # fill in your ClickHouse Cloud values
+./preflight.sh                             # must print "Overall: READY" (exit 0)
+
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
 
 # with the ClickStack observability overlay (module 05 onward):
@@ -21,15 +51,18 @@ docker compose --env-file .env.workshop \
 ```
 
 Frontend: http://localhost:8080 - Backend API docs: http://localhost:8080/api/docs
+(if you overrode `FRONTEND_HOST_PORT`, use that port instead of 8080).
 
 ## Layout
 
 | Path | What |
 |---|---|
+| `preflight.sh` | Participant readiness check — run before `docker compose up` |
 | `frontend/` | React/Vite SPA: Ops + Historical dashboards, zone map, chat panel |
 | `backend/` | FastAPI analytics API, guardrailed AI chat (`/api/chat`), OTel instrumentation |
 | `loadgen/` | `pg_trip_writer.py` — synthetic trips into Postgres (throttled via env) |
 | `db/cloud/001_cloud_schema.sql` | Idempotent schema for your Cloud service, including the ClickPipes CDC materialized view (run after the pipe's initial snapshot) |
+| `db/cloud/002_seed_historical.sql` | Optional runnable historical seed (taxi_zones + a yellow-taxi month) from public object storage; idempotent, run after 001 |
 | `db/postgres/` | Local-fallback Postgres init (CDC source table, publication) |
 | `otel-collector/` | Optional container-log scrape config for the ClickStack overlay |
 | `.env.workshop.example` | The single env template — copy to `.env.workshop` |

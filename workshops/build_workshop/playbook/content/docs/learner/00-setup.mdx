@@ -313,18 +313,33 @@ further.
 **You should now have:** phone-verified OpenAI account, $5 of prepaid credit with
 auto-recharge off, and `OPENAI_API_KEY` filled in.
 
-### Step 10 - Start the stack and verify
+### Step 10 - Run the preflight check, then start the stack
 
-Everything the app needs is now in `.env.workshop`. Start the workshop stack from the
-`app` directory:
+Everything the app needs is now in `.env.workshop`. Before starting the stack, run the
+preflight check from the `app` directory. It verifies Docker (including that the daemon
+can actually start a container), that your effective host ports are free, that
+`.env.workshop` has the required values, and that your ClickHouse Cloud service is
+reachable - each as a PASS, WARN, or FAIL with a one-line fix hint:
+
+```bash
+./preflight.sh
+```
+
+It must end with **Overall: READY** before you continue. Warnings are safe to proceed on
+(for example, the OpenAI and Langfuse keys are only needed in module 07). If a host port
+is already taken, preflight names the process holding it and prints the exact override to
+set - for example `set FRONTEND_HOST_PORT=28080 in .env.workshop` - so you never hit the
+raw `Bind ... port is already allocated` error. Apply the suggested value, re-run
+preflight, then start the stack:
 
 ```bash
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
 ```
 
 Give it a couple of minutes to become healthy, then open
-[localhost:8080](http://localhost:8080). Add `--profile tools` to the command to also
-start pgadmin on [localhost:5050](http://localhost:5050).
+[localhost:8080](http://localhost:8080) (or your overridden `FRONTEND_HOST_PORT`). Add
+`--profile tools` to the command to also start pgadmin on
+[localhost:5050](http://localhost:5050).
 
 ## How to verify you are done
 

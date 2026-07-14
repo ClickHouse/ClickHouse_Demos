@@ -88,14 +88,18 @@ once against their Cloud service (Cloud SQL console, `clickhousectl`, or agent):
 - Plain `ENGINE = MergeTree` retained -- Cloud transparently backs these with
   SharedMergeTree; no `ON CLUSTER` / `Replicated*` needed.
 - **No local `file()` reads.** The upstream demo's local seed reads
-  `file('sample/...')` from `user_files`, which does not exist on Cloud.
-  The file instead includes concrete (commented) `url()` seeds to run by hand:
-  `taxi_zones` from the public TLC zone-lookup CSV, and a one-month yellow-taxi
-  subset from the public TLC parquet exports
-  (`yellow_tripdata_2022-07.parquet`), with the column mapping and borough
-  enrichment cribbed from the upstream demo's dataset loader. This gives
-  the Historical dashboard real volume. Widen the brace list
-  (`{2022-07,2022-08,2022-09}`) for more months.
+  `file('sample/...')` from `user_files`, which does not exist on Cloud. The
+  reference/historical seed instead lives in a separate **runnable** file,
+  `db/cloud/002_seed_historical.sql` (001 keeps only a pointer comment, so there
+  is no commented/uncommented drift). It loads `taxi_zones` from the public TLC
+  zone-lookup CSV and a one-month yellow-taxi subset from the public TLC parquet
+  exports (`yellow_tripdata_2022-07.parquet`), with the column mapping and borough
+  enrichment cribbed from the upstream demo's dataset loader. Both statements are
+  idempotent (each guarded by a `count() = 0` check, so re-running cannot
+  double-load) and run after the schema, e.g.
+  `clickhouse client ... --multiquery < db/cloud/002_seed_historical.sql`. This
+  gives the Historical dashboard real volume; copy the second statement with the
+  next month's file name for more months.
 - The CDC path into `taxi_trips` is kept as the original **materialized-view
   model** and is now an **enabled, standardized MV** (no placeholder):
   ClickPipes/PeerDB always creates the destination table as
@@ -117,6 +121,53 @@ once against their Cloud service (Cloud SQL console, `clickhousectl`, or agent):
 ClickHouse Cloud endpoint/port/user/password/database + secure flag, shared (or
 local) Postgres host/db/credentials + `PGSSLMODE`, loadgen throttle, host-port
 mappings, and the query-safety limits.
+
+### 5. Workshop hardening (from the first live end-to-end bring-up)
+
+The first live run of the full stack surfaced five setup/runtime rough edges.
+Each is now addressed so any participant can get to a running app:
+
+- **`preflight.sh` (new).** A no-root, bash 3.2-compatible readiness check to run
+  before `docker compose up`. It PASS/WARN/FAILs (one fix hint per failure,
+  non-zero exit on any FAIL) on: the Docker CLI + daemon; that the daemon can
+  actually **start** a container (a `docker run` with a timeout - the wedge
+  detector for a daemon that answers `docker info` but leaves containers stuck in
+  `Created`); host-port collisions on the **effective** ports read from
+  `.env.workshop` (last-value-wins, matching compose), telling apart "in use by
+  this workshop stack" from a real clash and printing the exact override var and
+  a suggested free port; the required `.env.workshop` values (`CLICKHOUSE_HOST`,
+  `CLICKHOUSE_PASSWORD`; module-07 keys are warn-only); and TLS/TCP connectivity
+  to ClickHouse Cloud (and the shared Postgres, when used). Why: the live run hit
+  port collisions on 5432/8080/8000 and a wedged Docker daemon with no signal to
+  the participant until `up` failed.
+
+- **Backend idle-wake resilience** (`backend/app/db.py`, `backend/app/main.py`).
+  A ClickHouse Cloud service idle-scales to zero and takes ~5-30s to wake, so the
+  first request read-timed-out and surfaced a raw 500. `run_query` now retries a
+  transport-level connect/read timeout (clickhouse-connect raises
+  `OperationalError`) **once**, on a fresh client with a 30s read timeout; the
+  server-side `max_execution_time` is unchanged, so a genuinely slow query still
+  returns `TIMEOUT_EXCEEDED` -> 504 (the tradeoff is one wasted retry for a truly
+  slow query). A repeated transport timeout maps to 503 ("waking/unreachable"),
+  not 500. `/api/health` now probes with the same generous timeout and returns a
+  structured hint instead of reporting the service down mid-wake. Covered by
+  `backend/tests/test_db_retry.py`.
+
+- **Runnable seed** (`db/cloud/002_seed_historical.sql`, new) - see section 4.
+
+- **Multi-arch Postgres** (`docker-compose.workshop.yml`,
+  `db/postgres/init/000_postgis.sql`). The local-fallback Postgres image was
+  `postgis/postgis:16-3.4`, which is amd64-only and printed a platform-mismatch
+  warning (and ran under emulation) on Apple Silicon. The workshop path uses no
+  geo types (centroids are plain `double precision`; the CDC table has no geo
+  columns), so the image is now the official multi-arch `postgres:16` (native on
+  Apple Silicon, no warning). The postgis init is kept but made non-fatal (a
+  `DO`/`EXCEPTION` block) so it is portable across a plain and a PostGIS image and
+  never aborts container init.
+
+- **Requirements documented** (`README.md`): a Requirements section (Docker engine
+  with 6 GB + Compose v2, ~10 GB disk, macOS/Linux/WSL2 stance, and a host-port
+  table with the override vars) plus a "run `./preflight.sh` first" step.
 
 ## How to run
 
