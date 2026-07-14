@@ -1,0 +1,9 @@
+slides
+__pycache__/
+.venv/
+.pytest_cache/
+node_modules/
+frontend/dist/
+frontend/node_modules/
+frontend/package-lock.json
+frontend/tsconfig.tsbuildinfo
