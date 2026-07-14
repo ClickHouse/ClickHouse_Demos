@@ -31,21 +31,33 @@ exactly as before, so local development needs no collector.
                                           └──────────────────────────────────────────┘
 ```
 
-Two independent log paths (belt and suspenders):
+Two log paths:
 
-1. **App logs over OTLP** – the instrumented backend can export its Python logs
-   through the collector (`OTEL_LOGS_EXPORTER=otlp`). Correlated with traces.
+1. **App logs over OTLP** – the instrumented backend exports its Python logs
+   through the collector (`OTEL_LOGS_EXPORTER=otlp`), correlated with traces.
+   Live testing initially showed **zero** app logs in HyperDX while traces worked
+   perfectly. The cause was a bug in `configure_logging()`: it reassigned the root
+   logger's handlers and **evicted the OTLP log handler** that
+   `opentelemetry-instrument` attaches at startup, so app logs reached container
+   stdout but never OTLP. That is now fixed — `configure_logging()` preserves any
+   OpenTelemetry handler. **VERIFY-LIVE:** the app-side export is fixed and verified
+   locally (the handler survives startup), but that `otel_logs` actually populates
+   in HyperDX under traffic has not been re-confirmed on a live service.
 2. **Raw container stdout scraping** – an *optional* second collector
    (`--profile container-logs`) tails Docker's json-file logs, capturing every
-   service including the non-instrumented ones (loadgen, postgres). Enable this
-   if the OTLP log path is not enough. See VERIFY-LIVE below.
+   service including the non-instrumented ones (loadgen, postgres). This is the
+   reliable fallback, and the only path that covers non-instrumented services;
+   enable it if OTLP logs still do not appear. See VERIFY-LIVE below.
 
-Traces always flow over OTLP from the auto-instrumented backend.
+Traces always flow over OTLP from the auto-instrumented backend (they do not
+depend on the logging handlers, which is why they worked when logs did not).
 
 ## What changed in the app
 
 - **`backend/app/observability.py`** (new) – `configure_logging()` (stdout,
-  `LOG_LEVEL`, uvicorn loggers aligned) and `start_span()` (real OTel span when
+  `LOG_LEVEL`, uvicorn loggers aligned; **preserves the auto-instrumentation OTLP
+  log handler** on the root logger so app logs still export over OTLP -- a blind
+  handler reassignment used to evict it) and `start_span()` (real OTel span when
   instrumented, cheap no-op otherwise; import-guarded so the app runs even if
   OpenTelemetry is not installed).
 - **`backend/app/db.py`** – `run_query()` now wraps ClickHouse calls in a
@@ -116,9 +128,13 @@ docker compose --env-file .env.workshop \
 | `HYPERDX_OTEL_EXPORTER_CLICKHOUSE_DATABASE` | `otel` (via `CLICKSTACK_DATABASE`) | Database for ClickStack's `otel_*` tables. Separate from the app data DB (`nyc_tlc_data`). |
 | `CUSTOM_OTELCOL_CONFIG_FILE` | `/etc/otelcol-contrib/custom.config.yaml` | Only set on the container-logs collector; points at the filelog config. |
 
-Collector OTLP ports: `4317` (gRPC), `4318` (HTTP). The backend reaches it
-in-network at `http://otel-collector:4318`; host mappings are only for host-side
-senders (override with `OTEL_GRPC_HOST_PORT` / `OTEL_HTTP_HOST_PORT`).
+Collector OTLP ports: `4317` (gRPC), `4318` (HTTP). If either host port is
+already taken, `docker compose ... up` fails to bind the collector; set
+`OTEL_GRPC_HOST_PORT` / `OTEL_HTTP_HOST_PORT` to free ports in `.env.workshop`
+**before** starting the overlay (`preflight.sh` flags the clash and suggests
+values). Those host mappings only matter for host-side OTLP senders — the backend
+reaches the collector in-network at `http://otel-collector:4318`, so overriding
+the host ports does NOT change the backend wiring.
 
 ### Backend
 
@@ -129,7 +145,7 @@ senders (override with `OTEL_GRPC_HOST_PORT` / `OTEL_HTTP_HOST_PORT`).
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://otel-collector:4318` | Collector OTLP HTTP endpoint. |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` | Required because we target the 4318 HTTP port (OTLP defaults to gRPC). |
 | `OTEL_EXPORTER_OTLP_HEADERS` | `authorization=${OTLP_AUTH_TOKEN}` | Sends the shared token back to the collector. **VERIFY-LIVE.** |
-| `OTEL_LOGS_EXPORTER` | `otlp` | Export app logs over OTLP. **VERIFY-LIVE.** |
+| `OTEL_LOGS_EXPORTER` | `otlp` | Export app logs over OTLP. Only works because `configure_logging()` preserves the auto-instrumentation OTLP log handler (it used to evict it). **VERIFY-LIVE** that `otel_logs` populates. |
 | `LOG_LEVEL` | `INFO` | App + uvicorn log level (`DEBUG`/`INFO`/`WARNING`/`ERROR`). |
 
 ### Loadgen
@@ -180,9 +196,12 @@ ClickStack service; confirm during the first live run:
    ClickStack docs describe `OTLP_AUTH_TOKEN` on the collector but do not spell
    out the exact client header name/format. If auth fails, try `Bearer <token>`
    or drop the header (and unset `OTLP_AUTH_TOKEN`) to confirm the rest works.
-2. **App logs over OTLP** – whether `OTEL_LOGS_EXPORTER=otlp` actually lands
-   Python logs in HyperDX (vs. only traces). If logs are missing, rely on the
-   `--profile container-logs` path.
+2. **App logs over OTLP** – live testing found zero app logs while traces worked.
+   Root cause: `configure_logging()` evicted the auto-instrumentation OTLP log
+   handler; now fixed (the handler is preserved, verified locally that it survives
+   startup). Re-confirm on a live service that `otel_logs` now populates under
+   traffic. If logs are still missing, check the collector -> ClickStack log
+   delivery next; the `--profile container-logs` path remains the fallback.
 3. **Container-log scraping** (`otel-collector/custom.config.yaml`):
    - Host path `/var/lib/docker/containers/*/*-json.log` is inferred from the
      documented `/var/log/**/*.log` filelog example. On **Docker Desktop
