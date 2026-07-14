@@ -162,7 +162,7 @@ def zone_stats_sql(
     pickup_zone_id: list[int] | None,
     dropoff_zone_id: list[int] | None,
 ) -> tuple[str, dict[str, Any]]:
-    zone_col = "pickup_location_id" if group_by == ZoneGroupBy.pickup_zone else "dropoff_location_id"
+    zone_col = "pickup_zone_id" if group_by == ZoneGroupBy.pickup_zone else "dropoff_location_id"
     where_sql, params = _filters_sql(
         start=start,
         end=end,
