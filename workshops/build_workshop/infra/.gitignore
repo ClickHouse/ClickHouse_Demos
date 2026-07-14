@@ -1,2 +1,4 @@
 # Generated credentials — never commit.
 out/
+# chctl login state (cwd-relative) - never commit.
+.clickhouse/
