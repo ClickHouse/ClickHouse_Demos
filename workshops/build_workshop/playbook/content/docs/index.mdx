@@ -11,6 +11,16 @@ managed Postgres, conversational BI over your data, full observability, an AI-as
 SRE workflow, and an in-app AI chat traced end to end, and you will have practiced
 diagnosing a live incident with an AI SRE.
 
+You leave with a running prototype and this repo to show your team. Your ClickHouse Cloud
+trial keeps running for 30 days after the session, everything you built keeps running on
+it, and the repository is yours to keep. By the end you can demo five things live:
+
+- a real-time operational dashboard on ClickHouse Cloud,
+- a change-data-capture pipeline streaming from managed Postgres,
+- conversational BI over your data with ClickHouse Agents,
+- an AI-built SRE dashboard and alert over your telemetry,
+- and an in-app AI chat traced end to end in Langfuse.
+
 This playbook is dual-track. The Learner track is the lesson you follow in the room. The
 Instructor track is the facilitator's companion for the same module: timing, talk
 track, common failures, and reset steps.
@@ -97,18 +107,21 @@ Ten modules, in order. The app is complete on `main`, so modules 00 through 07 n
 per-module checkout — you configure and connect services rather than change app code. The
 only branch switches are the fault branches in module 08.
 
-| Step | Learner lesson | Instructor notes | Branch | What you will learn |
-|---|---|---|---|---|
-| 00 | [Setup](/docs/learner/00-setup) | [notes](/docs/instructor/00-setup) | `main` | Accounts, tools, agent skills, and the app repo, all wired up and verified |
-| 01 | [Base app](/docs/learner/01-base-app) | [notes](/docs/instructor/01-base-app) | `main` | Tour the running app: Ops and Historical dashboards, the chat panel, the data flow |
-| 02 | [ClickHouse Cloud](/docs/learner/02-clickhouse-cloud) | [notes](/docs/instructor/02-clickhouse-cloud) | `main` | Create the schema, seed historical data from object storage, and feel the query speed |
-| 03 | [Real-time CDC](/docs/learner/03-realtime-cdc) | [notes](/docs/instructor/03-realtime-cdc) | `main` | Stream live rows from managed Postgres into ClickHouse with a Postgres CDC ClickPipe |
-| 04 | [ClickHouse Agents](/docs/learner/04-clickhouse-agents) | [notes](/docs/instructor/04-clickhouse-agents) | `main` | Conversational BI: create an agent over your taxi data and explore it in natural language |
-| 05 | [ClickStack](/docs/learner/05-clickstack) | [notes](/docs/instructor/05-clickstack) | `main` | Enable ClickStack and send app traces and logs to HyperDX |
-| 06 | [AI SRE](/docs/learner/06-ai-sre) | [notes](/docs/instructor/06-ai-sre) | `main` | Connect your agent to the ClickStack MCP and have it build an SRE dashboard and alert |
-| 07 | [Chat and Langfuse](/docs/learner/07-chat-langfuse) | [notes](/docs/instructor/07-chat-langfuse) | `main` | Use the in-app AI chat and follow its traces, generations, and costs in Langfuse |
-| 08 | [Break and fix](/docs/learner/08-break-and-fix) | [notes](/docs/instructor/08-break-and-fix) | `fault/*` | Inject a fault, diagnose it with the AI SRE via ClickStack, and apply the fix |
-| 09 | [Wrap-up](/docs/learner/09-wrap-up) | [notes](/docs/instructor/09-wrap-up) | `main` | Review what you built, take it home, and extend it to your own data |
+| Step | Time | Learner lesson | Instructor notes | Branch | What you will learn |
+|---|---|---|---|---|---|
+| 00 | 25 min | [Setup](/docs/learner/00-setup) | [notes](/docs/instructor/00-setup) | `main` | Accounts, tools, agent skills, and the app repo, all wired up and verified |
+| 01 | 5 min | [Base app](/docs/learner/01-base-app) | [notes](/docs/instructor/01-base-app) | `main` | Tour the running app: Ops and Historical dashboards, the chat panel, the data flow |
+| 02 | 15 min | [ClickHouse Cloud](/docs/learner/02-clickhouse-cloud) | [notes](/docs/instructor/02-clickhouse-cloud) | `main` | Create the schema, seed historical data from object storage, and feel the query speed |
+| 03 | 20 min | [Real-time CDC](/docs/learner/03-realtime-cdc) | [notes](/docs/instructor/03-realtime-cdc) | `main` | Stream live rows from managed Postgres into ClickHouse with a Postgres CDC ClickPipe |
+| 04 | 10 min | [ClickHouse Agents](/docs/learner/04-clickhouse-agents) | [notes](/docs/instructor/04-clickhouse-agents) | `main` | Conversational BI: create an agent over your taxi data and explore it in natural language |
+| 05 | 15 min | [ClickStack](/docs/learner/05-clickstack) | [notes](/docs/instructor/05-clickstack) | `main` | Enable ClickStack and send app traces and logs to HyperDX |
+| 06 | 15 min | [AI SRE](/docs/learner/06-ai-sre) | [notes](/docs/instructor/06-ai-sre) | `main` | Connect your agent to the ClickStack MCP and have it build an SRE dashboard and alert |
+| 07 | 15 min | [Chat and Langfuse](/docs/learner/07-chat-langfuse) | [notes](/docs/instructor/07-chat-langfuse) | `main` | Use the in-app AI chat and follow its traces, generations, and costs in Langfuse |
+| 08 | 20 min | [Break and fix](/docs/learner/08-break-and-fix) | [notes](/docs/instructor/08-break-and-fix) | `fault/*` | Inject a fault, diagnose it with the AI SRE via ClickStack, and apply the fix |
+| 09 | 10 min | [Wrap-up](/docs/learner/09-wrap-up) | [notes](/docs/instructor/09-wrap-up) | `main` | Review what you built, take it home, and extend it to your own data |
+
+The times add up to about 2 hours 30 minutes of hands-on work; the rest of the
+three-hour session is the opening, transitions, and the finale demos.
 
 ## How to work through it
 
@@ -148,19 +161,20 @@ The stack reads it explicitly via `--env-file`:
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
 ```
 
-The values you supply as you go (each module tells you when):
+You fill in the values during module 00 setup, except the ClickStack block, which you add
+in module 05:
 
 - `CLICKHOUSE_HOST`, `CLICKHOUSE_PASSWORD` (plus `CLICKHOUSE_PORT=8443`,
   `CLICKHOUSE_USER=default`, `CLICKHOUSE_DATABASE=nyc_tlc_data`, `CLICKHOUSE_SECURE=true`)
-  — your Cloud service (module 02). `CLICKHOUSE_HOST` is the bare hostname, with no
+  — your Cloud service (module 00). `CLICKHOUSE_HOST` is the bare hostname, with no
   scheme and no port.
+- `OPENAI_API_KEY`, `LLM_MODEL=gpt-5.4-mini`, `LLM_BASE_URL` — the runtime LLM for the
+  in-app chat (module 00).
+- `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` — your Langfuse
+  project (module 00). `LANGFUSE_BASE_URL` is the Langfuse v4 env name; use
+  `https://us.cloud.langfuse.com` (US) or `https://cloud.langfuse.com` (EU).
 - `OTLP_AUTH_TOKEN`, `CLICKSTACK_DATABASE=otel`, `OTEL_SERVICE_NAME=nyc-taxi-backend`
   — observability, in the ClickStack section of the same `.env.workshop` (module 05).
-- `OPENAI_API_KEY`, `LLM_MODEL=gpt-4o-mini`, `LLM_BASE_URL` — the runtime LLM for the
-  in-app chat (module 07).
-- `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` — your Langfuse
-  project (module 07). `LANGFUSE_BASE_URL` is the Langfuse v4 env name; use
-  `https://us.cloud.langfuse.com` (US) or `https://cloud.langfuse.com` (EU).
 
 Never commit your filled-in `.env.workshop`; it is git-ignored.
 
