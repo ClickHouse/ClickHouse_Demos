@@ -346,29 +346,21 @@ cmd_schema() {
   need clickhousectl
   : "${CH_SERVICE_ID:?set CH_SERVICE_ID (clickhousectl cloud service list --json)}"
   [ -f "$SCHEMA_FILE" ] || { echo "ERROR: schema file not found: $SCHEMA_FILE" >&2; exit 1; }
-  echo ">> Applying $SCHEMA_FILE"
-  # Before the ClickPipe's initial snapshot creates the CDC source table, the
-  # file's trailing materialized view fails with UNKNOWN_TABLE. That is the
-  # documented run order: base objects now, create-mv after wait-pipe.
-  local applied=0
+  echo ">> Applying $SCHEMA_FILE (base tables + views)"
+  # 001 now contains only base objects, so it applies cleanly on a fresh service
+  # (the CDC materialized view was split into 003_cdc_mv.sql precisely because it
+  # referenced the not-yet-existing pipe table). set -e makes a genuine failure
+  # fatal, which is what we want now that no statement is expected to fail.
   if [ -n "${CH_HOST:-}" ] && [ -n "${CH_PASSWORD:-}" ]; then
     need clickhouse
     clickhouse client --host "$CH_HOST" --secure --password "$CH_PASSWORD" \
-      --multiquery < "$SCHEMA_FILE" && applied=1 || true
+      --multiquery < "$SCHEMA_FILE"
   else
-    clickhousectl cloud service query --id "$CH_SERVICE_ID" --queries-file "$SCHEMA_FILE" && applied=1 || true
+    clickhousectl cloud service query --id "$CH_SERVICE_ID" --queries-file "$SCHEMA_FILE"
   fi
-  if [ "$applied" = "1" ]; then
-    echo ">> Schema applied fully."
-  elif [ "$(chq "SELECT count() FROM system.tables WHERE database = 'nyc_tlc_data' AND name = 'taxi_trips'")" = "1" ]; then
-    echo ">> Base schema applied. The static CDC materialized view failed as expected"
-    echo "   before the pipe exists — run '$0 create-mv' after wait-pipe (it targets"
-    echo "   the pipe's ACTUAL destination table, which for CLI-created pipes lands"
-    echo "   in the 'default' database)."
-  else
-    echo "ERROR: schema application failed before base tables were created." >&2
-    exit 1
-  fi
+  echo ">> Schema applied. The CDC materialized view is separate: run '$0 create-mv'"
+  echo "   after wait-pipe (it detects the pipe's ACTUAL destination table -- CLI-created"
+  echo "   pipes land it in the 'default' database, the console wizard in nyc_tlc_data)."
 }
 
 cmd_create_mv() {

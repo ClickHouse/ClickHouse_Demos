@@ -100,22 +100,23 @@ once against their Cloud service (Cloud SQL console, `clickhousectl`, or agent):
   `clickhouse client ... --multiquery < db/cloud/002_seed_historical.sql`. This
   gives the Historical dashboard real volume; copy the second statement with the
   next month's file name for more months.
-- The CDC path into `taxi_trips` is kept as the original **materialized-view
-  model** and is now an **enabled, standardized MV** (no placeholder):
-  ClickPipes/PeerDB always creates the destination table as
-  `ENGINE = ReplacingMergeTree(_peerdb_version)` with `_peerdb_synced_at`,
-  `_peerdb_is_deleted`, `_peerdb_version` columns, and the workshop pins the
-  destination to database `nyc_tlc_data`, table `realtime_trips` (participants
-  select `nyc_tlc_data` and keep the source table name in the ClickPipes
-  wizard). The MV selects from `nyc_tlc_data.realtime_trips` into `taxi_trips`
-  with `WHERE _peerdb_is_deleted = 0` (an MV fires per inserted block, so it
-  needs no `FINAL`; the loadgen is append-only so version churn does not occur).
-  Because the MV references `realtime_trips`, the file's run-order note makes
-  clear it must be run **after** the ClickPipe's initial snapshot creates that
-  table (the ClickPipe itself only needs the `nyc_tlc_data` database that the
-  `CREATE DATABASE` at the top provides), and to confirm column types live with
-  `DESCRIBE` (expected PeerDB mapping `timestamptz -> DateTime64(6)`,
-  `int2/4/8 -> Int16/32/64`).
+- The CDC path into `taxi_trips` uses a **materialized view**, now in its own
+  runnable file `db/cloud/003_cdc_mv.sql` (001 keeps only a pointer). It was
+  inline in 001, but 001 must apply cleanly on a fresh service and the MV
+  references the ClickPipe's destination table, so running 001 as instructed
+  failed with `UNKNOWN_TABLE`; splitting it out fixes that. Run 003 **after** the
+  ClickPipe's initial snapshot creates the destination table. That table carries
+  the `_peerdb_synced_at`, `_peerdb_is_deleted`, `_peerdb_version` bookkeeping
+  columns, but its **engine and database depend on how the pipe was created**: the
+  console wizard is documented to use `ReplacingMergeTree(_peerdb_version)` and
+  lets you pick the destination database (`nyc_tlc_data`), while a CLI
+  (`clickhousectl`) pipe was observed live to land a plain (Shared)MergeTree in
+  the `default` database (`--table-mapping` takes no database qualifier). 003
+  ships both `FROM` variants (console default; CLI commented) and the MV filters
+  `WHERE _peerdb_is_deleted = 0` with no `FINAL`, so it works with either engine
+  (the loadgen is append-only, so no version churn). Confirm the actual
+  location/types live with `DESCRIBE` first (expected PeerDB mapping
+  `timestamptz -> DateTime64(6)`, `int2/4/8 -> Int16/32/64`).
 
 `.env.workshop.example` (new) documents every variable a participant fills:
 ClickHouse Cloud endpoint/port/user/password/database + secure flag, shared (or
@@ -198,10 +199,11 @@ plain HTTP (secure inferred `false` from the port).
    db/cloud/001_cloud_schema.sql
    ```
 
-   It creates the base tables/views and the `realtime_trips_to_taxi_trips_mv`
-   materialized view (which needs `realtime_trips` to already exist). The `url()`
-   seeds for `taxi_zones` and historical trips now live in
-   `db/cloud/002_seed_historical.sql`; run that file directly to load them.
+   It creates the base tables/views and applies cleanly on a fresh service. The
+   CDC materialized view lives in `db/cloud/003_cdc_mv.sql` -- run it after the
+   ClickPipe's initial snapshot creates its destination table. The `url()` seeds
+   for `taxi_zones` and historical trips live in `db/cloud/002_seed_historical.sql`;
+   run that file directly to load them.
 
 3. Configure and start the local app stack:
 
@@ -232,12 +234,13 @@ plain HTTP (secure inferred `false` from the port).
   unset -> `False`; Cloud `8443` unset -> `True`; explicit `CLICKHOUSE_SECURE`
   overrides the port inference in both directions.
 - `db/cloud/001_cloud_schema.sql` was executed with `clickhouse-local`: it
-  applies idempotently (re-run is a no-op) and creates the 3 tables + 2 views.
-  The concrete CDC MV was exercised end-to-end against a stub table matching the
-  documented ClickPipes shape (`ReplacingMergeTree(_peerdb_version)` with the
-  `_peerdb_*` columns and PeerDB-mapped types): a live row landed in `taxi_trips`
-  with `filename='realtime_cdc'`, and a row with `_peerdb_is_deleted = 1` was
-  correctly filtered out.
+  applies idempotently and cleanly on a fresh service (3 tables + 2 views, no MV,
+  no error -- the UNKNOWN_TABLE failure is gone). `db/cloud/003_cdc_mv.sql` (the
+  CDC MV, now split out) was exercised end-to-end against a stub destination table
+  matching the documented ClickPipes shape (`ReplacingMergeTree(_peerdb_version)`
+  with the `_peerdb_*` columns and PeerDB-mapped types): a live row landed in
+  `taxi_trips` with `filename='realtime_cdc'`, and a row with
+  `_peerdb_is_deleted = 1` was correctly filtered out.
 - The yellow-trips seed projection was validated against a synthetic Parquet with
   the real TLC column names (`VendorID`, `tpep_pickup_datetime`, `PULocationID`,
   ...): the borough-enrichment `multiIf`, the `store_and_fwd_flag` mapping, and

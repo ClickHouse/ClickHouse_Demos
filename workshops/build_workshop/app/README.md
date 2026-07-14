@@ -62,8 +62,9 @@ use those ports instead of 8080 / 8000.
 | `frontend/` | React/Vite SPA: Ops + Historical dashboards, zone map, chat panel |
 | `backend/` | FastAPI analytics API, guardrailed AI chat (`/api/chat`), OTel instrumentation |
 | `loadgen/` | `pg_trip_writer.py` — synthetic trips into Postgres (throttled via env) |
-| `db/cloud/001_cloud_schema.sql` | Idempotent schema for your Cloud service, including the ClickPipes CDC materialized view (run after the pipe's initial snapshot) |
+| `db/cloud/001_cloud_schema.sql` | Idempotent base schema (tables + views) for your Cloud service; applies cleanly on a fresh service |
 | `db/cloud/002_seed_historical.sql` | Optional runnable historical seed (taxi_zones + a yellow-taxi month) from public object storage; idempotent, run after 001 |
+| `db/cloud/003_cdc_mv.sql` | ClickPipes CDC materialized view into taxi_trips; run after the pipe's initial snapshot (ships console + CLI destination variants) |
 | `db/postgres/` | Local-fallback Postgres init (CDC source table, publication) |
 | `otel-collector/` | Optional container-log scrape config for the ClickStack overlay |
 | `.env.workshop.example` | The single env template — copy to `.env.workshop` |
