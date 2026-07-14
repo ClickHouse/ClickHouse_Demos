@@ -1,0 +1,108 @@
+<mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" page="1" pageWidth="1360" pageHeight="900">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="t0" value="ClickHouse BUILD Workshop - Data Flow" style="text;html=1;fontSize=20;fontStyle=1;align=left;" vertex="1" parent="1">
+      <mxGeometry x="40" y="10" width="600" height="30" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lane1" value="LIVE WRITE PATH (module 03)" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="60" width="1280" height="150" as="geometry"/>
+    </mxCell>
+    <mxCell id="w1" value="pg-trip-writer&#10;(local Docker)&#10;~2 rows/sec" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="60" y="100" width="150" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="w2" value="shared managed Postgres&#10;taxi_pNN.public.realtime_trips&#10;(your own database)" style="shape=cylinder3;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="290" y="95" width="210" height="90" as="geometry"/>
+    </mxCell>
+    <mxCell id="w3" value="WAL + publication&#10;pub_taxi_pNN" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="570" y="105" width="150" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="w4" value="ClickPipes Postgres CDC&#10;initial snapshot, then&#10;streams every ~60s" style="rounded=1;whiteSpace=wrap;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+      <mxGeometry x="790" y="100" width="190" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="w5" value="default.realtime_trips&#10;+_peerdb_synced_at&#10;+_peerdb_is_deleted +_peerdb_version" style="shape=cylinder3;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="1050" y="95" width="240" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lane2" value="MERGE + SEED (module 02)" style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="240" width="1280" height="160" as="geometry"/>
+    </mxCell>
+    <mxCell id="s1" value="NYC TLC parquet&#10;yellow_tripdata_2022-07&#10;(~3.2M rows)" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="60" y="285" width="200" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="s2" value="url() INSERT&#10;(one statement, minutes)" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="330" y="290" width="170" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="s3" value="materialized view&#10;realtime_trips_to_taxi_trips_mv&#10;WHERE _peerdb_is_deleted = 0" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="790" y="290" width="220" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="s4" value="nyc_tlc_data.taxi_trips&#10;(historical + live rows,&#10;filename tags the source)" style="shape=cylinder3;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="540" y="285" width="200" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lane3" value="READ PATHS (modules 01, 04, 07)" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="430" width="1280" height="230" as="geometry"/>
+    </mxCell>
+    <mxCell id="r1" value="Ops + Historical dashboards&#10;(React, TanStack Query)" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="60" y="470" width="210" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="r2" value="FastAPI query builders&#10;(safe parameterized SQL)" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="330" y="470" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="r3" value="in-app AI chat&#10;POST /api/chat" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="60" y="560" width="210" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="r4" value="OpenAI NL-to-SQL&#10;+ guardrails (SELECT-only,&#10;LIMIT, readonly=2)" style="rounded=1;whiteSpace=wrap;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="330" y="555" width="200" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="r5" value="Langfuse Cloud&#10;trace per chat turn&#10;(generations, sessions, cost)" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="600" y="555" width="210" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="r6" value="ClickHouse Agents&#10;(ai.clickhouse.cloud)&#10;conversational BI" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="600" y="465" width="210" height="70" as="geometry"/>
+    </mxCell>
+    <mxCell id="r7" value="ClickHouse service&#10;nyc_tlc_data" style="shape=cylinder3;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="900" y="480" width="170" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lane4" value="OBSERVABILITY PATH (modules 05, 06, 08)" style="rounded=1;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#b85450;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="690" width="1280" height="150" as="geometry"/>
+    </mxCell>
+    <mxCell id="o1" value="backend spans + logs&#10;(clickhouse.query span:&#10;SQL, elapsed_ms, error.category)" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="60" y="730" width="230" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="o2" value="otel-collector&#10;(OTLP :4318)" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="360" y="740" width="150" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="o3" value="otel db in your service&#10;(logs and traces)" style="shape=cylinder3;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="580" y="735" width="170" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="o4" value="HyperDX UI&#10;(search, traces, dashboards)" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="820" y="740" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="o5" value="AI SRE: coding agent via&#10;ClickStack MCP (dashboards,&#10;alerts, fault diagnosis)" style="rounded=1;whiteSpace=wrap;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="1090" y="735" width="210" height="80" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="f1" value="INSERT (TLS)" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="w1" target="w2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f2" value="" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="w2" target="w3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f3" value="logical decoding" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="w3" target="w4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f4" value="" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="w4" target="w5" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f5" value="per-block insert" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="w5" target="s3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f6" value="" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="s3" target="s4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f7" value="" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="s1" target="s2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f8" value="one-time seed" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="s2" target="s4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f9" value="GET /api/*" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="r1" target="r2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f10" value="SELECT" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="r2" target="r7" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f11" value="" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="r3" target="r4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f12" value="guarded SELECT" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="r4" target="r7" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f13" value="trace" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;" edge="1" source="r4" target="r5" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f14" value="RBAC SQL" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="r6" target="r7" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f15" value="OTLP" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="o1" target="o2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f16" value="" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="o2" target="o3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f17" value="" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;" edge="1" source="o3" target="o4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f18" value="clickstack_search,&#10;save_dashboard, save_alert" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;" edge="1" source="o5" target="o3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>

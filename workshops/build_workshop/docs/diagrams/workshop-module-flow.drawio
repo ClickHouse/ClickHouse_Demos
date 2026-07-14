@@ -1,0 +1,64 @@
+<mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" page="1" pageWidth="1360" pageHeight="760">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="t0" value="ClickHouse BUILD Workshop - Module Flow (150 min hands-on)" style="text;html=1;fontSize=20;fontStyle=1;align=left;" vertex="1" parent="1">
+      <mxGeometry x="40" y="10" width="800" height="30" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m0" value="00 Setup (25 min)&#10;Accounts, keys, clone,&#10;service, skills, MCP,&#10;stack up" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="40" y="70" width="190" height="90" as="geometry"/>
+    </mxCell>
+    <mxCell id="m1" value="01 Base app (5 min)&#10;Tour dashboards,&#10;chat panel, data flow" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="300" y="70" width="190" height="90" as="geometry"/>
+    </mxCell>
+    <mxCell id="m2" value="02 ClickHouse Cloud (15 min)&#10;Schema, url() seed of 3M&#10;TLC rows, backend to Cloud,&#10;feel the speed" style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="560" y="70" width="200" height="90" as="geometry"/>
+    </mxCell>
+    <mxCell id="m3" value="03 Realtime CDC (20 min)&#10;Generator on, Postgres CDC&#10;ClickPipe, MV, Ops dashboard&#10;goes live" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="830" y="70" width="200" height="90" as="geometry"/>
+    </mxCell>
+    <mxCell id="m4" value="04 ClickHouse Agents (10 min)&#10;Conversational BI over&#10;your taxi data" style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="70" width="200" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m5" value="05 ClickStack (15 min)&#10;OTel overlay on, traces and&#10;logs in HyperDX" style="rounded=1;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="1100" y="240" width="200" height="90" as="geometry"/>
+    </mxCell>
+    <mxCell id="m6" value="06 AI SRE (15 min)&#10;Coding agent + ClickStack MCP&#10;builds an SRE dashboard&#10;and alert" style="rounded=1;whiteSpace=wrap;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="830" y="240" width="200" height="90" as="geometry"/>
+    </mxCell>
+    <mxCell id="m7" value="07 Chat + Langfuse (15 min)&#10;Use the in-app AI chat, follow&#10;traces, generations, cost" style="rounded=1;whiteSpace=wrap;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="560" y="240" width="200" height="90" as="geometry"/>
+    </mxCell>
+    <mxCell id="m8" value="08 Break and fix (20 min)&#10;git checkout fault/*,&#10;diagnose with AI SRE,&#10;apply the fix" style="rounded=1;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="300" y="240" width="190" height="90" as="geometry"/>
+    </mxCell>
+    <mxCell id="m9" value="09 Wrap-up (10 min)&#10;Take home: running prototype,&#10;this repo, 30-day trial" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="40" y="240" width="190" height="90" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="fb" value="fault/01-map-not-loading&#10;fault/02-zone-stats-500&#10;fault/03-slow-dashboard" style="rounded=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#b85450;dashed=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="300" y="380" width="190" height="70" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="st1" value="STATE AFTER 03: historical + live data flowing into your Cloud service" style="text;html=1;fontSize=11;fontStyle=2;align=left;" vertex="1" parent="1">
+      <mxGeometry x="560" y="180" width="480" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="st2" value="STATE AFTER 07: app fully observable, AI chat traced, SRE tooling live" style="text;html=1;fontSize=11;fontStyle=2;align=left;" vertex="1" parent="1">
+      <mxGeometry x="300" y="360" width="480" height="20" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="g1" value="" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="m0" target="m1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="g2" value="" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="m1" target="m2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="g3" value="" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="m2" target="m3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="g4" value="" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="m3" target="m4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="g5" value="" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="m4" target="m5" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="g6" value="" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="m5" target="m6" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="g7" value="" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="m6" target="m7" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="g8" value="" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="m7" target="m8" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="g9" value="" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="m8" target="m9" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="g10" value="pick one or more" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;" edge="1" source="m8" target="fb" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+  </root>
+</mxGraphModel>
