@@ -159,13 +159,29 @@ flow Postgres -> ClickPipe -> ClickHouse -> dashboard.
 
 <Callout type="warn" title="Fallback: no managed Postgres in your org">
   Managed Postgres is in beta and availability varies by org. If
-  `clickhousectl cloud postgres create` is not available to you, your instructor hands out
-  a shared-Postgres slip. Use its values in the **same** `.env.workshop` and ClickPipe
-  fields — `PGHOST`, `PGDATABASE` (named `taxi_pNN`), `PGUSER`, `PGPASSWORD`,
-  `PGSSLMODE=require`, and set `PG_PUBLICATION` to the slip's publication (`pub_taxi_pNN`).
-  On the shared instance the table and publication are pre-created for you, so the
-  generator log shows `publication ... already exists` instead of creating one — that is
-  expected. Everything else in this module is identical.
+  `clickhousectl cloud postgres create` is not available to you, use one of these two
+  sources instead — everything else in this module is identical.
+
+  **No instructor (self-paced): a free Supabase project.** Sign up at
+  [supabase.com](https://supabase.com) and create a new project, saving the database
+  password you set at creation — that is the `postgres` user's password. In the project's
+  connection settings, copy the **direct** connection details (host `db.<ref>.supabase.co`,
+  port `5432`), **not** the connection pooler — poolers do not support the logical
+  replication that CDC needs. Put them in the same `.env.workshop` fields: `PGHOST` (the
+  direct host), `PGPORT=5432`, `PGDATABASE=postgres`, `PGUSER=postgres`,
+  `PGPASSWORD=<your project password>`, `PGSSLMODE=require`, `PG_PUBLICATION=pub_taxi`.
+  Because you connect as the project's `postgres` user, the generator creates the
+  `realtime_trips` table and the `pub_taxi` publication itself on first run, exactly like
+  the primary path. When you create the ClickPipe (Step 3), pick the dedicated **Supabase**
+  source type in the wizard (or pass `--postgres-type supabase` on the CLI) so it uses the
+  right connection settings.
+
+  **In the room: the instructor's shared-Postgres slip.** Use the slip's values in the same
+  `.env.workshop` and ClickPipe fields — `PGHOST`, `PGDATABASE` (named `taxi_pNN`),
+  `PGUSER`, `PGPASSWORD`, `PGSSLMODE=require`, and set `PG_PUBLICATION` to the slip's
+  publication (`pub_taxi_pNN`). On the shared instance the table and publication are
+  pre-created for you, so the generator log shows `publication ... already exists` instead
+  of creating one — that is expected.
 </Callout>
 
 ## How to verify you are done
