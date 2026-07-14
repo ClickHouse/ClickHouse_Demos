@@ -4,9 +4,9 @@ The published playbook for the ClickHouse BUILD Workshop ("Build AI with AI"): a
 three-hour, hands-on session where participants use their own agentic coding tool to take
 an NYC-taxi ride-hailing analytics app end to end on ClickHouse Cloud.
 
-This repository is the documentation site only. The workshop app that participants clone
-and build on lives in a separate repository (public URL TBD; set `appRepoUrl` in
-`src/lib/shared.ts` before publishing). The site is built with [Next.js](https://nextjs.org)
+This directory is the documentation site only. The workshop app that participants clone
+and build on lives alongside it at `workshops/build_workshop/app` in this repository, on
+the `build-workshop-v1` branch. The site is built with [Next.js](https://nextjs.org)
 and [Fumadocs](https://fumadocs.dev), and is published at `demohouse.cloud/workshop`.
 
 ## Prerequisites

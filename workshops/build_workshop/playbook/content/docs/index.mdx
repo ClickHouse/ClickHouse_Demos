@@ -167,10 +167,12 @@ Never commit your filled-in `.env.workshop`; it is git-ignored.
 
 ## Repository layout
 
-There are two repositories in play. This playbook and the workshop app are separate.
+Everything lives in one repository (`ClickHouse_Demos`), under
+`workshops/build_workshop/`, on the `build-workshop-v1` branch.
 
 ```text
-build-ai-with-ai/            # this playbook (the site you are reading)
+workshops/build_workshop/
+playbook/                    # this playbook (the site you are reading)
   content/docs/
     index.mdx                # this overview
     learner/                 # the lessons: 00-setup ... 09-wrap-up
@@ -178,7 +180,7 @@ build-ai-with-ai/            # this playbook (the site you are reading)
   src/                       # Next.js + Fumadocs app
   README.md                  # run, build, deploy, and authoring guide
 
-build-ai-with-ai-app/        # the NYC-taxi app you build on (cloned in module 00)
+app/                         # the NYC-taxi app you build on (cloned in module 00)
   frontend/                  # React SPA (Ops + Historical dashboards, chat panel)
   backend/                   # FastAPI analytics API + AI chat
   db/cloud/001_cloud_schema.sql   # the Cloud schema you run in module 02
