@@ -15,7 +15,7 @@ docker compose --env-file .env.workshop \
   -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
 ```
 
-When you are done, return to the complete app with `git checkout main`.
+When you are done, return to the complete app with `git checkout build-workshop-v1`.
 
 Budget about **20 minutes**.
 
@@ -47,11 +47,6 @@ The three fault branches each break a different part of the app:
 Check one out (see Starting point) and let the stack run long enough for the symptom to
 surface in the dashboards and in ClickStack.
 
-<Callout type="warn">
-  TODO: the exact symptom detail and the answer key for each fault branch are documented
-  in the instructor track once the fault-injection task finalizes them.
-</Callout>
-
 ## Step 2 — Diagnose with the AI SRE
 
 Point your agent at the ClickStack MCP and describe the symptom, not the cause:
@@ -69,7 +64,7 @@ step.
 
 ### `backend/` or `frontend/`
 
-Once you and the agent agree on the root cause, apply the fix (compare against `main` if
+Once you and the agent agree on the root cause, apply the fix (compare against `build-workshop-v1` if
 you want the reference). Rebuild the affected service:
 
 ```bash

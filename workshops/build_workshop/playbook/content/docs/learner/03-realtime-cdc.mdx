@@ -5,7 +5,7 @@ description: Stream live rows from a shared managed Postgres into ClickHouse wit
 
 ## Starting point
 
-You are on `main` — no checkout needed. Budget about **20 minutes**.
+You are on `build-workshop-v1` — no checkout needed. Budget about **20 minutes**.
 
 Prerequisites: module 02 complete (Cloud service seeded, back end reading from
 ClickHouse).
@@ -26,14 +26,20 @@ and the Ops dashboard updating.
 ## Step 1 — Start the ClickPipe wizard
 
 In the ClickHouse Cloud console, go to **Data Sources -> Set up a ClickPipe ->
-Postgres CDC**. Point it at the shared managed Postgres and select the
+Postgres CDC**. Point it at your assigned managed Postgres and select the
 `public.realtime_trips` table as the source.
 
-<Callout type="warn">
-  TODO: the shared managed Postgres host, database, replication user, and
-  publication/slot details land with the workshop infrastructure. Fill them in here once
-  provisioned.
-</Callout>
+Your instructor hand-out (a paper slip) has your per-participant connection values. Use
+exactly the ones on your slip; they are unique to you:
+
+- `PGHOST` — the managed Postgres host
+- `PGDATABASE` — your database, named `taxi_pNN`
+- `PGUSER` and `PGPASSWORD` — your credentials
+- publication name — `pub_taxi_pNN`
+
+Enter the host, database, user, and password in the wizard's connection step and the
+publication in its replication step. Copy the same values into `.env.workshop` (with
+`PGSSLMODE=require`) so the data generator in Step 3 writes to your Postgres.
 
 ## Step 2 — Accept the destination mapping
 
