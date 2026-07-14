@@ -74,14 +74,21 @@ def timeseries_sql(
         Interval.h1: "toStartOfInterval(pickup_datetime, INTERVAL 1 HOUR)",
     }[interval]
 
-    where_sql, params = _filters_sql(
-        start=start,
-        end=end,
-        vendor_id=vendor_id,
-        payment_type=payment_type,
-        pickup_zone_id=pickup_zone_id,
-        dropoff_zone_id=dropoff_zone_id,
-    )
+    clauses: list[str] = []
+    params: dict[str, Any] = {"start": ensure_utc(start), "end": ensure_utc(end)}
+    if vendor_id is not None:
+        clauses.append("vendor_id = {vendor_id:UInt16}")
+        params["vendor_id"] = int(vendor_id)
+    if payment_type is not None:
+        clauses.append("payment_type = {payment_type:UInt16}")
+        params["payment_type"] = int(payment_type)
+    if pickup_zone_id:
+        clauses.append("pickup_location_id IN {pickup_zone_ids:Array(UInt16)}")
+        params["pickup_zone_ids"] = [int(x) for x in pickup_zone_id]
+    if dropoff_zone_id:
+        clauses.append("dropoff_location_id IN {dropoff_zone_ids:Array(UInt16)}")
+        params["dropoff_zone_ids"] = [int(x) for x in dropoff_zone_id]
+    where_sql = " AND ".join(clauses) if clauses else "1"
 
     sql = f"""
 SELECT
@@ -94,6 +101,7 @@ SELECT
 FROM taxi_trips
 WHERE {where_sql}
 GROUP BY ts
+HAVING ts >= {{start:DateTime}} AND ts < {{end:DateTime}}
 ORDER BY ts
 """
     return sql, params
