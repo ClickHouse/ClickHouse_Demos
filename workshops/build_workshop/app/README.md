@@ -50,8 +50,9 @@ docker compose --env-file .env.workshop \
   -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d
 ```
 
-Frontend: http://localhost:8080 - Backend API docs: http://localhost:8080/api/docs
-(if you overrode `FRONTEND_HOST_PORT`, use that port instead of 8080).
+Frontend: http://localhost:8080 - Backend API docs (FastAPI Swagger):
+http://localhost:8000/docs. If you overrode `FRONTEND_HOST_PORT` or `BACKEND_HOST_PORT`,
+use those ports instead of 8080 / 8000.
 
 ## Layout
 

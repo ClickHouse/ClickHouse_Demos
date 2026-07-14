@@ -109,7 +109,7 @@ port_in_use() {
 }
 
 # suggest_port PORT -- a free port to override with, following the +20000 remap
-# convention already used in .env.workshop.example (8080 -> 28080, etc.).
+# convention (base port + 20000, e.g. 8080 -> 28080).
 suggest_port() {
   local base=$(( $1 + 20000 ))
   local p="$base"

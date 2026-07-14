@@ -199,9 +199,9 @@ plain HTTP (secure inferred `false` from the port).
    ```
 
    It creates the base tables/views and the `realtime_trips_to_taxi_trips_mv`
-   materialized view (which needs `realtime_trips` to already exist). Optional
-   `url()` seeds for `taxi_zones` and historical trips are at the bottom, run by
-   hand.
+   materialized view (which needs `realtime_trips` to already exist). The `url()`
+   seeds for `taxi_zones` and historical trips now live in
+   `db/cloud/002_seed_historical.sql`; run that file directly to load them.
 
 3. Configure and start the local app stack:
 
