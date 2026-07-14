@@ -1,13 +1,14 @@
 ---
 title: 02 ClickHouse Cloud
-description: Create your Cloud service, build the taxi schema, seed historical data from object storage, and point the back end at ClickHouse.
+description: Build the taxi schema on your Cloud service, seed historical data from object storage, and point the back end at ClickHouse.
 ---
 
 ## Starting point
 
-You are on `main` — no checkout needed.
+You are on `main` — no checkout needed. Budget about **15 minutes**.
 
-Prerequisites: a ClickHouse Cloud account with trial credits (module 00).
+Prerequisites: your ClickHouse Cloud service created and its host and password in
+`.env.workshop` (module 00).
 
 ## Why
 
@@ -20,21 +21,18 @@ real ClickHouse Cloud service and feel the difference on the same queries.
 A running ClickHouse Cloud service with the taxi schema created and seeded with
 historical trip data, and the app's back end reading from it.
 
-## Step 1 — Create your Cloud service
+## Step 1 — Confirm your service and credentials
 
-In the ClickHouse Cloud console, create a service. Copy the password the moment it is
-shown; it is displayed only once. Note the HTTPS endpoint.
-
-### `.env.workshop`
-
-Fill in the values you just obtained. `CLICKHOUSE_HOST` is the bare hostname — no
-scheme, no port:
+You created the Cloud service in module 00, so it already exists and its host and password
+are in `.env.workshop`. Confirm the `CLICKHOUSE_*` block is filled in - `CLICKHOUSE_HOST`
+is the bare hostname (no scheme, no port), and the credentials come from the service's
+**Connect** modal (left-nav **Connect** button) if you need to re-copy them:
 
 ```bash
 CLICKHOUSE_HOST=<your-service>.<region>.<cloud>.clickhouse.cloud
 CLICKHOUSE_PORT=8443
 CLICKHOUSE_USER=default
-CLICKHOUSE_PASSWORD=<the password shown once at creation>
+CLICKHOUSE_PASSWORD=<from the service's Connect modal>
 CLICKHOUSE_DATABASE=nyc_tlc_data
 CLICKHOUSE_SECURE=true
 ```
