@@ -1,0 +1,11 @@
+zone_id,borough,zone,service_zone,centroid_lat,centroid_lon
+161,Manhattan,Midtown Center,Yellow Zone,40.7549,-73.9840
+132,Queens,JFK Airport,Airports,40.6413,-73.7781
+234,Manhattan,Upper East Side South,Yellow Zone,40.7650,-73.9620
+79,Manhattan,East Village,Yellow Zone,40.7265,-73.9815
+68,Manhattan,East Harlem South,Yellow Zone,40.7900,-73.9440
+48,Manhattan,Clinton East,Yellow Zone,40.7600,-73.9930
+170,Queens,Long Island City/Hunters Point,Boro Zone,40.7480,-73.9500
+236,Manhattan,Upper West Side North,Yellow Zone,40.7870,-73.9750
+141,Manhattan,Lower East Side,Yellow Zone,40.7180,-73.9880
+107,Manhattan,Gramercy,Yellow Zone,40.7367,-73.9845
