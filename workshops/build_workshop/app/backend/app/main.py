@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.chat import router as chat_router
 from app.chat_service import shutdown_tracing
-from app.db import get_client, run_query
+from app.db import IDLE_WAKE_TIMEOUT_SECONDS, get_client, run_query
 from app.observability import configure_logging
 from app.query_builders import (
     anomalies_sql,
@@ -83,12 +83,29 @@ app.include_router(chat_router)
 
 @app.get("/api/health", response_model=HealthResponse)
 def health() -> HealthResponse:
-    client = get_client()
+    # A ClickHouse Cloud service can idle-scale to zero and take ~5-30s to wake, so
+    # probe with a generous read timeout rather than the default 5s query timeout;
+    # this lets the first health check ride out the wake instead of reporting the
+    # service down. The API itself is always healthy (HTTP 200); if the probe still
+    # fails we return clickhouse.ok=False with a structured hint so the UI can advise
+    # a retry rather than surface a raw error.
+    client = get_client(send_receive_timeout=IDLE_WAKE_TIMEOUT_SECONDS)
     try:
         version = client.command("SELECT version()")
         return HealthResponse(ok=True, clickhouse=HealthClickHouse(ok=True, version=str(version)))
     except Exception:
-        return HealthResponse(ok=True, clickhouse=HealthClickHouse(ok=False, version=None))
+        return HealthResponse(
+            ok=True,
+            clickhouse=HealthClickHouse(
+                ok=False,
+                version=None,
+                detail=(
+                    "ClickHouse is unreachable or still waking from idle. The first request "
+                    "to an idle Cloud service can take ~30s; retry shortly. If it persists, "
+                    "check CLICKHOUSE_HOST/PASSWORD and network access to port 8443."
+                ),
+            ),
+        )
 
 
 @app.get("/api/filters/zones", response_model=ZonesResponse)

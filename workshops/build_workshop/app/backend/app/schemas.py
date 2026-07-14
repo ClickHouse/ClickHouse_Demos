@@ -108,6 +108,8 @@ class ZonesResponse(BaseModel):
 class HealthClickHouse(BaseModel):
     ok: bool
     version: str | None = None
+    # Set when the probe fails; e.g. a hint that the Cloud service is waking from idle.
+    detail: str | None = None
 
 
 class HealthResponse(BaseModel):
