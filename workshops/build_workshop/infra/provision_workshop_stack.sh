@@ -306,6 +306,7 @@ Your .env.workshop values (data generator -> shared Postgres):
   PGUSER=$user
   PGPASSWORD=$pass
   PGSSLMODE=require
+  PG_PUBLICATION=$pub
 
 Your ClickPipe (console: Data Sources -> Set up a ClickPipe -> Postgres CDC):
   Host: $ADMIN_PGHOST   Port: $ADMIN_PGPORT   Database: $db
