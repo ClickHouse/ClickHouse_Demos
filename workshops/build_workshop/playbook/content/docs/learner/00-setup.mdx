@@ -127,7 +127,9 @@ The service is empty for now - you create the schema and load data in module 02.
 ### Step 4 - Create an organization API key
 
 Later modules use `clickhousectl` to create a ClickPipe from the command line, and that
-needs an organization API key. Create it now while you are in the console.
+needs an organization API key. The same key also lets `clickhousectl` create your own
+Postgres instance managed by ClickHouse in module 03. Create it now while you are in the
+console.
 
 In the console left menu, open the **API Keys** tab. Click **New API Key** (the first key
 may appear as an inline prompt instead). Give it a name, choose **Admin** permissions
