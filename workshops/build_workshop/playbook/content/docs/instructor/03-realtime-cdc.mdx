@@ -1,0 +1,37 @@
+---
+title: 03 Real-time CDC
+description: Instructor notes for module 03 — timing, talk track, common failures, and reset steps.
+---
+
+Facilitator companion to the learner lesson
+[03 Real-time CDC](/docs/learner/03-realtime-cdc).
+
+## Timing
+
+TODO: minute budget. The ClickPipe takes a moment to snapshot and begin streaming;
+account for it.
+
+## Talk track
+
+- The shared managed Postgres is the source; every attendee's ClickPipe reads from it.
+- Explain CDC at a high level (reads the write-ahead log) and why destination tables are
+  `ReplacingMergeTree` with `_peerdb_*` columns.
+- TODO: expand.
+
+## Common failures
+
+- Wizard cannot connect to the shared Postgres (network, credentials, or the replication
+  user lacks privileges).
+- Attendees confused by de-duplication semantics of `ReplacingMergeTree` when counts
+  look off; explain `FINAL` / aggregation.
+- Data generator not started, so nothing appears to move.
+- TODO: add failures seen in the dry run.
+
+## Reset steps
+
+- Delete and recreate the ClickPipe from the console.
+- Restart the data generator:
+  `docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d pg-trip-writer`
+  (turn it off with `--scale pg-trip-writer=0`).
+- TODO: whether the shared managed Postgres needs a per-attendee publication/slot lands
+  with the workshop infrastructure.

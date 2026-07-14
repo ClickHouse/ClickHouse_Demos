@@ -1,0 +1,199 @@
+---
+title: Build AI with AI
+description: A three-hour, hands-on workshop that takes an NYC-taxi analytics app end to end on ClickHouse Cloud, driven by your own AI coding agent.
+---
+
+Welcome to the ClickHouse BUILD Workshop playbook. Over three hours you will take an
+NYC-taxi ride-hailing analytics app (React front end, FastAPI back end, Postgres source
+database) and stand it up end to end on ClickHouse Cloud, using your own agentic coding
+tool to do the building. By the end you will have real-time change data capture from a
+managed Postgres, conversational BI over your data, full observability, an AI-assisted
+SRE workflow, and an in-app AI chat traced end to end, and you will have practiced
+diagnosing a live incident with an AI SRE.
+
+This playbook is dual-track. The Learner track is the lesson you follow in the room. The
+Instructor track is the facilitator's companion for the same module: timing, talk
+track, common failures, and reset steps.
+
+<Cards>
+  <Card title="Learner track" href="/docs/learner" description="Start here if you are attending the workshop." />
+  <Card title="Instructor track" href="/docs/instructor" description="Facilitator notes for running the session." />
+</Cards>
+
+## For learners
+
+You will work module by module. Each module names a starting checkpoint, explains why
+the step matters, states a concrete goal, walks you through numbered steps, and ends
+with a verification you can check yourself. You never have to keep pace with the whole
+room: if you fall behind, check out the next module's starting branch and continue.
+
+What you need on the day:
+
+- A laptop that meets the prerequisites in [00 Setup](/docs/learner/00-setup).
+- Your own agentic coding tool (Claude Code, Cursor, Codex CLI, or Windsurf), signed in
+  and on an active plan.
+- A ClickHouse Cloud account with visible trial credits (created during prework).
+- The workshop app repository cloned locally, with Docker running.
+
+## For instructors
+
+The Instructor track mirrors the Learner track one-to-one. For every module you get a
+timing budget, a talk track, the failures that actually happen in the room and how to
+unstick them, and the exact reset steps to get an attendee (or the whole room) back to a
+known-good state. Read the [Instructor track landing page](/docs/instructor) first for
+the room-level run of show and the shared-resource checklist.
+
+## Workshop scope
+
+### The app you build on
+
+The workshop app is a self-contained "war room" analytics stack for an NYC-taxi
+ride-hailing business:
+
+- **Front end** — a React single-page app with two dashboards: an Ops dashboard
+  (live operational metrics) and a Historical dashboard (large-range aggregations and
+  drilldowns). It also hosts the in-app AI chat panel you wire up in module 07.
+- **Back end** — a FastAPI service exposing safe, parameterized analytics endpoints.
+- **Source database** — Postgres (with PostGIS) as the operational source of truth,
+  the origin for change data capture into ClickHouse.
+- **Analytics warehouse** — ClickHouse Cloud, which you point the back end at in
+  module 02 and which receives CDC, observability data, and BI queries.
+
+You do not build the app from scratch. You start from a working local stack and, module
+by module, move its data plane and its intelligence onto ClickHouse Cloud.
+
+### Architecture (target end state)
+
+The block below is a placeholder for the rendered architecture diagram. It shows where
+each module plugs in (the `[NN]` tags map to the modules table).
+
+```text
+  ATTENDEE LAPTOP                                   CLICKHOUSE CLOUD (your trial)
+  +------------------------------------+            +--------------------------------+
+  | React front end (Ops + Historical  |            |  taxi analytics tables         |
+  |   dashboards, AI chat panel [07])  |--HTTP/SQL->|  (seeded [02], CDC target [03])|
+  |                                    |            |                                |
+  | FastAPI back end -----------------------------> |  ClickHouse Agents [04]        |
+  |                                    |            |  ClickStack / HyperDX [05]     |
+  | Postgres + PostGIS (source) -------- ClickPipes->|  otel_logs / otel_traces [05] |
+  |   [shared managed Postgres, CDC 03]|            |                                |
+  |                                    |            |  Remote MCP (OAuth):           |
+  | Coding agent (Claude Code / Cursor |<---MCP---->|   /mcp        [04]             |
+  |  / Codex / Windsurf) + skills      |            |   /clickstack [06]             |
+  +------------------------------------+            +--------------------------------+
+                                    |                         Langfuse Cloud [07]
+                                    +--- traces/generations -> (runs on ClickHouse)
+```
+
+<Callout title="Diagram is a placeholder">
+  TODO: replace the block above with the rendered workshop architecture diagram once it
+  is produced (see the design task). The module callouts (`[NN]`) map to the modules
+  table below.
+</Callout>
+
+## Modules
+
+Ten modules, in order. The app is complete on `main`, so modules 00 through 07 need no
+per-module checkout — you configure and connect services rather than change app code. The
+only branch switches are the fault branches in module 08.
+
+| Step | Learner lesson | Instructor notes | Branch | What you will learn |
+|---|---|---|---|---|
+| 00 | [Setup](/docs/learner/00-setup) | [notes](/docs/instructor/00-setup) | `main` | Accounts, tools, agent skills, and the app repo, all wired up and verified |
+| 01 | [Base app](/docs/learner/01-base-app) | [notes](/docs/instructor/01-base-app) | `main` | Tour the running app: Ops and Historical dashboards, the chat panel, the data flow |
+| 02 | [ClickHouse Cloud](/docs/learner/02-clickhouse-cloud) | [notes](/docs/instructor/02-clickhouse-cloud) | `main` | Create the schema, seed historical data from object storage, and feel the query speed |
+| 03 | [Real-time CDC](/docs/learner/03-realtime-cdc) | [notes](/docs/instructor/03-realtime-cdc) | `main` | Stream live rows from managed Postgres into ClickHouse with a Postgres CDC ClickPipe |
+| 04 | [ClickHouse Agents](/docs/learner/04-clickhouse-agents) | [notes](/docs/instructor/04-clickhouse-agents) | `main` | Conversational BI: create an agent over your taxi data and explore it in natural language |
+| 05 | [ClickStack](/docs/learner/05-clickstack) | [notes](/docs/instructor/05-clickstack) | `main` | Enable ClickStack and send app traces and logs to HyperDX |
+| 06 | [AI SRE](/docs/learner/06-ai-sre) | [notes](/docs/instructor/06-ai-sre) | `main` | Connect your agent to the ClickStack MCP and have it build an SRE dashboard and alert |
+| 07 | [Chat and Langfuse](/docs/learner/07-chat-langfuse) | [notes](/docs/instructor/07-chat-langfuse) | `main` | Use the in-app AI chat and follow its traces, generations, and costs in Langfuse |
+| 08 | [Break and fix](/docs/learner/08-break-and-fix) | [notes](/docs/instructor/08-break-and-fix) | `fault/*` | Inject a fault, diagnose it with the AI SRE via ClickStack, and apply the fix |
+| 09 | [Wrap-up](/docs/learner/09-wrap-up) | [notes](/docs/instructor/09-wrap-up) | `main` | Review what you built, take it home, and extend it to your own data |
+
+## How to work through it
+
+### Branches
+
+The app is already complete on `main`. This workshop is about configuring and connecting
+services — real-time CDC, observability, agents, chat — not editing application code, so
+there is nothing to build up branch by branch:
+
+- Clone the app once in module 00 and stay on `main` for modules 00 through 07.
+- Late joiners are never stranded: everything is service-side, so you only need your
+  `.env.workshop` filled in plus the module's console steps. There is no per-module
+  checkout to catch up on.
+- The only branch switches are in module 08 (Break and fix), which uses fault branches
+  (`fault/01-map-not-loading`, `fault/02-zone-stats-500`, `fault/03-slow-dashboard`). You
+  check one out, diagnose the failure, then return to `main`.
+
+<Callout type="warn" title="Fault branches are provisioned separately">
+  TODO: the `fault/*` branches are created in the app repository by the fault-injection
+  task; their symptoms and answer keys are documented in the instructor track once
+  finalized. Confirm the branches exist before the dry run.
+</Callout>
+
+### Environment variables
+
+Workshop configuration lives in a single `.env.workshop` file at the root of the app
+repository. A safe `.env.workshop.example` is committed; copy it and fill in only the
+values that are yours:
+
+```bash
+cp .env.workshop.example .env.workshop
+```
+
+The stack reads it explicitly via `--env-file`, so the workshop never touches the local
+`docker-compose.yml`:
+
+```bash
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
+```
+
+The values you supply as you go (each module tells you when):
+
+- `CLICKHOUSE_HOST`, `CLICKHOUSE_PASSWORD` (plus `CLICKHOUSE_PORT=8443`,
+  `CLICKHOUSE_USER=default`, `CLICKHOUSE_DATABASE=nyc_tlc_data`, `CLICKHOUSE_SECURE=true`)
+  — your Cloud service (module 02). `CLICKHOUSE_HOST` is the bare hostname, with no
+  scheme and no port.
+- `OTLP_AUTH_TOKEN`, `CLICKSTACK_DATABASE=otel`, `OTEL_SERVICE_NAME=nyc-taxi-backend`
+  — observability, in the ClickStack section of the same `.env.workshop` (module 05).
+- `OPENAI_API_KEY`, `LLM_MODEL=gpt-4o-mini`, `LLM_BASE_URL` — the runtime LLM for the
+  in-app chat (module 07).
+- `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` — your Langfuse
+  project (module 07). `LANGFUSE_BASE_URL` is the Langfuse v4 env name; use
+  `https://us.cloud.langfuse.com` (US) or `https://cloud.langfuse.com` (EU).
+
+Never commit your filled-in `.env.workshop`; it is git-ignored.
+
+## Repository layout
+
+There are two repositories in play. This playbook and the workshop app are separate.
+
+```text
+build-ai-with-ai/            # this playbook (the site you are reading)
+  content/docs/
+    index.mdx                # this overview
+    learner/                 # the lessons: 00-setup ... 09-wrap-up
+    instructor/              # facilitator notes: 00-setup ... 09-wrap-up
+  src/                       # Next.js + Fumadocs app
+  README.md                  # run, build, deploy, and authoring guide
+
+build-ai-with-ai-app/        # the NYC-taxi app you build on (cloned in module 00)
+  frontend/                  # React SPA (Ops + Historical dashboards, chat panel)
+  backend/                   # FastAPI analytics API + AI chat
+  db/cloud/001_cloud_schema.sql   # the Cloud schema you run in module 02
+  docker-compose.yml         # the original local stack (untouched by the workshop)
+  docker-compose.workshop.yml     # the workshop stack (Cloud + ClickPipes)
+  docker-compose.otel.yml         # the ClickStack observability overlay (module 05)
+  .env.workshop.example      # single env template (Cloud + chat + observability);
+                             #   copy to .env.workshop and fill in your values
+```
+
+## Where to go next
+
+<Cards>
+  <Card title="Begin with 00 Setup" href="/docs/learner/00-setup" description="Get your accounts, tools, and the app repo ready." />
+  <Card title="Instructor run of show" href="/docs/instructor" description="Room-level timing and shared-resource checklist." />
+  <Card title="ClickHouse Cloud" href="https://clickhouse.com/cloud" description="Create the trial you will use throughout." />
+  <Card title="ClickHouse docs" href="https://clickhouse.com/docs" description="Reference for everything you touch today." />
+</Cards>

@@ -1,0 +1,34 @@
+---
+title: 06 AI SRE
+description: Instructor notes for module 06 — timing, talk track, common failures, and reset steps.
+---
+
+Facilitator companion to the learner lesson [06 AI SRE](/docs/learner/06-ai-sre).
+
+## Timing
+
+TODO: minute budget. The ClickStack MCP OAuth flow is the fragile moment; budget extra
+and pre-stage per-tool config.
+
+## Talk track
+
+- The agent already writes SQL; give it the telemetry and the MCP tools and it does SRE
+  work.
+- Name the tools it will use: `clickstack_search`, `clickstack_save_dashboard`,
+  `clickstack_save_alert`.
+- Stress applying the auto-approve/allowlist so the agent is not stopped by permission
+  prompts.
+- TODO: expand.
+
+## Common failures
+
+- MCP OAuth fails or is slow across many concurrent first-time flows.
+- Permission prompts interrupt the agent mid-build (allowlist not applied).
+- Agent picks an unjustified alert threshold; coach it to baseline first.
+- TODO: add failures seen in the dry run.
+
+## Reset steps
+
+- Re-add the MCP server and re-run the OAuth login.
+- Delete a bad dashboard/alert in HyperDX and re-prompt.
+- TODO: confirm reset commands and the fallback (local `mcp-clickhouse` over stdio).

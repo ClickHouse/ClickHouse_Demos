@@ -1,0 +1,35 @@
+---
+title: 02 ClickHouse Cloud
+description: Instructor notes for module 02 — timing, talk track, common failures, and reset steps.
+---
+
+Facilitator companion to the learner lesson
+[02 ClickHouse Cloud](/docs/learner/02-clickhouse-cloud).
+
+## Timing
+
+TODO: minute budget. The seed-from-object-storage step is fire-and-wait; start it and
+keep talking while it loads.
+
+## Talk track
+
+- This is the first "wow": the same Historical query that was sluggish is now
+  sub-second on ClickHouse.
+- Explain why ClickHouse is fast on this shape of query (columnar, `ORDER BY`-aligned
+  scans) at a level matched to the room.
+- TODO: expand.
+
+## Common failures
+
+- Attendee did not copy the service password (shown once); they must reset it in the
+  console.
+- Wrong `CLICKHOUSE_HOST` (they pasted a full URL with scheme/port instead of the bare
+  hostname). `CLICKHOUSE_PORT=8443` and `CLICKHOUSE_SECURE=true` are separate.
+- Seed load fails on object-storage access; confirm the public TLC URL.
+- TODO: add failures seen in the dry run.
+
+## Reset steps
+
+- Re-issue the service password from the console and re-fill `.env.workshop`, then
+  restart: `docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d`.
+- Re-run `db/cloud/001_cloud_schema.sql` — it is idempotent, so a re-run is a no-op.

@@ -1,0 +1,19 @@
+{
+  "title": "Instructor track",
+  "description": "Timing, talk tracks, common failures, and reset steps for facilitators.",
+  "root": true,
+  "icon": "Presentation",
+  "pages": [
+    "index",
+    "00-setup",
+    "01-base-app",
+    "02-clickhouse-cloud",
+    "03-realtime-cdc",
+    "04-clickhouse-agents",
+    "05-clickstack",
+    "06-ai-sre",
+    "07-chat-langfuse",
+    "08-break-and-fix",
+    "09-wrap-up"
+  ]
+}

@@ -1,0 +1,173 @@
+---
+title: 00 Setup
+description: Get your accounts, tools, agent skills, and the workshop app repository wired up and verified.
+---
+
+## Starting point
+
+This is the first module, so there is nothing to check out yet. You will clone the app
+repository during this module.
+
+```bash
+git clone <APP_REPO_URL>          # the URL is in your welcome email
+cd build-ai-with-ai-app
+# you are now on `main` — the complete app. There is no per-module checkout;
+# you stay on `main` for modules 00 through 07.
+```
+
+Prerequisites you should already have from prework:
+
+- A laptop with 16 GB+ RAM and about 10 GB of free disk, with Docker installed and
+  allocated at least 6 GB of memory.
+- Your agentic coding tool installed, signed in, and on an active plan.
+- A ClickHouse Cloud account where you can see your trial credits.
+
+<Callout title="Did prework not finish?">
+  If any prework item failed, flag an instructor now. There is a staffed setup clinic
+  before the session for exactly this.
+</Callout>
+
+## Why
+
+Everything in the next three hours runs on top of four things: a ClickHouse Cloud
+account, a working coding agent that speaks the Model Context Protocol (MCP), the
+ClickHouse knowledge your agent needs, and the app running locally. Getting all four
+verified now is what lets the rest of the session move fast.
+
+## Goal
+
+By the end of this module you have: a ClickHouse Cloud org with visible trial credits, a
+Langfuse Cloud project with its keys saved, an OpenAI API key saved, your coding agent
+loaded with the ClickHouse agent skills and the ClickHouse docs, and the app repo cloned
+with `docker compose up` succeeding.
+
+## Step 1 — Confirm your ClickHouse Cloud trial
+
+Sign in at [console.clickhouse.cloud](https://console.clickhouse.cloud) and confirm you
+can see your trial credits (Billing shows the trial credit balance). You will create the
+actual service in module 02.
+
+### `.env.workshop`
+
+Copy the template and leave the `CLICKHOUSE_*` values blank for now. You fill them in
+module 02, when the service exists.
+
+```bash
+cp .env.workshop.example .env.workshop
+```
+
+```bash
+# Populated in module 02 after you create your Cloud service.
+CLICKHOUSE_HOST=
+CLICKHOUSE_PORT=8443
+CLICKHOUSE_USER=default
+CLICKHOUSE_PASSWORD=
+CLICKHOUSE_DATABASE=nyc_tlc_data
+CLICKHOUSE_SECURE=true
+```
+
+## Step 2 — Create a Langfuse Cloud project
+
+Langfuse is where you will watch the in-app AI chat's traces in module 07. Sign up at
+[cloud.langfuse.com](https://cloud.langfuse.com) — the free Hobby plan needs no credit
+card and includes 50k units per month. Create an organization and a project, then open
+**Project Settings -> API Keys** to get a `pk-lf-...` / `sk-lf-...` pair.
+
+### `.env.workshop`
+
+Copy the project keys and region base URL into `.env.workshop`.
+
+```bash
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+# US: https://us.cloud.langfuse.com   EU: https://cloud.langfuse.com
+LANGFUSE_BASE_URL=https://us.cloud.langfuse.com
+```
+
+<Callout>
+  `LANGFUSE_BASE_URL` is the Langfuse v4 env name (v4 renamed `LANGFUSE_HOST`, still
+  accepted as a fallback alias). The chat back end reads exactly these three
+  `LANGFUSE_*` names.
+</Callout>
+
+## Step 3 — Create an OpenAI API key
+
+The in-app chat calls an LLM at runtime. Your coding agent's subscription does not cover
+that, so you need one API key with a few dollars of credit.
+
+### `.env.workshop`
+
+```bash
+OPENAI_API_KEY=sk-...
+LLM_MODEL=gpt-4o-mini
+LLM_BASE_URL=https://api.openai.com/v1
+```
+
+## Step 4 — Load ClickHouse knowledge into your agent
+
+Install `clickhousectl`, use it to load the official ClickHouse agent skills into your
+coding agent, and point the agent at the ClickHouse docs, so its SQL and architecture
+advice are grounded.
+
+### clickhousectl
+
+```bash
+curl https://clickhouse.com/cli | sh
+```
+
+On macOS the binary lands in `~/.local/bin` — make sure that is on your `PATH`. Run all
+`clickhousectl cloud ...` commands from one fixed directory: its login tokens are stored
+relative to the current working directory.
+
+### `.claude/skills/` (or your tool's skills directory)
+
+```bash
+# Primary path (you already have clickhousectl):
+clickhousectl skills --agent claude    # or: cursor | codex | windsurf
+# Alternative:
+#   npx skills add clickhouse/agent-skills
+```
+
+`clickhousectl skills` downloads the skills from the repository's `main` branch at run
+time, so it needs live GitHub access.
+
+Point your agent at the docs too:
+[clickhouse.com/docs/llms.txt](https://clickhouse.com/docs/llms.txt) is a
+machine-readable index it can pull from.
+
+## Step 5 — Clone the app and start the stack
+
+### `docker-compose.workshop.yml`
+
+From the app repository, copy the template (if you have not already) and start the
+workshop stack. The workshop uses `docker-compose.workshop.yml` with an explicit
+`--env-file`, leaving the original local `docker-compose.yml` untouched:
+
+```bash
+cp .env.workshop.example .env.workshop    # then fill in the values from the steps above
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
+```
+
+Give the stack a couple of minutes to become healthy. Add `--profile tools` to also
+start pgadmin on http://localhost:5050.
+
+## How to verify you are done
+
+- `docker compose ps` shows the app services healthy.
+- The app front end loads at `http://localhost:8080/`.
+- Your agent can answer a question using the ClickHouse skills (ask it something like
+  "what is a ReplacingMergeTree and when would I use one?").
+- Your `.env.workshop` has Langfuse keys and an OpenAI key filled in; `CLICKHOUSE_*` is
+  still blank (that is expected until module 02).
+
+## Wrap-up
+
+You now have every account, key, and tool the workshop needs, and the app is running
+locally against its bundled databases. Nothing is on ClickHouse Cloud yet — that starts
+next.
+
+## End state
+
+The app runs locally, your agent is knowledgeable about ClickHouse, and your
+credentials are saved. Continue to [01 Base app](/docs/learner/01-base-app) to tour what
+you just started.

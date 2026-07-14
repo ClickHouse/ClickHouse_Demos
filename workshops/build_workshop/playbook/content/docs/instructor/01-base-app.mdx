@@ -1,0 +1,29 @@
+---
+title: 01 Base app
+description: Instructor notes for module 01 — timing, talk track, common failures, and reset steps.
+---
+
+Facilitator companion to the learner lesson [01 Base app](/docs/learner/01-base-app).
+
+## Timing
+
+TODO: minute budget. Keep this short; it is orientation, not construction, and buys time
+for services and telemetry to warm up.
+
+## Talk track
+
+- Walk the two dashboards on the projector: Ops (live) versus Historical (large ranges).
+- Point out the chat panel and set the expectation that it is wired up in module 07.
+- Name the data flow so the later modules have a shared vocabulary.
+- TODO: expand.
+
+## Common failures
+
+- Front end not reachable at `http://localhost:8080/` because the stack is not healthy
+  yet; have them run `docker compose ps`.
+- TODO: add failures seen in the dry run.
+
+## Reset steps
+
+- `docker compose down && docker compose up -d` to recover an unhealthy stack.
+- TODO: confirm reset commands.

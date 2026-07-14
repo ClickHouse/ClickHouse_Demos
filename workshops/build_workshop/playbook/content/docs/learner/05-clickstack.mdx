@@ -1,0 +1,100 @@
+---
+title: 05 ClickStack
+description: Enable ClickStack, run the local OpenTelemetry collector overlay, and see your app's traces and logs in HyperDX.
+---
+
+## Starting point
+
+You are on `main` — no checkout needed. The app is already instrumented for
+OpenTelemetry on `main`; in this module you turn it on with the collector overlay.
+
+Prerequisites: your Cloud service running (module 02).
+
+## Why
+
+To diagnose the app later, you first need to see it. ClickStack (ClickHouse's
+observability stack, with HyperDX as the UI) stores OpenTelemetry traces and logs in
+ClickHouse. In this module you turn on the collector so every request through the app
+produces telemetry you can query.
+
+## Goal
+
+App traces and logs flowing into ClickStack and visible in HyperDX, with at least one
+end-to-end request trace you can open.
+
+## Step 1 — Enable Managed ClickStack on your service
+
+The workshop uses **Managed ClickStack (HyperDX)** inside your own ClickHouse Cloud
+service: the collector writes `otel_*` tables to your service and the HyperDX UI renders
+them there. Enable it in the console: open your service, click **ClickStack** in the left
+menu, choose **Start Ingestion**, skip the collector step (the app ships its own
+collector in Step 2), and **Launch ClickStack** to single-sign-on into HyperDX.
+
+<Callout title="Managed ClickStack: what diverges from the classic setup">
+  - The back end uses vanilla OpenTelemetry, not the convenience
+    `hyperdx-opentelemetry` package the ClickStack docs suggest. That package hard-pins
+    `opentelemetry-api==1.30.0`, which conflicts with the Langfuse v4 SDK the chat
+    feature uses (needs `opentelemetry-api>=1.33.1`) — the two cannot share one
+    environment. The ClickStack collector ingests standard OTLP, so the vanilla distro
+    behaves identically; the workshop just sets the exporter env vars itself.
+  - ClickStack's telemetry lives in a separate database on your service
+    (`CLICKSTACK_DATABASE=otel`), distinct from the app's data database
+    (`CLICKHOUSE_DATABASE=nyc_tlc_data`).
+  - Traces always flow over OTLP from the auto-instrumented back end. App logs can go
+    over OTLP too; an optional second collector (`--profile container-logs`) scrapes raw
+    container stdout. On Docker Desktop (macOS/Windows) the container-log host path may
+    not be mountable because the daemon runs in a VM, so on a Mac rely on the OTLP log
+    path; the scraping profile is for Linux hosts.
+</Callout>
+
+## Step 2 — Run the OpenTelemetry collector overlay
+
+### `.env.workshop` and `docker-compose.otel.yml`
+
+Append the observability variables to your single `.env.workshop`, then bring the stack
+up with the overlay. The overlay sets `OTEL_ENABLED=true` on the back end for you and
+adds the `otel-collector` service (`clickhouse/clickstack-otel-collector`):
+
+```bash
+docker compose --env-file .env.workshop \
+  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d
+```
+
+These live in the ClickStack observability section of `.env.workshop.example`; fill them
+in your `.env.workshop`:
+
+```bash
+OTLP_AUTH_TOKEN=change-me-workshop-token   # shared secret securing OTLP ingest
+CLICKSTACK_DATABASE=otel                   # ClickStack's own otel_* tables
+OTEL_SERVICE_NAME=nyc-taxi-backend         # the service name shown in HyperDX
+LOG_LEVEL=INFO
+```
+
+The collector reuses `CLICKHOUSE_HOST` / `CLICKHOUSE_PORT` / `CLICKHOUSE_USER` /
+`CLICKHOUSE_PASSWORD` from `.env.workshop`; the back end exports OTLP to
+`http://otel-collector:4318` (HTTP/protobuf). To also scrape raw container stdout on a
+Linux host, add `--profile container-logs`.
+
+## Step 3 — Generate and find traffic in HyperDX
+
+Click around both dashboards to generate requests, then open HyperDX and find the
+resulting traces and logs. Follow one request end to end (front end -> back end ->
+ClickHouse).
+
+## How to verify you are done
+
+- A service named `nyc-taxi-backend` appears in HyperDX.
+- Requests to `/api/...` show as traces, each with a child `clickhouse.query` span
+  carrying `db.statement`, `db.elapsed_ms`, and `db.rows_returned`.
+- Triggering a failing query (for example one that exceeds the safety limits) surfaces
+  `error.category` on that span, and error logs appear.
+
+## Wrap-up
+
+The app is now observable: its behavior is recorded as traces and logs in ClickHouse and
+explorable in HyperDX. That telemetry is the substrate for the AI SRE work next.
+
+## End state
+
+Telemetry is flowing into ClickStack. Continue to [06 AI SRE](/docs/learner/06-ai-sre)
+to have your agent build on top of it.

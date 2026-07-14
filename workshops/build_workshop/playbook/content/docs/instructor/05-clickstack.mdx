@@ -1,0 +1,35 @@
+---
+title: 05 ClickStack
+description: Instructor notes for module 05 — timing, talk track, common failures, and reset steps.
+---
+
+Facilitator companion to the learner lesson [05 ClickStack](/docs/learner/05-clickstack).
+
+## Timing
+
+TODO: minute budget. Telemetry must accumulate before the module 08 finale, so start the
+collector as early as this module allows and keep it running.
+
+## Talk track
+
+- ClickStack is observability on ClickHouse; HyperDX is the UI; traces and logs are just
+  rows you can query.
+- Show one end-to-end request trace on the projector.
+- TODO: expand.
+
+## Common failures
+
+- Collector overlay not started (forgot the second `-f docker-compose.otel.yml`), so
+  nothing arrives in HyperDX.
+- `OTLP_AUTH_TOKEN` mismatch, or missing `CLICKHOUSE_*` in `.env.workshop` (the collector
+  reuses `CLICKHOUSE_HOST`/`PORT`/`USER`/`PASSWORD` to reach the Cloud service).
+- No traffic generated yet; have them click through both dashboards.
+- On Docker Desktop, the `--profile container-logs` scraper cannot mount the host log
+  path (daemon in a VM); this is expected, use the OTLP log path.
+- TODO: add failures seen in the dry run.
+
+## Reset steps
+
+- Restart with both compose files:
+  `docker compose --env-file .env.workshop -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d`.
+- TODO: confirm the ClickStack enablement path in the console during the dry run.
