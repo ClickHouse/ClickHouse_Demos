@@ -20,9 +20,9 @@ export function ZoneMap({ zones, filters }: Props) {
   // Load taxi zone polygons (GeoJSON generated from shapefile) once.
   useEffect(() => {
     let cancelled = false;
-    fetch("/taxi_zones.geojson")
+    fetch("/static/taxi_zones.geojson")
       .then(async (r) => {
-        if (!r.ok) throw new Error(`Failed to load /taxi_zones.geojson: ${r.status} ${r.statusText}`);
+        if (!r.ok) throw new Error(`Failed to load /static/taxi_zones.geojson: ${r.status} ${r.statusText}`);
         return await r.json();
       })
       .then((j) => {
