@@ -117,7 +117,7 @@ participants supply their own keys via a root `.env` file or the shell.
     environment:
       # ... existing CLICKHOUSE_* / API_CORS_ORIGINS / QUERY_* vars ...
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+      - LLM_MODEL=${LLM_MODEL:-gpt-5.4-mini}
       - LLM_BASE_URL=${LLM_BASE_URL:-https://api.openai.com/v1}
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
@@ -131,7 +131,7 @@ Example root `.env` for a participant:
 
 ```bash
 OPENAI_API_KEY=sk-...
-# LLM_MODEL=gpt-4o-mini              # any JSON-mode-capable chat model
+# LLM_MODEL=gpt-5.4-mini              # any JSON-mode-capable chat model
 # LLM_BASE_URL=https://api.openai.com/v1
 LANGFUSE_PUBLIC_KEY=pk-lf-...
 LANGFUSE_SECRET_KEY=sk-lf-...

@@ -68,7 +68,7 @@ services:
       # AI chat (NL-to-SQL). Optional: the app boots without these; /api/chat
       # returns 503 until OPENAI_API_KEY is set.
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+      - LLM_MODEL=${LLM_MODEL:-gpt-5.4-mini}
       - LLM_BASE_URL=${LLM_BASE_URL:-https://api.openai.com/v1}
       # Langfuse tracing of the chat flow (optional; SDK v4 uses LANGFUSE_BASE_URL).
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
