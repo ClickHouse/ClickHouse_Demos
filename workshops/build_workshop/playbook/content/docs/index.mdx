@@ -142,8 +142,7 @@ values that are yours:
 cp .env.workshop.example .env.workshop
 ```
 
-The stack reads it explicitly via `--env-file`, so the workshop never touches the local
-`docker-compose.yml`:
+The stack reads it explicitly via `--env-file`:
 
 ```bash
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
@@ -184,7 +183,6 @@ app/                         # the NYC-taxi app you build on (cloned in module 0
   frontend/                  # React SPA (Ops + Historical dashboards, chat panel)
   backend/                   # FastAPI analytics API + AI chat
   db/cloud/001_cloud_schema.sql   # the Cloud schema you run in module 02
-  docker-compose.yml         # the original local stack (untouched by the workshop)
   docker-compose.workshop.yml     # the workshop stack (Cloud + ClickPipes)
   docker-compose.otel.yml         # the ClickStack observability overlay (module 05)
   .env.workshop.example      # single env template (Cloud + chat + observability);

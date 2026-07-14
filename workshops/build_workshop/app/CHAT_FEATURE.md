@@ -44,11 +44,11 @@ Request/response contract:
 
 1. On the first request the backend introspects `taxi_trips` and `taxi_zones` with
    `DESCRIBE TABLE` and caches the column list. If ClickHouse is unreachable it falls
-   back to the checked-in schema (`db/init/001_schema.sql`), so the prompt is always
-   grounded.
+   back to an embedded copy of the schema (matching `db/cloud/001_cloud_schema.sql`),
+   so the prompt is always grounded.
 2. The system prompt embeds that schema plus four few-shot NL-to-SQL examples using the
-   repo's own patterns (`toStartOfInterval`, `quantileTDigest`, zone joins,
-   `total_amount` revenue fallback — see `readme.md` sections 4 and 6).
+   app's own query-builder patterns (`toStartOfInterval`, `quantileTDigest`, zone joins,
+   `total_amount` revenue fallback — see `backend/app/query_builders.py`).
 3. The model returns a strict JSON object `{answer, sql, chart}`. The default path uses
    OpenAI JSON mode (`response_format={"type": "json_object"}`). If you point
    `LLM_BASE_URL` at a provider that does not support JSON mode, the parser also accepts a
