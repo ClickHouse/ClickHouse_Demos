@@ -27,9 +27,16 @@ _LOG_DATEFMT = "%Y-%m-%dT%H:%M:%S%z"
 def configure_logging() -> None:
     """Configure stdout logging for the app and uvicorn.
 
-    Idempotent: safe to call more than once (handlers are replaced, not stacked).
-    Level comes from the LOG_LEVEL env var (default INFO). Container log
+    Idempotent: safe to call more than once (our stdout handler is replaced, not
+    stacked). Level comes from the LOG_LEVEL env var (default INFO). Container log
     collectors read stdout, so everything is written there with one format.
+
+    When the app runs under `opentelemetry-instrument` (OTEL_ENABLED=true), the
+    auto-instrumentation attaches an OTLP log-export handler to the root logger
+    BEFORE this module is imported. We must preserve it: a blind
+    `root.handlers = [handler]` evicts it, which is why app logs reached container
+    stdout but never OTLP (otel_logs stayed empty while traces worked). So we keep
+    any OpenTelemetry handler and only swap in our single stdout handler.
     """
     level_name = os.getenv("LOG_LEVEL", "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
@@ -39,7 +46,8 @@ def configure_logging() -> None:
 
     root = logging.getLogger()
     root.setLevel(level)
-    root.handlers = [handler]
+    otel_handlers = [h for h in root.handlers if type(h).__module__.startswith("opentelemetry")]
+    root.handlers = [handler, *otel_handlers]
 
     # uvicorn installs its own handlers at startup; re-point them at ours so the
     # format/level stay consistent and duplicate lines are avoided.
