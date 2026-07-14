@@ -75,32 +75,13 @@ by module, move its data plane and its intelligence onto ClickHouse Cloud.
 
 ### Architecture (target end state)
 
-The block below is a placeholder for the rendered architecture diagram. It shows where
-each module plugs in (the `[NN]` tags map to the modules table).
+![Workshop architecture: participant laptop, ClickHouse Cloud, shared instructor infrastructure, and third-party services](/workshop-architecture.svg)
 
-```text
-  ATTENDEE LAPTOP                                   CLICKHOUSE CLOUD (your trial)
-  +------------------------------------+            +--------------------------------+
-  | React front end (Ops + Historical  |            |  taxi analytics tables         |
-  |   dashboards, AI chat panel [07])  |--HTTP/SQL->|  (seeded [02], CDC target [03])|
-  |                                    |            |                                |
-  | FastAPI back end -----------------------------> |  ClickHouse Agents [04]        |
-  |                                    |            |  ClickStack / HyperDX [05]     |
-  | Postgres + PostGIS (source) -------- ClickPipes->|  otel_logs / otel_traces [05] |
-  |   [shared managed Postgres, CDC 03]|            |                                |
-  |                                    |            |  Remote MCP (OAuth):           |
-  | Coding agent (Claude Code / Cursor |<---MCP---->|   /mcp        [04]             |
-  |  / Codex / Windsurf) + skills      |            |   /clickstack [06]             |
-  +------------------------------------+            +--------------------------------+
-                                    |                         Langfuse Cloud [07]
-                                    +--- traces/generations -> (runs on ClickHouse)
-```
+The editable draw.io sources for this and the data-flow and module-flow diagrams live
+in the repo at `workshops/build_workshop/docs/diagrams/` (the SVGs have the diagram
+XML embedded, so opening them in draw.io recovers the editable diagram).
 
-<Callout title="Diagram is a placeholder">
-  TODO: replace the block above with the rendered workshop architecture diagram once it
-  is produced (see the design task). The module callouts (`[NN]`) map to the modules
-  table below.
-</Callout>
+![Module flow: ten modules from setup to wrap-up with per-module time budgets](/workshop-module-flow.svg)
 
 ## Modules
 
