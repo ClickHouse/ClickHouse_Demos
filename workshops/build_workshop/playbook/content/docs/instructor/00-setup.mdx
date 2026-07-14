@@ -7,15 +7,20 @@ Facilitator companion to the learner lesson [00 Setup](/docs/learner/00-setup).
 
 ## Timing
 
-TODO: minute budget from rehearsal. Kick off the fire-and-wait steps (create service,
-`docker compose up`) before or during the opening talk so they run underneath it.
+About 25 minutes. Kick off the fire-and-wait steps (create the service, `docker compose
+up`) before or during the opening talk so they run underneath it. Push attendees to do
+the three account signups (ClickHouse Cloud, Langfuse, OpenAI) before the day - each is 5
+to 10 minutes - so this module stays inside budget.
 
 ## Talk track
 
 - Frame the session: they will move an existing app onto ClickHouse Cloud, and the agent
   does the building.
-- Emphasize copying the service password the instant it is shown (module 02), and that
-  `.env` is the single source of config.
+- Point out that service credentials come from the service's Connect modal (not a
+  one-time password reveal), and that `.env.workshop` is the single source of config.
+- Module 00 now creates the Cloud service and fills every credential, so the fire-and-wait
+  is front-loaded here; module 02 just builds the schema on the service that already
+  exists.
 - TODO: expand.
 
 ## Common failures
@@ -30,5 +35,6 @@ TODO: minute budget from rehearsal. Kick off the fire-and-wait steps (create ser
 ## Reset steps
 
 - Point a stuck attendee at the loaner Cloud service pool if their trial is unusable.
-- Re-run `cp .env.example .env` and re-fill; confirm no stray committed `.env`.
+- Re-run `cp .env.workshop.example .env.workshop` and re-fill; confirm no stray committed
+  `.env.workshop`.
 - TODO: confirm reset commands.
