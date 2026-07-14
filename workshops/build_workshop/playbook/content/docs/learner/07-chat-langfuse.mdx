@@ -5,11 +5,11 @@ description: Use the in-app AI chat and follow its traces, generations, and cost
 
 ## Starting point
 
-You are on `main` — no checkout needed. The chat feature is already built into the app on
-`main`; this module configures it and traces it.
+You are on `main` — no checkout needed. Budget about **15 minutes**. The chat feature is
+already built into the app on `main`; this module configures it and traces it.
 
-Prerequisites: a Langfuse project with keys in `.env.workshop` and an OpenAI key
-(module 00).
+Prerequisites: a Langfuse project with keys in `.env.workshop` and an OpenAI key, both
+created in module 00.
 
 ## Why
 
@@ -32,11 +32,12 @@ project as a trace with its generation, tokens, and cost.
 ### `.env.workshop`
 
 The chat back end (`backend/app/chat.py`, `backend/app/chat_service.py`) reads these from
-the environment. Fill them in `.env.workshop`:
+the environment. You filled them in during module 00 setup; confirm they are present in
+`.env.workshop`:
 
 ```bash
-OPENAI_API_KEY=sk-...
-LLM_MODEL=gpt-4o-mini                 # any JSON-mode-capable chat model
+OPENAI_API_KEY=sk-proj-...
+LLM_MODEL=gpt-5.4-mini                 # any JSON-mode-capable chat model
 LLM_BASE_URL=https://api.openai.com/v1
 LANGFUSE_PUBLIC_KEY=pk-lf-...
 LANGFUSE_SECRET_KEY=sk-lf-...
@@ -69,15 +70,34 @@ rest of the app is unaffected.)
 
 ## Step 3 — Follow the trace in Langfuse
 
-Open your Langfuse project and look at three views:
+Open your Langfuse project. New projects (any created after April 2026) use the Langfuse
+v4 "Fast Preview" interface: the main surface is a single unified observations table where
+every operation your app performs — each LLM call, tool step, and retrieval — is its own
+row. A filter sidebar narrows the table by fields such as name, model, or session, showing
+how many rows match each value, and you can save a filtered view as a one-click shortcut.
+
+Your first trace also flips the project's "Setup Tracing" indicator from Pending to
+Active — a quick confirmation that instrumentation is working.
+
+From that table, the views that matter for the chat are:
 
 - **Traces** — one trace per chat turn, named `chat`. Open it to see the prompt (schema
   plus your question) and the model's JSON output.
-- **Generations** — the OpenAI call with its token counts and USD cost.
-- **Sessions** — turns that share a `conversation_id` grouped into one conversation.
+- **Generations** — the OpenAI call captured inside the trace, with its token counts and
+  USD cost.
+- **Sessions** — turns that share a `conversation_id` grouped into one conversation
+  timeline.
+- **Dashboards** — charts over your traces (latency, cost, volume) for a rolled-up view.
 
 If traces do not appear, confirm `LANGFUSE_BASE_URL` matches your project's region and
 that both keys are set on the back end.
+
+<Callout title="Two things to try at home">
+  Langfuse Cloud gained full-text search across traces in May 2026 - useful for finding a
+  specific conversation by content. And a hosted Langfuse MCP server (June 2026) lets your
+  coding agent query your observations, metrics, and scores directly, the same way it
+  queries ClickHouse.
+</Callout>
 
 ## How to verify you are done
 
