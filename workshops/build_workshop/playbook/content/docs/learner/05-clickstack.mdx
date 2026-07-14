@@ -1,6 +1,6 @@
 ---
 title: 05 ClickStack
-description: Enable ClickStack, run the local OpenTelemetry collector overlay, and see your app's traces and logs in HyperDX.
+description: Enable ClickStack, run the local OpenTelemetry collector overlay, and see your app's traces in HyperDX.
 ---
 
 ## Starting point
@@ -20,8 +20,9 @@ produces telemetry you can query.
 
 ## Goal
 
-App traces and logs flowing into ClickStack and visible in HyperDX, with at least one
-end-to-end request trace you can open.
+App traces flowing into ClickStack and visible in HyperDX, with at least one end-to-end
+request trace you can open. Traces are the signal you verify here; application logs are
+available via `docker compose ... logs` and the optional container-logs profile.
 
 ## Step 1 — Enable Managed ClickStack on your service
 
@@ -41,14 +42,24 @@ collector in Step 2), and **Launch ClickStack** to single-sign-on into HyperDX.
   - ClickStack's telemetry lives in a separate database on your service
     (`CLICKSTACK_DATABASE=otel`), distinct from the app's data database
     (`CLICKHOUSE_DATABASE=nyc_tlc_data`).
-  - Traces always flow over OTLP from the auto-instrumented back end. App logs can go
-    over OTLP too; an optional second collector (`--profile container-logs`) scrapes raw
-    container stdout. On Docker Desktop (macOS/Windows) the container-log host path may
-    not be mountable because the daemon runs in a VM, so on a Mac rely on the OTLP log
-    path; the scraping profile is for Linux hosts.
+  - Traces always flow over OTLP from the auto-instrumented back end and are the signal
+    you rely on here. Application logs did not deliver reliably over OTLP in testing, so
+    read them with `docker compose ... logs` (or enable the optional
+    `--profile container-logs` collector, which scrapes raw container stdout — a
+    Linux-host path; on Docker Desktop the daemon runs in a VM and that host mount may
+    not be available).
 </Callout>
 
 ## Step 2 — Run the OpenTelemetry collector overlay
+
+<Callout title="Check the collector ports first">
+  The collector publishes OTLP on host ports **4317** and **4318**, which are commonly
+  already in use. If `./preflight.sh` in module 00 WARNed on them, set
+  `OTEL_GRPC_HOST_PORT` and `OTEL_HTTP_HOST_PORT` in `.env.workshop` to the values
+  preflight suggests (for example `24317` / `24318`) before starting the overlay. The
+  back end reaches the collector in-network, so remapping the host ports is safe. Re-run
+  `./preflight.sh` to confirm the ports are clear.
+</Callout>
 
 ### `.env.workshop` and `docker-compose.otel.yml`
 
@@ -79,21 +90,24 @@ Linux host, add `--profile container-logs`.
 ## Step 3 — Generate and find traffic in HyperDX
 
 Click around both dashboards to generate requests, then open HyperDX and find the
-resulting traces and logs. Follow one request end to end (front end -> back end ->
-ClickHouse).
+resulting traces. Follow one request end to end (front end -> back end -> ClickHouse).
+(Application logs are not in HyperDX in this setup; read them with `docker compose ...
+logs backend`.)
 
 ## How to verify you are done
 
 - A service named `nyc-taxi-backend` appears in HyperDX.
 - Requests to `/api/...` show as traces, each with a child `clickhouse.query` span
   carrying `db.statement`, `db.elapsed_ms`, and `db.rows_returned`.
-- Triggering a failing query (for example one that exceeds the safety limits) surfaces
-  `error.category` on that span, and error logs appear.
+- You will not see query errors here yet: a healthy, seeded app does not trip the safety
+  limits, and 4xx requests never reach ClickHouse. In module 08 the injected fault makes
+  an errored `clickhouse.query` span (with `error.category`) observable.
 
 ## Wrap-up
 
-The app is now observable: its behavior is recorded as traces and logs in ClickHouse and
-explorable in HyperDX. That telemetry is the substrate for the AI SRE work next.
+The app is now observable: its behavior is recorded as traces in ClickHouse and
+explorable in HyperDX (with logs available via `docker compose ... logs` and the
+container-logs profile). That telemetry is the substrate for the AI SRE work next.
 
 ## End state
 

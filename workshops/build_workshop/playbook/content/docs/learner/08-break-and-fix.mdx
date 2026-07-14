@@ -38,11 +38,14 @@ and confirm the app recovers.
 
 ### fault branch
 
-The three fault branches each break a different part of the app:
+The three fault branches each break a different part of the app. Here is how you know the
+fault is active (observable behavior only — the diagnosis is the exercise):
 
-- `fault/01-map-not-loading` — the map fails to load.
-- `fault/02-zone-stats-500` — a zone-stats endpoint returns 500s.
-- `fault/03-slow-dashboard` — the dashboard becomes slow.
+- `fault/01-map-not-loading` — the zone map stays empty while everything else works.
+- `fault/02-zone-stats-500` — the map choropleth empties and `/api/metrics/zone_stats`
+  returns 500 for pickup grouping; sibling cards keep working.
+- `fault/03-slow-dashboard` — the "What's happening now" trend card times out (504) while
+  sibling cards stay fast.
 
 Check one out (see Starting point) and let the stack run long enough for the symptom to
 surface in the dashboards and in ClickStack.
