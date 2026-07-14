@@ -133,19 +133,24 @@ The wizard auto-creates the destination table as
 database `nyc_tlc_data` and keep the source table name, which yields
 `nyc_tlc_data.realtime_trips`.
 
-### `db/cloud/001_cloud_schema.sql`
+### `db/cloud/003_cdc_mv.sql`
 
 After the ClickPipe's initial snapshot creates `realtime_trips`, confirm the column
-types and create the materialized view that feeds `taxi_trips`:
+types and run the CDC materialized view that feeds `taxi_trips`:
 
 ```sql
 DESCRIBE nyc_tlc_data.realtime_trips;   -- expect the PeerDB mapping:
                                         --   timestamptz     -> DateTime64(6)
                                         --   int2/int4/int8  -> Int16/Int32/Int64
--- Then run realtime_trips_to_taxi_trips_mv from the schema file. It selects from
--- realtime_trips into taxi_trips WHERE _peerdb_is_deleted = 0. An MV fires per inserted
--- block, so no FINAL is needed; the loadgen is append-only, so no version churn occurs.
+-- Then run db/cloud/003_cdc_mv.sql. It creates realtime_trips_to_taxi_trips_mv, which
+-- selects from realtime_trips into taxi_trips WHERE _peerdb_is_deleted = 0. An MV fires
+-- per inserted block, so no FINAL is needed; the loadgen is append-only, so no version
+-- churn occurs.
 ```
+
+If you created the pipe with the CLI alternative (Step 3), its destination table is
+`default.realtime_trips` rather than `nyc_tlc_data.realtime_trips`; `003_cdc_mv.sql`
+includes a variant for that source, so run the one matching the table the pipe created.
 
 ## Step 5 — Watch the Ops dashboard go live
 

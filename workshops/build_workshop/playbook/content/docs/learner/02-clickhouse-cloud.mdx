@@ -48,19 +48,17 @@ agent):
 
 ```sql
 CREATE DATABASE IF NOT EXISTS nyc_tlc_data;
--- then run db/cloud/001_cloud_schema.sql, which creates:
+-- then run db/cloud/001_cloud_schema.sql, which creates the base objects:
 --   taxi_zones, fhv_trips, taxi_trips           (ENGINE = MergeTree; Cloud backs these
 --                                                 with SharedMergeTree transparently, so
 --                                                 no ON CLUSTER / Replicated* is needed)
 --   taxi_trips_expanded, fhv_trips_expanded     (enrichment views)
---   realtime_trips_to_taxi_trips_mv             (the CDC materialized view, used in 03)
 ```
 
 <Callout>
-  The `realtime_trips_to_taxi_trips_mv` materialized view reads from
-  `nyc_tlc_data.realtime_trips`, which the module 03 ClickPipe creates. Create the base
-  tables and views now; the MV lands in module 03 after the ClickPipe's initial snapshot
-  exists.
+  `001_cloud_schema.sql` creates only the base tables and views, and runs cleanly on its
+  own. The CDC materialized view that feeds `taxi_trips` is added in module 03 (from
+  `db/cloud/003_cdc_mv.sql`), once the ClickPipe exists.
 </Callout>
 
 ## Step 3 — Seed historical data from object storage

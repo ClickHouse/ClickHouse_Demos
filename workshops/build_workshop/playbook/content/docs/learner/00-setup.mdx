@@ -80,6 +80,13 @@ You stay on the `build-workshop-v1` branch for modules 00 through 07 - the app i
 complete, so there is no per-module checkout. `.env.workshop` is git-ignored, so your
 keys never get committed.
 
+<Callout type="warn" title="Shell variables override the env file">
+  Compose fills unset variables from `.env.workshop`, but a value you have `export`ed in
+  your shell WINS over the file. If `OPENAI_API_KEY`, any `LANGFUSE_*`, or
+  `CLICKHOUSE_PASSWORD` is exported in the shell you run `docker compose` from, `unset` it
+  first so the file's value is used. (`./preflight.sh` warns when it detects this.)
+</Callout>
+
 **You should now have:** the repo cloned, a terminal in the `app` directory, and a
 fresh `.env.workshop` you can open in an editor.
 
@@ -179,11 +186,9 @@ clickhousectl skills --agent claude    # or: cursor | codex | windsurf
 #   npx skills add clickhouse/agent-skills
 ```
 
-Eight skills ship today: `clickhouse-best-practices` (28 rules),
-`clickhouse-architecture-advisor`, `clickhouse-js-node-troubleshooting`, `chdb-datastore`,
-`chdb-sql`, `clickhousectl-local-dev`, `clickhousectl-cloud-deploy`, and
-`clickstack-otel-collector`. The installer downloads them from GitHub at run time, so it
-needs live network access.
+The installer prints the current set — at the time of writing it includes
+`clickhouse-best-practices`, the architecture advisor, chdb and clickhousectl helpers, and
+more. It downloads them from GitHub at run time, so it needs live network access.
 
 Point your agent at the docs too. The machine-readable index at
 [clickhouse.com/docs/llms.txt](https://clickhouse.com/docs/llms.txt) lists every docs page
@@ -347,7 +352,8 @@ Give it a couple of minutes to become healthy, then open
 
 Run through this checklist - it is the exact set of things later modules assume:
 
-- `docker compose ps` shows the app services healthy, and the front end loads at
+- `docker compose ps` shows the app services healthy (the STATUS column reads `healthy`
+  after about 30s; `Up` means still starting), and the front end loads at
   [localhost:8080](http://localhost:8080).
 - The API docs (FastAPI Swagger) answer at [localhost:8000/docs](http://localhost:8000/docs)
   on the backend port (use your `BACKEND_HOST_PORT` if you overrode it).
