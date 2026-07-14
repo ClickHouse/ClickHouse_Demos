@@ -25,7 +25,11 @@ services:
   # this container is simply idle. wal_level=logical is kept so it can also act
   # as a ClickPipes/CDC source during local experimentation.
   postgres:
-    image: postgis/postgis:16-3.4
+    # Official multi-arch image (linux/amd64 + linux/arm64): runs natively on
+    # Apple Silicon, so no "platform mismatch" warning or slow emulation. The
+    # workshop path needs no geo types, so PostGIS is not required; the postgis
+    # init (db/postgres/init/000_postgis.sql) is written to be non-fatal here.
+    image: postgres:16
     container_name: nyc-taxi-workshop-postgres
     hostname: postgres
     environment:
