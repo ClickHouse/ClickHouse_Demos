@@ -112,6 +112,9 @@ services:
       # fallback (falls back to plaintext); set 'require' for the shared managed
       # Postgres, which mandates TLS.
       - PGSSLMODE=${PGSSLMODE:-prefer}
+      # Publication the CDC ClickPipe subscribes to. The loadgen creates it on
+      # your own managed Postgres; on the shared fallback it is pre-created.
+      - PG_PUBLICATION=${PG_PUBLICATION:-pub_taxi}
       - RATE_PER_SEC=${RATE_PER_SEC:-2}
       - BATCH_SIZE=${BATCH_SIZE:-10}
     restart: unless-stopped
