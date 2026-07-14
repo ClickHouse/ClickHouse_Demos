@@ -92,11 +92,31 @@ with a threshold it can justify from the baseline it just observed.
   HyperDX UI first; then the agent's saved alert can target it.
 </Callout>
 
+## Step 4 (optional) — AI Notebooks: investigate inside HyperDX
+
+The coding-agent-plus-MCP path above works from your editor. ClickStack also has an
+in-product AI investigation surface: **AI Notebooks** (beta, Managed ClickStack only).
+
+1. In HyperDX, a team admin enables it once: **Team Settings** then **Security
+   Policies**, turn on **Generative AI**. A **Notebooks** entry appears in the left
+   sidebar.
+2. Open a new notebook and ask in plain language, for example: "What are the slowest
+   backend operations in the last 30 minutes, and did any of them error?"
+3. The agent queries your logs, traces, and metrics and emits interactive tiles — its
+   reasoning, the queries it executed, charts, and summaries. You can branch an
+   investigation from any intermediate tile, and mix in manual search, timeseries,
+   table, or markdown tiles alongside the AI ones.
+
+Same telemetry, two AI surfaces: the MCP path builds durable artifacts (dashboards,
+alerts) from your editor; Notebooks is for interactive investigation inside the
+observability product itself. In module 08 you can diagnose the fault with either.
+
 ## How to verify you are done
 
 - A saved SRE dashboard appears in HyperDX with the health signals populated.
 - A saved alert exists with a sensible threshold.
 - You can articulate what the dashboard would look like during an incident.
+- Optional: a Notebook exists with one plain-language investigation and its tiles.
 
 ## Wrap-up
 
