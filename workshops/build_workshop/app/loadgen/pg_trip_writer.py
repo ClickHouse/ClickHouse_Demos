@@ -7,6 +7,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 import psycopg
+from psycopg import errors, sql
 
 # Structured stdout logging so container logs are parseable by the ClickStack
 # collector (filelog receiver) instead of bare prints. Level from LOG_LEVEL.
@@ -28,9 +29,49 @@ PGPORT = int(env("PGPORT", "5432"))
 PGDATABASE = env("PGDATABASE", "taxi")
 PGUSER = env("PGUSER", "taxi")
 PGPASSWORD = env("PGPASSWORD", "taxi")
+# Publication the CDC ClickPipe subscribes to. On the participant's own managed
+# Postgres the loadgen creates it (the connection user is the instance admin);
+# on the shared-fallback instance the instructor pre-creates it and the scoped
+# role lacks CREATE rights, so ensure_publication() below is a logged no-op.
+PG_PUBLICATION = env("PG_PUBLICATION", "pub_taxi")
 
 RATE_PER_SEC = float(env("RATE_PER_SEC", "5"))
 BATCH_SIZE = int(env("BATCH_SIZE", "25"))
+
+
+def ensure_publication(conn: psycopg.Connection, pub_name: str) -> None:
+    """Idempotently ensure the CDC publication exists for public.realtime_trips.
+
+    Removes any psql prerequisite for participants: on their own managed Postgres
+    the loadgen creates the publication; on the shared-fallback instance it is
+    pre-created and the scoped role cannot create it, so we swallow the
+    insufficient-privilege error and log clearly. Either way the loadgen keeps
+    running and the ClickPipe finds a publication to subscribe to.
+    """
+    with conn.cursor() as cur:
+        cur.execute("SELECT 1 FROM pg_publication WHERE pubname = %s", (pub_name,))
+        if cur.fetchone():
+            logger.info(f"[loadgen] publication {pub_name} already exists; leaving as-is")
+            return
+
+    create_pub = sql.SQL("CREATE PUBLICATION {} FOR TABLE {}").format(
+        sql.Identifier(pub_name),
+        sql.Identifier("public", "realtime_trips"),
+    )
+    try:
+        with conn.cursor() as cur:
+            cur.execute(create_pub)
+        logger.info(f"[loadgen] created publication {pub_name} for public.realtime_trips")
+    except errors.DuplicateObject:
+        # Lost a race with another writer; the publication now exists.
+        logger.info(f"[loadgen] publication {pub_name} created concurrently; leaving as-is")
+    except errors.InsufficientPrivilege:
+        # Shared-fallback path: the scoped role cannot CREATE PUBLICATION, but the
+        # instructor pre-created it out of band, so this is expected and harmless.
+        logger.warning(
+            f"[loadgen] no privilege to create publication {pub_name}; assuming it was "
+            "pre-created (shared-fallback path) and continuing"
+        )
 
 
 def pick_zone_id() -> int:
@@ -84,6 +125,7 @@ def main() -> None:
         with conn.cursor() as cur:
             cur.execute(create_sql)
             logger.info(f"[loadgen] ensured realtime_trips table exists")
+        ensure_publication(conn, PG_PUBLICATION)
 
         while True:
             rows = []
