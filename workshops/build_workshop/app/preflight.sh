@@ -134,8 +134,15 @@ docker_publisher_of() {
 }
 
 # tcp_reachable HOST PORT [SECONDS] -- return 0 if a TCP connect succeeds.
+# Prefer nc: bash /dev/tcp probes to REMOTE hosts have been observed getting
+# killed (exit 137) on some macOS setups while nc connects fine; /dev/tcp stays
+# as the fallback for systems without nc.
 tcp_reachable() {
-  run_with_timeout "${3:-6}" bash -c "exec 3<>/dev/tcp/$1/$2" >/dev/null 2>&1
+  if command -v nc >/dev/null 2>&1; then
+    nc -z -w "${3:-6}" "$1" "$2" >/dev/null 2>&1
+  else
+    run_with_timeout "${3:-6}" bash -c "exec 3<>/dev/tcp/$1/$2" >/dev/null 2>&1
+  fi
 }
 
 # env_get KEY -- value of KEY in .env.workshop, LAST occurrence wins (matching
