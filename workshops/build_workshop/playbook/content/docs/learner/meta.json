@@ -5,6 +5,7 @@
   "icon": "GraduationCap",
   "pages": [
     "index",
+    "self-paced",
     "00-setup",
     "01-base-app",
     "02-clickhouse-cloud",
@@ -14,6 +15,7 @@
     "06-ai-sre",
     "07-chat-langfuse",
     "08-break-and-fix",
-    "09-wrap-up"
+    "09-wrap-up",
+    "troubleshooting"
   ]
 }

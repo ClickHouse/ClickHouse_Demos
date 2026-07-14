@@ -46,6 +46,12 @@ What you need on the day:
 - A ClickHouse Cloud account with visible trial credits (created during prework).
 - The workshop app repository cloned locally, with Docker running.
 
+**Self-paced?** You can complete the whole workshop with no instructor - the primary path
+is fully self-serve. See [Running this workshop self-paced](/docs/learner/self-paced) for
+what changes, how to use your coding agent as an instructor, and the
+[Troubleshooting](/docs/learner/troubleshooting) reference for every failure seen in
+testing.
+
 ## For instructors
 
 The Instructor track mirrors the Learner track one-to-one. For every module you get a
@@ -169,7 +175,8 @@ workshops/build_workshop/
 playbook/                    # this playbook (the site you are reading)
   content/docs/
     index.mdx                # this overview
-    learner/                 # the lessons: 00-setup ... 09-wrap-up
+    learner/                 # self-paced guide, the lessons 00-setup ... 09-wrap-up,
+                             #   and a troubleshooting reference
     instructor/              # facilitator notes: 00-setup ... 09-wrap-up
   src/                       # Next.js + Fumadocs app
   README.md                  # run, build, deploy, and authoring guide
