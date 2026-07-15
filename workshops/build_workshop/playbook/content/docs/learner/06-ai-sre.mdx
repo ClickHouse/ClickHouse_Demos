@@ -24,9 +24,11 @@ alert against your telemetry.
 
 ## Step 1 — Add the ClickStack MCP to your agent
 
-First enable MCP on your service: in the console open the service, click
-**Connect -> Connect with MCP**, and turn on the toggle. Then connect your coding agent
-to the hosted ClickStack MCP endpoint (`https://mcp.clickhouse.cloud/clickstack`,
+First enable MCP on your service (skip if you already did this in module 00):
+
+Console - your service -> **Connect** -> **Enable Model Context Protocol**
+
+Then connect your coding agent to the hosted ClickStack MCP endpoint (`https://mcp.clickhouse.cloud/clickstack`,
 streamable HTTP with browser OAuth using your ClickHouse Cloud login). The endpoint
 exposes the tools this lab uses: `clickstack_search`, `clickstack_timeseries`,
 `clickstack_query_tile`, `clickstack_save_dashboard`, and `clickstack_save_alert`.
@@ -114,6 +116,9 @@ Using the clickstack MCP, explore the app's traces and logs, then build and save
 dashboard showing request rate, error rate, and p95 latency per service.
 ```
 
+You should see the agent call the `clickstack_*` tools without a per-call prompt (the
+auto-approve above), then confirm a saved dashboard you can open in HyperDX.
+
 ## Step 3 — Add an alert
 
 Ask the agent to save an alert (via `clickstack_save_alert`) on the error-rate signal,
@@ -129,9 +134,8 @@ with a threshold it can justify from the baseline it just observed.
 The coding-agent-plus-MCP path above works from your editor. ClickStack also has an
 in-product AI investigation surface: **AI Notebooks** (beta, Managed ClickStack only).
 
-1. In HyperDX, a team admin enables it once: **Team Settings** then **Security
-   Policies**, turn on **Generative AI**. A **Notebooks** entry appears in the left
-   sidebar.
+1. A team admin enables it once: HyperDX - **Team Settings** -> **Security Policies** ->
+   turn on **Generative AI**. A **Notebooks** entry then appears in the left sidebar.
 2. Open a new notebook and ask in plain language, for example: "What are the slowest
    backend operations in the last 30 minutes, and did any of them error?"
 3. The agent queries your logs, traces, and metrics and emits interactive tiles — its

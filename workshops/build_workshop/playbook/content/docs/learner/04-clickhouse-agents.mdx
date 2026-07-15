@@ -26,9 +26,10 @@ analytical question, showing the SQL it generated.
 
 Two entry points, both using your existing ClickHouse Cloud identity:
 
-- In the console, open your service and click **ClickHouse agents** in the left sidebar,
-  then **Launch**.
+- Console - your service -> **ClickHouse agents** -> **Launch**
 - Or go directly to [ai.clickhouse.cloud](https://ai.clickhouse.cloud).
+
+{/* screenshot: clickhouse-agents-ui */}
 
 <Callout>
   ClickHouse Agents is in beta, available to all Cloud customers, and Claude-powered.
@@ -51,6 +52,10 @@ versus the prior week?
 ```
 
 Then ask your own question about the ride-hailing business — this is your open step.
+
+You should see the agent return a written answer with the generated SQL shown alongside
+it, and its numbers should line up with what the Historical dashboard shows for the same
+period.
 
 ## How to verify you are done
 

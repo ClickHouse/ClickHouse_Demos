@@ -27,7 +27,7 @@ historical trip data, and the app's back end reading from it.
 You created the Cloud service in module 00, so it already exists and its host and password
 are in `.env.workshop`. Confirm the `CLICKHOUSE_*` block is filled in - `CLICKHOUSE_HOST`
 is the bare hostname (no scheme, no port), and the credentials come from the service's
-**Connect** modal (left-nav **Connect** button) if you need to re-copy them:
+Connect modal (Console - your service -> **Connect**) if you need to re-copy them:
 
 ```bash
 CLICKHOUSE_HOST=<your-service>.<region>.<cloud>.clickhouse.cloud
@@ -61,6 +61,14 @@ CREATE DATABASE IF NOT EXISTS nyc_tlc_data;
   `db/cloud/003_cdc_mv.sql`), once the ClickPipe exists.
 </Callout>
 
+You should see each statement return `Ok.` with no error. Confirm the objects exist:
+
+```sql
+SHOW TABLES FROM nyc_tlc_data;
+```
+
+You should see `taxi_zones`, `taxi_trips`, `fhv_trips`, and the two `*_expanded` views.
+
 ## Step 3 — Seed historical data from object storage
 
 ### `db/cloud/002_seed_historical.sql`
@@ -80,7 +88,14 @@ idempotent — each is guarded by a `count() = 0` check — so re-running the fi
 double-load. To add more months, copy the second statement with the next month's file name
 (each month is ~3M rows, so keep it small for a workshop service).
 
-This gives the Historical dashboard real volume.
+This gives the Historical dashboard real volume. Confirm the load with a count:
+
+```sql
+SELECT count() FROM nyc_tlc_data.taxi_trips;
+```
+
+You should see roughly **3.2M** rows (a single month of yellow-taxi trips), and
+`taxi_zones` returning **265** zones.
 
 ## Step 4 — Point the back end at ClickHouse
 

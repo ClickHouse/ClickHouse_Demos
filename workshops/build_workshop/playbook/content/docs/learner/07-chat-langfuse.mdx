@@ -79,6 +79,11 @@ how many rows match each value, and you can save a filtered view as a one-click 
 Your first trace also flips the project's "Setup Tracing" indicator from Pending to
 Active — a quick confirmation that instrumentation is working.
 
+{/* screenshot: langfuse-traces */}
+
+You should see a new row appear in the observations table within a few seconds of each
+chat turn, and the project's tracing indicator reading **Active** rather than Pending.
+
 From that table, the views that matter for the chat are:
 
 - **Traces** — one trace per chat turn, named `chat`. Open it to see the prompt (schema
