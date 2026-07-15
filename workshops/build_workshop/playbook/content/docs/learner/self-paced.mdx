@@ -62,6 +62,12 @@ Because it has the skills and the MCP from module 00, the agent can also query y
 service directly while it helps - so it can check whether your tables, pipe, or telemetry
 actually landed, not just read the docs.
 
+If you want the instructor framing to persist across sessions instead of re-pasting it,
+drop it into your tool's project-instructions file: `CLAUDE.md` for Claude Code, `AGENTS.md`
+for Codex CLI, and `.cursor/rules/` (or `AGENTS.md`, which Cursor also reads) for Cursor.
+Each tool loads that file automatically at the repo root, so the guidance is in context
+every time you open the workshop.
+
 ## Pacing advice
 
 The per-module time budgets in the [overview](/docs) assume a room where the account
