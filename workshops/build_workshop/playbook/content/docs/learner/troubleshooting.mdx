@@ -170,9 +170,13 @@ has a ready-to-paste prompt that turns it into your instructor.
 - **Symptom** - hitting `https://mcp.clickhouse.cloud/mcp` (or `/clickstack`) returns 401.
 - **Why** - expected before you complete the browser OAuth flow; the endpoint is
   authenticated.
-- **Fix** - add the server to your agent, then run the OAuth flow (for example `/mcp` in
-  Claude Code, or `claude mcp login <name>`) and authorize in the browser. Also confirm the
-  **Connect with MCP** toggle is on for your service.
+- **Fix** - add the server to your agent, then run the OAuth flow and authorize in the
+  browser, using your tool's command:
+  - **Claude Code** - run `/mcp`, select the server, and authorize (or `claude mcp login <name>`).
+  - **Codex CLI** - `codex mcp login <name>`.
+  - **Cursor** - open the MCP settings pane and click the server's authorize/login control.
+
+  Also confirm the **Connect with MCP** toggle is on for your service.
 
 ### Corporate laptop blocks MCP or OAuth
 

@@ -196,6 +196,12 @@ The installer prints the current set — at the time of writing it includes
 `clickhouse-best-practices`, the architecture advisor, chdb and clickhousectl helpers, and
 more. It downloads them from GitHub at run time, so it needs live network access.
 
+Where they land depends on the `--agent` you pass: `.claude/skills/` for Claude Code,
+`.cursor/skills/` for Cursor, and `.codex/skills/` for Codex CLI. The installer also writes
+the universal `.agents/skills/` copy, which Cursor and Codex both read natively - so if you
+run it without a flag and let it auto-detect, every tool on your machine picks the skills
+up.
+
 Point your agent at the docs too. The machine-readable index at
 [clickhouse.com/docs/llms.txt](https://clickhouse.com/docs/llms.txt) lists every docs page
 with a description your agent can pull from - add that URL to your agent's context or docs
@@ -237,6 +243,7 @@ claude mcp add --transport http clickhouse-cloud https://mcp.clickhouse.cloud/mc
 
 # Codex CLI
 codex mcp add clickhouse-cloud --url https://mcp.clickhouse.cloud/mcp
+codex mcp login clickhouse-cloud
 ```
 
 ```jsonc
@@ -251,6 +258,14 @@ The same **Connect with MCP** toggle also exposes a ClickStack observability end
 `https://mcp.clickhouse.cloud/clickstack`, which you wire up in module 06 - you do not
 need it yet. The full reference is at
 [clickhouse.com/docs/use-cases/AI/MCP/remote_mcp](https://clickhouse.com/docs/use-cases/AI/MCP/remote_mcp).
+
+Optionally, auto-approve the read-only `clickhouse-cloud` tools so they run without a
+prompt on every call (the same pattern you will use for ClickStack in module 06):
+
+- **Claude Code** - `.claude/settings.json`: `"permissions": { "allow": ["mcp__clickhouse-cloud"] }`
+- **Cursor** - `.cursor/permissions.json`: `"mcpAllowlist": ["clickhouse-cloud:*"]`
+- **Codex CLI** - `~/.codex/config.toml`, under `[mcp_servers.clickhouse-cloud]`: `default_tools_approval_mode = "auto"`
+- **Windsurf** - set auto-execution to Allowlist (or Turbo for the session) in settings.
 
 **You should now have:** your agent connected to `clickhouse-cloud` over MCP, authorized
 in the browser. Ask it to "list my databases" - a response confirms the connection.
