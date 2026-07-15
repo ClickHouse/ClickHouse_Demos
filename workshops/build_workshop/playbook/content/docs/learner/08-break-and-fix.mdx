@@ -74,6 +74,10 @@ you want the reference). Rebuild the affected service:
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
 ```
 
+You should see the symptom clear in the UI (the map loads, the 500 stops, or the slow
+card responds again), and the error signal on your SRE dashboard fall back to baseline
+within a minute or two.
+
 ## How to verify you are done
 
 - The agent named the correct root cause and cited telemetry as evidence.

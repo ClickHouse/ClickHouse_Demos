@@ -1,37 +1,68 @@
 ---
 title: Learner track
-description: The hands-on lessons you work through during the session, in order.
+description: Build a real-time, observable, AI-assisted analytics app on ClickHouse Cloud - in one sitting, with your coding agent doing most of the typing.
 ---
 
-This is the track you follow in the room. Work the modules in order, but do not worry
-about keeping pace with everyone else: every module names a checkpoint branch you can
-check out to start fresh, so you are never stranded.
+Over the next couple of hours you take a working NYC-taxi app and rebuild its data plane
+on ClickHouse Cloud: real historical analytics, a live change-data-capture stream,
+conversational BI, an AI-built SRE dashboard, and an in-app AI chat traced end to end.
+Work the modules in order - the numbered list below doubles as your progress tracker.
+
+## Your progress
+
+0. [Setup](/docs/learner/00-setup) - accounts, keys, tools, agent skills, and the app running locally.
+1. [Base app](/docs/learner/01-base-app) - tour the running app so you know what you are moving onto ClickHouse.
+2. [ClickHouse Cloud](/docs/learner/02-clickhouse-cloud) - build the schema and seed 3.2M+ real taxi rows from object storage.
+3. [Real-time CDC](/docs/learner/03-realtime-cdc) - stream your own Postgres into ClickHouse with a ClickPipe.
+4. [ClickHouse Agents](/docs/learner/04-clickhouse-agents) - ask your data questions in plain language.
+5. [ClickStack](/docs/learner/05-clickstack) - see the app's own traces and logs in HyperDX.
+6. [AI SRE](/docs/learner/06-ai-sre) - have your agent build an SRE dashboard and alert over that telemetry.
+7. [Chat and Langfuse](/docs/learner/07-chat-langfuse) - wire an in-app AI chat and trace every turn.
+8. [Break and fix](/docs/learner/08-break-and-fix) - inject a fault, diagnose it with the AI SRE, fix it.
+9. [Wrap-up](/docs/learner/09-wrap-up) - recap, take it home, extend it to your own data.
+
+## What you'll build
+
+By the end you have, all running on your own trial service:
+
+- a **live ops dashboard** over **3.2M+ real NYC taxi rows** seeded straight from object storage,
+- a **change-data-capture pipeline** streaming your own Postgres into ClickHouse continuously,
+- **conversational BI** over that data with ClickHouse Agents,
+- an **AI-built SRE dashboard and alert** over the app's own telemetry,
+- and an **in-app AI chat** traced end to end in Langfuse.
+
+## Time
+
+About **2h30 hands-on** - and your dashboard is live on real data within the first 40 minutes.
+
+## Cost
+
+**$0** - ClickHouse Cloud trial credits cover everything. The only paid key is about **$5 of OpenAI credit** for the chat module (module 07), and even that stretches across many runs.
+
+## Everything is copy-paste
+
+Every command and query on these pages is ready to copy and run, and your coding agent does the heavy lifting - you are directing the build, not typing it out.
 
 ## How each lesson is structured
 
 Every module page follows the same shape, so you always know where you are:
 
-1. **Starting point** — the checkpoint branch to check out and what you need in place.
-2. **Why** — why this step matters for the app you are building.
-3. **Goal** — the one concrete outcome for the module.
-4. **Steps** — numbered, each verb-first, with the exact files you touch.
-5. **How to verify you are done** — a check you can run yourself.
-6. **Wrap-up** — what just happened.
-7. **End state** — the handoff into the next module.
+1. **Starting point** - the checkpoint branch to check out and what you need in place.
+2. **Why** - why this step matters for the app you are building.
+3. **Goal** - the one concrete outcome for the module.
+4. **Steps** - numbered, each verb-first, with the exact files you touch and an expected-output checkpoint.
+5. **How to verify you are done** - a check you can run yourself.
+6. **Wrap-up** - what just happened.
+7. **End state** - the handoff into the next module.
 
-## The modules
+Do not worry about keeping pace with everyone else: every module names a checkpoint branch
+you can check out to start fresh, so you are never stranded.
 
-<Cards>
-  <Card title="00 Setup" href="/docs/learner/00-setup" description="Accounts, tools, agent skills, and the app repo." />
-  <Card title="01 Base app" href="/docs/learner/01-base-app" description="Tour the running app." />
-  <Card title="02 ClickHouse Cloud" href="/docs/learner/02-clickhouse-cloud" description="Schema, seed data, and query speed." />
-  <Card title="03 Real-time CDC" href="/docs/learner/03-realtime-cdc" description="Live Postgres to ClickHouse with ClickPipes." />
-  <Card title="04 ClickHouse Agents" href="/docs/learner/04-clickhouse-agents" description="Conversational BI over your data." />
-  <Card title="05 ClickStack" href="/docs/learner/05-clickstack" description="Traces and logs in HyperDX." />
-  <Card title="06 AI SRE" href="/docs/learner/06-ai-sre" description="Agent-built SRE dashboard and alert." />
-  <Card title="07 Chat and Langfuse" href="/docs/learner/07-chat-langfuse" description="In-app AI chat, traced end to end." />
-  <Card title="08 Break and fix" href="/docs/learner/08-break-and-fix" description="Inject a fault, diagnose it, fix it." />
-  <Card title="09 Wrap-up" href="/docs/learner/09-wrap-up" description="Recap, take-home, and extensions." />
-</Cards>
+## Working on your own
+
+Running this without an instructor? Read [Running this workshop self-paced](/docs/learner/self-paced)
+first - it maps what an instructor would otherwise provide onto the self-serve replacements
+built into these materials. If anything breaks, [Troubleshooting](/docs/learner/troubleshooting)
+lists every setup failure seen in testing with its fix.
 
 Start with [00 Setup](/docs/learner/00-setup).

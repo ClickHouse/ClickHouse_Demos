@@ -93,37 +93,58 @@ instance is up you will see, in order:
 [loadgen] inserted 10 trips @ ...
 ```
 
+You should see the log settle into a repeating `[loadgen] inserted 10 trips @ ...` line
+every few seconds - that is your readiness signal.
+
 Because you connect as the instance admin, the generator creates the `realtime_trips`
 table **and** the `pub_taxi` publication for you — no `psql` needed. Once you see rows
 being inserted, your Postgres is live and ready for a ClickPipe.
 
 ## Step 3 — Create the Postgres CDC ClickPipe
 
-In the ClickHouse Cloud console, go to **Data Sources -> Set up a ClickPipe ->
-Postgres CDC**. Fill the connection step with your instance's values and select the
-source in the replication step:
+You can create the pipe two ways. Both produce the same live CDC stream; pick by how you
+prefer to work:
+
+| Console wizard (recommended) | `clickhousectl` CLI |
+| --- | --- |
+| Visual, step-by-step; you see each choice | Scriptable; one command, repeatable |
+| Lets you pin the destination to `nyc_tlc_data` | Lands the destination table in the `default` database |
+| Best for a first pipe and for following along | Best if you are automating or already live in a terminal |
+
+**Rule of thumb:** use the wizard here so you can pin the destination database and watch
+each step; reach for the CLI when you are scripting the same pipe repeatedly.
+
+### Console wizard
+
+Console - **Data sources** -> **Set up a ClickPipe** -> **Postgres CDC**
+
+Fill the connection step with your instance's values and select the source in the
+replication step:
+
+{/* screenshot: clickpipes-wizard-connection */}
+{/* screenshot: clickpipes-wizard-replication */}
 
 - Host: your `PGHOST`   Port: `5432`   Database: `postgres`
 - User: `postgres`   Password: the one-time password
 - Publication: `pub_taxi`
 - Table: `public.realtime_trips`
 
-<Callout title="chctl alternative">
-  You can also create the pipe from the command line against your ClickHouse service id:
+### `clickhousectl` CLI
 
-  ```bash
-  clickhousectl cloud clickpipe create postgres <your-clickhouse-service-id> \
-    --name taxi-cdc --host "$PGHOST" --port 5432 \
-    --pg-database postgres --username postgres --password '<one-time password>' \
-    --publication-name pub_taxi \
-    --replication-mode cdc \
-    --table-mapping "public.realtime_trips:realtime_trips"
-  ```
+Create the same pipe from the command line against your ClickHouse service id:
 
-  Prefer the console wizard: a CLI-created pipe lands its destination table in the
-  `default` database (the `--table-mapping` target does not accept a database qualifier),
-  whereas the wizard lets you pin the destination to `nyc_tlc_data` in the next step.
-</Callout>
+```bash
+clickhousectl cloud clickpipe create postgres <your-clickhouse-service-id> \
+  --name taxi-cdc --host "$PGHOST" --port 5432 \
+  --pg-database postgres --username postgres --password '<one-time password>' \
+  --publication-name pub_taxi \
+  --replication-mode cdc \
+  --table-mapping "public.realtime_trips:realtime_trips"
+```
+
+As the table above notes, a CLI-created pipe lands its destination table in the `default`
+database (the `--table-mapping` target does not accept a database qualifier), whereas the
+wizard lets you pin the destination to `nyc_tlc_data` in the next step.
 
 ## Step 4 — Accept the destination mapping
 
@@ -156,6 +177,10 @@ includes a variant for that source, so run the one matching the table the pipe c
 
 Open the Ops dashboard at `http://localhost:8080/` and watch counts move as new trips
 flow Postgres -> ClickPipe -> ClickHouse -> dashboard.
+
+You should see the ClickPipe in the console (Console - **Data sources**) reporting a
+**Running** state, and `SELECT count() FROM nyc_tlc_data.realtime_trips` climbing each
+time you re-run it.
 
 <Callout type="warn" title="Fallback: no managed Postgres in your org">
   Managed Postgres is in beta and availability varies by org. If

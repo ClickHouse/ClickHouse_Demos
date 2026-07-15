@@ -28,9 +28,15 @@ available via `docker compose ... logs` and the optional container-logs profile.
 
 The workshop uses **Managed ClickStack (HyperDX)** inside your own ClickHouse Cloud
 service: the collector writes `otel_*` tables to your service and the HyperDX UI renders
-them there. Enable it in the console: open your service, click **ClickStack** in the left
-menu, choose **Start Ingestion**, skip the collector step (the app ships its own
-collector in Step 2), and **Launch ClickStack** to single-sign-on into HyperDX.
+them there. Enable it in the console:
+
+Console - your service -> **ClickStack** -> **Start Ingestion** -> skip the collector
+step (the app ships its own collector in Step 2) -> **Launch ClickStack**
+
+That single-signs you on into HyperDX.
+
+{/* screenshot: clickstack-hyperdx */}
+
 
 <Callout title="Managed ClickStack: what diverges from the classic setup">
   - The back end uses vanilla OpenTelemetry, not the convenience
@@ -93,6 +99,9 @@ Click around both dashboards to generate requests, then open HyperDX and find th
 resulting traces. Follow one request end to end (front end -> back end -> ClickHouse).
 (Application logs are not in HyperDX in this setup; read them with `docker compose ...
 logs backend`.)
+
+You should see a service named `nyc-taxi-backend` appear in HyperDX, with `/api/...`
+requests showing as traces, each carrying a child `clickhouse.query` span.
 
 ## How to verify you are done
 

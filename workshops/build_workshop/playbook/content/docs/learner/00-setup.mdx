@@ -116,10 +116,16 @@ else - the default service size is fine for the workshop. Provisioning takes a m
 two.
 
 Once the service exists, get its credentials from the **Connect** dialog rather than
-hunting for a password screen: open your service and press the **Connect** button in the
-left navigation. A modal opens with the connection details for your service. Copy the
-**host** (the bare hostname, no `https://` and no port) and the **password** for the
-`default` user into `.env.workshop`:
+hunting for a password screen:
+
+Console - your service -> **Connect**
+
+A modal opens with the connection details for your service. Copy the **host** (the bare
+hostname, no `https://` and no port) and the **password** for the `default` user into
+`.env.workshop`:
+
+{/* screenshot: connect-modal */}
+
 
 ```bash
 # From the Connect modal for your service:
@@ -144,11 +150,14 @@ needs an organization API key. The same key also lets `clickhousectl` create you
 Postgres instance managed by ClickHouse in module 03. Create it now while you are in the
 console.
 
-In the console left menu, open the **API Keys** tab. Click **New API Key** (the first key
-may appear as an inline prompt instead). Give it a name, choose **Admin** permissions
-(full read and write), and set an expiration. Click **Generate API Key**. The next screen
-shows the **Key ID** and the **Key secret** - the secret is shown only once and cannot be
-retrieved after you leave the screen, so save both somewhere safe now.
+Console - left menu -> **API Keys** -> **New API Key** (the first key may appear as an
+inline prompt instead). Give it a name, choose **Admin** permissions (full read and
+write), and set an expiration. Click **Generate API Key**. The next screen shows the
+**Key ID** and the **Key secret** - the secret is shown only once and cannot be retrieved
+after you leave the screen, so save both somewhere safe now.
+
+{/* screenshot: api-keys-page */}
+
 
 **You should now have:** a Key ID and Key secret saved outside the repo. (These do not go
 in `.env.workshop`; you paste them into `clickhousectl` when it prompts.)
@@ -169,6 +178,9 @@ then confirm the install:
 export PATH="$HOME/.local/bin:$PATH"   # add to your shell profile to make it permanent
 clickhousectl --version
 ```
+
+You should see a version string like `clickhousectl version 0.x.y`. If the shell reports
+`command not found`, the `~/.local/bin` directory is not on your `PATH` yet.
 
 <Callout title="Run cloud commands from one directory">
   `clickhousectl` stores its login tokens relative to the current working directory. Pick
@@ -228,10 +240,14 @@ live.
 ### Step 7 - Connect the remote ClickHouse MCP to your agent
 
 The remote MCP lets your agent query your Cloud service directly (read-only: it only runs
-`SELECT` statements). First enable it on the service: open the service, press **Connect**,
-and turn on the **Connect with MCP** toggle - it is off by default. The endpoint is
-`https://mcp.clickhouse.cloud/mcp` and it authenticates with a browser OAuth flow using
-your ClickHouse Cloud login.
+`SELECT` statements). First enable it on the service:
+
+Console - your service -> **Connect** -> **Enable Model Context Protocol**
+
+The toggle is off by default. The endpoint is `https://mcp.clickhouse.cloud/mcp` and it
+authenticates with a browser OAuth flow using your ClickHouse Cloud login.
+
+{/* screenshot: connect-mcp-modal */}
 
 Add it to your agent with the command for your tool, then complete the OAuth flow in the
 browser:
@@ -389,7 +405,8 @@ reachable - each as a PASS, WARN, or FAIL with a one-line fix hint:
 ./preflight.sh
 ```
 
-It must end with **Overall: READY** before you continue. Warnings are safe to proceed on
+You should see a run of `PASS` lines ending with `Overall: READY`. It must end with
+**Overall: READY** before you continue. Warnings are safe to proceed on
 (for example, the OpenAI and Langfuse keys are only needed in module 07). If a host port
 is already taken, preflight names the process holding it and prints the exact override to
 set - for example `set FRONTEND_HOST_PORT=28080 in .env.workshop` - so you never hit the
@@ -404,6 +421,10 @@ Give it a couple of minutes to become healthy, then open
 [localhost:8080](http://localhost:8080) (or your overridden `FRONTEND_HOST_PORT`). Add
 `--profile tools` to the command to also start pgadmin on
 [localhost:5050](http://localhost:5050).
+
+You should see, after `docker compose ps`, every workshop service with a `STATUS` of
+`healthy` (it reads `Up` for the first ~30s while still starting), and the front end
+loading at [localhost:8080](http://localhost:8080).
 
 ## How to verify you are done
 
