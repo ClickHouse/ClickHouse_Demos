@@ -236,23 +236,49 @@ your ClickHouse Cloud login.
 Add it to your agent with the command for your tool, then complete the OAuth flow in the
 browser:
 
-```bash
-# Claude Code
-claude mcp add --transport http clickhouse-cloud https://mcp.clickhouse.cloud/mcp
-#   then run /mcp inside Claude Code, select clickhouse-cloud, and authorize
+<Tabs items={['Claude Code', 'Codex CLI', 'Cursor', 'Windsurf']}>
+  <Tab value="Claude Code">
 
-# Codex CLI
+```bash
+claude mcp add --transport http clickhouse-cloud https://mcp.clickhouse.cloud/mcp
+```
+
+Then run `/mcp` inside Claude Code, select `clickhouse-cloud`, and authorize in the browser
+(or `claude mcp login clickhouse-cloud`).
+
+  </Tab>
+  <Tab value="Codex CLI">
+
+```bash
 codex mcp add clickhouse-cloud --url https://mcp.clickhouse.cloud/mcp
 codex mcp login clickhouse-cloud
 ```
 
-```jsonc
-// Cursor - add from the Cursor Marketplace: search "ClickHouse", click Add to Cursor,
-// then authorize with OAuth. (No manual JSON needed.)
+The config lands in `~/.codex/config.toml` under `[mcp_servers.clickhouse-cloud]`. The
+`login` command opens the browser OAuth flow.
 
-// Windsurf - mcp_config.json (Windsurf connects via mcp-remote, not native HTTP)
+  </Tab>
+  <Tab value="Cursor">
+
+Add it from the Cursor Marketplace: search "ClickHouse", click **Add to Cursor**, then
+authorize with OAuth from the MCP settings pane. No manual JSON needed. To wire it by hand
+instead, add to `.cursor/mcp.json`:
+
+```jsonc
+{ "mcpServers": { "clickhouse-cloud": { "url": "https://mcp.clickhouse.cloud/mcp" } } }
+```
+
+  </Tab>
+  <Tab value="Windsurf">
+
+Windsurf connects through `mcp-remote` rather than native HTTP. Add to `mcp_config.json`:
+
+```jsonc
 { "mcpServers": { "clickhouse-cloud": { "command": "npx", "args": ["-y", "mcp-remote", "https://mcp.clickhouse.cloud/mcp"] } } }
 ```
+
+  </Tab>
+</Tabs>
 
 The same **Connect with MCP** toggle also exposes a ClickStack observability endpoint,
 `https://mcp.clickhouse.cloud/clickstack`, which you wire up in module 06 - you do not
@@ -262,10 +288,20 @@ need it yet. The full reference is at
 Optionally, auto-approve the read-only `clickhouse-cloud` tools so they run without a
 prompt on every call (the same pattern you will use for ClickStack in module 06):
 
-- **Claude Code** - `.claude/settings.json`: `"permissions": { "allow": ["mcp__clickhouse-cloud"] }`
-- **Cursor** - `.cursor/permissions.json`: `"mcpAllowlist": ["clickhouse-cloud:*"]`
-- **Codex CLI** - `~/.codex/config.toml`, under `[mcp_servers.clickhouse-cloud]`: `default_tools_approval_mode = "auto"`
-- **Windsurf** - set auto-execution to Allowlist (or Turbo for the session) in settings.
+<Tabs items={['Claude Code', 'Codex CLI', 'Cursor', 'Windsurf']}>
+  <Tab value="Claude Code">
+  In `.claude/settings.json`: `"permissions": { "allow": ["mcp__clickhouse-cloud"] }`
+  </Tab>
+  <Tab value="Codex CLI">
+  In `~/.codex/config.toml`, under `[mcp_servers.clickhouse-cloud]`: `default_tools_approval_mode = "auto"`
+  </Tab>
+  <Tab value="Cursor">
+  In `.cursor/permissions.json`: `"mcpAllowlist": ["clickhouse-cloud:*"]`
+  </Tab>
+  <Tab value="Windsurf">
+  Set auto-execution to Allowlist (or Turbo for the session) in settings.
+  </Tab>
+</Tabs>
 
 **You should now have:** your agent connected to `clickhouse-cloud` over MCP, authorized
 in the browser. Ask it to "list my databases" - a response confirms the connection.
