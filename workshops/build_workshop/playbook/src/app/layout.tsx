@@ -1,10 +1,15 @@
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import './global.css';
-import { Inter } from 'next/font/google';
+import { Inter, Inconsolata } from 'next/font/google';
 import type { Metadata } from 'next';
 
 const inter = Inter({
   subsets: ['latin'],
+});
+
+const inconsolata = Inconsolata({
+  subsets: ['latin'],
+  variable: '--font-inconsolata',
 });
 
 // Absolute base for Open Graph / social image URLs. Set NEXT_PUBLIC_SITE_URL to the
@@ -17,9 +22,15 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.className} ${inconsolata.variable}`}
+      suppressHydrationWarning
+    >
       <body className="flex flex-col min-h-screen">
-        <RootProvider>{children}</RootProvider>
+        <RootProvider theme={{ defaultTheme: 'dark', enableSystem: false }}>
+          {children}
+        </RootProvider>
       </body>
     </html>
   );
