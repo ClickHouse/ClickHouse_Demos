@@ -16,7 +16,10 @@
 FROM node:22-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+# --ignore-scripts skips the `postinstall: fumadocs-mdx` hook, which needs the
+# MDX source + source.config.ts (not present yet at this layer). The .source
+# files are regenerated in the builder stage once the full tree is copied.
+RUN npm ci --ignore-scripts
 
 FROM node:22-slim AS builder
 WORKDIR /app
@@ -27,7 +30,9 @@ ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+# Regenerate the Fumadocs .source bundle (skipped in deps via --ignore-scripts)
+# now that source.config.ts and the MDX content are present.
+RUN npx fumadocs-mdx && npm run build
 
 FROM node:22-slim AS runner
 WORKDIR /app
