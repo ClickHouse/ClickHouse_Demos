@@ -97,7 +97,7 @@ services:
         - CMD
         - python3
         - -c
-        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=8)"
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=8)"
       interval: 10s
       timeout: 10s
       retries: 5
@@ -115,7 +115,9 @@ services:
       - "${FRONTEND_HOST_PORT:-8080}:8080"
     # nginx:alpine ships wget; a 200 for / (the SPA index) means nginx is serving.
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/"]
+      # 127.0.0.1, not localhost: localhost resolves to ::1 in the container and
+      # nginx binds IPv4-only, so busybox wget would report unhealthy forever.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
       interval: 10s
       timeout: 5s
       retries: 5
