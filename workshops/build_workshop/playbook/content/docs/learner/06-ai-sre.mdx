@@ -35,36 +35,68 @@ exposes the tools this lab uses: `clickstack_search`, `clickstack_timeseries`,
 
 Add the server with your tool's command, then authorize in the browser:
 
-```bash
-# Claude Code
-claude mcp add --transport http clickstack https://mcp.clickhouse.cloud/clickstack
-#   authorize: run /mcp inside claude, or: claude mcp login clickstack
+<Tabs items={['Claude Code', 'Codex CLI', 'Cursor', 'Windsurf']}>
+  <Tab value="Claude Code">
 
-# Codex CLI
+```bash
+claude mcp add --transport http clickstack https://mcp.clickhouse.cloud/clickstack
+```
+
+Authorize by running `/mcp` inside Claude Code, or `claude mcp login clickstack`.
+
+  </Tab>
+  <Tab value="Codex CLI">
+
+```bash
 codex mcp add clickstack --url https://mcp.clickhouse.cloud/clickstack
 codex mcp login clickstack
 ```
 
+  </Tab>
+  <Tab value="Cursor">
+
+In `.cursor/mcp.json`, then authorize from the MCP settings pane:
+
 ```jsonc
-// Cursor — .cursor/mcp.json
 { "mcpServers": { "clickstack": { "url": "https://mcp.clickhouse.cloud/clickstack" } } }
+```
 
-// Windsurf — ~/.codeium/windsurf/mcp_config.json
+  </Tab>
+  <Tab value="Windsurf">
+
+In `~/.codeium/windsurf/mcp_config.json`:
+
+```jsonc
 { "mcpServers": { "clickstack": { "serverUrl": "https://mcp.clickhouse.cloud/clickstack" } } }
+```
 
-// Windsurf fallback if native OAuth is flaky: the mcp-remote command form
+If native OAuth is flaky, use the `mcp-remote` command form instead:
+
+```jsonc
 { "mcpServers": { "clickstack": { "command": "npx", "args": ["-y", "mcp-remote", "https://mcp.clickhouse.cloud/clickstack"] } } }
 ```
+
+  </Tab>
+</Tabs>
 
 ### auto-approve so the investigation is not interrupted
 
 Allow the ClickStack tools to run without a prompt on every call:
 
-- **Claude Code** — `.claude/settings.json`: `"permissions": { "allow": ["mcp__clickstack"] }`
-- **Cursor** — `.cursor/permissions.json`: `"mcpAllowlist": ["clickstack:*"]`
-- **Codex CLI** — `~/.codex/config.toml`, under `[mcp_servers.clickstack]`:
-  `default_tools_approval_mode = "auto"`
-- **Windsurf** — set auto-execution to Allowlist (or Turbo for the session) in settings.
+<Tabs items={['Claude Code', 'Codex CLI', 'Cursor', 'Windsurf']}>
+  <Tab value="Claude Code">
+  In `.claude/settings.json`: `"permissions": { "allow": ["mcp__clickstack"] }`
+  </Tab>
+  <Tab value="Codex CLI">
+  In `~/.codex/config.toml`, under `[mcp_servers.clickstack]`: `default_tools_approval_mode = "auto"`
+  </Tab>
+  <Tab value="Cursor">
+  In `.cursor/permissions.json`: `"mcpAllowlist": ["clickstack:*"]`
+  </Tab>
+  <Tab value="Windsurf">
+  Set auto-execution to Allowlist (or Turbo for the session) in settings.
+  </Tab>
+</Tabs>
 
 <Callout>
   Your trial org has a single service, so no extra scoping is needed. If you are on an
