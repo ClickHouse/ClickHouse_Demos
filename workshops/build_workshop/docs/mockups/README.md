@@ -9,6 +9,26 @@ was modified to produce them.
 Generated with the OpenAI Codex CLI (`codex exec`, version 0.144.4) from `BRIEF.md`
 in this directory.
 
+## Selected direction
+
+The user picked **variation-1-dark** (clickhouse.com-faithful dark) as the direction to
+carry into the live playbook. The other two variations are kept here for the record.
+
+## Logo asset provenance
+
+Every mockup uses the **official ClickHouse wordmark**, not an approximation. The SVG was
+taken from the live clickhouse.com site header (the inline `<svg viewBox="0 0 135 40"
+aria-label="ClickHouse">` in the top nav) and saved to `clickhouse-logo.svg` in this
+directory. It is drawn with `fill="currentColor"`, so a single asset recolors itself per
+background: the light wordmark (`#F5F5F5`) on the dark headers (variations 1 and 3) and
+the dark wordmark (`#1F1F1C`) on the light header (variation 2). The workshop name
+"BUILD Workshop" sits beside it after a thin divider.
+
+Usage note: this mark is a ClickHouse trademark. It is appropriate here because the
+workshop is first-party ClickHouse material; if these docs are ever forked or
+white-labeled, the mark should be replaced. ClickHouse does not publish a public
+`/brand` asset page (that URL 404s), so the canonical source is the site header itself.
+
 ## Verified brand facts
 
 Palette and type were extracted from the live clickhouse.com and clickhouse.com/docs
