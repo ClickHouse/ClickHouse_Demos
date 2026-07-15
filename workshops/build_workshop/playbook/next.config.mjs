@@ -12,6 +12,9 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 const config = {
   reactStrictMode: true,
   basePath,
+  // Emit a self-contained server bundle (.next/standalone) so the Docker image
+  // can run `node server.js` without the full node_modules tree. See Dockerfile.
+  output: 'standalone',
 };
 
 export default withMDX(config);
