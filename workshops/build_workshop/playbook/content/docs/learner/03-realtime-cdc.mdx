@@ -35,11 +35,27 @@ From the directory where you run `clickhousectl` (the same one you logged in fro
 module 00 — the org API key authenticates this), create a managed Postgres instance.
 Use the **same region as your ClickHouse Cloud service** so the pipe stays in-region:
 
+<Callout title="Not authenticated? Log in with your organization API key">
+  If `clickhousectl` reports that you are not authenticated, log in first with the Key ID
+  and Key secret you created in module 00:
+
+  ```bash
+  clickhousectl cloud auth login --api-key YOUR_KEY --api-secret YOUR_SECRET
+  ```
+
+  Or set them as environment variables instead:
+
+  ```bash
+  export CLICKHOUSE_CLOUD_API_KEY=your-key
+  export CLICKHOUSE_CLOUD_API_SECRET=your-secret
+  ```
+</Callout>
+
 ```bash
 clickhousectl cloud postgres create \
   --name my-workshop-pg \
-  --region us-east-1 \
-  --size m8gd.large \
+  --region ap-southeast-1 \
+  --size c6gd.large \
   --pg-version 17 \
   --ha-type none
 ```
@@ -60,6 +76,14 @@ Copy both somewhere safe right now.
 </Callout>
 
 ## Step 2 — Point the data generator at your instance
+
+<Callout type="warn" title="Give the instance a few minutes to provision first">
+  `clickhousectl cloud postgres create` returns before the instance is ready — provisioning
+  takes **a few minutes**. If you jump straight here and start the generator against an
+  instance that is not accepting connections yet, you will see connection errors. That is
+  expected. Wait a couple of minutes for provisioning to
+  finish first.
+</Callout>
 
 The workshop stack already includes `pg-trip-writer`, the data generator. Put your
 instance's values into `.env.workshop` (in the `app` directory):
@@ -131,7 +155,7 @@ replication step:
 
 ### `clickhousectl` CLI
 
-Create the same pipe from the command line against your ClickHouse service id:
+Create the same pipe from the command line against your **ClickHouse** service id:
 
 ```bash
 clickhousectl cloud clickpipe create postgres <your-clickhouse-service-id> \
@@ -177,6 +201,14 @@ includes a variant for that source, so run the one matching the table the pipe c
 
 Open the Ops dashboard at `http://localhost:8080/` and watch counts move as new trips
 flow Postgres -> ClickPipe -> ClickHouse -> dashboard.
+
+In the Filters bar, set **Interval** to `1m` and **Auto-refresh** to `5s` so the charts
+redraw every few seconds — that is how you see the new data arriving from the CDC pipeline
+in near real time.
+
+![NYC Taxi Ops (Live) dashboard with Interval set to 1m and Auto-refresh to 5s, its trip, fare, and duration charts filling in from the CDC pipeline](/screenshots/03-ops-dashboard-live.png)
+
+*The Ops (Live) dashboard updating from the CDC pipeline with Interval `1m` and Auto-refresh `5s`.*
 
 You should see the ClickPipe in the console (Console - **Data sources**) reporting a
 **Running** state, and `SELECT count() FROM nyc_tlc_data.realtime_trips` climbing each
