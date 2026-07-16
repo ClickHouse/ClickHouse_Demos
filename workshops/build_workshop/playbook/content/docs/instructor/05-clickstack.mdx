@@ -32,7 +32,12 @@ collector as early as this module allows and keep it running.
 - On Docker Desktop, the `--profile container-logs` scraper cannot mount the host log
   path (daemon in a VM); this is expected — read logs with `docker compose ... logs`.
   OTLP log delivery is unreliable, so do not rely on logs appearing in HyperDX.
-- TODO: add failures seen in the dry run.
+- After the overlay recreates the backend, the app used to 502 (frontend nginx cached the
+  old backend IP). The frontend now re-resolves per request, so it self-heals within ~10s
+  and needs no manual restart. Confirmed fixed in the dry run.
+- Dry-run reference: telemetry pipeline verified end to end — `nyc-taxi-backend` traces
+  with `clickhouse.query` child spans carrying `db.statement` / `db.elapsed_ms` /
+  `db.rows_returned`. Details in `workshops/build_workshop/docs/DRY_RUN_REPORT.md`.
 
 ## Reset steps
 

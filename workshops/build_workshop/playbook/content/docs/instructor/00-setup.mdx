@@ -30,7 +30,9 @@ to 10 minutes - so this module stays inside budget.
 - Coding agent cannot add MCP servers due to corporate policy (surfaced by the prework
   smoke test).
 - `docker compose up` fails because Docker is under-allocated (needs 6 GB+).
-- TODO: add failures seen in the dry run.
+- The first request after a Cloud service idle-scales to zero used to 500; the back end
+  now retries the idle-wake on connect, so the first dashboard load may pause a few seconds
+  but succeeds. Not a failure to chase. Dry run: `workshops/build_workshop/docs/DRY_RUN_REPORT.md`.
 
 ## Reset steps
 
