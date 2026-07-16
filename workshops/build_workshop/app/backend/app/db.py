@@ -35,17 +35,52 @@ def _categorize_clickhouse_error(msg: str) -> str:
     return "query_failed"
 
 
+def is_not_seeded_error(msg: str) -> bool:
+    """True when a query failed only because the schema is not there yet -- the
+    target database or table does not exist.
+
+    On the workshop path the app is started in module 00 against an empty Cloud
+    service, and the taxi schema is not created and seeded until module 02. Until
+    then every dashboard query references a missing object. Rather than surfacing
+    that as a wall of 500s, we treat it as "no data yet" and return an empty
+    result, so the dashboards render empty exactly as the playbook says they
+    will. The match is deliberately narrow (the two ClickHouse error names for a
+    missing table/database) so it never masks a genuine query failure such as a
+    bad column or SQL syntax error."""
+    return "UNKNOWN_TABLE" in msg or "UNKNOWN_DATABASE" in msg
+
+
 def get_client(send_receive_timeout: int | None = None) -> Client:
-    return clickhouse_connect.get_client(
+    timeout = send_receive_timeout or settings.query_timeout_seconds
+    common = dict(
         host=settings.clickhouse_host,
         port=settings.clickhouse_port,
         username=settings.clickhouse_user,
         password=settings.clickhouse_password,
-        database=settings.clickhouse_database,
         secure=settings.clickhouse_secure_effective,
         connect_timeout=settings.clickhouse_connect_timeout,
-        send_receive_timeout=send_receive_timeout or settings.query_timeout_seconds,
+        send_receive_timeout=timeout,
     )
+    try:
+        return clickhouse_connect.get_client(database=settings.clickhouse_database, **common)
+    except ClickHouseError as e:
+        # clickhouse-connect binds the session to CLICKHOUSE_DATABASE at connect
+        # time and runs a settings probe, so if that database does not exist yet
+        # the client fails to construct at all -- and every endpoint calls
+        # get_client() first, which is what turns the not-yet-seeded state
+        # (workshop modules 00-01, before module 02 creates nyc_tlc_data) into a
+        # wall of 500s. Fall back to connecting without a default database (the
+        # server's own `default`); read queries then hit UNKNOWN_TABLE and
+        # run_query() returns an empty result, so the dashboards render empty as
+        # the playbook says. Once the schema exists, the primary connect succeeds.
+        if is_not_seeded_error(str(e)):
+            logger.info(
+                "configured database %r does not exist yet; connecting without a "
+                "default database so queries return empty until module 02 seeds it",
+                settings.clickhouse_database,
+            )
+            return clickhouse_connect.get_client(**common)
+        raise
 
 
 @dataclass(frozen=True)
@@ -119,6 +154,25 @@ def _http_error_for(e: ClickHouseError, sql: str, start: float, span: Any) -> HT
     return HTTPException(status_code=500, detail=f"ClickHouse query failed: {msg}")
 
 
+def _empty_not_seeded_result(
+    sql: str, start: float, span: Any
+) -> tuple[list[dict[str, Any]], QueryMeta]:
+    """Treat a missing database/table as an empty result set (see
+    is_not_seeded_error). Annotates the span with a distinct category so the
+    not-yet-seeded state is still visible in traces, then returns zero rows."""
+    elapsed_ms = int((time.perf_counter() - start) * 1000)
+    span.set_attribute("error.category", "not_seeded")
+    span.set_attribute("db.elapsed_ms", elapsed_ms)
+    span.set_attribute("db.rows_returned", 0)
+    logger.info(
+        "ClickHouse database/table not found (schema not seeded yet?); returning "
+        "an empty result so the dashboards render empty instead of erroring "
+        "(create + seed the schema in module 02) | sql=%s",
+        sql[:_SQL_ATTR_MAXLEN],
+    )
+    return [], QueryMeta(elapsed_ms=elapsed_ms, rows_returned=0, cached=False)
+
+
 def run_query(
     client: Client,
     sql: str,
@@ -150,8 +204,12 @@ def run_query(
                 retry_client = get_client(send_receive_timeout=IDLE_WAKE_TIMEOUT_SECONDS)
                 result = _execute(retry_client, sql, parameters)
             except ClickHouseError as retry_error:
+                if is_not_seeded_error(str(retry_error)):
+                    return _empty_not_seeded_result(sql, start, span)
                 raise _http_error_for(retry_error, sql, start, span) from retry_error
         except ClickHouseError as e:
+            if is_not_seeded_error(str(e)):
+                return _empty_not_seeded_result(sql, start, span)
             raise _http_error_for(e, sql, start, span) from e
 
         elapsed_ms = int((time.perf_counter() - start) * 1000)
