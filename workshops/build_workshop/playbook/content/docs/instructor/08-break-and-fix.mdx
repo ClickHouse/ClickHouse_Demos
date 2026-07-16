@@ -114,7 +114,7 @@ with the HTML document rather than a 404, so `r.ok` passes and `r.json()` throws
 - Not enough telemetry baseline for the agent to localize; module 05 must have run early.
 - Attendees jump to the fix before confirming root cause from evidence.
 - Fault symptom not yet visible because the stack was just brought up — or, for fault 03,
-  because too little historical data is loaded (confirm the module 02 seed ran).
+  because too little historical data is loaded (confirm the module 01 seed ran).
 - Fault 01 produces no backend trace at all, and the bad request returns 200 `text/html`
   via the SPA fallback rather than a 404; attendees may search traces forever. Nudge them
   to the browser console / Network tab, where the JSON parse error and the `text/html`
