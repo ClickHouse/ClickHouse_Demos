@@ -52,7 +52,7 @@ flowchart LR
   CA -->|creates, module 03| PG
   BE --> OAI
   BE -.->|traces| LF
-  TLC -.->|url seed, module 02| CH
+  TLC -.->|url seed, module 01| CH
   HDX -->|reads otel db| CH
   AG -->|RBAC-governed SQL| CH
 ```
@@ -67,8 +67,8 @@ draw.io recovers the editable original.
 
 ```mermaid
 flowchart LR
-  M00["00 Setup<br/>25 min"] --> M01["01 Base app<br/>5 min"]
-  M01 --> M02["02 ClickHouse Cloud<br/>schema + 3M-row seed<br/>15 min"]
+  M00["00 Setup<br/>25 min"] --> M01["01 ClickHouse Cloud<br/>schema + 3M-row seed<br/>15 min"]
+  M01 --> M02["02 Base app<br/>tour the seeded app<br/>5 min"]
   M02 --> M03["03 Realtime CDC<br/>own Postgres + ClickPipe<br/>20 min"]
   M03 --> M04["04 ClickHouse Agents<br/>conversational BI<br/>10 min"]
   M04 --> M05["05 ClickStack<br/>traces to HyperDX<br/>15 min"]

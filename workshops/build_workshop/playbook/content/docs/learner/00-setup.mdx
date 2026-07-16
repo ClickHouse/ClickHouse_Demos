@@ -137,7 +137,7 @@ CLICKHOUSE_DATABASE=nyc_tlc_data
 CLICKHOUSE_SECURE=true      # pre-filled; leave as-is
 ```
 
-The service is empty for now - you create the schema and load data in module 02. The
+The service is empty for now - you create the schema and load data in module 01. The
 `CLICKHOUSE_DATABASE=nyc_tlc_data` name is what you will create there.
 
 **You should now have:** a running Cloud service and `CLICKHOUSE_HOST` plus
@@ -444,17 +444,20 @@ Run through this checklist - it is the exact set of things later modules assume:
 
 <Callout title="Dashboards are empty right now, and that is expected">
   The Cloud service has no tables yet, so the dashboards will not show data until you
-  create the schema and seed it in module 02. "The front end loads" is all you need here.
+  create the schema and seed it in module 01. The app handles the not-yet-seeded state
+  gracefully - the dashboards render empty rather than erroring. "The front end loads" is
+  all you need here.
 </Callout>
 
 ## Wrap-up
 
 You now have every account, key, and tool the workshop needs; your agent knows ClickHouse
 and can query your Cloud service directly; and the app is running locally. The only thing
-your Cloud service is missing is data - that is exactly what module 02 adds.
+your Cloud service is missing is data - that is exactly what module 01 adds.
 
 ## End state
 
 The app runs locally against an empty Cloud service, your agent is wired up with skills
 and MCP, and every credential is saved. Continue to
-[01 Base app](/docs/learner/01-base-app) to tour what you just started.
+[01 ClickHouse Cloud](/docs/learner/01-clickhouse-cloud) to give it a real analytics
+warehouse.

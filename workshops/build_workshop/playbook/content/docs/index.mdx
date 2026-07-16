@@ -74,7 +74,7 @@ ride-hailing business:
 - **Source database** — Postgres (with PostGIS) as the operational source of truth,
   the origin for change data capture into ClickHouse.
 - **Analytics warehouse** — ClickHouse Cloud, which you point the back end at in
-  module 02 and which receives CDC, observability data, and BI queries.
+  module 01 and which receives CDC, observability data, and BI queries.
 
 You do not build the app from scratch. You start from a working local stack and, module
 by module, move its data plane and its intelligence onto ClickHouse Cloud.
@@ -98,8 +98,8 @@ only branch switches are the fault branches in module 08.
 | Step | Time | Learner lesson | Instructor notes | Branch | What you will learn |
 |---|---|---|---|---|---|
 | 00 | 25 min | [Setup](/docs/learner/00-setup) | [notes](/docs/instructor/00-setup) | `build-workshop-v1` | Accounts, tools, agent skills, and the app repo, all wired up and verified |
-| 01 | 5 min | [Base app](/docs/learner/01-base-app) | [notes](/docs/instructor/01-base-app) | `build-workshop-v1` | Tour the running app: Ops and Historical dashboards, the chat panel, the data flow |
-| 02 | 15 min | [ClickHouse Cloud](/docs/learner/02-clickhouse-cloud) | [notes](/docs/instructor/02-clickhouse-cloud) | `build-workshop-v1` | Create the schema, seed historical data from object storage, and feel the query speed |
+| 01 | 15 min | [ClickHouse Cloud](/docs/learner/01-clickhouse-cloud) | [notes](/docs/instructor/01-clickhouse-cloud) | `build-workshop-v1` | Create the schema, seed historical data from object storage, and feel the query speed |
+| 02 | 5 min | [Base app](/docs/learner/02-base-app) | [notes](/docs/instructor/02-base-app) | `build-workshop-v1` | Tour the running app now that it has data: Ops and Historical dashboards, the chat panel, the data flow |
 | 03 | 20 min | [Real-time CDC](/docs/learner/03-realtime-cdc) | [notes](/docs/instructor/03-realtime-cdc) | `build-workshop-v1` | Stream live rows from managed Postgres into ClickHouse with a Postgres CDC ClickPipe |
 | 04 | 10 min | [ClickHouse Agents](/docs/learner/04-clickhouse-agents) | [notes](/docs/instructor/04-clickhouse-agents) | `build-workshop-v1` | Conversational BI: create an agent over your taxi data and explore it in natural language |
 | 05 | 15 min | [ClickStack](/docs/learner/05-clickstack) | [notes](/docs/instructor/05-clickstack) | `build-workshop-v1` | Enable ClickStack and send app traces and logs to HyperDX |
@@ -184,7 +184,7 @@ playbook/                    # this playbook (the site you are reading)
 app/                         # the NYC-taxi app you build on (cloned in module 00)
   frontend/                  # React SPA (Ops + Historical dashboards, chat panel)
   backend/                   # FastAPI analytics API + AI chat
-  db/cloud/001_cloud_schema.sql   # the Cloud schema you run in module 02
+  db/cloud/001_cloud_schema.sql   # the Cloud schema you run in module 01
   docker-compose.workshop.yml     # the workshop stack (Cloud + ClickPipes)
   docker-compose.otel.yml         # the ClickStack observability overlay (module 05)
   .env.workshop.example      # single env template (Cloud + chat + observability);
