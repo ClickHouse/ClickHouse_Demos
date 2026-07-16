@@ -52,35 +52,57 @@ def is_not_seeded_error(msg: str) -> bool:
 
 def get_client(send_receive_timeout: int | None = None) -> Client:
     timeout = send_receive_timeout or settings.query_timeout_seconds
-    common = dict(
-        host=settings.clickhouse_host,
-        port=settings.clickhouse_port,
-        username=settings.clickhouse_user,
-        password=settings.clickhouse_password,
-        secure=settings.clickhouse_secure_effective,
-        connect_timeout=settings.clickhouse_connect_timeout,
-        send_receive_timeout=timeout,
-    )
+
+    def _connect(read_timeout: int) -> Client:
+        common = dict(
+            host=settings.clickhouse_host,
+            port=settings.clickhouse_port,
+            username=settings.clickhouse_user,
+            password=settings.clickhouse_password,
+            secure=settings.clickhouse_secure_effective,
+            connect_timeout=settings.clickhouse_connect_timeout,
+            send_receive_timeout=read_timeout,
+        )
+        try:
+            return clickhouse_connect.get_client(database=settings.clickhouse_database, **common)
+        except OperationalError:
+            raise  # let the caller retry transport timeouts with a longer read timeout
+        except ClickHouseError as e:
+            # clickhouse-connect binds the session to CLICKHOUSE_DATABASE at connect
+            # time and runs a settings probe, so if that database does not exist yet
+            # the client fails to construct at all -- and every endpoint calls
+            # get_client() first, which is what turns the not-yet-seeded state
+            # (workshop modules 00-01, before module 01 creates nyc_tlc_data) into a
+            # wall of 500s. Fall back to connecting without a default database (the
+            # server's own `default`); read queries then hit UNKNOWN_TABLE and
+            # run_query() returns an empty result, so the dashboards render empty as
+            # the playbook says. Once the schema exists, the primary connect succeeds.
+            if is_not_seeded_error(str(e)):
+                logger.info(
+                    "configured database %r does not exist yet; connecting without a "
+                    "default database so queries return empty until module 01 seeds it",
+                    settings.clickhouse_database,
+                )
+                return clickhouse_connect.get_client(**common)
+            raise
+
     try:
-        return clickhouse_connect.get_client(database=settings.clickhouse_database, **common)
-    except ClickHouseError as e:
-        # clickhouse-connect binds the session to CLICKHOUSE_DATABASE at connect
-        # time and runs a settings probe, so if that database does not exist yet
-        # the client fails to construct at all -- and every endpoint calls
-        # get_client() first, which is what turns the not-yet-seeded state
-        # (workshop modules 00-01, before module 02 creates nyc_tlc_data) into a
-        # wall of 500s. Fall back to connecting without a default database (the
-        # server's own `default`); read queries then hit UNKNOWN_TABLE and
-        # run_query() returns an empty result, so the dashboards render empty as
-        # the playbook says. Once the schema exists, the primary connect succeeds.
-        if is_not_seeded_error(str(e)):
-            logger.info(
-                "configured database %r does not exist yet; connecting without a "
-                "default database so queries return empty until module 02 seeds it",
-                settings.clickhouse_database,
-            )
-            return clickhouse_connect.get_client(**common)
-        raise
+        return _connect(timeout)
+    except OperationalError:
+        # Transport-level connect/read timeout while constructing the client:
+        # clickhouse-connect runs a settings-probe query at connect time, and the
+        # first request to a Cloud service waking from idle can exceed the default
+        # 5s read timeout. run_query() retries idle-wake timeouts for queries, but
+        # this happens before any query runs, so without a retry here the very
+        # first request after an idle period 500s. Retry once with the longer
+        # idle-wake read timeout (the not-seeded fallback inside _connect still
+        # applies on the retry, covering a service that is both waking and empty).
+        logger.warning(
+            "ClickHouse client construct timed out (likely idle-wake); retrying "
+            "once with read timeout=%ds",
+            IDLE_WAKE_TIMEOUT_SECONDS,
+        )
+        return _connect(IDLE_WAKE_TIMEOUT_SECONDS)
 
 
 @dataclass(frozen=True)
