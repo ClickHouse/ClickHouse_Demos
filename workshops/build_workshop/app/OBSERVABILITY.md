@@ -126,7 +126,15 @@ docker compose --env-file .env.workshop \
 | `CLICKHOUSE_PASSWORD` | (empty) | Cloud SQL password. |
 | `OTLP_AUTH_TOKEN` | (empty) | Shared secret securing the collector's OTLP ingest. Clients send it back. Empty disables auth. |
 | `HYPERDX_OTEL_EXPORTER_CLICKHOUSE_DATABASE` | `otel` (via `CLICKSTACK_DATABASE`) | Database for ClickStack's `otel_*` tables. Separate from the app data DB (`nyc_tlc_data`). |
-| `CUSTOM_OTELCOL_CONFIG_FILE` | `/etc/otelcol-contrib/custom.config.yaml` | Only set on the container-logs collector; points at the filelog config. |
+| `CUSTOM_OTELCOL_CONFIG_FILE` | `/etc/otelcol-contrib/main.config.yaml` (main) · `.../custom.config.yaml` (container-logs) | Merges an extra config onto the image's baked-in pipelines. The **main** collector uses `main.config.yaml` to redirect the unused `metrics/promql` (Prometheus remote-write) pipeline to a `nop` exporter — see below. The **container-logs** collector uses `custom.config.yaml` for the filelog receiver. |
+
+The image ships a second metrics pipeline, `metrics/promql`, that remote-writes
+metrics to `http://${CLICKHOUSE_PROMETHEUS_METRICS_ENDPOINT}/write`. This workshop
+never sets that variable and runs no Prometheus remote-write target, so the exporter
+timed out every ~60s and logged `prometheusremotewrite ... context deadline exceeded`
+(non-fatal — metrics still reach ClickHouse via the primary `metrics` pipeline).
+`otel-collector/main.config.yaml` overrides that pipeline's exporter to `nop`, which
+stops the error without affecting what lands in ClickHouse.
 
 Collector OTLP ports: `4317` (gRPC), `4318` (HTTP). If either host port is
 already taken, `docker compose ... up` fails to bind the collector; set
@@ -145,7 +153,8 @@ the host ports does NOT change the backend wiring.
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://otel-collector:4318` | Collector OTLP HTTP endpoint. |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` | Required because we target the 4318 HTTP port (OTLP defaults to gRPC). |
 | `OTEL_EXPORTER_OTLP_HEADERS` | `authorization=${OTLP_AUTH_TOKEN}` | Sends the shared token back to the collector. **VERIFY-LIVE.** |
-| `OTEL_LOGS_EXPORTER` | `otlp` | Export app logs over OTLP. Only works because `configure_logging()` preserves the auto-instrumentation OTLP log handler (it used to evict it). **VERIFY-LIVE** that `otel_logs` populates. |
+| `OTEL_LOGS_EXPORTER` | `otlp` | Wires up the OTLP log exporter/provider. Necessary but NOT sufficient on its own — see the next row. |
+| `OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED` | `true` | **Required for logs to flow.** Only when this is `true` does `opentelemetry-instrument` attach the stdlib-logging OTLP handler to the root logger; `configure_logging()` then preserves it. Without it, `otel_logs` stays empty while traces/metrics work fine. |
 | `LOG_LEVEL` | `INFO` | App + uvicorn log level (`DEBUG`/`INFO`/`WARNING`/`ERROR`). |
 
 ### Loadgen
@@ -192,16 +201,25 @@ docker compose ... logs backend | head           # "[entrypoint] OTEL_ENABLED=tr
 These follow documented patterns but were not confirmed against a live Managed
 ClickStack service; confirm during the first live run:
 
-1. **OTLP auth header** – `OTEL_EXPORTER_OTLP_HEADERS=authorization=<token>`. The
-   ClickStack docs describe `OTLP_AUTH_TOKEN` on the collector but do not spell
-   out the exact client header name/format. If auth fails, try `Bearer <token>`
-   or drop the header (and unset `OTLP_AUTH_TOKEN`) to confirm the rest works.
-2. **App logs over OTLP** – live testing found zero app logs while traces worked.
-   Root cause: `configure_logging()` evicted the auto-instrumentation OTLP log
-   handler; now fixed (the handler is preserved, verified locally that it survives
-   startup). Re-confirm on a live service that `otel_logs` now populates under
-   traffic. If logs are still missing, check the collector -> ClickStack log
-   delivery next; the `--profile container-logs` path remains the fallback.
+1. **OTLP auth header** – ✅ CONFIRMED against a live service. The plain
+   `OTEL_EXPORTER_OTLP_HEADERS=authorization=<token>` form works (no `Bearer `
+   prefix needed): with it set, backend traces and metrics land in `otel_traces` /
+   `otel_metrics_*` on ClickHouse Cloud. Leave it as-is.
+2. **App logs over OTLP** – ✅ CONFIRMED against a live service. `otel_logs`
+   populates under traffic (verified: `debug ... ClickHouse query ok` rows land
+   with `ServiceName=nyc-taxi-backend`). Two things were needed and are now in
+   place: (a) `OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true`, without
+   which `opentelemetry-instrument` never attaches the OTLP log handler (this was
+   the actual root cause — `configure_logging()` was correctly *preserving* a
+   handler that was never installed); and (b) `configure_logging()` keeps that
+   handler instead of evicting it. **Severity note:** successful queries log at
+   `DEBUG` (`db.py`), so with the default `LOG_LEVEL=INFO` a healthy app is quiet
+   and only WARN/ERROR records flow — which is the point (you see logs in HyperDX
+   exactly when something goes wrong). Set `LOG_LEVEL=DEBUG` to see per-query rows.
+   The `--profile container-logs` path remains the fallback for non-instrumented
+   services. **Deprecation:** OTel Python 0.64b0 logs a warning that the SDK's
+   env-var-driven LoggingHandler is deprecated and "will be removed in a future
+   release"; revisit the wiring on the next OTel bump.
 3. **Container-log scraping** (`otel-collector/custom.config.yaml`):
    - Host path `/var/lib/docker/containers/*/*-json.log` is inferred from the
      documented `/var/log/**/*.log` filelog example. On **Docker Desktop

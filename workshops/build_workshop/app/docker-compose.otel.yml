@@ -39,6 +39,14 @@ services:
       # Target database for ClickStack's own otel_* tables (distinct from the
       # app's data database, CLICKHOUSE_DATABASE=nyc_tlc_data).
       - HYPERDX_OTEL_EXPORTER_CLICKHOUSE_DATABASE=${CLICKSTACK_DATABASE:-otel}
+      # Merge a custom config on top of the image's baked-in pipelines. This
+      # redirects the image's `metrics/promql` pipeline (a Prometheus remote-write
+      # fan-out we never use) to a no-op exporter, silencing the repeating
+      # "prometheusremotewrite ... context deadline exceeded" error. Metrics still
+      # reach ClickHouse via the primary `metrics` pipeline. See main.config.yaml.
+      - CUSTOM_OTELCOL_CONFIG_FILE=/etc/otelcol-contrib/main.config.yaml
+    volumes:
+      - ./otel-collector/main.config.yaml:/etc/otelcol-contrib/main.config.yaml:ro
     ports:
       # Host mappings are only needed if you send OTLP from the host; the backend
       # reaches the collector in-network at http://otel-collector:4318.
@@ -62,9 +70,14 @@ services:
       # `authorization` header. The exact header name/format the collector
       # expects is not spelled out in the docs; confirm against a live service.
       - OTEL_EXPORTER_OTLP_HEADERS=authorization=${OTLP_AUTH_TOKEN:-}
-      # VERIFY-LIVE: export app logs over OTLP (in addition to stdout, which the
-      # container-logs collector can scrape). Confirm logs appear in HyperDX.
+      # Export app logs over OTLP (in addition to stdout, which the container-logs
+      # collector can scrape).
       - OTEL_LOGS_EXPORTER=otlp
+      # REQUIRED for logs to actually flow. OTEL_LOGS_EXPORTER=otlp only wires up the
+      # exporter; opentelemetry-instrument attaches the stdlib-logging OTLP handler to
+      # the root logger ONLY when this is true. Without it, otel_logs stays empty while
+      # traces/metrics work (observability.py preserves the handler once it exists).
+      - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
 
   # OPTIONAL (profile: container-logs). A second collector that tails raw Docker
