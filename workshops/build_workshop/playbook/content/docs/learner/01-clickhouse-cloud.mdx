@@ -1,5 +1,5 @@
 ---
-title: 02 ClickHouse Cloud
+title: 01 ClickHouse Cloud
 description: Build the taxi schema on your Cloud service, seed historical data from object storage, and point the back end at ClickHouse.
 ---
 
@@ -8,14 +8,15 @@ description: Build the taxi schema on your Cloud service, seed historical data f
 You are on `build-workshop-v1` — no checkout needed. Budget about **15 minutes**.
 
 Prerequisites: your ClickHouse Cloud service created and its host and password in
-`.env.workshop` (module 00).
+`.env.workshop`, and the app running locally (module 00).
 
 ## Why
 
-The app has no analytics data yet — module 01 was a tour of an empty UI. In this module
-you give it a real warehouse: create the taxi schema on ClickHouse Cloud, seed it with
-historical trip data, and point the back end at it. This is where the dashboards first
-light up.
+Your Cloud service is empty — module 00 wired up its credentials, but it has no tables,
+which is why the dashboards render empty right now. This is the first thing you build: a
+real warehouse. Create the taxi schema on ClickHouse Cloud, seed it with historical trip
+data, and point the back end at it. This is where the dashboards get their data — you tour
+the running app next, in module 02, once it has something to show.
 
 ## Goal
 
@@ -135,4 +136,5 @@ object storage. What is still missing is fresh data: the Ops dashboard is not li
 ## End state
 
 Historical data is on ClickHouse and the back end reads from it. Continue to
-[03 Real-time CDC](/docs/learner/03-realtime-cdc) to stream live rows in.
+[02 Base app](/docs/learner/02-base-app) to tour the running app now that its dashboards
+have data.
