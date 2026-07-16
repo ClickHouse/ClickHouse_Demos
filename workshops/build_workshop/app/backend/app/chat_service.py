@@ -11,6 +11,7 @@ from clickhouse_connect.driver.client import Client
 from clickhouse_connect.driver.exceptions import ClickHouseError
 from fastapi import HTTPException
 
+from app.db import is_not_seeded_error
 from app.settings import settings
 
 # Tables the model is allowed to reference. The ClickHouse client connects with
@@ -169,6 +170,12 @@ FEW_SHOTS: list[dict[str, str]] = [
 
 class SqlGuardrailError(ValueError):
     """Raised when a model-generated statement fails the read-only guardrails."""
+
+
+class SchemaNotSeededError(Exception):
+    """Raised when a generated query references a table/database that does not
+    exist yet -- the schema has not been created and seeded (module 02). Lets
+    run_chat answer honestly instead of surfacing a raw ClickHouse error."""
 
 
 # Whole-word write/DDL keywords that must never appear in a generated query.
@@ -426,6 +433,8 @@ def execute_readonly_select(client: Client, sql: str) -> ChatQueryResult:
             },
         )
     except ClickHouseError as e:
+        if is_not_seeded_error(str(e)):
+            raise SchemaNotSeededError() from e
         raise HTTPException(status_code=400, detail=f"Generated query failed: {e}") from e
     elapsed_ms = int((time.perf_counter() - start) * 1000)
 
@@ -459,5 +468,19 @@ def run_chat(client: Client, message: str, conversation_id: str | None) -> ChatR
         return ChatResult(answer=plan.answer, sql=None, rows=None, chart=None)
 
     safe_sql = sanitize_select_sql(plan.sql)
-    result = execute_readonly_select(client, safe_sql)
+    try:
+        result = execute_readonly_select(client, safe_sql)
+    except SchemaNotSeededError:
+        # The taxi tables are not there yet (before module 02 seeds them). Answer
+        # honestly rather than leaking a raw ClickHouse "table does not exist" error.
+        return ChatResult(
+            answer=(
+                "The taxi tables are not populated yet, so I could not run that query. "
+                "Create and seed the schema in module 02 (and stream live data in "
+                "module 03), then ask again."
+            ),
+            sql=safe_sql,
+            rows=None,
+            chart=None,
+        )
     return ChatResult(answer=plan.answer, sql=safe_sql, rows=result.rows, chart=plan.chart)
