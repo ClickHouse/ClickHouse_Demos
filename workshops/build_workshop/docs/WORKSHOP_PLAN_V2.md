@@ -147,7 +147,7 @@ file-path-named steps -> How to verify -> End state), modules table as syllabus.
 |---|---|---|
 | 0:00-0:10 | Intro | Cold open (the finished thing, 3 min) + framing. Slides: foundation-app owner |
 | 0:10-0:40 | 00 Setup | Accounts verified (prework), CHC service create + API key + chctl login, Langfuse org, keys into .env, docker compose up, agent skills + MCP wired |
-| 0:40-1:05 | 01 Base App + 02 ClickHouse Cloud | Tour app; schema to Cloud; seed historical data via url() (1-3 months yellow parquet); backend flips to Cloud; feel the dashboard speed |
+| 0:40-1:05 | 01 ClickHouse Cloud + 02 Base App | Schema to Cloud; seed historical data via url() (1-3 months yellow parquet); backend flips to Cloud; feel the dashboard speed; then tour the seeded app |
 | 1:05-1:30 | 03 Realtime CDC | Create your own managed Postgres (clickhousectl); start your generator (writes to it, and the generator log is the readiness probe); create Postgres CDC ClickPipe (console wizard); snapshot then streaming; Ops dashboard goes live. Hard checkpoint |
 | 1:30-1:35 | Break | Telemetry and CDC keep flowing |
 | 1:35-1:50 | 04 ClickHouse Agents | Agent over your taxi data at ai.clickhouse.cloud; conversational exploration; share prompts that produce insights |

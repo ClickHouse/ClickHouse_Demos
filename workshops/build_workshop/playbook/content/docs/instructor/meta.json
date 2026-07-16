@@ -6,8 +6,8 @@
   "pages": [
     "index",
     "00-setup",
-    "01-base-app",
-    "02-clickhouse-cloud",
+    "01-clickhouse-cloud",
+    "02-base-app",
     "03-realtime-cdc",
     "04-clickhouse-agents",
     "05-clickstack",
