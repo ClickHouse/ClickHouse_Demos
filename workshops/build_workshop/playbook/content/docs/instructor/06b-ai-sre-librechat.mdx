@@ -20,7 +20,9 @@ is tight — 06a already covers the MCP-in-editor path.
 ## Per-participant setup checklist
 
 - Docker headroom for a second small stack (LibreChat API + MongoDB).
-- `OPENAI_API_KEY` copied from `.env.workshop` into `app/librechat/.env`.
+- The add-on reads the SAME `app/.env.workshop` (no separate env file). They add the
+  "Module 06b" vars from `.env.workshop.example`; `OPENAI_API_KEY` is already present and the
+  LibreChat defaults are pre-filled, so only two values are theirs to supply:
 - `CLICKSTACK_SERVICE_ID` = their ClickHouse Cloud service UUID.
 - `GITHUB_PAT` = a fine-grained, read-only PAT on `ClickHouse/ClickHouse_Demos`.
 - One-time agent import in the Agent Builder (paste prompt, attach + authorize both MCPs).
@@ -32,7 +34,7 @@ is tight — 06a already covers the MCP-in-editor path.
 - **GitHub tool errors** → PAT missing/expired or lacks read access to the repo; it must be
   a fine-grained token with Contents:read on `ClickHouse/ClickHouse_Demos`.
 - **Weak answers / no SQL** → a `-mini`/`-nano` model was picked; switch to `gpt-5.4`.
-- **Port 3090 in use** → set `LIBRECHAT_PORT` in `app/librechat/.env`.
+- **Port 3090 in use** → set `LIBRECHAT_PORT` in `app/.env.workshop`.
 - **Frontend fault not in telemetry** → the app wasn't opened in a browser after the
   rebuild, so the browser SDK never recorded it; load the page first.
 

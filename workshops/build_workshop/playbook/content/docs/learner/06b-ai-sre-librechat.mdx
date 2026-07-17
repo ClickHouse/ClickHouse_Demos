@@ -19,23 +19,21 @@ and the **source code** (GitHub MCP) — so it can go from symptom to the exact 
 
 ## Step 1 — Bring up LibreChat
 
-```bash
-cd workshops/build_workshop/app/librechat
-cp .env.example .env
-```
-
-Your `OPENAI_API_KEY` is reused automatically from `../.env.workshop` (the one you filled
-in earlier), so you only need to add two values to `.env`:
+This add-on reuses the **same `.env.workshop`** you already filled in — no new env file.
+Open `app/.env.workshop` and add the values from its **"Module 06b"** section (they are in
+`.env.workshop.example` for reference). `OPENAI_API_KEY` is already there; the LibreChat
+defaults (`LIBRECHAT_PORT`, login, secrets) are pre-filled, so you only need two values:
 - `CLICKSTACK_SERVICE_ID` — your ClickHouse Cloud service UUID (Console → your service →
   Settings, or the id in the service URL).
 - `GITHUB_PAT` — a **fine-grained, read-only** GitHub PAT scoped to
   `ClickHouse/ClickHouse_Demos` (github.com → Settings → Developer settings → Fine-grained
   tokens → read-only Contents on that repo).
 
-Then start it:
+Then start it (it reads `../.env.workshop`):
 
 ```bash
-docker compose --env-file .env -f docker-compose.librechat.yml up -d
+cd workshops/build_workshop/app/librechat
+docker compose --env-file ../.env.workshop -f docker-compose.librechat.yml up -d
 ```
 
 Give it a minute, then open [localhost:3090](http://localhost:3090).
