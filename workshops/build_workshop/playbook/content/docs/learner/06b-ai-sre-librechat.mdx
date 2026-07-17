@@ -19,15 +19,21 @@ and the **source code** (GitHub MCP) — so it can go from symptom to the exact 
 
 ## Step 1 — Bring up LibreChat
 
-This add-on reuses the **same `.env.workshop`** you already filled in — no new env file.
+This add-on reuses the **same `.env.workshop`** you already filled in.
 Open `app/.env.workshop` and add the values from its **"Module 06b"** section (they are in
 `.env.workshop.example` for reference). `OPENAI_API_KEY` is already there; the LibreChat
 defaults (`LIBRECHAT_PORT`, login, secrets) are pre-filled, so you only need two values:
-- `CLICKSTACK_SERVICE_ID` — your ClickHouse Cloud service UUID (Console → your service →
-  Settings, or the id in the service URL).
+- `CLICKSTACK_SERVICE_ID` — your ClickStack **Service ID**. In HyperDX (ClickStack), open
+  **Team Settings** → the **Data** tab → and under **Connections**, the **Default**
+  connection shows a **Service ID** (a UUID like `b96dfec2-44a8-48f7-998f-036a0d16a871`).
+  Copy that value.
 - `GITHUB_PAT` — a **fine-grained, read-only** GitHub PAT scoped to
   `ClickHouse/ClickHouse_Demos` (github.com → Settings → Developer settings → Fine-grained
   tokens → read-only Contents on that repo).
+
+![ClickStack Team Settings → Data tab: the Default connection panel showing the Service ID UUID to copy into CLICKSTACK_SERVICE_ID](/screenshots/06b-clickstack-service-id.png)
+
+*Find `CLICKSTACK_SERVICE_ID` in HyperDX → **Team Settings** → **Data** → **Connections** → **Default** → **Service ID**.*
 
 Then start it (it reads `../.env.workshop`):
 
