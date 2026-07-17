@@ -109,12 +109,11 @@ Postgres Settings tab or ClickHouse support. `verify-pg` prints this same hint o
 - `slips.txt` — printable hand-outs: the `.env.workshop` PG block, the ClickPipe
   wizard values, and an optional chctl one-liner per participant
 
-## Using another Postgres provider (RDS, Supabase, ...)
+## Using another Postgres provider (RDS, ...)
 
 Skip `create-pg`/`configure-pg`; create the instance there and apply the same
-targets (RDS: custom parameter group + `rds.logical_replication=1`; Supabase:
-`supabase postgres-config update ... --experimental`, and use the DIRECT
-endpoint — poolers are not supported for CDC). Then export the `ADMIN_PG*`
+targets (RDS: custom parameter group + `rds.logical_replication=1`). Use the DIRECT
+endpoint — poolers are not supported for CDC. Then export the `ADMIN_PG*`
 variables and use `provision`/`verify-pg`/`create-pipe`/`verify-sync`/`teardown`
 unchanged.
 
