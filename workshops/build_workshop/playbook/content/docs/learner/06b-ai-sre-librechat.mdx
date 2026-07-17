@@ -95,7 +95,7 @@ Inject a fault (see [08 Break and fix](/docs/learner/08-break-and-fix) for the b
 for example the map fault, and rebuild the app stack:
 
 ```bash
-cd workshops/build_workshop/app
+cd app
 git checkout fault/01-map-not-loading
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
 ```
