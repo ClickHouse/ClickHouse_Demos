@@ -79,7 +79,7 @@ on slips. THIS is where the slot gate lives: 30+ pipes on one instance needs
 max_replication_slots/max_wal_senders raised to ~50 and max_connections to 300+ — and on
 managed Postgres that patch is a known beta gap (FORBIDDEN; raise via console/support),
 so the documented fallback-of-the-fallback is **RDS** (custom parameter group, slots to
-50, ~$0.07/hr) or **Supabase** (CLI-settable slots, DIRECT connection not the pooler).
+50, ~$0.07/hr; use the DIRECT connection, not the pooler).
 Neon is ruled out (slots fixed at 10, inactive slots deleted after ~40h). No
 PgBouncer/pooler in the CDC path. The `max_slot_wal_keep_size` WAL safety valve is
 best-effort only: it reads back as -1 (unlimited) on live managed instances because the
@@ -180,7 +180,7 @@ stranded; hard pivot rules at 1:30 and 2:45.
 1. PRIMARY (D1) gate: can a fresh TRIAL org create a managed Postgres instance
    (`clickhousectl cloud postgres create`) and reach it via psql? Verify at the dry run
    on a clean trial org — this is the gate that matters now. FALLBACK gate: on one
-   shared instance, are slots raisable to 50 for 30+ pipes? (else RDS/Supabase.)
+   shared instance, are slots raisable to 50 for 30+ pipes? (else RDS.)
 2. 10 concurrent ClickPipes CDC against the shared PG: snapshot contention, slot
    stability, decode CPU. (D2 gate; now relevant only to the shared FALLBACK pool —
    the primary path is one pipe per own instance — else S3-pipe fallback.)
