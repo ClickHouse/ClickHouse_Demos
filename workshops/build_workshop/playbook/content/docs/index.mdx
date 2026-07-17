@@ -79,13 +79,26 @@ ride-hailing business:
 You do not build the app from scratch. You start from a working local stack and, module
 by module, move its data plane and its intelligence onto ClickHouse Cloud.
 
+### The platform you build on
+
+ClickHouse Cloud is a single platform that spans the whole stack — from ingesting data at
+the bottom, to storing and analyzing it in ClickHouse, to observing it and layering AI on
+top. This workshop is a guided tour through exactly these pieces: you ingest with
+ClickPipes, analyze in ClickHouse, observe with ClickStack/HyperDX, and add AI with
+Langfuse and your coding agent.
+
+![The ClickHouse Cloud platform: layered stack from sources and ClickPipes ingestion, through ClickHouse and Postgres, up to HyperDX, Langfuse and agentic AI](/clickhouse-platform.svg)
+
 ### Architecture (target end state)
+
+Here is how those platform pieces come together for the workshop specifically — the app on
+your laptop, everything stateful in your own ClickHouse Cloud trial, and the third-party
+APIs the chat feature calls.
 
 ![Workshop architecture: participant laptop, your ClickHouse Cloud trial (service, ClickPipes, managed Postgres), and third-party services](/workshop-architecture.svg)
 
-The editable draw.io sources for this and the data-flow and module-flow diagrams live
-in the repo at `workshops/build_workshop/docs/diagrams/` (the SVGs have the diagram
-XML embedded, so opening them in draw.io recovers the editable diagram).
+The diagrams above are generated from `workshops/build_workshop/docs/diagrams/gen_diagrams.py`
+(edit the script and re-run it to regenerate the SVGs) — see the module flow below.
 
 ![Module flow: ten modules from setup to wrap-up with per-module time budgets](/workshop-module-flow.svg)
 
