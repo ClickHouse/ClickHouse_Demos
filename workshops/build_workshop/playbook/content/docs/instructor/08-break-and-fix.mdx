@@ -108,6 +108,17 @@ with the HTML document rather than a 404, so `r.ok` passes and `r.json()` throws
 - **Teaching point**: not every failure surfaces in backend traces, and a 404 can masquerade
   as a 200 behind an SPA fallback — so read the actual response body and content-type, not
   just the status code.
+- **Note (browser SDK):** with the HyperDX browser SDK enabled (module 05 overlay), the
+  frontend now surfaces this in ClickStack itself — the `ZoneMap` parse failure is captured
+  as a `console.error` span under `ServiceName=nyc-taxi-frontend`, paired with the resource
+  span for the `text/html` 200. So the agent can localize it from telemetry without leaving
+  ClickStack; the browser console / Network tab is the fallback, not the only path.
+
+**Sample agent response** (fault 01, via the ClickStack MCP):
+
+![Agent root-cause analysis of fault 01: it names the missing /static/taxi_zones.geojson returning the SPA index.html as 200 text/html, the ZoneMap JSON parse error captured as a nyc-taxi-frontend console.error span, contrasts it against healthy /api and backend spans, flags the SDK self-test errors as noise, and proposes shipping the asset or guarding the parse](/screenshots/08-fault01-root-cause.png)
+
+*Expected diagnosis: the agent ties the failure to the geojson request returning 200 `text/html` (SPA fallback), the resulting `JSON.parse` error captured under `nyc-taxi-frontend`, and recommends shipping the asset to `/static/` or guarding the `.json()` parse.*
 
 ## Common failures
 

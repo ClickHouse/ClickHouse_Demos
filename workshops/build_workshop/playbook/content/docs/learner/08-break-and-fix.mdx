@@ -60,8 +60,18 @@ investigate the traces and logs, localize the failure, and tell me the root caus
 the evidence.
 ```
 
+
 Then ask your own follow-up question about blast radius or timeline — this is your open
 step.
+
+Confirm the errors were actually recorded by ClickStack: open **Client Sessions** in the
+HyperDX sidebar and pick your session. You will see the session flagged with its error
+count and event timeline — including the front-end `console.error` from the failure — plus
+a replay of exactly what the user saw when it broke.
+
+![ClickStack Client Sessions: an anonymous session flagged "1 Errors, 92 Events" with a highlighted console.error "ZoneMap: failed to load…" in the event timeline and a session-replay player showing the app with the broken map](/screenshots/08-client-session-error.png)
+
+*ClickStack → Client Sessions records the browser errors and a replay of the user's session — proof the failure was captured, not just reproduced.*
 
 ## Step 3 — Apply the fix
 
