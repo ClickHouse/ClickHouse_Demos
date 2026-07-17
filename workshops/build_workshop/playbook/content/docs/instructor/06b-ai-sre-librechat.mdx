@@ -1,0 +1,45 @@
+---
+title: 06b AI SRE with LibreChat
+description: Instructor notes for the optional LibreChat agentic-SRE module — setup checklist, talk track, common failures.
+---
+
+Facilitator companion to [06b AI SRE with LibreChat](/docs/learner/06b-ai-sre-librechat).
+
+## Timing
+
+Optional, ~20 minutes, best as a post-module-08 deep-dive or a take-home. Skip if the room
+is tight — 06a already covers the MCP-in-editor path.
+
+## Talk track
+
+- 06a = agent in your editor; 06b = chat-native agent that reads **telemetry + source** and
+  goes symptom → line of code.
+- The payoff pairs with module 08: check out a fault, ask the agent, watch it cross the two
+  planes.
+
+## Per-participant setup checklist
+
+- Docker headroom for a second small stack (LibreChat API + MongoDB).
+- The add-on reads the SAME `app/.env.workshop` (no separate env file). They add the
+  "Module 06b" vars from `.env.workshop.example`; `OPENAI_API_KEY` is already present and the
+  LibreChat defaults are pre-filled, so only two values are theirs to supply:
+- `CLICKSTACK_SERVICE_ID` = their ClickHouse Cloud service UUID.
+- `GITHUB_PAT` = a fine-grained, read-only PAT on `ClickHouse/ClickHouse_Demos`.
+- One-time agent import in the Agent Builder (paste prompt, attach + authorize both MCPs).
+
+## Common failures
+
+- **Agent queries the wrong data / a "playground" service** → `CLICKSTACK_SERVICE_ID` unset
+  or wrong; the ClickStack MCP defaults to the first service in the account.
+- **GitHub tool errors** → PAT missing/expired or lacks read access to the repo; it must be
+  a fine-grained token with Contents:read on `ClickHouse/ClickHouse_Demos`.
+- **Weak answers / no SQL** → a `-mini`/`-nano` model was picked; switch to `gpt-5.4`.
+- **Port 3090 in use** → set `LIBRECHAT_PORT` in `app/.env.workshop`.
+- **Frontend fault not in telemetry** → the app wasn't opened in a browser after the
+  rebuild, so the browser SDK never recorded it; load the page first.
+
+## Reset steps
+
+- `docker compose -f docker-compose.librechat.yml down` stops the add-on (add `-v`-style
+  cleanup by removing `app/librechat/data-node/` to wipe the seeded user/agent).
+- Main app reset is the module-08 shared reset (`git checkout build-workshop-v1` + rebuild).

@@ -57,3 +57,5 @@ scratchpad/
 clickhouse-data/
 .gstack/
 .clickhouse/
+
+workshops/build_workshop/playbook/docs/superpowers
