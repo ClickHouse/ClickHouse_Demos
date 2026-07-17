@@ -1,0 +1,102 @@
+---
+title: 06b AI SRE with LibreChat
+description: Optional — run a prebuilt LibreChat SRE agent that investigates telemetry (ClickStack MCP) and source code (GitHub MCP) to root-cause a fault.
+---
+
+## Starting point
+
+Optional module. You are on `build-workshop-v1` — no checkout needed yet. Budget about
+**20 minutes**.
+
+Prerequisites: module 05 complete (telemetry flowing into ClickStack), your OpenAI key in
+`.env.workshop`, and Docker with headroom for a second small stack.
+
+## Why
+
+Module 06a put the agent in your editor. Here you get a **chat-native** SRE agent in
+LibreChat that investigates across two planes at once — your **telemetry** (ClickStack MCP)
+and the **source code** (GitHub MCP) — so it can go from symptom to the exact line of code.
+
+## Step 1 — Bring up LibreChat
+
+```bash
+cd workshops/build_workshop/app/librechat
+cp .env.example .env
+```
+
+Fill in `.env`:
+- `OPENAI_API_KEY` — copy it from `../.env.workshop`.
+- `CLICKSTACK_SERVICE_ID` — your ClickHouse Cloud service UUID (Console → your service →
+  Settings, or the id in the service URL).
+- `GITHUB_PAT` — a **fine-grained, read-only** GitHub PAT scoped to
+  `ClickHouse/ClickHouse_Demos` (github.com → Settings → Developer settings → Fine-grained
+  tokens → read-only Contents on that repo).
+
+Then start it:
+
+```bash
+docker compose --env-file .env -f docker-compose.librechat.yml up -d
+```
+
+Give it a minute, then open [localhost:3090](http://localhost:3090).
+
+<Callout>
+  LibreChat is a second stack (its own MongoDB). It runs in its own compose project, so it
+  never touches the main workshop stack. Stop it any time with
+  `docker compose -f docker-compose.librechat.yml down`.
+</Callout>
+
+## Step 2 — Log in as the default user
+
+There is no signup — a default user is pre-created. Log in with:
+
+- **Email:** `workshop@example.com`
+- **Password:** `clickhouse`
+
+## Step 3 — Import the SRE agent (one time)
+
+Open **Agent Builder** (the agents panel), create a new agent, and:
+
+1. Paste the **Instructions** from
+   `workshops/build_workshop/app/librechat/sre-agent-definition.md`.
+2. Attach the **`clickstack`** MCP tool and complete the browser OAuth (your ClickHouse
+   Cloud login) — this authorizes the agent to read your telemetry.
+3. Attach the **`github`** MCP tool (it uses the PAT from your `.env`).
+4. Pick a strong model on the OpenAI endpoint — `gpt-5.4` (avoid `-mini`/`-nano`).
+5. Save the agent.
+
+## Step 4 — Break something, then ask the agent
+
+Inject a fault (see [08 Break and fix](/docs/learner/08-break-and-fix) for the branches),
+for example the map fault, and rebuild the app stack:
+
+```bash
+cd workshops/build_workshop/app
+git checkout fault/01-map-not-loading
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
+```
+
+Open the app so the failure is exercised (the broken map is recorded by the browser SDK from
+module 05). Then, in LibreChat, ask your SRE agent:
+
+```text
+Users report the map isn't loading. I'm running the fault/01-map-not-loading branch.
+Investigate the telemetry and the source, and give me the root cause with evidence.
+```
+
+The agent should confirm the symptom in ClickStack, then read the source on the fault branch
+via the GitHub MCP and pinpoint the offending code (the `/static` geojson path in
+`frontend/src/ui/ZoneMap.tsx`) with the fix.
+
+## How to verify you are done
+
+- LibreChat is reachable at `localhost:3090` and you logged in without signing up.
+- The SRE agent has both `clickstack` and `github` tools attached and authorized.
+- For a checked-out fault, the agent names the correct root cause **and** cites the source
+  file/line on that branch as evidence.
+
+## Wrap-up
+
+You now have a chat-native SRE agent that reasons across telemetry and code — the same
+pattern teams use to shorten incident triage. Reset with `git checkout build-workshop-v1`
+and rebuild when you are done.
