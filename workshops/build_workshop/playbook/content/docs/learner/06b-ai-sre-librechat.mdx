@@ -61,15 +61,32 @@ There is no signup — a default user is pre-created. Log in with:
 
 ## Step 3 — Import the SRE agent (one time)
 
-Open **Agent Builder** (the agents panel), create a new agent, and:
+Open **Agent Builder** (the agents panel) and **Create New Agent**. Give it a name, paste the
+**Instructions** from `workshops/build_workshop/app/librechat/sre-agent-definition.md`, and
+pick a strong model on the OpenAI endpoint (e.g. `gpt-5.4` / `gpt-5.5` — avoid `-mini`/`-nano`;
+the multi-hop reasoning needs a capable model).
 
-1. Paste the **Instructions** from
-   `workshops/build_workshop/app/librechat/sre-agent-definition.md`.
-2. Attach the **`clickstack`** MCP tool and complete the browser OAuth (your ClickHouse
-   Cloud login) — this authorizes the agent to read your telemetry.
-3. Attach the **`github`** MCP tool (it uses the PAT from your `.env`).
-4. Pick a strong model on the OpenAI endpoint — `gpt-5.4` (avoid `-mini`/`-nano`).
-5. Save the agent.
+![LibreChat Agent Builder "Create New Agent" form with a name and the SRE instructions pasted into the Instructions box, and an OpenAI model selected](/screenshots/06b-agent-create.png)
+
+Scroll to **MCP Servers** → **Add MCP Server Tools** and add both servers — `clickstack` and
+`github`:
+
+![The MCP Server Tools picker showing the clickstack and github MCP servers, each with an Add button](/screenshots/06b-agent-add-mcp.png)
+
+- **`clickstack`** — on first use, complete the browser OAuth (your ClickHouse Cloud login)
+  so the agent can read your telemetry. This is the redirect that must land back on
+  `localhost:3090`.
+- **`github`** — uses the read-only PAT you put in `.env.workshop`.
+
+Both should now be listed under **MCP Servers** on the agent:
+
+![The agent's MCP Servers section listing both clickstack and github](/screenshots/06b-agent-mcp-attached.png)
+
+**Save** the agent, then open a chat with it and ask "what can you do?" to confirm it is
+wired up — it should describe investigating the NYC Taxi app across ClickStack telemetry
+(`otel.otel_traces` / `otel.otel_logs`) and the `ClickHouse/ClickHouse_Demos` source:
+
+![The saved agent answering "what can you do?", describing symptom confirmation, querying ClickStack telemetry, localizing failures, and reading source from ClickHouse/ClickHouse_Demos](/screenshots/06b-agent-ready.png)
 
 ## Step 4 — Break something, then ask the agent
 
