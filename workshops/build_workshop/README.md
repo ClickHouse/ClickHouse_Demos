@@ -57,10 +57,10 @@ flowchart LR
   AG -->|RBAC-governed SQL| CH
 ```
 
-The published diagrams (the ClickHouse Cloud platform stack, the workshop architecture, and
-the module flow) are generated as clean SVGs by `docs/diagrams/gen_diagrams.py` — edit that
-script and re-run it (`python3 gen_diagrams.py all`) to regenerate them, then copy the SVGs
-into `playbook/public/`.
+The published diagrams (the ClickHouse Cloud platform stack, the workshop architecture, the
+data flow, and the module flow) are generated as clean SVGs by `docs/diagrams/gen_diagrams.py`
+— edit that script and re-run it (`python3 gen_diagrams.py all`) to regenerate them, then copy
+the SVGs into `playbook/public/`.
 
 ## Workflows
 

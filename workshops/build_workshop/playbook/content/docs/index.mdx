@@ -97,6 +97,13 @@ APIs the chat feature calls.
 
 ![Workshop architecture: participant laptop, your ClickHouse Cloud trial (service, ClickPipes, managed Postgres), and third-party services](/workshop-architecture.svg)
 
+### How data flows
+
+The same picture, followed as data: seeded once from object storage, streamed continuously
+via CDC, then read by the dashboards, chat, and agents, and observed through ClickStack.
+
+![Data flow: four lanes — one-time seed, live CDC, read paths, and observability — all through your ClickHouse service](/workshop-data-flow.svg)
+
 The diagrams above are generated from `workshops/build_workshop/docs/diagrams/gen_diagrams.py`
 (edit the script and re-run it to regenerate the SVGs) — see the module flow below.
 

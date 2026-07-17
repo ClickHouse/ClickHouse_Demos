@@ -317,12 +317,113 @@ def platform_stack():
     return s
 
 
+# ===========================================================================
+# DATA FLOW  (four swimlanes: seed, live CDC, read, observe)
+# ===========================================================================
+def data_flow():
+    W, H = 1560, 900
+    s = _svg_header(W, H)
+    s += (f'<text x="30" y="44" fill="{INK}" font-size="22" font-weight="700">'
+          f'ClickHouse BUILD Workshop · Data flow</text>\n')
+    s += (f'<text x="30" y="70" fill="{SUBINK}" font-size="13.5">'
+          f'How a row moves: seeded once, streamed continuously, then read and observed — '
+          f'all through your ClickHouse service.</text>\n')
+
+    LX, LW = 30, W - 60
+    TITLE_W = 176  # left title gutter per lane
+
+    def lane(y, h, title, subtitle):
+        t = (f'<rect x="{LX}" y="{y}" width="{LW}" height="{h}" rx="14" fill="#1C1C22" '
+             f'stroke="#3A3A45" stroke-width="1.3"/>\n')
+        t += (f'<rect x="{LX}" y="{y}" width="6" height="{h}" rx="3" fill="{YELLOW}"/>\n')
+        t += (f'<text x="{LX+22}" y="{y+30}" fill="{INK}" font-size="14.5" '
+              f'font-weight="700">{escape(title)}</text>\n')
+        # wrap subtitle into the gutter
+        words, line, ln = subtitle.split(), "", 0
+        for wd in words:
+            if len(line) + len(wd) > 20:
+                t += (f'<text x="{LX+22}" y="{y+52+ln*16}" fill="{SUBINK}" '
+                      f'font-size="11">{escape(line)}</text>\n'); line = wd; ln += 1
+            else:
+                line = (line + " " + wd).strip()
+        if line:
+            t += (f'<text x="{LX+22}" y="{y+52+ln*16}" fill="{SUBINK}" font-size="11">{escape(line)}</text>\n')
+        return t
+
+    def fbox(x, y, w, label, sub, accent=False):
+        return box(x, y, w, 62, label, [sub] if sub else None, accent=accent, rounded=10)
+
+    def harrow(x1, x2, y, label):
+        return edge(x1, y, x2, y, label, label_dy=-9)
+
+    x0 = LX + TITLE_W + 10     # where the flow chain starts
+    bw = 216                   # box width
+    gap = 140                  # arrow gap (wide enough for the longest label chip)
+
+    def col(i):
+        return x0 + i*(bw+gap)
+
+    # Lane 1 — SEED (module 01)
+    y = 96; s += lane(y, 96, "Seed", "one-time, module 01")
+    by = y + 17
+    s += fbox(col(0), by, bw, "NYC TLC parquet", "~3.2M rows, public")
+    s += fbox(col(2), by, bw, "ClickHouse service", "nyc_tlc_data.taxi_trips", accent=True)
+    s += harrow(col(0)+bw, col(2)-6, by+31, "url() seed — one statement, module 01")
+
+    # Lane 2 — LIVE CDC (module 03)
+    y = 212; s += lane(y, 110, "Live CDC", "continuous, module 03")
+    by = y + 24
+    s += fbox(col(0), by, bw, "pg-trip-writer", "synthetic trips")
+    s += fbox(col(1), by, bw, "Managed Postgres", "public.realtime_trips")
+    s += fbox(col(2), by, bw, "ClickPipes", "Postgres CDC pipe")
+    s += fbox(col(3), by, bw, "ClickHouse service", "MV → taxi_trips", accent=True)
+    s += harrow(col(0)+bw, col(1)-6, by+31, "INSERT · TLS")
+    s += harrow(col(1)+bw, col(2)-6, by+31, "replication")
+    s += harrow(col(2)+bw, col(3)-6, by+31, "CDC rows ~60s")
+
+    # Lane 3 — READ (modules 02, 04, 07)
+    y = 342; s += lane(y, 176, "Read", "modules 02, 04, 07")
+    by = y + 22
+    s += fbox(col(0), by, bw, "ClickHouse service", "nyc_tlc_data", accent=True)
+    s += fbox(col(1), by, bw, "FastAPI", "safe parameterized SQL")
+    s += fbox(col(2), by, bw, "Ops + Historical", "React dashboards")
+    s += harrow(col(0)+bw, col(1)-6, by+31, "SELECT")
+    s += harrow(col(1)+bw, col(2)-6, by+31, "GET /api/*")
+    # two more consumers off the service (stacked below)
+    by2 = y + 104
+    s += fbox(col(1), by2, bw, "in-app AI chat", "guarded SELECT (module 07)")
+    s += fbox(col(2), by2, bw, "ClickHouse Agents", "RBAC SQL (module 04)")
+    s += elbow([(col(0)+bw/2, by+62), (col(0)+bw/2, by2+31), (col(1)-6, by2+31)], "NL → SQL", mid=(col(0)+bw/2+70, by2+22))
+    s += harrow(col(1)+bw, col(2)-6, by2+31, "RBAC SQL")
+
+    # Lane 4 — OBSERVE (modules 05, 06, 08)
+    y = 538; s += lane(y, 176, "Observe", "modules 05, 06, 08")
+    by = y + 22
+    s += fbox(col(0), by, bw, "backend spans", "clickhouse.query + logs")
+    s += fbox(col(1), by, bw, "otel-collector", "OTLP :4318")
+    s += fbox(col(2), by, bw, "otel db", "in your service")
+    s += fbox(col(3), by, bw, "HyperDX UI", "search, traces, dashboards")
+    s += harrow(col(0)+bw, col(1)-6, by+31, "OTLP")
+    s += harrow(col(1)+bw, col(2)-6, by+31, "write")
+    s += harrow(col(2)+bw, col(3)-6, by+31, "read")
+    by2 = y + 104
+    s += fbox(col(1), by2, bw, "coding agent", "via ClickStack MCP")
+    s += elbow([(col(1)+bw/2, by2), (col(1)+bw/2, by+62)], None)
+    s += (f'<text x="{col(2)-6}" y="{by2+34}" fill="{SUBINK}" font-size="11.5">'
+          f'clickstack_search / save_dashboard / save_alert</text>\n')
+    s += "</svg>\n"
+    return s
+
+
 import sys
 if __name__ == "__main__":
     which = sys.argv[1] if len(sys.argv) > 1 else "all"
     if which in ("platform", "all"):
         open("clickhouse-platform.svg", "w").write(platform_stack())
         print("wrote clickhouse-platform.svg")
+    if which in ("dataflow", "all"):
+        open("workshop-data-flow.svg", "w").write(data_flow())
+        print("wrote workshop-data-flow.svg")
     if which in ("module", "all"):
         open("workshop-module-flow.svg", "w").write(module_flow())
         print("wrote workshop-module-flow.svg")
