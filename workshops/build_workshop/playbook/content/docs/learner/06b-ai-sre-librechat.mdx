@@ -101,16 +101,19 @@ docker compose --env-file .env.workshop -f docker-compose.workshop.yml -f docker
 ```
 
 Open the app so the failure is exercised (the broken map is recorded by the browser SDK from
-module 05). Then, in LibreChat, ask your SRE agent:
+module 05). Then, in LibreChat, ask your SRE agent — you don't even need to name the fault;
+let it localize from the telemetry:
 
 ```text
-Users report the map isn't loading. I'm running the fault/01-map-not-loading branch.
-Investigate the telemetry and the source, and give me the root cause with evidence.
+User reports there are some UI errors. Can you check and find the root cause? Is this a code bug?
 ```
 
-The agent should confirm the symptom in ClickStack, then read the source on the fault branch
-via the GitHub MCP and pinpoint the offending code (the `/static` geojson path in
-`frontend/src/ui/ZoneMap.tsx`) with the fix.
+The agent confirms the symptom in ClickStack (the `nyc-taxi-frontend` `console.error` and the
+failing `/static/taxi_zones.geojson` fetch that returns `text/html` instead of JSON), then
+reads the source via the GitHub MCP and pinpoints the offending code in
+`frontend/src/ui/ZoneMap.tsx` — with the fix.
+
+![The SRE agent in LibreChat answering the UI-errors prompt: "Root cause: frontend code bug — ZoneMap.tsx fetches /static/taxi_zones.geojson but the file is served at /taxi_zones.geojson", with an evidence chain (console.error, the 200 text/html resource fetch) built from the clickstack + github tools](/screenshots/06b-fault01-agent-diagnosis.png)
 
 ## How to verify you are done
 
