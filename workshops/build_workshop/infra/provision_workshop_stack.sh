@@ -23,7 +23,7 @@
 # Auth: org API key (write ops; browser OAuth is read-only):
 #   export CLICKHOUSE_CLOUD_API_KEY=...  CLICKHOUSE_CLOUD_API_SECRET=...
 #
-# Admin Postgres connection (after create-pg, or your own RDS/Supabase):
+# Admin Postgres connection (after create-pg, or your own RDS):
 #   ADMIN_PGHOST (required) ADMIN_PGPASSWORD (required)
 #   ADMIN_PGPORT=5432 ADMIN_PGUSER=postgres ADMIN_PGDATABASE=postgres ADMIN_PGSSLMODE=require
 #
