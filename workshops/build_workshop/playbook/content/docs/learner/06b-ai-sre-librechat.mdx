@@ -28,14 +28,15 @@ defaults (`LIBRECHAT_PORT`, login, secrets) are pre-filled, so you only need two
   **Team Settings** → the **Data** tab → and under **Connections**, the **Default**
   connection shows a **Service ID** (a UUID like `b96dfec2-44a8-48f7-998f-036a0d16a871`).
   Copy that value.
-- `GITHUB_PAT` — a **fine-grained, read-only** GitHub PAT scoped to
-  `ClickHouse/ClickHouse_Demos` (github.com → Settings → Developer settings → Fine-grained
-  tokens → read-only Contents on that repo). This is the same repo you cloned in module 00;
-  the GitHub MCP reads its branches from GitHub, so the agent can see the fault-branch source.
 
 ![ClickStack Team Settings → Data tab: the Default connection panel showing the Service ID UUID to copy into CLICKSTACK_SERVICE_ID](/screenshots/06b-clickstack-service-id.png)
 
 *Find `CLICKSTACK_SERVICE_ID` in ClickStack → **Team Settings** → **Data** → **Connections** → **Default** → **Service ID**.*
+
+- `GITHUB_PAT` — a **fine-grained, read-only** GitHub PAT scoped to
+  `ClickHouse/ClickHouse_Demos` (github.com → Settings → Developer settings → Fine-grained
+  tokens → read-only Contents on that repo). This is the same repo you cloned in module 00;
+  the GitHub MCP reads its branches from GitHub, so the agent can see the fault-branch source.
 
 Then start it (it reads `../.env.workshop`):
 
