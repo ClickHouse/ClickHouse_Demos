@@ -59,6 +59,11 @@ services:
       - MONGO_URI=mongodb://mongodb:27017/LibreChat
       - SEARCH=false
       - RAG_API_URL=
+      # We publish LibreChat on host ${LIBRECHAT_PORT} but it listens on 3080 inside
+      # the container. Tell it its real public URL so OAuth / MCP callbacks (ClickStack,
+      # Slack, ...) redirect back to the right port instead of the internal 3080.
+      - DOMAIN_CLIENT=http://localhost:${LIBRECHAT_PORT:-3090}
+      - DOMAIN_SERVER=http://localhost:${LIBRECHAT_PORT:-3090}
     volumes:
       - type: bind
         source: ./librechat.yaml
