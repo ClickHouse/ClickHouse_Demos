@@ -68,6 +68,14 @@ the model generated alongside the answer. Watch for real answers rather than the
 placeholder. (Without `OPENAI_API_KEY`, `POST /api/chat` returns a 503 setup hint and the
 rest of the app is unaffected.)
 
+![NYC Taxi Ops dashboard with the Ask AI button highlighted in the bottom-right corner](/screenshots/07-chat-ask-ai-button.png)
+
+*Open the chat panel with the **Ask AI** button in the bottom-right of the dashboard.*
+
+![Ask the data (AI) panel open, answering "top 10 pickup zones by trips in July 2022" with a bar chart, a results table, and a Show SQL button](/screenshots/07-chat-answer-with-sql.png)
+
+*The chat answers in natural language with a chart and table, and a **Show SQL** button reveals the query the model generated.*
+
 ## Step 3 — Follow the trace in Langfuse
 
 Open your Langfuse project. New projects (any created after April 2026) use the Langfuse
@@ -79,7 +87,9 @@ how many rows match each value, and you can save a filtered view as a one-click 
 Your first trace also flips the project's "Setup Tracing" indicator from Pending to
 Active — a quick confirmation that instrumentation is working.
 
-{/* screenshot: langfuse-traces */}
+![Langfuse Tracing view with a chat trace open, showing the trace tree, latency, token counts, cost, and model, plus the system prompt with the ClickHouse schema](/screenshots/07-langfuse-trace.png)
+
+*A `chat` trace in Langfuse: latency, token usage, cost, and model on the right, with the full prompt (schema + question) and the model's output captured for each turn.*
 
 You should see a new row appear in the observations table within a few seconds of each
 chat turn, and the project's tracing indicator reading **Active** rather than Pending.
