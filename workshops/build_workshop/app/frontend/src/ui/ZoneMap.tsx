@@ -29,6 +29,10 @@ export function ZoneMap({ zones, filters }: Props) {
         if (!cancelled) setGeojson(j);
       })
       .catch((e) => {
+        // Surface the failure so browser observability (consoleCapture) records it:
+        // a swallowed catch is invisible to the SDK otherwise. This is how the
+        // "map not loading" fault becomes a captured UI error in HyperDX.
+        console.error("ZoneMap: failed to load taxi zone geojson", e);
         if (!cancelled) {
           setGeojson(null);
           setGeojsonError((e as Error).message);
