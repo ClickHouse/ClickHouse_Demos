@@ -17,7 +17,7 @@ services:
 
   # One-shot: create the default workshop user, then exit. Idempotent (|| true).
   librechat-init:
-    image: ghcr.io/danny-avila/librechat:latest
+    image: ghcr.io/danny-avila/librechat@sha256:a46254938507971e0d4f7ed3f9d116bd9b118f4810b5b75eb716baf575645068  # pinned "latest" as of 2026-07-17 (no semver tag on :latest); repin deliberately
     container_name: nyc-taxi-librechat-init
     depends_on:
       - mongodb
@@ -39,7 +39,7 @@ services:
     restart: "no"
 
   api:
-    image: ghcr.io/danny-avila/librechat:latest
+    image: ghcr.io/danny-avila/librechat@sha256:a46254938507971e0d4f7ed3f9d116bd9b118f4810b5b75eb716baf575645068  # pinned "latest" as of 2026-07-17 (no semver tag on :latest); repin deliberately
     container_name: nyc-taxi-librechat-api
     depends_on:
       - mongodb
