@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="720" viewBox="0 0 1060 720" font-family="Inter, -apple-system, Segoe UI, Roboto, sans-serif">
+<rect x="0" y="0" width="1060" height="720" fill="#17171A"/>
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L7,3 L0,6 Z" fill="#7E858E"/></marker></defs>
+<text x="530.0" y="46" fill="#EDEDED" font-size="22" font-weight="700" text-anchor="middle">The ClickHouse Cloud platform</text>
+<text x="530.0" y="72" fill="#B7BCC2" font-size="13.5" text-anchor="middle">One platform, bottom to top: ingest → store &amp; analyze → observe &amp; add AI. The workshop builds on exactly these pieces.</text>
+<rect x="90" y="98" width="880" height="40" rx="10" fill="#191920" stroke="#3A3A45" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="236.66666666666666" y="122.0" fill="#B7BCC2" font-size="11.5" font-weight="600" letter-spacing="1.2" text-anchor="middle">APPS</text>
+<text x="530.0" y="122.0" fill="#B7BCC2" font-size="11.5" font-weight="600" letter-spacing="1.2" text-anchor="middle">USERS</text>
+<text x="823.3333333333334" y="122.0" fill="#B7BCC2" font-size="11.5" font-weight="600" letter-spacing="1.2" text-anchor="middle">API</text>
+<path d="M530.0,190 L530.0,149" stroke="#FAFF69" stroke-width="2.4" fill="none"/><polygon points="524.0,149 536.0,149 530.0,142" fill="#FAFF69"/>
+<rect x="90" y="196" width="880" height="104" rx="12" fill="#1E1E24" stroke="#3A3A45" stroke-width="1.3"/>
+<text x="106" y="252.0" fill="#B7BCC2" font-size="11" font-weight="700" letter-spacing="1.5">UIs</text>
+<rect x="168" y="218" width="196" height="60" rx="9" fill="#33333F" stroke="#50505C" stroke-width="1.3"/>
+<text x="184" y="245.0" fill="#EDEDED" font-size="14.5" font-weight="700">LibreChat</text>
+<text x="184" y="263.0" fill="#B7BCC2" font-size="11">agentic AI chat</text>
+<rect x="380" y="218" width="196" height="60" rx="9" fill="#33333F" stroke="#50505C" stroke-width="1.3"/>
+<text x="396" y="245.0" fill="#EDEDED" font-size="14.5" font-weight="700">HyperDX</text>
+<text x="396" y="263.0" fill="#B7BCC2" font-size="11">system observability</text>
+<rect x="592" y="218" width="196" height="60" rx="9" fill="#33333F" stroke="#50505C" stroke-width="1.3"/>
+<text x="608" y="245.0" fill="#EDEDED" font-size="14.5" font-weight="700">Langfuse</text>
+<text x="608" y="263.0" fill="#B7BCC2" font-size="11">LLM observability</text>
+<rect x="804" y="218" width="150" height="60" rx="9" fill="#191920" stroke="#3A3A45" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="879.0" y="242" fill="#B7BCC2" font-size="11" font-weight="700" letter-spacing="1.2" text-anchor="middle">LLMs</text>
+<text x="879.0" y="260" fill="#B7BCC2" font-size="10.5" text-anchor="middle">OpenAI / Claude / Gemini</text>
+<path d="M530.0,340 L530.0,307" stroke="#FAFF69" stroke-width="2.4" fill="none"/><polygon points="524.0,307 536.0,307 530.0,300" fill="#FAFF69"/>
+<rect x="90" y="346" width="880" height="100" rx="12" fill="#1E1E24" stroke="#3A3A45" stroke-width="1.3"/>
+<text x="106" y="400.0" fill="#B7BCC2" font-size="11" font-weight="700" letter-spacing="1.5">DBs</text>
+<rect x="168" y="368" width="240" height="58" rx="9" fill="#FAFF69" stroke="#E4E85F" stroke-width="1.3"/>
+<text x="184" y="394.0" fill="#141410" font-size="14.5" font-weight="700">Postgres</text>
+<text x="184" y="412.0" fill="#141410CC" font-size="11">OLTP source</text>
+<rect x="424" y="368" width="530" height="58" rx="9" fill="#FAFF69" stroke="#E4E85F" stroke-width="1.3"/>
+<text x="440" y="394.0" fill="#141410" font-size="14.5" font-weight="700">ClickHouse</text>
+<text x="440" y="412.0" fill="#141410CC" font-size="11">OLAP + real-time analytics (the core)</text>
+<path d="M530.0,486 L530.0,453" stroke="#FAFF69" stroke-width="2.4" fill="none"/><polygon points="524.0,453 536.0,453 530.0,446" fill="#FAFF69"/>
+<rect x="90" y="492" width="880" height="62" rx="12" fill="#1E1E24" stroke="#3A3A45" stroke-width="1.3"/>
+<text x="106" y="527.0" fill="#B7BCC2" font-size="11" font-weight="700" letter-spacing="1.5">STREAM</text>
+<rect x="168" y="506" width="786" height="34" rx="9" fill="#33333F" stroke="#50505C" stroke-width="1.3"/>
+<text x="184" y="520.0" fill="#EDEDED" font-size="14.5" font-weight="700">ClickPipes</text>
+<text x="184" y="538.0" fill="#B7BCC2" font-size="11">managed ingestion · Postgres CDC, Kafka, S3, …</text>
+<path d="M530.0,594 L530.0,561" stroke="#FAFF69" stroke-width="2.4" fill="none"/><polygon points="524.0,561 536.0,561 530.0,554" fill="#FAFF69"/>
+<rect x="90" y="600" width="880" height="40" rx="10" fill="#191920" stroke="#3A3A45" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="236.66666666666666" y="624.0" fill="#B7BCC2" font-size="11.5" font-weight="600" letter-spacing="1.2" text-anchor="middle">OPEN TABLE FORMATS</text>
+<text x="530.0" y="624.0" fill="#B7BCC2" font-size="11.5" font-weight="600" letter-spacing="1.2" text-anchor="middle">DATA LAKE</text>
+<text x="823.3333333333334" y="624.0" fill="#B7BCC2" font-size="11.5" font-weight="600" letter-spacing="1.2" text-anchor="middle">OTHER SOURCES</text>
+</svg>
