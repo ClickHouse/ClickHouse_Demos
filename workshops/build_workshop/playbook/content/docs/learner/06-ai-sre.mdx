@@ -106,18 +106,52 @@ Allow the ClickStack tools to run without a prompt on every call:
   `x-service-id` header to the clickstack MCP entry as shown in your tool's config above.
 </Callout>
 
-## Step 2 — Have the agent build an SRE dashboard
 
-Prompt your agent to explore the telemetry with `clickstack_search` and then save a
-dashboard covering request rate, error rate, and latency.
+
+Confirm the connection works by asking the agent how the service is doing — a quick health
+check exercises the `clickstack_*` tools end to end:
 
 ```text
-Using the clickstack MCP, explore the app's traces and logs, then build and save an SRE
-dashboard showing request rate, error rate, and p95 latency per service.
+Using the clickstack MCP, check the health of the nyc-taxi-backend service over the last
+24h — request volume, error rate, and latency — and tell me if anything looks off.
 ```
 
-You should see the agent call the `clickstack_*` tools without a per-call prompt (the
-auto-approve above), then confirm a saved dashboard you can open in HyperDX.
+![Coding agent calling the ClickStack MCP tools to assess nyc-taxi-backend health, reporting total spans, error rate, p95 and max latency, and last activity in a summary table](/screenshots/06-agent-health-check.png)
+
+*The agent reads traces, logs, and metrics through the ClickStack MCP and summarizes service health — total spans, a negligible error rate, p95 vs. a slow-outlier max latency, and whether the service is currently emitting. A grounded answer here confirms the MCP is wired up.*
+
+## Step 2 — Have the agent build an SRE dashboard
+
+ClickStack can build the dashboard for you from a plain-language description. In ClickStack, open
+**Dashboards** in the left sidebar and click **Generate with AI**. Describe what you want —
+the generator inspects your telemetry first and builds tiles from what it actually finds
+(if the data lacks something you asked for, it tells you rather than inventing generic
+tiles):
+
+```text
+explore the app's traces and logs, then build and save an SRE dashboard showing request
+rate, error rate, and p95 latency per service
+```
+
+![HyperDX Dashboards page with the "Generate dashboard with AI" modal open and the SRE dashboard prompt typed in](/screenshots/06-generate-dashboard-prompt.png)
+
+*Dashboards → **Generate with AI**: describe the dashboard and let HyperDX inspect the data and build it.*
+
+The AI works through your telemetry — sampling logs and traces, checking for error spans,
+then assembling and verifying each tile — and summarizes what it built, with a link to open
+the saved dashboard:
+
+![The AI generation view listing its steps (sampling logs and traces, checking error spans, building and verifying tiles) and a summary of the dashboard it built with key observations](/screenshots/06-dashboard-ai-build.png)
+
+*The generator grounds every tile in real data and explains what it found before saving.*
+
+Open the saved dashboard to see the result: request rate, error rate, and p95 latency per
+service, alongside total-request/error counts, overall p95, a log-warnings tile, and a
+top-endpoints table — all reading live from the `nyc-taxi-backend` service.
+
+![The saved SRE dashboard rendering request rate, error rate, p95 latency per service, overall p95 (567.9ms), log warnings, total requests/errors, and a top-endpoints-by-request-count table](/screenshots/06-sre-dashboard.png)
+
+*The finished SRE dashboard, saved under **Dashboards** and populated from live telemetry.*
 
 ## Step 3 — Add an alert
 
