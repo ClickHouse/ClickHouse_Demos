@@ -24,8 +24,8 @@ cd workshops/build_workshop/app/librechat
 cp .env.example .env
 ```
 
-Fill in `.env`:
-- `OPENAI_API_KEY` — copy it from `../.env.workshop`.
+Your `OPENAI_API_KEY` is reused automatically from `../.env.workshop` (the one you filled
+in earlier), so you only need to add two values to `.env`:
 - `CLICKSTACK_SERVICE_ID` — your ClickHouse Cloud service UUID (Console → your service →
   Settings, or the id in the service URL).
 - `GITHUB_PAT` — a **fine-grained, read-only** GitHub PAT scoped to

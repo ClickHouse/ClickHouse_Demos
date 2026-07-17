@@ -22,6 +22,9 @@ services:
     depends_on:
       - mongodb
     env_file:
+      # Reuse the workshop env you already filled in (OPENAI_API_KEY, etc.),
+      - ../.env.workshop
+      # then layer the LibreChat-only settings + your CLICKSTACK_SERVICE_ID / GITHUB_PAT.
       - .env
     environment:
       - MONGO_URI=mongodb://mongodb:27017/LibreChat
@@ -48,6 +51,9 @@ services:
     ports:
       - "${LIBRECHAT_PORT:-3090}:3080"
     env_file:
+      # Reuse the workshop env you already filled in (OPENAI_API_KEY, etc.),
+      - ../.env.workshop
+      # then layer the LibreChat-only settings + your CLICKSTACK_SERVICE_ID / GITHUB_PAT.
       - .env
     environment:
       - HOST=0.0.0.0
