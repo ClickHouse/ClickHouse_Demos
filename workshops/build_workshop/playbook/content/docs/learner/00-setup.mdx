@@ -418,9 +418,7 @@ docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
 ```
 
 Give it a couple of minutes to become healthy, then open
-[localhost:8080](http://localhost:8080) (or your overridden `FRONTEND_HOST_PORT`). Add
-`--profile tools` to the command to also start pgadmin on
-[localhost:5050](http://localhost:5050).
+[localhost:8080](http://localhost:8080) (or your overridden `FRONTEND_HOST_PORT`).
 
 You should see, after `docker compose ps`, every workshop service with a `STATUS` of
 `healthy` (it reads `Up` for the first ~30s while still starting), and the front end

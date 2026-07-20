@@ -30,7 +30,6 @@ Host ports (override any of these in `.env.workshop` if it is already taken —
 | Frontend (UI) | 8080 | `FRONTEND_HOST_PORT` |
 | Backend API | 8000 | `BACKEND_HOST_PORT` |
 | Postgres (local fallback) | 5432 | `POSTGRES_HOST_PORT` |
-| pgAdmin (`--profile tools`) | 5050 | `PGADMIN_HOST_PORT` |
 | OTel gRPC (otel overlay) | 4317 | `OTEL_GRPC_HOST_PORT` |
 | OTel HTTP (otel overlay) | 4318 | `OTEL_HTTP_HOST_PORT` |
 

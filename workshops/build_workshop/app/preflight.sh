@@ -181,7 +181,7 @@ resolve_port() {
 
 # check_port VAR PORT SEVERITY NOTE -- probe one host port.
 # SEVERITY is "core" (a real conflict FAILs) or "optional" (WARN only, since the
-# port is bound solely when you opt into --profile tools / the otel overlay).
+# port is bound solely when you opt into the otel overlay).
 check_port() {
   local var="$1" port="$2" sev="$3" note="$4"
   if port_in_use "$port"; then
@@ -408,7 +408,7 @@ else
   fail ".env.workshop not found in $SCRIPT_DIR" \
        "run: cp .env.workshop.example .env.workshop  then fill in CLICKHOUSE_HOST and CLICKHOUSE_PASSWORD"
   if [ -f "$EXAMPLE_FILE" ]; then
-    warn "port checks below use the example defaults (8080/8000/5432/5050/4317/4318)" \
+    warn "port checks below use the example defaults (8080/8000/5432/4317/4318)" \
          "create .env.workshop so preflight checks your real, effective ports"
   fi
 fi
@@ -429,14 +429,12 @@ section "Host port availability (effective ports)"
 FRONTEND_PORT=$(resolve_port FRONTEND_HOST_PORT 8080)
 BACKEND_PORT=$(resolve_port BACKEND_HOST_PORT 8000)
 POSTGRES_PORT=$(resolve_port POSTGRES_HOST_PORT 5432)
-PGADMIN_PORT=$(resolve_port PGADMIN_HOST_PORT 5050)
 OTEL_GRPC_PORT=$(resolve_port OTEL_GRPC_HOST_PORT 4317)
 OTEL_HTTP_PORT=$(resolve_port OTEL_HTTP_HOST_PORT 4318)
 
 check_port FRONTEND_HOST_PORT "$FRONTEND_PORT" core ""
 check_port BACKEND_HOST_PORT "$BACKEND_PORT" core ""
 check_port POSTGRES_HOST_PORT "$POSTGRES_PORT" core ""
-check_port PGADMIN_HOST_PORT "$PGADMIN_PORT" optional " (only with --profile tools)"
 check_port OTEL_GRPC_HOST_PORT "$OTEL_GRPC_PORT" optional " (only with the otel overlay)"
 check_port OTEL_HTTP_HOST_PORT "$OTEL_HTTP_PORT" optional " (only with the otel overlay)"
 
