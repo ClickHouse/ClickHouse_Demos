@@ -43,18 +43,21 @@ CLICKHOUSE_SECURE=true
 
 ### `db/cloud/001_cloud_schema.sql`
 
-The workshop ships an idempotent schema file. First create the destination database,
-then run the schema against your service (Cloud SQL console, `clickhousectl`, or your
-agent):
+The workshop ships an idempotent schema file. It creates the destination database
+(`CREATE DATABASE IF NOT EXISTS nyc_tlc_data`) and all the base objects in one go, so you
+can run it as a single command against your service:
 
-```sql
-CREATE DATABASE IF NOT EXISTS nyc_tlc_data;
--- then run db/cloud/001_cloud_schema.sql, which creates the base objects:
---   taxi_zones, fhv_trips, taxi_trips           (ENGINE = MergeTree; Cloud backs these
---                                                 with SharedMergeTree transparently, so
---                                                 no ON CLUSTER / Replicated* is needed)
---   taxi_trips_expanded, fhv_trips_expanded     (enrichment views)
+```bash
+clickhouse client --host <your-service>.<region>.<cloud>.clickhouse.cloud --port 9440 --secure \
+  --user default --password '<password>' --multiquery < db/cloud/001_cloud_schema.sql
 ```
+
+Or paste the file into the Cloud SQL console (or run it with `clickhousectl` or your
+agent). It creates the base objects:
+
+- `taxi_zones`, `fhv_trips`, `taxi_trips` — `ENGINE = MergeTree` (Cloud backs these with
+  SharedMergeTree transparently, so no `ON CLUSTER` / `Replicated*` is needed)
+- `taxi_trips_expanded`, `fhv_trips_expanded` — enrichment views
 
 <Callout>
   `001_cloud_schema.sql` creates only the base tables and views, and runs cleanly on its
