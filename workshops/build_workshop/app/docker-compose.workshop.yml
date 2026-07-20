@@ -15,8 +15,6 @@
 #   # fill in your ClickHouse Cloud endpoint/password (and shared Postgres, if used)
 #   docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
 #
-# pgadmin is optional and only starts with:  --profile tools
-#
 # This file is self-contained: it does NOT extend docker-compose.yml.
 
 services:
@@ -150,23 +148,5 @@ services:
       - BATCH_SIZE=${BATCH_SIZE:-10}
     restart: unless-stopped
 
-  # Optional: only starts with `--profile tools`. Handy for inspecting the
-  # local fallback Postgres; not needed for the shared managed Postgres.
-  pgadmin:
-    image: dpage/pgadmin4:9.11.0
-    container_name: nyc-taxi-workshop-pgadmin
-    profiles: ["tools"]
-    depends_on:
-      - postgres
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD:-admin}
-      - PGADMIN_LISTEN_PORT=80
-    ports:
-      - "${PGADMIN_HOST_PORT:-5050}:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-
 volumes:
   postgres_data:
-  pgadmin_data:
