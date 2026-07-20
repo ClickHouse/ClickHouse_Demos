@@ -2,9 +2,9 @@
 
 The NYC-taxi analytics app participants run locally during the ClickHouse BUILD
 Workshop: a React ops dashboard (with an AI chat panel), a FastAPI analytics backend,
-a local Postgres with a synthetic trip generator, and an optional ClickStack
-OpenTelemetry overlay. ClickHouse itself is your own ClickHouse Cloud service; live
-ingestion is Postgres CDC via ClickPipes.
+a synthetic trip generator that streams into your ClickHouse-managed Postgres (from
+module 03), and an optional ClickStack OpenTelemetry overlay. ClickHouse itself is your
+own ClickHouse Cloud service; live ingestion is Postgres CDC via ClickPipes.
 
 Follow the playbook (`../playbook`, published at demohouse.cloud/workshop) from
 module 00 — it walks through every step below in order.
@@ -29,7 +29,6 @@ Host ports (override any of these in `.env.workshop` if it is already taken —
 |---|---|---|
 | Frontend (UI) | 8080 | `FRONTEND_HOST_PORT` |
 | Backend API | 8000 | `BACKEND_HOST_PORT` |
-| Postgres (local fallback) | 5432 | `POSTGRES_HOST_PORT` |
 | OTel gRPC (otel overlay) | 4317 | `OTEL_GRPC_HOST_PORT` |
 | OTel HTTP (otel overlay) | 4318 | `OTEL_HTTP_HOST_PORT` |
 

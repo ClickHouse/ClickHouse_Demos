@@ -46,10 +46,10 @@ upstream demo's compose)
 
 Contains only:
 
-- `postgres` -- local fallback only (kept `wal_level=logical` for parity);
 - `backend` -- all ClickHouse params env-driven, defaulting to `8443` + TLS;
 - `frontend` -- unchanged build, nginx still proxies `/api` to `backend:8000`;
-- `pg-trip-writer` -- the loadgen, PG connection env-driven, throttled.
+- `pg-trip-writer` -- the loadgen, PG connection env-driven, throttled; gated
+  behind the `cdc` profile so it only runs from module 03 (no local `postgres`).
 
 Deliberately **omitted**: `clickhouse`, `ch-ui`, `broker`, `connect`,
 `kafka-ui`, `pg-cdc-init`, `clickhouse-cdc-init`, `connect-init`. ClickHouse is
@@ -62,17 +62,20 @@ with the local stack.
 
 ### 3. Loadgen (pg-trip-writer)
 
-`loadgen/pg_trip_writer.py` -- **no code change needed**. It was already fully
-env-driven for the Postgres connection (`PGHOST`, `PGPORT`, `PGDATABASE`,
-`PGUSER`, `PGPASSWORD`) and already had a configurable write rate
-(`RATE_PER_SEC`, `BATCH_SIZE`, effective delay = `BATCH_SIZE / RATE_PER_SEC`).
+`loadgen/pg_trip_writer.py` is fully env-driven for the Postgres connection
+(`PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`) with a configurable
+write rate (`RATE_PER_SEC`, `BATCH_SIZE`, effective delay = `BATCH_SIZE /
+RATE_PER_SEC`). It now exits with a clear message if `PGHOST` is unset rather
+than defaulting to a (removed) local host.
 
 The workshop compose lowers the defaults to `RATE_PER_SEC=2`, `BATCH_SIZE=10`
 (from `10`/`25` in local) because a single shared managed Postgres may be fed by
 30+ concurrent generators. Participants can raise or lower this via env, or drop
 the generator entirely with `docker compose ... up -d --scale pg-trip-writer=0`.
 
-The compose also passes `PGSSLMODE` (default `prefer`) through to the loadgen.
+The service is gated behind the `cdc` compose profile and connects with
+`PGSSLMODE=require` (managed Postgres mandates TLS); it starts once
+`COMPOSE_PROFILES=cdc` and the PG* values are set in module 03.
 psycopg3/libpq honors it natively, so no code change is needed; set
 `PGSSLMODE=require` for the shared managed Postgres, which mandates TLS.
 
@@ -164,6 +167,9 @@ Each is now addressed so any participant can get to a running app:
   Apple Silicon, no warning). The postgis init is kept but made non-fatal (a
   `DO`/`EXCEPTION` block) so it is portable across a plain and a PostGIS image and
   never aborts container init.
+  **Update:** the local-fallback `postgres` service was later removed entirely;
+  the loadgen writes only to your managed Postgres from module 03 and is gated
+  behind the `cdc` profile, so this image note is historical.
 
 - **Requirements documented** (`README.md`): a Requirements section (Docker engine
   with 6 GB + Compose v2, ~10 GB disk, macOS/Linux/WSL2 stance, and a host-port
@@ -218,7 +224,8 @@ plain HTTP (secure inferred `false` from the port).
 
 - `docker compose -f docker-compose.workshop.yml config` passes with **exit 0
   and no warnings** with no `.env` file, and again with a filled `--env-file`.
-  Only `backend`, `frontend`, `postgres`, and `pg-trip-writer` are present.
+  Only `backend` and `frontend` are present by default; `pg-trip-writer` appears
+  with the `cdc` profile (the local `postgres` service was removed).
   Env interpolation was confirmed (e.g. `CLICKHOUSE_SECURE: "true"`, filled
   `CLICKHOUSE_HOST`, `PGHOST`, `RATE_PER_SEC`, and `PGSSLMODE` defaulting to
   `prefer` and overriding to `require`).

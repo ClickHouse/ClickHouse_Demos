@@ -5,10 +5,11 @@
 #     own ClickHouse Cloud service (https:8443) via CLICKHOUSE_* env vars.
 #   - No `ch-ui` (use the ClickHouse Cloud SQL console instead).
 #   - No `broker` / `connect` / `kafka-ui` / *-cdc-init. Change data capture is
-#     handled Cloud-side by ClickPipes reading from the shared managed Postgres.
-#   - `postgres` remains only as a LOCAL FALLBACK for running the loadgen offline.
-#     In the workshop the loadgen and app point at a shared managed Postgres via
-#     the PG* env vars (see .env.workshop.example).
+#     handled Cloud-side by ClickPipes reading from your managed Postgres.
+#   - No local `postgres`. The loadgen (`pg-trip-writer`) writes to your own
+#     Postgres managed by ClickHouse (created in module 03) and is gated behind
+#     the `cdc` profile, so nothing Postgres-related starts before module 03.
+#     Set PG* for that managed instance in .env.workshop (see the example).
 #
 # Usage:
 #   cp .env.workshop.example .env.workshop
@@ -18,45 +19,6 @@
 # This file is self-contained: it does NOT extend docker-compose.yml.
 
 services:
-  # Local fallback Postgres. Only used when PGHOST points here (the default).
-  # For the workshop, set PGHOST/PGPORT/... to the shared managed Postgres and
-  # this container is simply idle. wal_level=logical is kept so it can also act
-  # as a ClickPipes/CDC source during local experimentation.
-  postgres:
-    # Official multi-arch image (linux/amd64 + linux/arm64): runs natively on
-    # Apple Silicon, so no "platform mismatch" warning or slow emulation. The
-    # workshop path needs no geo types, so PostGIS is not required; the postgis
-    # init (db/postgres/init/000_postgis.sql) is written to be non-fatal here.
-    image: postgres:16
-    container_name: nyc-taxi-workshop-postgres
-    hostname: postgres
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB:-taxi}
-      - POSTGRES_USER=${POSTGRES_USER:-taxi}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-taxi}
-    command:
-      - "postgres"
-      - "-c"
-      - "wal_level=logical"
-      - "-c"
-      - "max_replication_slots=10"
-      - "-c"
-      - "max_wal_senders=10"
-    ports:
-      - "${POSTGRES_HOST_PORT:-5432}:5432"
-    volumes:
-      - ./db/postgres/init:/docker-entrypoint-initdb.d:ro
-      - ./db/sample:/sample:ro
-      - postgres_data:/var/lib/postgresql/data
-    # pg_isready ships in the postgres image. $$ keeps the var for the container
-    # shell to expand (compose would otherwise interpolate it at config time).
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
   backend:
     build:
       context: ./backend
@@ -121,32 +83,30 @@ services:
       retries: 5
       start_period: 10s
 
-  # Writes synthetic trips into Postgres; ClickPipes captures them Cloud-side.
-  # Defaults to the local `postgres` service. Point PG* at the shared managed
-  # Postgres for the workshop. RATE_PER_SEC is intentionally low because a
-  # shared Postgres may be fed by 30+ concurrent generators.
+  # Writes synthetic trips into your managed Postgres; a ClickPipe captures them
+  # Cloud-side. Gated behind the `cdc` profile so it does NOT start with a bare
+  # `docker compose up -d` (modules 00-02). Module 03 starts it once PG* point at
+  # your managed instance, e.g.:
+  #   docker compose --env-file .env.workshop -f docker-compose.workshop.yml \
+  #     --profile cdc up -d pg-trip-writer
+  # RATE_PER_SEC is intentionally low (a shared instance may see many generators).
   pg-trip-writer:
     build:
       context: ./loadgen
     container_name: nyc-taxi-workshop-pg-trip-writer
-    depends_on:
-      - postgres
+    profiles: ["cdc"]
     environment:
-      - PGHOST=${PGHOST:-postgres}
+      # No local default: set these to your managed Postgres (module 03).
+      - PGHOST=${PGHOST:-}
       - PGPORT=${PGPORT:-5432}
-      - PGDATABASE=${PGDATABASE:-taxi}
-      - PGUSER=${PGUSER:-taxi}
-      - PGPASSWORD=${PGPASSWORD:-taxi}
-      # psycopg3/libpq reads PGSSLMODE natively. 'prefer' works for the local
-      # fallback (falls back to plaintext); set 'require' for the shared managed
-      # Postgres, which mandates TLS.
-      - PGSSLMODE=${PGSSLMODE:-prefer}
+      - PGDATABASE=${PGDATABASE:-postgres}
+      - PGUSER=${PGUSER:-postgres}
+      - PGPASSWORD=${PGPASSWORD:-}
+      # Managed Postgres mandates TLS; psycopg3/libpq reads PGSSLMODE natively.
+      - PGSSLMODE=${PGSSLMODE:-require}
       # Publication the CDC ClickPipe subscribes to. The loadgen creates it on
-      # your own managed Postgres; on the shared fallback it is pre-created.
+      # your own managed Postgres; on the instructor shared fallback it is pre-created.
       - PG_PUBLICATION=${PG_PUBLICATION:-pub_taxi}
       - RATE_PER_SEC=${RATE_PER_SEC:-2}
       - BATCH_SIZE=${BATCH_SIZE:-10}
     restart: unless-stopped
-
-volumes:
-  postgres_data:

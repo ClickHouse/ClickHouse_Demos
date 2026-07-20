@@ -85,8 +85,11 @@ Copy both somewhere safe right now.
   finish first.
 </Callout>
 
-The workshop stack already includes `pg-trip-writer`, the data generator. Put your
-instance's values into `.env.workshop` (in the `app` directory):
+The workshop stack ships `pg-trip-writer`, the data generator, gated behind the `cdc`
+compose profile so it stays off until now. Put your instance's values into
+`.env.workshop` (in the `app` directory), including `COMPOSE_PROFILES=cdc` — every later
+`docker compose` command uses `--env-file .env.workshop`, so that one line switches the
+generator on from here on (and it comes back after a `down`/`up`):
 
 ```bash
 PGHOST=<hostname from the create output>
@@ -96,9 +99,10 @@ PGUSER=postgres
 PGPASSWORD=<one-time password from the create output>
 PGSSLMODE=require
 PG_PUBLICATION=pub_taxi
+COMPOSE_PROFILES=cdc
 ```
 
-Then restart just the generator and watch its log:
+Then start the generator and watch its log:
 
 ```bash
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d pg-trip-writer

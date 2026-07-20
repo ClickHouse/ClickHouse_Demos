@@ -24,11 +24,11 @@ def env(name: str, default: str) -> str:
     return default if v is None or v == "" else v
 
 
-PGHOST = env("PGHOST", "postgres")
+PGHOST = env("PGHOST", "")
 PGPORT = int(env("PGPORT", "5432"))
-PGDATABASE = env("PGDATABASE", "taxi")
-PGUSER = env("PGUSER", "taxi")
-PGPASSWORD = env("PGPASSWORD", "taxi")
+PGDATABASE = env("PGDATABASE", "postgres")
+PGUSER = env("PGUSER", "postgres")
+PGPASSWORD = env("PGPASSWORD", "")
 # Publication the CDC ClickPipe subscribes to. On the participant's own managed
 # Postgres the loadgen creates it (the connection user is the instance admin);
 # on the shared-fallback instance the instructor pre-creates it and the scoped
@@ -84,6 +84,13 @@ def pick_zone_id() -> int:
 
 
 def main() -> None:
+    if not PGHOST:
+        logger.error(
+            "[loadgen] PGHOST is not set. Point PG* at your managed Postgres "
+            "(module 03) before starting pg-trip-writer."
+        )
+        raise SystemExit(1)
+
     dsn = f"host={PGHOST} port={PGPORT} dbname={PGDATABASE} user={PGUSER} password={PGPASSWORD}"
     logger.info(f"[loadgen] connecting: {PGHOST}:{PGPORT} db={PGDATABASE} user={PGUSER}")
 

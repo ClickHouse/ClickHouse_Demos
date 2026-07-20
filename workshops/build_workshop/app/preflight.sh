@@ -10,7 +10,7 @@
 # the stack actually tripped over: the Docker CLI + daemon, that the daemon can
 # really start a container (catches a wedged engine), host-port collisions on the
 # EFFECTIVE ports from .env.workshop, the required .env.workshop values, and
-# network reachability of ClickHouse Cloud (and the shared Postgres, if used).
+# network reachability of ClickHouse Cloud (and your managed Postgres, once set).
 #
 # Every failure prints a one-line fix hint. The script exits non-zero if any check
 # FAILs (warnings do not affect the exit code), so it composes into scripts and CI.
@@ -361,7 +361,7 @@ HAVE_ENV=0
 CH_HOST=""
 CH_PORT="8443"
 CH_PW=""
-PGHOST_VAL="postgres"
+PGHOST_VAL=""
 
 if [ "$HAVE_ENV" -eq 1 ]; then
   pass ".env.workshop found"
@@ -398,17 +398,17 @@ if [ "$HAVE_ENV" -eq 1 ]; then
          "add LANGFUSE_PUBLIC_KEY/SECRET_KEY before module 07 if you want traces; chat works untraced without them"
   fi
 
-  PGHOST_VAL=$(env_get PGHOST); [ -n "$PGHOST_VAL" ] || PGHOST_VAL="postgres"
-  if [ "$PGHOST_VAL" = "postgres" ]; then
-    pass "PGHOST=postgres (using the local fallback Postgres container)"
+  PGHOST_VAL=$(env_get PGHOST)
+  if [ -n "$PGHOST_VAL" ]; then
+    pass "PGHOST=$PGHOST_VAL (managed Postgres for the live CDC path, module 03)"
   else
-    pass "PGHOST=$PGHOST_VAL (using a shared managed Postgres)"
+    pass "PGHOST not set yet (set it in module 03 for live CDC; not needed before then)"
   fi
 else
   fail ".env.workshop not found in $SCRIPT_DIR" \
        "run: cp .env.workshop.example .env.workshop  then fill in CLICKHOUSE_HOST and CLICKHOUSE_PASSWORD"
   if [ -f "$EXAMPLE_FILE" ]; then
-    warn "port checks below use the example defaults (8080/8000/5432/4317/4318)" \
+    warn "port checks below use the example defaults (8080/8000/4317/4318)" \
          "create .env.workshop so preflight checks your real, effective ports"
   fi
 fi
@@ -428,13 +428,11 @@ fi
 section "Host port availability (effective ports)"
 FRONTEND_PORT=$(resolve_port FRONTEND_HOST_PORT 8080)
 BACKEND_PORT=$(resolve_port BACKEND_HOST_PORT 8000)
-POSTGRES_PORT=$(resolve_port POSTGRES_HOST_PORT 5432)
 OTEL_GRPC_PORT=$(resolve_port OTEL_GRPC_HOST_PORT 4317)
 OTEL_HTTP_PORT=$(resolve_port OTEL_HTTP_HOST_PORT 4318)
 
 check_port FRONTEND_HOST_PORT "$FRONTEND_PORT" core ""
 check_port BACKEND_HOST_PORT "$BACKEND_PORT" core ""
-check_port POSTGRES_HOST_PORT "$POSTGRES_PORT" core ""
 check_port OTEL_GRPC_HOST_PORT "$OTEL_GRPC_PORT" optional " (only with the otel overlay)"
 check_port OTEL_HTTP_HOST_PORT "$OTEL_HTTP_PORT" optional " (only with the otel overlay)"
 
@@ -465,18 +463,18 @@ else
        "set CLICKHOUSE_HOST in .env.workshop first"
 fi
 
-if [ "$PGHOST_VAL" != "postgres" ] && [ -n "$PGHOST_VAL" ]; then
+if [ -n "$PGHOST_VAL" ]; then
   PGPORT_VAL=$(env_get PGPORT); [ -n "$PGPORT_VAL" ] || PGPORT_VAL="5432"
   if tcp_reachable "$PGHOST_VAL" "$PGPORT_VAL" 8; then
-    pass "shared Postgres reachable ($PGHOST_VAL:$PGPORT_VAL, TCP)"
+    pass "managed Postgres reachable ($PGHOST_VAL:$PGPORT_VAL, TCP)"
   else
-    # WARN, not FAIL: the app dashboards run without the loadgen; the shared
-    # Postgres only feeds the live CDC path (module 03).
-    warn "shared Postgres not reachable at $PGHOST_VAL:$PGPORT_VAL (only needed for the live CDC path, module 03)" \
-         "check wifi / VPN / firewall and that the shared Postgres endpoint and its IP allowlist are correct"
+    # WARN, not FAIL: only the live CDC path (module 03) needs Postgres; the app
+    # dashboards run without the loadgen.
+    warn "managed Postgres not reachable at $PGHOST_VAL:$PGPORT_VAL (only needed for the live CDC path, module 03)" \
+         "check wifi / VPN / firewall and that the managed Postgres endpoint and its IP allowlist are correct"
   fi
 else
-  pass "using the local fallback Postgres (no external Postgres reachability check needed)"
+  pass "no PGHOST set (managed Postgres is created in module 03; nothing to check yet)"
 fi
 
 # --- Summary ---------------------------------------------------------------

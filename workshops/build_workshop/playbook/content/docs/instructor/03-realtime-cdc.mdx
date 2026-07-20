@@ -39,8 +39,9 @@ begin streaming; account for it.
   `require` (managed Postgres mandates TLS).
 - **Region mismatch.** Cross-region Postgres-to-ClickHouse works but adds latency; steer
   participants to create the Postgres in the same region as their ClickHouse service.
-- **Data generator not started**, so nothing appears to move — check `pg-trip-writer` is
-  up and its log shows `inserted N trips`.
+- **Data generator not started**, so nothing appears to move — the loadgen is behind the
+  `cdc` profile, so confirm `COMPOSE_PROFILES=cdc` is in `.env.workshop`, then check
+  `pg-trip-writer` is up and its log shows `inserted N trips`.
 - **Pipe create fails with `BAD_REQUEST: table realtime_trips exists and is not empty`.**
   Only on a **re-run/reset**, not a fresh participant: deleting a ClickPipe drops the
   source replication slot but leaves its destination table behind, and the CLI refuses to
@@ -61,7 +62,7 @@ rather than creating one — that is expected, not an error.
 ## Reset steps
 
 - Delete and recreate the ClickPipe from the console.
-- Restart the data generator:
+- Restart the data generator (needs `COMPOSE_PROFILES=cdc` in `.env.workshop`):
   `docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d pg-trip-writer`
   (turn it off with `--scale pg-trip-writer=0`).
 - Reset a lost Postgres password with `clickhousectl cloud postgres reset-password`.
