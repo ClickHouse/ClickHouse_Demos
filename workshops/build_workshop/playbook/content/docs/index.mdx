@@ -69,7 +69,7 @@ ride-hailing business:
 
 - **Front end** — a React single-page app with two dashboards: an Ops dashboard
   (live operational metrics) and a Historical dashboard (large-range aggregations and
-  drilldowns). It also hosts the in-app AI chat panel you wire up in module 07.
+  drilldowns). It also hosts the in-app AI chat panel you wire up in module 08.
 - **Back end** — a FastAPI service exposing safe, parameterized analytics endpoints.
 - **Source database** — Postgres (with PostGIS) as the operational source of truth,
   the origin for change data capture into ClickHouse.
@@ -111,9 +111,9 @@ The diagrams above are generated from `workshops/build_workshop/docs/diagrams/ge
 
 ## Modules
 
-Ten modules, in order. The app is complete on `build-workshop-v1`, so modules 00 through 07 need no
-per-module checkout — you configure and connect services rather than change app code. The
-only branch switches are the fault branches in module 08.
+Ten modules, in order. The app is complete on `build-workshop-v1`, so every module except
+07 needs no per-module checkout — you configure and connect services rather than change
+app code. The only branch switches are the fault branches in module 07.
 
 | Step | Time | Learner lesson | Instructor notes | Branch | What you will learn |
 |---|---|---|---|---|---|
@@ -124,8 +124,8 @@ only branch switches are the fault branches in module 08.
 | 04 | 10 min | [ClickHouse Agents](/docs/learner/04-clickhouse-agents) | [notes](/docs/instructor/04-clickhouse-agents) | `build-workshop-v1` | Conversational BI: create an agent over your taxi data and explore it in natural language |
 | 05 | 15 min | [ClickStack](/docs/learner/05-clickstack) | [notes](/docs/instructor/05-clickstack) | `build-workshop-v1` | Enable ClickStack and send app traces and logs to HyperDX |
 | 06 | 15 min | [AI SRE](/docs/learner/06-ai-sre) | [notes](/docs/instructor/06-ai-sre) | `build-workshop-v1` | Connect your agent to the ClickStack MCP and have it build an SRE dashboard and alert |
-| 07 | 15 min | [Chat and Langfuse](/docs/learner/07-chat-langfuse) | [notes](/docs/instructor/07-chat-langfuse) | `build-workshop-v1` | Use the in-app AI chat and follow its traces, generations, and costs in Langfuse |
-| 08 | 20 min | [Break and fix](/docs/learner/08-break-and-fix) | [notes](/docs/instructor/08-break-and-fix) | `fault/*` | Inject a fault, diagnose it with the AI SRE via ClickStack, and apply the fix |
+| 07 | 20 min | [Break and fix](/docs/learner/07-break-and-fix) | [notes](/docs/instructor/07-break-and-fix) | `fault/*` | Continue from AI SRE or optional 06b, inject a fault, diagnose it via ClickStack, and apply the fix |
+| 08 | 15 min | [Chat and Langfuse](/docs/learner/08-chat-langfuse) | [notes](/docs/instructor/08-chat-langfuse) | `build-workshop-v1` | Use the in-app AI chat and follow its traces, generations, and costs in Langfuse |
 | 09 | 10 min | [Wrap-up](/docs/learner/09-wrap-up) | [notes](/docs/instructor/09-wrap-up) | `build-workshop-v1` | Review what you built, take it home, and extend it to your own data |
 
 The times add up to about 2 hours 30 minutes of hands-on work; the rest of the
@@ -139,16 +139,18 @@ The app is already complete on `build-workshop-v1`. This workshop is about confi
 services — real-time CDC, observability, agents, chat — not editing application code, so
 there is nothing to build up branch by branch:
 
-- Clone the app once in module 00 and stay on `build-workshop-v1` for modules 00 through 07.
+- Clone the app once in module 00 and stay on `build-workshop-v1` except while running
+  the fault scenarios in module 07.
 - Late joiners are never stranded: everything is service-side, so you only need your
   `.env.workshop` filled in plus the module's console steps. There is no per-module
   checkout to catch up on.
-- The only branch switches are in module 08 (Break and fix), which uses fault branches
+- The only branch switches are in module 07 (Break and fix), which uses fault branches
   (`fault/01-map-not-loading`, `fault/02-zone-stats-500`, `fault/03-slow-dashboard`). You
-  check one out, diagnose the failure, then return to `build-workshop-v1`.
+  check one out, diagnose the failure, then preserve the fix and return to
+  `build-workshop-v1` with the module 07 stash-and-switch reset.
 
 <Callout title="Fault branches">
-  The three `fault/*` branches above exist in the repo; module 08 walks through checking
+  The three `fault/*` branches above exist in the repo; module 07 walks through checking
   one out. Their symptoms and fixes are documented in the instructor track's answer key.
 </Callout>
 

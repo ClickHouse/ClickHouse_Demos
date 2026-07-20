@@ -7,14 +7,14 @@ Facilitator companion to [06b AI SRE with LibreChat](/docs/learner/06b-ai-sre-li
 
 ## Timing
 
-Optional, ~20 minutes, best as a post-module-08 deep-dive or a take-home. Skip if the room
-is tight — 06a already covers the MCP-in-editor path.
+Optional, ~20 minutes, best immediately before module 07 or as a take-home. Skip if the
+room is tight — 06a already covers the MCP-in-editor path.
 
 ## Talk track
 
 - 06a = agent in your editor; 06b = chat-native agent that reads **telemetry + source** and
   goes symptom → line of code.
-- The payoff pairs with module 08: check out a fault, ask the agent, watch it cross the two
+- The payoff flows directly into module 07: check out a fault, ask the agent, watch it cross the two
   planes.
 
 ## Per-participant setup checklist
@@ -42,4 +42,4 @@ is tight — 06a already covers the MCP-in-editor path.
 
 - `docker compose -f docker-compose.librechat.yml down` stops the add-on (add `-v`-style
   cleanup by removing `app/librechat/data-node/` to wipe the seeded user/agent).
-- Main app reset is the module-08 shared reset (`git checkout build-workshop-v1` + rebuild).
+- Main app reset is the module-07 shared stash-and-switch reset followed by a rebuild.

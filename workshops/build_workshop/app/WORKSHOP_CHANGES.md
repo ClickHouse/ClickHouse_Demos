@@ -136,7 +136,7 @@ Each is now addressed so any participant can get to a running app:
   `.env.workshop` (last-value-wins, matching compose), telling apart "in use by
   this workshop stack" from a real clash and printing the exact override var and
   a suggested free port; the required `.env.workshop` values (`CLICKHOUSE_HOST`,
-  `CLICKHOUSE_PASSWORD`; module-07 keys are warn-only); and TLS/TCP connectivity
+  `CLICKHOUSE_PASSWORD`; module-08 keys are warn-only); and TLS/TCP connectivity
   to ClickHouse Cloud (and the shared Postgres, when used). Why: the live run hit
   port collisions on 5432/8080/8000 and a wedged Docker daemon with no signal to
   the participant until `up` failed.
