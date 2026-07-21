@@ -82,9 +82,9 @@ cd ClickHouse_Demos/workshops/build_workshop/app
 cp .env.workshop.example .env.workshop
 ```
 
-You stay on the `build-workshop-v1` branch for modules 00 through 07 - the app is
-complete, so there is no per-module checkout. `.env.workshop` is git-ignored, so your
-keys never get committed.
+You stay on the `build-workshop-v1` branch throughout the workshop except for the fault
+scenarios in module 07. The app is complete, so there is no other per-module checkout.
+`.env.workshop` is git-ignored, so your keys never get committed.
 
 <Callout type="warn" title="Shell variables override the env file">
   Compose fills unset variables from `.env.workshop`, but a value you have `export`ed in
@@ -324,7 +324,7 @@ in the browser. Ask it to "list my databases" - a response confirms the connecti
 
 ### Step 8 - Create a Langfuse Cloud project
 
-Langfuse is where you watch the in-app AI chat's traces in module 07. Pick your region by
+Langfuse is where you watch the in-app AI chat's traces in module 08. Pick your region by
 its URL - they are separate accounts:
 
 - **US:** [us.cloud.langfuse.com](https://us.cloud.langfuse.com) - matches the app default.
@@ -407,7 +407,8 @@ reachable - each as a PASS, WARN, or FAIL with a one-line fix hint:
 
 You should see a run of `PASS` lines ending with `Overall: READY`. It must end with
 **Overall: READY** before you continue. Warnings are safe to proceed on
-(for example, the OpenAI and Langfuse keys are only needed in module 07). If a host port
+(for example, the OpenAI key is needed for optional module 06b and module 08, while the
+Langfuse keys are only needed in module 08). If a host port
 is already taken, preflight names the process holding it and prints the exact override to
 set - for example `set FRONTEND_HOST_PORT=28080 in .env.workshop` - so you never hit the
 raw `Bind ... port is already allocated` error. Apply the suggested value, re-run
@@ -418,9 +419,7 @@ docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
 ```
 
 Give it a couple of minutes to become healthy, then open
-[localhost:8080](http://localhost:8080) (or your overridden `FRONTEND_HOST_PORT`). Add
-`--profile tools` to the command to also start pgadmin on
-[localhost:5050](http://localhost:5050).
+[localhost:8080](http://localhost:8080) (or your overridden `FRONTEND_HOST_PORT`).
 
 You should see, after `docker compose ps`, every workshop service with a `STATUS` of
 `healthy` (it reads `Up` for the first ~30s while still starting), and the front end
