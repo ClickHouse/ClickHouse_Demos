@@ -91,8 +91,8 @@ scenarios in module 07. The app is complete, so there is no other per-module che
   Compose fills unset variables from `.env.workshop`, but a value you have `export`ed in
   your shell WINS over the file. If `OPENAI_API_KEY`, any `LANGFUSE_*`, or
   `CLICKHOUSE_PASSWORD` is exported in the shell you run `docker compose` from, `unset` it
-  first so the file's value is used. (`workshops/build_workshop/app/preflight.sh` warns
-  when it detects this.)
+  first so the file's value is used. (`./preflight.sh` in the current
+  `ClickHouse_Demos/workshops/build_workshop/app` directory warns when it detects this.)
 </Callout>
 
 **You should now have:** the repo cloned, a terminal in the `app` directory, and a
@@ -219,7 +219,7 @@ confirms that the credentials actually work before you continue.
 </Callout>
 
 **You should now have:** `clickhousectl --version` printing a version number,
-`chctl cloud auth status` showing read/write API-key authentication, and
+`chctl cloud auth status` showing API-key credentials are configured, and
 `chctl cloud org list` returning your Cloud organization.
 
 ### Step 6 - Load ClickHouse skills and docs into your agent
