@@ -156,9 +156,24 @@ top-endpoints table — all reading live from the `nyc-taxi-backend` service.
 Ask the agent to save an alert (via `clickstack_save_alert`) on the error-rate signal,
 with a threshold it can justify from the baseline it just observed.
 
+The agent can save the alert, but it cannot create the notification channel the alert
+delivers to — there is no MCP tool for that. Pre-create a webhook in the HyperDX UI
+first, then let the agent's saved alert target it:
+
+1. Open one of your dashboard charts — the error-rate tile is a good pick — and click
+   its **Alert** button (the bell icon on the tile).
+2. In the alert's notification settings, choose **Generic Webhook** as the channel.
+3. You need a URL to point it at. For a throwaway endpoint that needs zero setup, open
+   [webhook.site](https://webhook.site) in another tab; it hands you a unique URL and
+   shows every request it receives in real time. Copy that URL and paste it in as the
+   webhook URL.
+4. Save. The channel now exists, so the agent's saved alert can target it — and when the
+   alert fires you can watch the payload arrive live on your webhook.site page.
+
 <Callout>
-  There is no MCP tool to create a notification webhook. Pre-create the webhook in the
-  HyperDX UI first; then the agent's saved alert can target it.
+  webhook.site URLs are public and ephemeral — great for seeing an alert fire in a
+  workshop, but not for anything real. In production you would wire the alert to Slack,
+  PagerDuty, or your own endpoint instead.
 </Callout>
 
 ## Step 4 (optional) — AI Notebooks: investigate inside HyperDX
