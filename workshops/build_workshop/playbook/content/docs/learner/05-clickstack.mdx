@@ -111,7 +111,7 @@ requests showing as traces, each carrying a child `clickhouse.query` span.
 - Requests to `/api/...` show as traces, each with a child `clickhouse.query` span
   carrying `db.statement`, `db.elapsed_ms`, and `db.rows_returned`.
 - You will not see query errors here yet: a healthy, seeded app does not trip the safety
-  limits, and 4xx requests never reach ClickHouse. In module 08 the injected fault makes
+  limits, and 4xx requests never reach ClickHouse. In module 07 the injected fault makes
   an errored `clickhouse.query` span (with `error.category`) observable.
 
 ## Wrap-up

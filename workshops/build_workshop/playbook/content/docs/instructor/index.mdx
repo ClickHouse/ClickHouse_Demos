@@ -10,7 +10,7 @@ room-level picture.
 
 The learner track also carries a [Running this workshop self-paced](/docs/learner/self-paced)
 page for people doing the workshop with no instructor; it sends them to these notes as
-their answer key (and to the module 08 fault answer key only as a last resort), so keep
+their answer key (and to the module 07 fault answer key only as a last resort), so keep
 this track accurate for that audience too.
 
 ## Run of show
@@ -25,10 +25,10 @@ the dry run and record the final numbers here.
 | 02 | ClickHouse Cloud | 15 min | First "wow" on query speed |
 | 03 | Real-time CDC | 20 min | Shared managed Postgres is a room-wide dependency |
 | 04 | ClickHouse Agents | 10 min | Beta tool; have a fallback question ready |
-| 05 | ClickStack | 15 min | Telemetry needs time to accumulate before module 08 |
+| 05 | ClickStack | 15 min | Telemetry needs time to accumulate before module 07 |
 | 06 | AI SRE | 15 min | MCP OAuth is the fragile moment; pre-stage config |
-| 07 | Chat and Langfuse | 15 min | Keys already set in module 00; restart plus trace tour |
-| 08 | Break and fix | 20 min | The finale; hard-stop management matters |
+| 07 | Break and fix | 20 min | Direct payoff from 06/06b; hard-stop management matters |
+| 08 | Chat and Langfuse | 15 min | Keys already set in module 00; restart plus trace tour |
 | 09 | Wrap-up | 10 min | Volunteers demo; reset any shared state |
 
 These budgets total about 2 hours 30 minutes of hands-on work; the remaining time in the
@@ -36,7 +36,8 @@ three-hour session covers the opening, transitions between modules, and the fina
 
 <Callout title="Tune the timing during rehearsal">
   The budgets above are the starting allocation. Confirm each against the timed dry run,
-  and set a hard-pivot time for the finale (module 08) so the wrap-up is never squeezed.
+  and set a hard-pivot time for the incident lab (module 07) so module 08 and the wrap-up
+  are never squeezed.
 </Callout>
 
 ## Shared-resource checklist
@@ -49,7 +50,7 @@ before doors open:
   per-attendee isolation.
 - **Loaner ClickHouse Cloud services** — a small pool for attendees whose trial fails.
   TODO: pool size and distribution method.
-- **Runtime LLM key pool** — spend-capped fallback keys for the in-app chat (module 07).
+- **Runtime LLM key pool** — spend-capped fallback keys for the in-app chat (module 08).
 - **Projector and shared channel** — for the finale demos.
 - **Venue network** — enough symmetric bandwidth, no captive portal, OAuth-friendly.
 
@@ -68,7 +69,7 @@ should arrive then. TODO: confirm the clinic start time and staffing.
   <Card title="04 ClickHouse Agents" href="/docs/instructor/04-clickhouse-agents" />
   <Card title="05 ClickStack" href="/docs/instructor/05-clickstack" />
   <Card title="06 AI SRE" href="/docs/instructor/06-ai-sre" />
-  <Card title="07 Chat and Langfuse" href="/docs/instructor/07-chat-langfuse" />
-  <Card title="08 Break and fix" href="/docs/instructor/08-break-and-fix" />
+  <Card title="07 Break and fix" href="/docs/instructor/07-break-and-fix" />
+  <Card title="08 Chat and Langfuse" href="/docs/instructor/08-chat-langfuse" />
   <Card title="09 Wrap-up" href="/docs/instructor/09-wrap-up" />
 </Cards>

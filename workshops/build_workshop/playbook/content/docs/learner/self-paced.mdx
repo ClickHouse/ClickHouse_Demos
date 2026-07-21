@@ -31,10 +31,10 @@ to unstick them, and the reset steps to get back to a known-good state. When a m
 not behave as its verify step expects, open the matching instructor page - it is written
 for exactly that moment.
 
-<Callout type="warn" title="One page to hold back: the module 08 answer key">
-  The instructor page for [08 Break and fix](/docs/instructor/08-break-and-fix) contains
+<Callout type="warn" title="One page to hold back: the module 07 answer key">
+  The instructor page for [07 Break and fix](/docs/instructor/07-break-and-fix) contains
   the full fault answer key - the exact symptom, signal, and fix for each injected fault.
-  Diagnosing the fault yourself is the entire point of module 08, so attempt it from the
+  Diagnosing the fault yourself is the entire point of module 07, so attempt it from the
   telemetry first and only open the answer key if you are genuinely stuck.
 </Callout>
 
@@ -45,13 +45,7 @@ your coding agent in module 00. That same agent makes a capable workshop instruc
 the block below into it, filling in the module number and what you are seeing:
 
 ```text
-You are my workshop instructor. The workshop lives in this repo under
-workshops/build_workshop: the playbook markdown is in playbook/content/docs
-(learner and instructor tracks), the app is in app/, and infrastructure notes
-are in infra/README.md. I am on module NN and stuck: <describe what you see>.
-Read the relevant module page and the troubleshooting page, inspect my local
-state (docker compose ps, container logs, and .env.workshop WITHOUT printing
-any secret values), and walk me to the module's verify step.
+You are my workshop instructor. The workshop lives in this repo under workshops/build_workshop: the playbook markdown is in playbook/content/docs (learner and instructor tracks), the app is in app/, and infrastructure notes are in infra/README.md. I am on module NN and stuck: <describe what you see>. Read the relevant module page and the troubleshooting page, inspect my local state (docker compose ps, container logs, and .env.workshop WITHOUT printing any secret values), and walk me to the module's verify step.
 ```
 
 Because it has the skills and the MCP from module 00, the agent can also query your Cloud

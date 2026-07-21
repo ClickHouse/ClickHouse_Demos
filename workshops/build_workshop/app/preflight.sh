@@ -385,8 +385,8 @@ if [ "$HAVE_ENV" -eq 1 ]; then
   if [ -n "$(env_get OPENAI_API_KEY)" ]; then
     pass "OPENAI_API_KEY is set"
   else
-    warn "OPENAI_API_KEY is empty (needed only for module 07: the AI chat)" \
-         "add it before module 07; the rest of the workshop runs without it"
+    warn "OPENAI_API_KEY is empty (needed for optional module 06b and module 08)" \
+         "add it before 06b if using LibreChat, or before module 08 for the AI chat"
   fi
 
   LF_PUB=$(env_get LANGFUSE_PUBLIC_KEY)
@@ -394,8 +394,8 @@ if [ "$HAVE_ENV" -eq 1 ]; then
   if [ -n "$LF_PUB" ] && [ -n "$LF_SEC" ]; then
     pass "LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY are set"
   else
-    warn "LANGFUSE keys not fully set (needed only for module 07: chat tracing)" \
-         "add LANGFUSE_PUBLIC_KEY/SECRET_KEY before module 07 if you want traces; chat works untraced without them"
+    warn "LANGFUSE keys not fully set (needed only for module 08: chat tracing)" \
+         "add LANGFUSE_PUBLIC_KEY/SECRET_KEY before module 08 if you want traces; chat works untraced without them"
   fi
 
   PGHOST_VAL=$(env_get PGHOST); [ -n "$PGHOST_VAL" ] || PGHOST_VAL="postgres"

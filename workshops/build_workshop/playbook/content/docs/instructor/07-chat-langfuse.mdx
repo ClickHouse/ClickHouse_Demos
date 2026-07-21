@@ -1,36 +1,7 @@
 ---
-title: 07 Chat and Langfuse
-description: Instructor notes for module 07 — timing, talk track, common failures, and reset steps.
+title: Module moved
+description: The Chat and Langfuse instructor notes are now module 08.
 ---
 
-Facilitator companion to the learner lesson
-[07 Chat and Langfuse](/docs/learner/07-chat-langfuse).
-
-## Timing
-
-About 15 minutes. The runtime LLM key and the Langfuse keys are already in `.env.workshop`
-from module 00, so this is mostly a backend restart plus the trace tour.
-
-## Talk track
-
-- The chat panel from module 02 becomes real, and every turn is traced.
-- Make the ClickHouse hook explicit: Langfuse is a ClickHouse company (acquired January
-  2026) and runs on ClickHouse, so the traces they inspect live in ClickHouse.
-- Show a trace on the projector: prompt, completion, tokens, cost.
-- TODO: expand.
-
-## Common failures
-
-- Missing `OPENAI_API_KEY`; `POST /api/chat` returns 503 with a setup hint (the rest of
-  the app is unaffected). An unfunded key errors on the model call.
-- Wrong `LANGFUSE_BASE_URL` region (`https://us.cloud.langfuse.com` vs
-  `https://cloud.langfuse.com`), so traces do not appear.
-- Back end not restarted after filling `.env.workshop`.
-- The 2026-07 clean-room dry run covered this module; validated failure modes, timings, and human-gated steps were confirmed in the 2026-07 clean-room dry run.
-
-## Reset steps
-
-- Hand out a capped loaner LLM key from the pool.
-- Re-fill `OPENAI_API_KEY` / `LLM_MODEL` / `LLM_BASE_URL` and the three `LANGFUSE_*`
-  values in `.env.workshop`, then
-  `docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d --build backend`.
+The Chat and Langfuse instructor notes moved to module 08. Continue to
+[08 Chat and Langfuse](/docs/instructor/08-chat-langfuse).

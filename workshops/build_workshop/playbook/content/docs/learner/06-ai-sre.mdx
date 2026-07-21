@@ -112,8 +112,7 @@ Confirm the connection works by asking the agent how the service is doing — a 
 check exercises the `clickstack_*` tools end to end:
 
 ```text
-Using the clickstack MCP, check the health of the nyc-taxi-backend service over the last
-24h — request volume, error rate, and latency — and tell me if anything looks off.
+Using the clickstack MCP, check the health of the nyc-taxi-backend service over the last 24h — request volume, error rate, and latency — and tell me if anything looks off.
 ```
 
 ![Coding agent calling the ClickStack MCP tools to assess nyc-taxi-backend health, reporting total spans, error rate, p95 and max latency, and last activity in a summary table](/screenshots/06-agent-health-check.png)
@@ -129,8 +128,7 @@ the generator inspects your telemetry first and builds tiles from what it actual
 tiles):
 
 ```text
-explore the app's traces and logs, then build and save an SRE dashboard showing request
-rate, error rate, and p95 latency per service
+explore the app's traces and logs, then build and save an SRE dashboard showing request rate, error rate, and p95 latency per service
 ```
 
 ![HyperDX Dashboards page with the "Generate dashboard with AI" modal open and the SRE dashboard prompt typed in](/screenshots/06-generate-dashboard-prompt.png)
@@ -179,7 +177,7 @@ in-product AI investigation surface: **AI Notebooks** (beta, Managed ClickStack 
 
 Same telemetry, two AI surfaces: the MCP path builds durable artifacts (dashboards,
 alerts) from your editor; Notebooks is for interactive investigation inside the
-observability product itself. In module 08 you can diagnose the fault with either.
+observability product itself. In module 07 you can diagnose the fault with either.
 
 ## How to verify you are done
 
@@ -195,5 +193,8 @@ artifacts from it. That is exactly what you will lean on when something breaks.
 
 ## End state
 
-An AI-built SRE dashboard and alert are in place. Continue to
-[07 Chat and Langfuse](/docs/learner/07-chat-langfuse) to bring AI into the app itself.
+An AI-built SRE dashboard and alert are in place. Continue to optional
+[06b AI SRE with LibreChat](/docs/learner/06b-ai-sre-librechat) if you want a chat-native
+agent that reads both telemetry and source, then use that agent in
+[07 Break and fix](/docs/learner/07-break-and-fix). If you are skipping 06b, go straight
+to module 07 with the editor agent you configured here.
