@@ -53,11 +53,15 @@ relative to the playbook root.
 | `content/docs/learner/04-clickhouse-agents.mdx` `{/* screenshot: clickhouse-agents-ui */}` | `agents-ui.png` |
 | `content/docs/learner/05-clickstack.mdx` `{/* screenshot: clickstack-hyperdx */}` | `hyperdx-home.png` |
 | `content/docs/learner/03-realtime-cdc.mdx` `{/* screenshot: clickpipes-wizard-replication */}` | PENDING (wizard step 2, see Not captured) |
-| `content/docs/learner/07-chat-langfuse.mdx` `{/* screenshot: langfuse-traces */}` | PENDING (Langfuse, skipped) |
+| `content/docs/learner/08-chat-langfuse.mdx` `{/* screenshot: langfuse-traces */}` | PENDING (Langfuse, skipped) |
 
 `console-services.png`, `service-overview.png`, `sql-console.png`, and
 `clickpipes-tiles.png` have no placeholder yet; they can go in a doc gallery or get
 placeholders added later.
+
+The old module-number filenames for the five module 07/08 screenshots are retained as
+compatibility aliases so saved links continue to load after the module reorder. New content
+must use the filenames that match the current module number.
 
 ## Redaction (before publishing)
 

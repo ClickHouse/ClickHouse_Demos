@@ -43,18 +43,21 @@ CLICKHOUSE_SECURE=true
 
 ### `db/cloud/001_cloud_schema.sql`
 
-The workshop ships an idempotent schema file. First create the destination database,
-then run the schema against your service (Cloud SQL console, `clickhousectl`, or your
-agent):
+The workshop ships an idempotent schema file. It creates the destination database
+(`CREATE DATABASE IF NOT EXISTS nyc_tlc_data`) and all the base objects in one go, so you
+can run it as a single command against your service:
 
-```sql
-CREATE DATABASE IF NOT EXISTS nyc_tlc_data;
--- then run db/cloud/001_cloud_schema.sql, which creates the base objects:
---   taxi_zones, fhv_trips, taxi_trips           (ENGINE = MergeTree; Cloud backs these
---                                                 with SharedMergeTree transparently, so
---                                                 no ON CLUSTER / Replicated* is needed)
---   taxi_trips_expanded, fhv_trips_expanded     (enrichment views)
+```bash
+clickhouse client --host <your-service>.<region>.<cloud>.clickhouse.cloud --port 9440 --secure \
+  --user default --password '<password>' --multiquery < db/cloud/001_cloud_schema.sql
 ```
+
+Or paste the file into the Cloud SQL console (or run it with `clickhousectl` or your
+agent). It creates the base objects:
+
+- `taxi_zones`, `fhv_trips`, `taxi_trips` — `ENGINE = MergeTree` (Cloud backs these with
+  SharedMergeTree transparently, so no `ON CLUSTER` / `Replicated*` is needed)
+- `taxi_trips_expanded`, `fhv_trips_expanded` — enrichment views
 
 <Callout>
   `001_cloud_schema.sql` creates only the base tables and views, and runs cleanly on its
@@ -118,8 +121,40 @@ idle-scale to zero and take a few seconds to wake.)
 
 Open the Historical dashboard. Now that ClickHouse Cloud is seeded, the charts render —
 try a wide date range and watch the seeded historical data (a few million rows) come back
-in well under a second. Then ask your agent your own analytical question against the
-data — this is your open step.
+in well under a second.
+
+Then ask your agent your own analytical question against the data — this is your open
+step. If you want a starting point, here are a few questions that work well against the
+seeded month:
+
+- "Which pickup zones had the most yellow-taxi trips, and what was the average fare?"
+- "What's the busiest hour of the day for pickups?"
+- "How does the average tip percentage differ by borough?"
+
+For example, that first question maps to a query like this — a join across ~3.2M trips
+and the 265 zones that still returns in well under a second:
+
+```sql
+SELECT
+  z.zone    AS pickup_zone,
+  z.borough AS borough,
+  count()                                              AS trips,
+  round(avg(t.fare_amount), 2)                         AS avg_fare,
+  round(avg(t.tip_amount / nullIf(t.fare_amount, 0)) * 100, 1) AS avg_tip_pct
+FROM nyc_tlc_data.taxi_trips AS t
+INNER JOIN nyc_tlc_data.taxi_zones AS z
+  ON t.pickup_location_id = z.location_id
+GROUP BY pickup_zone, borough
+ORDER BY trips DESC
+LIMIT 10;
+```
+
+<Callout>
+  The seed loads a single month (July 2022), so even a "wide" date range in the dashboard
+  covers that one month — still a few million rows per query, which is plenty to feel how
+  fast ClickHouse aggregates. Add more months by copying statement 2 in
+  `db/cloud/002_seed_historical.sql` with the next month's file name.
+</Callout>
 
 ## How to verify you are done
 
