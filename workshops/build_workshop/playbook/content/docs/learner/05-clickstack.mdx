@@ -33,11 +33,26 @@ them there. Enable it in the console:
 Console - your service -> **ClickStack** -> **Start Ingestion** -> skip the collector
 step (the app ships its own collector in Step 2) -> **Launch ClickStack**
 
-That single-signs you on into HyperDX.
+That single-signs you on into HyperDX. (The UI is empty at this point — telemetry starts
+flowing once the collector overlay is running in Step 2.)
 
-![HyperDX Search view showing nyc-taxi-backend traces — a live list of GET /api/health and POST spans with timestamp, service, and duration columns](/screenshots/05-hyperdx-traces.png)
-
-*HyperDX rendering the app's traces: the `nyc-taxi-backend` service with its `/api/...` request spans.*
+<Callout title="Managed ClickStack: what diverges from the classic setup">
+  - The back end uses vanilla OpenTelemetry, not the convenience
+    `hyperdx-opentelemetry` package the ClickStack docs suggest. That package hard-pins
+    `opentelemetry-api==1.30.0`, which conflicts with the Langfuse v4 SDK the chat
+    feature uses (needs `opentelemetry-api>=1.33.1`) — the two cannot share one
+    environment. The ClickStack collector ingests standard OTLP, so the vanilla distro
+    behaves identically; the workshop just sets the exporter env vars itself.
+  - ClickStack's telemetry lives in a separate database on your service
+    (`CLICKSTACK_DATABASE=otel`), distinct from the app's data database
+    (`CLICKHOUSE_DATABASE=nyc_tlc_data`).
+  - Traces always flow over OTLP from the auto-instrumented back end and are the signal
+    you rely on here. Application logs did not deliver reliably over OTLP in testing, so
+    read them with `docker compose ... logs` (or enable the optional
+    `--profile container-logs` collector, which scrapes raw container stdout — a
+    Linux-host path; on Docker Desktop the daemon runs in a VM and that host mount may
+    not be available).
+</Callout>
 
 ## Step 2 — Run the OpenTelemetry collector overlay
 
@@ -85,6 +100,10 @@ logs backend`.)
 
 You should see a service named `nyc-taxi-backend` appear in HyperDX, with `/api/...`
 requests showing as traces, each carrying a child `clickhouse.query` span.
+
+![HyperDX Search view showing nyc-taxi-backend traces — a live list of GET /api/health and POST spans with timestamp, service, and duration columns](/screenshots/05-hyperdx-traces.png)
+
+*HyperDX rendering the app's traces: the `nyc-taxi-backend` service with its `/api/...` request spans.*
 
 ## How to verify you are done
 
