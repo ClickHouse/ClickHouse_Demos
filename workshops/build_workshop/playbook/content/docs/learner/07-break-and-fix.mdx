@@ -1,0 +1,129 @@
+---
+title: 07 Break and fix
+description: Check out a fault branch, watch something break, diagnose it with the AI SRE via ClickStack, and apply the fix.
+---
+
+## Starting point
+
+This is the only module with a branch switch. From the `app` directory, pick a fault,
+check it out, and rebuild with the observability overlay so the failure shows up in
+telemetry. **Use fault 02 if you completed module 06b**, where fault 01 was already
+diagnosed. Otherwise, fault 02 is the recommended first incident and fault 01 is a
+reliable frontend alternative:
+
+```bash
+git checkout fault/02-zone-stats-500   # or fault/01-map-not-loading
+docker compose --env-file .env.workshop \
+  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
+```
+
+Fault 03 is an instructor-led, at-scale option: it needs the full roughly 30-million-row
+dataset to time out reliably and may look healthy with the default sample seed.
+
+Budget about **20 minutes**.
+
+Prerequisites: ClickStack telemetry (module 05) and your agent connected to the
+ClickStack MCP with a dashboard and alert (module 06). If you completed optional module
+06b, keep the LibreChat SRE agent open: this lab is where you use it against the fault
+scenarios and verify the fixes.
+
+## Why
+
+This is the incident lab and the direct payoff from modules 06 and 06b. You inject a
+realistic fault, then use everything you built — the telemetry, the dashboard, and your
+MCP-connected editor or LibreChat agent — to find the root cause the way an on-call
+engineer would, with the AI doing the heavy lifting.
+
+## Goal
+
+Diagnose the injected fault from telemetry alone, using your AI SRE, then apply the fix
+and confirm the app recovers.
+
+## Step 1 — Introduce the fault
+
+### fault branch
+
+The three fault branches each break a different part of the app. Here is how you know the
+fault is active (observable behavior only — the diagnosis is the exercise):
+
+- `fault/01-map-not-loading` — the zone map stays empty while everything else works.
+- `fault/02-zone-stats-500` — the map choropleth empties and `/api/metrics/zone_stats`
+  returns 500 for pickup grouping; sibling cards keep working.
+- `fault/03-slow-dashboard` — with the full roughly 30-million-row dataset, the "What's
+  happening now" trend card times out (504) while sibling cards stay fast. With the default
+  sample seed, use this only as a query-plan exercise because it may not fail visibly.
+
+Check one out (see Starting point) and let the stack run long enough for the symptom to
+surface in the dashboards and in ClickStack.
+
+## Step 2 — Diagnose with the AI SRE
+
+Use the editor agent from module 06 or the LibreChat SRE agent from optional module 06b,
+then describe the symptom, not the cause:
+
+```text
+Something is wrong with the app: users are seeing errors. Using the clickstack MCP, investigate the traces and logs, localize the failure, and tell me the root cause with the evidence.
+```
+
+
+Then ask your own follow-up question about blast radius or timeline — this is your open
+step.
+
+Confirm the fault in the signal that matches your scenario:
+
+- **Fault 01:** open **Client Sessions** in the HyperDX sidebar and pick your session. You
+  will see the front-end `console.error`, the failed resource load, and a replay of the
+  empty map. The backend dashboard and alert can stay healthy because this request never
+  reaches FastAPI.
+- **Fault 02:** open the failing `/api/metrics/zone_stats` trace and its matching backend
+  error log. The SRE dashboard error rate should rise and its alert may fire.
+- **Fault 03 (full dataset only):** open the slow or timed-out trend trace and compare its
+  latency and SQL with a fast sibling request. The latency/error signal should rise; the
+  exact alert behavior depends on the threshold you chose in module 06.
+
+![ClickStack Client Sessions: an anonymous session flagged "1 Errors, 92 Events" with a highlighted console.error "ZoneMap: failed to load…" in the event timeline and a session-replay player showing the app with the broken map](/screenshots/07-client-session-error.png)
+
+*ClickStack → Client Sessions records the browser errors and a replay of the user's session — proof the failure was captured, not just reproduced.*
+
+## Step 3 — Apply the fix
+
+### `backend/` or `frontend/`
+
+Once you and the agent agree on the root cause, apply the fix (compare against `build-workshop-v1` if
+you want the reference). Rebuild the affected service:
+
+```bash
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
+```
+
+You should see the symptom clear in the UI (the map loads, the 500 stops, or the slow
+card responds again). For backend faults, the error or latency signal on your SRE dashboard
+should fall back to baseline within a minute or two. For fault 01, verify a fresh browser
+session has no new `ZoneMap` error; the backend signal is expected to remain unchanged.
+
+## How to verify you are done
+
+- The agent named the correct root cause and cited telemetry as evidence.
+- After the fix, the scenario-specific signal above returns to baseline.
+- For a backend fault that crossed its threshold, the alert from module 06 clears.
+
+## Wrap-up
+
+You just ran an incident end to end: detection, AI-assisted diagnosis from telemetry,
+and remediation — on a system you built during the same session.
+
+## End state
+
+The incident is resolved. Preserve your fix for later comparison, return to the complete
+base app, and rebuild it with telemetry still enabled:
+
+```bash
+git stash push --include-untracked -m "module-07-fix"
+git switch build-workshop-v1
+docker compose --env-file .env.workshop \
+  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
+```
+
+`git stash push` is safe when there is nothing to save; Git simply reports that there are
+no local changes. Continue to [08 Chat and Langfuse](/docs/learner/08-chat-langfuse) to
+wire and trace the in-app AI experience.

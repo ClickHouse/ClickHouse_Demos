@@ -106,8 +106,8 @@ def module_flow():
         ("04 ClickHouse Agents", "10 min", "conversational BI", "over your taxi data"),
         ("05 ClickStack", "15 min", "OTel overlay: traces", "+ logs in HyperDX"),
         ("06 AI SRE", "15 min", "agent + ClickStack MCP", "builds dashboard + alert"),
-        ("07 Chat + Langfuse", "15 min", "in-app AI chat,", "every turn traced"),
-        ("08 Break and fix", "20 min", "inject a fault, diagnose", "with the AI SRE, fix it"),
+        ("07 Break and fix", "20 min", "inject a fault, diagnose", "with the AI SRE, fix it"),
+        ("08 Chat + Langfuse", "15 min", "in-app AI chat,", "every turn traced"),
         ("09 Wrap-up", "10 min", "running prototype,", "take it home"),
     ]
     cols, bw, bh = 5, 300, 96
@@ -121,7 +121,7 @@ def module_flow():
     s += (f'<text x="{gx}" y="{gy+8}" fill="{INK}" font-size="20" font-weight="700">'
           f'ClickHouse BUILD Workshop · Module flow</text>\n')
     s += (f'<text x="{gx}" y="{gy+30}" fill="{SUBINK}" font-size="13">'
-          f'~2h30 hands-on · modules 00-07 and 09 stay on build-workshop-v1; only module 08 switches branches</text>\n')
+          f'~2h30 hands-on · only module 07 switches from build-workshop-v1 to a fault branch</text>\n')
 
     top = gy + 52
     pos = {}
@@ -381,8 +381,8 @@ def data_flow():
     s += harrow(col(1)+bw, col(2)-6, by+31, "replication")
     s += harrow(col(2)+bw, col(3)-6, by+31, "CDC rows ~60s")
 
-    # Lane 3 — READ (modules 02, 04, 07)
-    y = 342; s += lane(y, 176, "Read", "modules 02, 04, 07")
+    # Lane 3 — READ (modules 02, 04, 08)
+    y = 342; s += lane(y, 176, "Read", "modules 02, 04, 08")
     by = y + 22
     s += fbox(col(0), by, bw, "ClickHouse service", "nyc_tlc_data", accent=True)
     s += fbox(col(1), by, bw, "FastAPI", "safe parameterized SQL")
@@ -391,13 +391,13 @@ def data_flow():
     s += harrow(col(1)+bw, col(2)-6, by+31, "GET /api/*")
     # two more consumers off the service (stacked below)
     by2 = y + 104
-    s += fbox(col(1), by2, bw, "in-app AI chat", "guarded SELECT (module 07)")
+    s += fbox(col(1), by2, bw, "in-app AI chat", "guarded SELECT (module 08)")
     s += fbox(col(2), by2, bw, "ClickHouse Agents", "RBAC SQL (module 04)")
     s += elbow([(col(0)+bw/2, by+62), (col(0)+bw/2, by2+31), (col(1)-6, by2+31)], "NL → SQL", mid=(col(0)+bw/2+70, by2+22))
     s += harrow(col(1)+bw, col(2)-6, by2+31, "RBAC SQL")
 
-    # Lane 4 — OBSERVE (modules 05, 06, 08)
-    y = 538; s += lane(y, 176, "Observe", "modules 05, 06, 08")
+    # Lane 4 — OBSERVE (modules 05, 06, 07)
+    y = 538; s += lane(y, 176, "Observe", "modules 05, 06, 07")
     by = y + 22
     s += fbox(col(0), by, bw, "backend spans", "clickhouse.query + logs")
     s += fbox(col(1), by, bw, "otel-collector", "OTLP :4318")
