@@ -43,11 +43,13 @@ That single-signs you on into HyperDX.
 
 <Callout title="Check the collector ports first">
   The collector publishes OTLP on host ports **4317** and **4318**, which are commonly
-  already in use. If `./preflight.sh` in module 00 WARNed on them, set
+  already in use. If `./preflight.sh` in `ClickHouse_Demos/workshops/build_workshop/app`
+  WARNed on them in module 00, set
   `OTEL_GRPC_HOST_PORT` and `OTEL_HTTP_HOST_PORT` in `.env.workshop` to the values
   preflight suggests (for example `24317` / `24318`) before starting the overlay. The
-  back end reaches the collector in-network, so remapping the host ports is safe. Re-run
-  `./preflight.sh` to confirm the ports are clear.
+  back end reaches the collector in-network, so remapping the host ports is safe. From
+  the `ClickHouse_Demos` repository root, re-run
+  `cd workshops/build_workshop/app && ./preflight.sh` to confirm the ports are clear.
 </Callout>
 
 ### `.env.workshop` and `docker-compose.otel.yml`

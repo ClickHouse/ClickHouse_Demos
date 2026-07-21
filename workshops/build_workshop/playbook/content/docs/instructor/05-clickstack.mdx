@@ -22,8 +22,9 @@ collector as early as this module allows and keep it running.
 
 - OTLP host ports 4317/4318 already in use: have them set `OTEL_GRPC_HOST_PORT` /
   `OTEL_HTTP_HOST_PORT` in `.env.workshop` (preflight suggests values, e.g. 24317/24318)
-  and re-run `./preflight.sh`; the back end reaches the collector in-network, so the
-  remap is safe.
+  and, from the `ClickHouse_Demos` repository root, run
+  `cd workshops/build_workshop/app && ./preflight.sh`; the back end reaches the collector
+  in-network, so the remap is safe.
 - Collector overlay not started (forgot the second `-f docker-compose.otel.yml`), so
   nothing arrives in HyperDX.
 - `OTLP_AUTH_TOKEN` mismatch, or missing `CLICKHOUSE_*` in `.env.workshop` (the collector
