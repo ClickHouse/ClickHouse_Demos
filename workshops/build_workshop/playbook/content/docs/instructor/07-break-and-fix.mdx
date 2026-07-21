@@ -9,30 +9,30 @@ Facilitator companion to the learner lesson
 ## Timing
 
 About 20 minutes. This is the incident lab; protect enough runway for the diagnosis to
-land before module 08 and the wrap-up. Rough per-fault diagnosis times: fault 02 = 5-10 min,
-fault 01 = 5-15 min, and fault 03 = 10-20 min only with the full roughly 30-million-row
-dataset. Run one fault per participant (or one for the room); with the default sample seed,
-use fault 02 then fault 01. Set a hard-stop at rehearsal so the wrap-up is not squeezed.
+land before module 08 and the wrap-up. The lab runs fault 01 (5-15 min diagnosis). Faults
+02 (5-10 min) and 03 (10-20 min, and only with the full roughly 30-million-row dataset)
+remain available as optional extra incidents for a fast room. Set a hard-stop at rehearsal
+so the wrap-up is not squeezed.
 
 ## Talk track
 
 - This is the payoff: use everything built so far to run a real incident.
-- If the room completed 06b, select fault 02 here so the LibreChat SRE agent applies its
-  telemetry-plus-source workflow to a new incident instead of repeating fault 01.
+- If the room completed 06b, fault 01 is already diagnosed — this module becomes
+  confirm-fix-verify, so keep the momentum and move quickly to the fix.
 - Describe the symptom, not the cause, and let the agents converge from telemetry.
 - Consider showing several attendees' diagnoses side by side on the projector.
-- Run one fault at a time. Teach fault 02 first and fault 01 second. Add fault 03 between
-  them only when the full dataset was pre-seeded; use the shared stash-and-switch reset
-  below between faults.
+- The lab runs fault 01. If time permits an extra round, add fault 02 (and fault 03 only
+  when the full dataset was pre-seeded); use the shared stash-and-switch reset below
+  between faults.
 
 ## Answer key
 
 Do not share this section with learners; it lives in the playbook only and is never
 committed to the app repo. Each fault is one small change on its own branch off `build-workshop-v1`;
-the fix is to revert it. Run one fault at a time. Recommended teaching order and rough
-diagnosis times: fault 02 first (5-10 min, warm-up, the trace tells all), fault 01 second
-(5-15 min, curveball — the backend is innocent), and fault 03 only when the full dataset
-is available (10-20 min, deeper ClickHouse reasoning).
+the fix is to revert it. Run one fault at a time. The lab's incident is fault 01 (5-15 min,
+curveball — the backend is innocent). Optional extras for a fast room: fault 02 (5-10 min,
+warm-up, the trace tells all) and fault 03 only when the full dataset is available
+(10-20 min, deeper ClickHouse reasoning).
 
 Shared reset for every fault (the stash preserves participant edits and avoids a blocked
 branch switch):
@@ -134,8 +134,8 @@ with the HTML document rather than a 404, so `r.ok` passes and `r.json()` throws
   because too little historical data is loaded. **Measured in the dry run:** on the default
   single-month seed (~3.17M rows) the WHERE-vs-HAVING fault is not observable — the full
   scan runs in ~300-560ms, indistinguishable from the baseline. Seed several months before
-  demoing fault 03, or lead the break-and-fix with fault 01 / fault 02 (which reproduce
-  instantly) and treat fault 03 as an at-scale illustration.
+  demoing fault 03, or stick with fault 01 (which reproduces instantly) and treat fault 03
+  as an at-scale illustration.
 - Fault 01 produces no backend trace at all, and the bad request returns 200 `text/html`
   via the SPA fallback rather than a 404; attendees may search traces forever. Nudge them
   to the browser console / Network tab, where the JSON parse error and the `text/html`
