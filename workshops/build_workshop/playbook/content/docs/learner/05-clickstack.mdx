@@ -63,8 +63,9 @@ flowing once the collector overlay is running in Step 2.)
   `OTEL_GRPC_HOST_PORT` and `OTEL_HTTP_HOST_PORT` in `.env.workshop` to the values
   preflight suggests (for example `24317` / `24318`) before starting the overlay. The
   back end reaches the collector in-network, so remapping the host ports is safe. From
-  the `ClickHouse_Demos` repository root, re-run
-  `cd workshops/build_workshop/app && ./preflight.sh` to confirm the ports are clear.
+  anywhere inside the cloned repository, re-run
+  `cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app" && ./preflight.sh`
+  to confirm the ports are clear.
 </Callout>
 
 ### `.env.workshop` and `docker-compose.otel.yml`

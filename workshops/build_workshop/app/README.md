@@ -39,8 +39,8 @@ Run the preflight check first — it verifies Docker, the effective ports, your
 `.env.workshop`, and Cloud connectivity, and must report `READY` before you start:
 
 ```bash
-# From the ClickHouse_Demos repository root:
-cd workshops/build_workshop/app
+# From anywhere inside the cloned ClickHouse_Demos repository:
+cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
 
 cp .env.workshop.example .env.workshop     # fill in your ClickHouse Cloud values
 ./preflight.sh                             # must print "Overall: READY" (exit 0)

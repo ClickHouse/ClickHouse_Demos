@@ -428,16 +428,17 @@ auto-recharge off, and `OPENAI_API_KEY` filled in.
 ### Step 10 - Run the preflight check, then start the stack
 
 Everything the app needs is now in `.env.workshop`. Before starting the stack, run the
-preflight check from `ClickHouse_Demos/workshops/build_workshop/app`. If your terminal is
-at the `ClickHouse_Demos` repository root, enter the app directory first. It verifies
+preflight check from `ClickHouse_Demos/workshops/build_workshop/app`. The command below
+enters that directory whether your terminal is at the repository root or already inside
+the app. It verifies
 Docker (including that the daemon can actually start a container), that your effective
 host ports are free, that
 `.env.workshop` has the required values, and that your ClickHouse Cloud service is
 reachable - each as a PASS, WARN, or FAIL with a one-line fix hint:
 
 ```bash
-# From the ClickHouse_Demos repository root:
-cd workshops/build_workshop/app
+# From anywhere inside the cloned ClickHouse_Demos repository:
+cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
 ./preflight.sh
 ```
 
