@@ -121,6 +121,29 @@ def test_compare_period_delta_pct_null_when_b_zero(api_base_url: str, http: http
     assert all(x["delta_pct"] is None for x in rows)
 
 
+def test_compare_period_with_zone_filter(api_base_url: str, http: httpx.Client, sample_window: tuple[str, str]) -> None:
+    # Regression: a pickup/dropoff zone filter must be applied against the real
+    # taxi_trips columns (pickup_location_id / dropoff_location_id), not the
+    # output aliases pickup_zone_id / dropoff_zone_id, which do not exist in the
+    # CTE scope and used to raise ClickHouse UNKNOWN_IDENTIFIER (code 47).
+    start, end = sample_window
+    for filter_key in ("pickup_zone_id", "dropoff_zone_id"):
+        r = http.get(
+            f"{api_base_url}/api/compare/period",
+            params={
+                "a_start": start,
+                "a_end": end,
+                "b_start": start,
+                "b_end": end,
+                "group_by": "pickup_zone",
+                "metric": "trips",
+                "limit": 20,
+                filter_key: [161],
+            },
+        )
+        assert r.status_code == 200, f"{filter_key}: {r.text}"
+
+
 def test_anomalies_tip_ratio_with_threshold(api_base_url: str, http: httpx.Client, sample_window: tuple[str, str]) -> None:
     start, end = sample_window
     r = http.get(
