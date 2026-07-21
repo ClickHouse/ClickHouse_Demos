@@ -21,7 +21,8 @@ built into these materials.
   and OpenAI. Each takes 5 to 10 minutes on its own, mostly waiting on email or phone
   verification. If you create them before the session (the links are all in this module),
   you arrive with keys in hand and the 25 minutes is plenty. If not, come to the staffed
-  setup clinic before doors open - or, on your own, lean on `./preflight.sh` (Step 10) and
+  setup clinic before doors open - or, on your own, lean on the `./preflight.sh` check in
+  `ClickHouse_Demos/workshops/build_workshop/app` (Step 10) and
   the [Troubleshooting](/docs/learner/troubleshooting) page, which lists every setup failure
   seen in testing with its fix.
 </Callout>
@@ -90,7 +91,8 @@ scenarios in module 07. The app is complete, so there is no other per-module che
   Compose fills unset variables from `.env.workshop`, but a value you have `export`ed in
   your shell WINS over the file. If `OPENAI_API_KEY`, any `LANGFUSE_*`, or
   `CLICKHOUSE_PASSWORD` is exported in the shell you run `docker compose` from, `unset` it
-  first so the file's value is used. (`./preflight.sh` warns when it detects this.)
+  first so the file's value is used. (`./preflight.sh` in the current
+  `ClickHouse_Demos/workshops/build_workshop/app` directory warns when it detects this.)
 </Callout>
 
 **You should now have:** the repo cloned, a terminal in the `app` directory, and a
@@ -159,8 +161,8 @@ after you leave the screen, so save both somewhere safe now.
 {/* screenshot: api-keys-page */}
 
 
-**You should now have:** a Key ID and Key secret saved outside the repo. (These do not go
-in `.env.workshop`; you paste them into `clickhousectl` when it prompts.)
+**You should now have:** a Key ID and Key secret saved outside the repo. These do not go
+in `.env.workshop`; you use them to authenticate `chctl` in the next step.
 
 ### Step 5 - Install clickhousectl
 
@@ -182,13 +184,43 @@ clickhousectl --version
 You should see a version string like `clickhousectl version 0.x.y`. If the shell reports
 `command not found`, the `~/.local/bin` directory is not on your `PATH` yet.
 
-<Callout title="Run cloud commands from one directory">
-  `clickhousectl` stores its login tokens relative to the current working directory. Pick
-  one directory - the `app` directory is a good choice - and run every
-  `clickhousectl cloud ...` command from there so you stay authenticated.
+Now authenticate the CLI to your ClickHouse Cloud organization with the **Key ID** and
+**Key secret** from Step 4. The masked interactive prompt is the safest option:
+
+```bash
+chctl cloud auth login --interactive
+```
+
+For a non-interactive login, replace both placeholders, including the angle brackets:
+
+```bash
+chctl cloud auth login --api-key <key> --api-secret <secret>
+```
+
+The non-interactive command can expose the secret in shell history and process listings,
+so use the interactive prompt unless you are running trusted automation. Then verify both
+the configured auth mode and a real request to the Cloud API:
+
+```bash
+chctl cloud auth status
+chctl cloud org list
+```
+
+The login must use the organization API key rather than the default browser OAuth flow:
+OAuth is read-only, while module 03 needs write access to create managed Postgres and a
+ClickPipe. `auth status` confirms that API-key authentication is configured; `org list`
+confirms that the credentials actually work before you continue.
+
+<Callout title="Keep API-key commands in the app directory">
+  `clickhousectl` saves API-key credentials in `.clickhouse/credentials.json` relative to
+  the current directory and creates `.clickhouse/.gitignore` to keep them out of Git. Run
+  the login and every later `clickhousectl cloud ...` command from the `app` directory.
+  Never share or copy the credentials file.
 </Callout>
 
-**You should now have:** `clickhousectl --version` printing a version number.
+**You should now have:** `clickhousectl --version` printing a version number,
+`chctl cloud auth status` showing API-key credentials are configured, and
+`chctl cloud org list` returning your Cloud organization.
 
 ### Step 6 - Load ClickHouse skills and docs into your agent
 
@@ -396,12 +428,17 @@ auto-recharge off, and `OPENAI_API_KEY` filled in.
 ### Step 10 - Run the preflight check, then start the stack
 
 Everything the app needs is now in `.env.workshop`. Before starting the stack, run the
-preflight check from the `app` directory. It verifies Docker (including that the daemon
-can actually start a container), that your effective host ports are free, that
+preflight check from `ClickHouse_Demos/workshops/build_workshop/app`. The command below
+enters that directory whether your terminal is at the repository root or already inside
+the app. It verifies
+Docker (including that the daemon can actually start a container), that your effective
+host ports are free, that
 `.env.workshop` has the required values, and that your ClickHouse Cloud service is
 reachable - each as a PASS, WARN, or FAIL with a one-line fix hint:
 
 ```bash
+# From anywhere inside the cloned ClickHouse_Demos repository:
+cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
 ./preflight.sh
 ```
 

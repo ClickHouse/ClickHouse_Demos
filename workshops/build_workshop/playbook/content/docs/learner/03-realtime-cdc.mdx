@@ -36,19 +36,17 @@ module 00 — the org API key authenticates this), create a managed Postgres ins
 Use the **same region as your ClickHouse Cloud service** so the pipe stays in-region:
 
 <Callout title="Not authenticated? Log in with your organization API key">
-  If `clickhousectl` reports that you are not authenticated, log in first with the Key ID
-  and Key secret you created in module 00:
+  If `clickhousectl` reports that you are not authenticated, return to the `app` directory
+  and log in again with the Key ID and Key secret you created in module 00:
 
   ```bash
-  clickhousectl cloud auth login --api-key YOUR_KEY --api-secret YOUR_SECRET
+  chctl cloud auth login --interactive
+  chctl cloud org list
   ```
 
-  Or set them as environment variables instead:
-
-  ```bash
-  export CLICKHOUSE_CLOUD_API_KEY=your-key
-  export CLICKHOUSE_CLOUD_API_SECRET=your-secret
-  ```
+  The masked prompt safely replaces stale saved credentials, and `org list` verifies them
+  against the Cloud API. Module 00 also shows the non-interactive `--api-key` /
+  `--api-secret` form for trusted automation.
 </Callout>
 
 ```bash
