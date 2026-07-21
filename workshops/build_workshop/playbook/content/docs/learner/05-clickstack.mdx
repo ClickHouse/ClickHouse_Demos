@@ -33,12 +33,8 @@ them there. Enable it in the console:
 Console - your service -> **ClickStack** -> **Start Ingestion** -> skip the collector
 step (the app ships its own collector in Step 2) -> **Launch ClickStack**
 
-That single-signs you on into HyperDX.
-
-![HyperDX Search view showing nyc-taxi-backend traces — a live list of GET /api/health and POST spans with timestamp, service, and duration columns](/screenshots/05-hyperdx-traces.png)
-
-*HyperDX rendering the app's traces: the `nyc-taxi-backend` service with its `/api/...` request spans.*
-
+That single-signs you on into HyperDX. (The UI is empty at this point — telemetry starts
+flowing once the collector overlay is running in Step 2.)
 
 <Callout title="Managed ClickStack: what diverges from the classic setup">
   - The back end uses vanilla OpenTelemetry, not the convenience
@@ -104,6 +100,10 @@ logs backend`.)
 
 You should see a service named `nyc-taxi-backend` appear in HyperDX, with `/api/...`
 requests showing as traces, each carrying a child `clickhouse.query` span.
+
+![HyperDX Search view showing nyc-taxi-backend traces — a live list of GET /api/health and POST spans with timestamp, service, and duration columns](/screenshots/05-hyperdx-traces.png)
+
+*HyperDX rendering the app's traces: the `nyc-taxi-backend` service with its `/api/...` request spans.*
 
 ## How to verify you are done
 
