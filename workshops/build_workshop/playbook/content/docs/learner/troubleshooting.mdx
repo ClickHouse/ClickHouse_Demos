@@ -52,7 +52,7 @@ has a ready-to-paste prompt that turns it into your instructor.
   first request pays that wake cost. The back end already allows a longer first-connect
   timeout and retries once.
 - **Fix** - just retry, or wait about 30 seconds. This is not a fault. It also matters in
-  [08 Break and fix](/docs/learner/08-break-and-fix): a waking service makes the fault 03
+  [07 Break and fix](/docs/learner/07-break-and-fix): a waking service makes the fault 03
   timeout fire more readily.
 
 ### Lost the service password
@@ -144,7 +144,7 @@ has a ready-to-paste prompt that turns it into your instructor.
   semantics (preflight reads it the same way).
 - **Fix** - remove the earlier duplicate so only the intended value remains.
 
-## Chat (module 07)
+## Chat (module 08)
 
 ### POST /api/chat returns 503 with a setup hint
 
@@ -152,7 +152,8 @@ has a ready-to-paste prompt that turns it into your instructor.
   the app is fine.
 - **Why** - no `OPENAI_API_KEY` is set on the back end.
 - **Fix** - add `OPENAI_API_KEY` to `.env.workshop`, then
-  `docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d --build backend`.
+  `docker compose --env-file .env.workshop -f docker-compose.workshop.yml
+  -f docker-compose.otel.yml up -d --build backend`.
   Chat is the only feature that needs it.
 
 ### Cannot create a first OpenAI key

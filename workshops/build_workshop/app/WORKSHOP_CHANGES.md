@@ -49,8 +49,7 @@ Contains only:
 - `postgres` -- local fallback only (kept `wal_level=logical` for parity);
 - `backend` -- all ClickHouse params env-driven, defaulting to `8443` + TLS;
 - `frontend` -- unchanged build, nginx still proxies `/api` to `backend:8000`;
-- `pg-trip-writer` -- the loadgen, PG connection env-driven, throttled;
-- `pgadmin` -- optional, only starts with `--profile tools`.
+- `pg-trip-writer` -- the loadgen, PG connection env-driven, throttled.
 
 Deliberately **omitted**: `clickhouse`, `ch-ui`, `broker`, `connect`,
 `kafka-ui`, `pg-cdc-init`, `clickhouse-cdc-init`, `connect-init`. ClickHouse is
@@ -137,7 +136,7 @@ Each is now addressed so any participant can get to a running app:
   `.env.workshop` (last-value-wins, matching compose), telling apart "in use by
   this workshop stack" from a real clash and printing the exact override var and
   a suggested free port; the required `.env.workshop` values (`CLICKHOUSE_HOST`,
-  `CLICKHOUSE_PASSWORD`; module-07 keys are warn-only); and TLS/TCP connectivity
+  `CLICKHOUSE_PASSWORD`; module-08 keys are warn-only); and TLS/TCP connectivity
   to ClickHouse Cloud (and the shared Postgres, when used). Why: the live run hit
   port collisions on 5432/8080/8000 and a wedged Docker daemon with no signal to
   the participant until `up` failed.
@@ -214,14 +213,12 @@ plain HTTP (secure inferred `false` from the port).
    ```
 
    App on http://localhost:8080, backend API on http://localhost:8000.
-   Add `--profile tools` to also start pgadmin on http://localhost:5050.
 
 ## Verification performed
 
 - `docker compose -f docker-compose.workshop.yml config` passes with **exit 0
   and no warnings** with no `.env` file, and again with a filled `--env-file`.
-  With the profile off, only `backend`, `frontend`, `postgres`,
-  `pg-trip-writer` are present; `pgadmin` appears only with `--profile tools`.
+  Only `backend`, `frontend`, `postgres`, and `pg-trip-writer` are present.
   Env interpolation was confirmed (e.g. `CLICKHOUSE_SECURE: "true"`, filled
   `CLICKHOUSE_HOST`, `PGHOST`, `RATE_PER_SEC`, and `PGSSLMODE` defaulting to
   `prefer` and overriding to `require`).

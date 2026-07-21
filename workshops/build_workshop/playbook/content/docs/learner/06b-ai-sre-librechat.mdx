@@ -38,10 +38,11 @@ defaults (`LIBRECHAT_PORT`, login, secrets) are pre-filled, so you only need two
   tokens → read-only Contents on that repo). This is the same repo you cloned in module 00;
   the GitHub MCP reads its branches from GitHub, so the agent can see the fault-branch source.
 
-Then start it (it reads `../.env.workshop`):
+Then start it (the command works from any directory inside the clone and LibreChat reads
+`../.env.workshop`):
 
 ```bash
-cd app/librechat
+cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app/librechat"
 docker compose --env-file ../.env.workshop -f docker-compose.librechat.yml up -d
 ```
 
@@ -91,11 +92,11 @@ wired up — it should describe investigating the NYC Taxi app across ClickStack
 
 ## Step 4 — Break something, then ask the agent
 
-Inject a fault (see [08 Break and fix](/docs/learner/08-break-and-fix) for the branches),
+Inject a fault (see [07 Break and fix](/docs/learner/07-break-and-fix) for the branches),
 for example the map fault, and rebuild the app stack:
 
 ```bash
-cd app
+cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
 git checkout fault/01-map-not-loading
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
 ```
@@ -125,5 +126,12 @@ reads the source via the GitHub MCP and pinpoints the offending code in
 ## Wrap-up
 
 You now have a chat-native SRE agent that reasons across telemetry and code — the same
-pattern teams use to shorten incident triage. Reset with `git checkout build-workshop-v1`
-and rebuild when you are done.
+pattern teams use to shorten incident triage. Leave fault 01 checked out: module 07 switches
+to fault 02 so you can apply the same workflow to a new incident instead of repeating this
+diagnosis.
+
+## End state
+
+The LibreChat SRE agent is ready to investigate fault scenarios and verify their fixes.
+Continue directly to [07 Break and fix](/docs/learner/07-break-and-fix), select fault 02,
+and turn this first diagnosis into a repeatable test-and-remediate workflow.

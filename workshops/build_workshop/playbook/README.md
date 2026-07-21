@@ -75,6 +75,9 @@ either drop or pre-render the OG images. If you take this path:
 
 Node hosting is recommended unless the target can only serve static files.
 
+Legacy module 07/08 lesson paths remain as unlisted compatibility pages for static exports;
+the recommended Node deployment redirects those paths to their new module numbers.
+
 ## Content authoring
 
 All content is MDX under `content/docs/`. The site is dual-track: every module has a

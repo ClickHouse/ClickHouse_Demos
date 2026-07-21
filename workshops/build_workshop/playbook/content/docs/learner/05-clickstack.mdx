@@ -39,25 +39,6 @@ That single-signs you on into HyperDX.
 
 *HyperDX rendering the app's traces: the `nyc-taxi-backend` service with its `/api/...` request spans.*
 
-
-<Callout title="Managed ClickStack: what diverges from the classic setup">
-  - The back end uses vanilla OpenTelemetry, not the convenience
-    `hyperdx-opentelemetry` package the ClickStack docs suggest. That package hard-pins
-    `opentelemetry-api==1.30.0`, which conflicts with the Langfuse v4 SDK the chat
-    feature uses (needs `opentelemetry-api>=1.33.1`) — the two cannot share one
-    environment. The ClickStack collector ingests standard OTLP, so the vanilla distro
-    behaves identically; the workshop just sets the exporter env vars itself.
-  - ClickStack's telemetry lives in a separate database on your service
-    (`CLICKSTACK_DATABASE=otel`), distinct from the app's data database
-    (`CLICKHOUSE_DATABASE=nyc_tlc_data`).
-  - Traces always flow over OTLP from the auto-instrumented back end and are the signal
-    you rely on here. Application logs did not deliver reliably over OTLP in testing, so
-    read them with `docker compose ... logs` (or enable the optional
-    `--profile container-logs` collector, which scrapes raw container stdout — a
-    Linux-host path; on Docker Desktop the daemon runs in a VM and that host mount may
-    not be available).
-</Callout>
-
 ## Step 2 — Run the OpenTelemetry collector overlay
 
 <Callout title="Check the collector ports first">
@@ -111,7 +92,7 @@ requests showing as traces, each carrying a child `clickhouse.query` span.
 - Requests to `/api/...` show as traces, each with a child `clickhouse.query` span
   carrying `db.statement`, `db.elapsed_ms`, and `db.rows_returned`.
 - You will not see query errors here yet: a healthy, seeded app does not trip the safety
-  limits, and 4xx requests never reach ClickHouse. In module 08 the injected fault makes
+  limits, and 4xx requests never reach ClickHouse. In module 07 the injected fault makes
   an errored `clickhouse.query` span (with `error.category`) observable.
 
 ## Wrap-up
