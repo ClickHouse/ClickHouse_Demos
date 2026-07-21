@@ -41,8 +41,13 @@ Two entry points, both using your existing ClickHouse Cloud identity:
 ## Step 2 — Create an agent over your taxi data
 
 Click **Create New Agent**, give it a **Name**, **Instructions** (for example: answer
-questions about the NYC taxi data in `nyc_tlc_data`), and pick a **Model**, then start
-chatting. The agent introspects your schema so its SQL is grounded.
+questions about the NYC taxi data in `nyc_tlc_data`), and pick a **Model**.
+
+Add a tool called **ClickHouse** and confirm it shows as **Connected** — this is what
+lets the agent introspect your schema and run SQL against your service. Without a
+connected ClickHouse tool the agent has nothing to query.
+
+Then start chatting. The agent introspects your schema so its SQL is grounded.
 
 ## Step 3 — Explore conversationally
 
