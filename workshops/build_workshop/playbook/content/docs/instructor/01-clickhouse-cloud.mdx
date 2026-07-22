@@ -35,4 +35,5 @@ keep talking while it loads.
 
 - Re-issue the service password from the console and re-fill `.env.workshop`, then
   restart: `docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d`.
-- Re-run `db/cloud/001_cloud_schema.sql` — it is idempotent, so a re-run is a no-op.
+- Re-copy the complete schema command from
+  [learner Module 01, Step 2](/docs/learner/01-clickhouse-cloud); it is idempotent.
