@@ -299,10 +299,10 @@ def compare_period_sql(
         shared_clauses.append("payment_type = {payment_type:UInt8}")
         params["payment_type"] = int(payment_type)
     if pickup_zone_id:
-        shared_clauses.append("pickup_zone_id IN {pickup_zone_ids:Array(UInt16)}")
+        shared_clauses.append("pickup_location_id IN {pickup_zone_ids:Array(UInt16)}")
         params["pickup_zone_ids"] = [int(x) for x in pickup_zone_id]
     if dropoff_zone_id:
-        shared_clauses.append("dropoff_zone_id IN {dropoff_zone_ids:Array(UInt16)}")
+        shared_clauses.append("dropoff_location_id IN {dropoff_zone_ids:Array(UInt16)}")
         params["dropoff_zone_ids"] = [int(x) for x in dropoff_zone_id]
     shared_sql = (" AND " + " AND ".join(shared_clauses)) if shared_clauses else ""
 

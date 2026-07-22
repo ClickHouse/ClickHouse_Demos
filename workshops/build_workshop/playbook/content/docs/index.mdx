@@ -111,22 +111,22 @@ The diagrams above are generated from `workshops/build_workshop/docs/diagrams/ge
 
 ## Modules
 
-Ten modules, in order. The app is complete on `build-workshop-v1`, so every module except
+Ten modules, in order. The app is complete on `main`, so every module except
 07 needs no per-module checkout — you configure and connect services rather than change
 app code. The only branch switches are the fault branches in module 07.
 
 | Step | Time | Learner lesson | Instructor notes | Branch | What you will learn |
 |---|---|---|---|---|---|
-| 00 | 25 min | [Setup](/docs/learner/00-setup) | [notes](/docs/instructor/00-setup) | `build-workshop-v1` | Accounts, tools, agent skills, and the app repo, all wired up and verified |
-| 01 | 15 min | [ClickHouse Cloud](/docs/learner/01-clickhouse-cloud) | [notes](/docs/instructor/01-clickhouse-cloud) | `build-workshop-v1` | Create the schema, seed historical data from object storage, and feel the query speed |
-| 02 | 5 min | [Base app](/docs/learner/02-base-app) | [notes](/docs/instructor/02-base-app) | `build-workshop-v1` | Tour the running app now that it has data: Ops and Historical dashboards, the chat panel, the data flow |
-| 03 | 20 min | [Real-time CDC](/docs/learner/03-realtime-cdc) | [notes](/docs/instructor/03-realtime-cdc) | `build-workshop-v1` | Stream live rows from managed Postgres into ClickHouse with a Postgres CDC ClickPipe |
-| 04 | 10 min | [ClickHouse Agents](/docs/learner/04-clickhouse-agents) | [notes](/docs/instructor/04-clickhouse-agents) | `build-workshop-v1` | Conversational BI: create an agent over your taxi data and explore it in natural language |
-| 05 | 15 min | [ClickStack](/docs/learner/05-clickstack) | [notes](/docs/instructor/05-clickstack) | `build-workshop-v1` | Enable ClickStack and send app traces and logs to HyperDX |
-| 06 | 15 min | [AI SRE](/docs/learner/06-ai-sre) | [notes](/docs/instructor/06-ai-sre) | `build-workshop-v1` | Connect your agent to the ClickStack MCP and have it build an SRE dashboard and alert |
-| 07 | 20 min | [Break and fix](/docs/learner/07-break-and-fix) | [notes](/docs/instructor/07-break-and-fix) | `fault/*` | Continue from AI SRE or optional 06b, inject a fault, diagnose it via ClickStack, and apply the fix |
-| 08 | 15 min | [Chat and Langfuse](/docs/learner/08-chat-langfuse) | [notes](/docs/instructor/08-chat-langfuse) | `build-workshop-v1` | Use the in-app AI chat and follow its traces, generations, and costs in Langfuse |
-| 09 | 10 min | [Wrap-up](/docs/learner/09-wrap-up) | [notes](/docs/instructor/09-wrap-up) | `build-workshop-v1` | Review what you built, take it home, and extend it to your own data |
+| 00 | 25 min | [Setup](/docs/learner/00-setup) | [notes](/docs/instructor/00-setup) | `main` | Accounts, tools, agent skills, and the app repo, all wired up and verified |
+| 01 | 15 min | [ClickHouse Cloud](/docs/learner/01-clickhouse-cloud) | [notes](/docs/instructor/01-clickhouse-cloud) | `main` | Create the schema, seed historical data from object storage, and feel the query speed |
+| 02 | 5 min | [Base app](/docs/learner/02-base-app) | [notes](/docs/instructor/02-base-app) | `main` | Tour the running app now that it has data: Ops and Historical dashboards, the chat panel, the data flow |
+| 03 | 20 min | [Real-time CDC](/docs/learner/03-realtime-cdc) | [notes](/docs/instructor/03-realtime-cdc) | `main` | Stream live rows from managed Postgres into ClickHouse with a Postgres CDC ClickPipe |
+| 04 | 10 min | [ClickHouse Agents](/docs/learner/04-clickhouse-agents) | [notes](/docs/instructor/04-clickhouse-agents) | `main` | Conversational BI: create an agent over your taxi data and explore it in natural language |
+| 05 | 15 min | [ClickStack](/docs/learner/05-clickstack) | [notes](/docs/instructor/05-clickstack) | `main` | Enable ClickStack and send app traces and logs to HyperDX |
+| 06 | 15 min | [AI SRE](/docs/learner/06-ai-sre) | [notes](/docs/instructor/06-ai-sre) | `main` | Use the ClickStack MCP connection to build an SRE dashboard and alert |
+| 07 | 20 min | [Test, fail, and fix](/docs/learner/07-break-and-fix) | [notes](/docs/instructor/07-break-and-fix) | `fault/*` | Continue from AI SRE or optional 06b, inject a fault, diagnose it, fix it, and prove recovery |
+| 08 | 15 min | [Chat and Langfuse](/docs/learner/08-chat-langfuse) | [notes](/docs/instructor/08-chat-langfuse) | `main` | Use the in-app AI chat and follow its traces, generations, and costs in Langfuse |
+| 09 | 10 min | [Wrap-up](/docs/learner/09-wrap-up) | [notes](/docs/instructor/09-wrap-up) | `main` | Review what you built, take it home, and extend it to your own data |
 
 The times add up to about 2 hours 30 minutes of hands-on work; the rest of the
 three-hour session is the opening, transitions, and the finale demos.
@@ -135,11 +135,11 @@ three-hour session is the opening, transitions, and the finale demos.
 
 ### Branches
 
-The app is already complete on `build-workshop-v1`. This workshop is about configuring and connecting
+The app is already complete on `main`. This workshop is about configuring and connecting
 services — real-time CDC, observability, agents, chat — not editing application code, so
 there is nothing to build up branch by branch:
 
-- Clone the app once in module 00 and stay on `build-workshop-v1` except while running
+- Clone the app once in module 00 and stay on `main` except while running
   the fault scenarios in module 07.
 - Late joiners are never stranded: everything is service-side, so you only need your
   `.env.workshop` filled in plus the module's console steps. There is no per-module
@@ -147,7 +147,7 @@ there is nothing to build up branch by branch:
 - The only branch switches are in module 07 (Break and fix), which uses fault branches
   (`fault/01-map-not-loading`, `fault/02-zone-stats-500`, `fault/03-slow-dashboard`). You
   check one out, diagnose the failure, then preserve the fix and return to
-  `build-workshop-v1` with the module 07 stash-and-switch reset.
+  `main` with the module 07 stash-and-switch reset.
 
 <Callout title="Fault branches">
   The three `fault/*` branches above exist in the repo; module 07 walks through checking
@@ -190,7 +190,7 @@ Never commit your filled-in `.env.workshop`; it is git-ignored.
 ## Repository layout
 
 Everything lives in one repository (`ClickHouse_Demos`), under
-`workshops/build_workshop/`, on the `build-workshop-v1` branch.
+`workshops/build_workshop/`, on the `main` branch.
 
 ```text
 workshops/build_workshop/
@@ -206,7 +206,7 @@ playbook/                    # this playbook (the site you are reading)
 app/                         # the NYC-taxi app you build on (cloned in module 00)
   frontend/                  # React SPA (Ops + Historical dashboards, chat panel)
   backend/                   # FastAPI analytics API + AI chat
-  db/cloud/001_cloud_schema.sql   # the Cloud schema you run in module 01
+  db/cloud/001_cloud_schema.sql   # maintainer fixture; Module 01 contains the copyable SQL
   docker-compose.workshop.yml     # the workshop stack (Cloud + ClickPipes)
   docker-compose.otel.yml         # the ClickStack observability overlay (module 05)
   .env.workshop.example      # single env template (Cloud + chat + observability);

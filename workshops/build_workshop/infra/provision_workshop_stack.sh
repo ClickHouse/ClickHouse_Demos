@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end workshop stack provisioning via clickhousectl (chctl):
+# End-to-end workshop stack provisioning via clickhousectl (clickhousectl):
 # managed Postgres -> ClickHouse Cloud service -> Postgres CDC ClickPipe -> data sync.
 #
 # Instructor-side tool. It stands up the SHARED Postgres every participant's
@@ -18,7 +18,7 @@
 #
 # E2E-verified 2026-07-14 against a live org (see infra/README.md for findings).
 # For the reliable ClickHouse query path, export CH_HOST and CH_PASSWORD from the
-# create-ch output (the chctl Query API fails on orgs not migrated to Custom Roles).
+# create-ch output (the clickhousectl Query API fails on orgs not migrated to Custom Roles).
 #
 # Auth: org API key (write ops; browser OAuth is read-only):
 #   export CLICKHOUSE_CLOUD_API_KEY=...  CLICKHOUSE_CLOUD_API_SECRET=...
@@ -92,8 +92,8 @@ psqla() {
 
 # chq <sql> — run a query on the demo ClickHouse service.
 # Preferred path: clickhouse client against the service endpoint (set CH_HOST +
-# CH_PASSWORD from the create-ch output). Fallback: the chctl Query API — but
-# note (verified live) chctl 0.3.1's auto-provisioning fails on organizations
+# CH_PASSWORD from the create-ch output). Fallback: the clickhousectl Query API — but
+# note (verified live) clickhousectl 0.3.1's auto-provisioning fails on organizations
 # that have not migrated to Custom Roles ("Use 'roles' instead of
 # 'assignedRoleIds'"), so the client path is the reliable one.
 chq() {
