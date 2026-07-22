@@ -8,7 +8,7 @@ fail_if_found() {
   local description=$1
   local pattern=$2
   shift 2
-  if rg -n --pcre2 "${pattern}" "$@"; then
+  if grep -RInE -- "${pattern}" "$@"; then
     echo "ERROR: ${description}" >&2
     exit 1
   fi
@@ -26,14 +26,14 @@ fail_if_found \
 
 fail_if_found \
   "learners must not be told to edit SQL comments or execute a hidden SQL file" \
-  '(comment|uncomment).*(sql|variant)|(?:run|execute|open).*(?:db/cloud|\.sql file)' \
+  '(comment|uncomment).*(sql|variant)|(run|execute|open).*(db/cloud|\.sql file)' \
   "${CONTENT}/learner"
 
 require_fixed() {
   local description=$1
   local literal=$2
   local file=$3
-  if ! rg -Fq -- "${literal}" "${file}"; then
+  if ! grep -Fq -- "${literal}" "${file}"; then
     echo "ERROR: ${description}" >&2
     exit 1
   fi
@@ -45,7 +45,7 @@ require_count() {
   local literal=$3
   local file=$4
   local actual
-  actual=$(rg -F -c -- "${literal}" "${file}" || true)
+  actual=$(grep -F -c -- "${literal}" "${file}" || true)
   if [ "${actual}" -ne "${expected}" ]; then
     echo "ERROR: ${description} (expected ${expected}, found ${actual})" >&2
     exit 1
@@ -88,7 +88,8 @@ require_count \
 
 # MCP server definitions belong in setup. Later modules should use or link to
 # that setup instead of asking learners to configure the same endpoint again.
-if rg -n 'mcpServers|"clickhouse"\s*:\s*\{' "${CONTENT}/learner" --glob '!00-setup.mdx'; then
+if grep -RInE --exclude='00-setup.mdx' \
+  'mcpServers|"clickhouse"[[:space:]]*:[[:space:]]*\{' "${CONTENT}/learner"; then
   echo "ERROR: learner MCP server configuration must appear only in 00-setup.mdx" >&2
   exit 1
 fi
