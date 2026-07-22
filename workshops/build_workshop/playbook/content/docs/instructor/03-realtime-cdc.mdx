@@ -19,8 +19,8 @@ begin streaming; account for it.
   there is no shared instance on the primary path. One participant needs exactly one
   replication slot, and every managed instance ships `wal_level=logical` with 10 slots by
   default, so the "raise max_replication_slots" gate simply does not apply to them.
-- Their Postgres and their ClickPipe live in the same org, so the pipe wizard connects
-  with no cross-org setup.
+- Their Postgres and ClickPipe live in the same org and are both created with
+  `clickhousectl`; no console-wizard fork is required.
 - Explain CDC at a high level (reads the write-ahead log) and why destination tables carry
   `_peerdb_*` bookkeeping columns; the MV filters `_peerdb_is_deleted = 0`.
 - Point out that the generator's own log is the readiness signal — the app is the probe;
@@ -35,7 +35,7 @@ begin streaming; account for it.
 - **Generator logs connection errors at first.** The instance is still provisioning; the
   container exits and restarts automatically, so it self-heals within about a minute. Only
   investigate if errors persist past a couple of minutes.
-- **Wizard cannot connect.** Usually a wrong host or password, or `PGSSLMODE` not set to
+- **ClickPipe cannot connect.** Usually a wrong host or password, or `PGSSLMODE` not set to
   `require` (managed Postgres mandates TLS).
 - **Region mismatch.** Cross-region Postgres-to-ClickHouse works but adds latency; steer
   participants to create the Postgres in the same region as their ClickHouse service.
@@ -45,8 +45,7 @@ begin streaming; account for it.
   Only on a **re-run/reset**, not a fresh participant: deleting a ClickPipe drops the
   source replication slot but leaves its destination table behind, and the CLI refuses to
   reuse a non-empty one. Drop the leftover first, then recreate the pipe:
-  `DROP TABLE IF EXISTS default.realtime_trips;` (or `nyc_tlc_data.realtime_trips` for a
-  wizard pipe). Confirmed in the dry run.
+  `DROP TABLE IF EXISTS default.realtime_trips;`. Confirmed in the dry run.
 - **Managed Postgres unavailable in the org** (beta availability varies) — this is the one
   case that falls back to the shared instructor pool; see below.
 
@@ -60,7 +59,7 @@ rather than creating one — that is expected, not an error.
 
 ## Reset steps
 
-- Delete and recreate the ClickPipe from the console.
+- Delete and recreate the ClickPipe with the commands in learner Module 03.
 - Restart the data generator:
   `docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d pg-trip-writer`
   (turn it off with `--scale pg-trip-writer=0`).

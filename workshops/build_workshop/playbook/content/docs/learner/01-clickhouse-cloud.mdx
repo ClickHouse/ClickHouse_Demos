@@ -1,175 +1,341 @@
 ---
 title: 01 ClickHouse Cloud
-description: Build the taxi schema on your Cloud service, seed historical data from object storage, and point the back end at ClickHouse.
+description: Create the taxi schema, seed historical data, and verify it with the client, skills, and ClickHouse MCP.
 ---
 
-## Starting point
+## Outcome
 
-You are on `build-workshop-v1` — no checkout needed. Budget about **15 minutes**.
+In about **15 minutes**, you will create the taxi schema, load one month of public NYC
+taxi data, and see the Historical dashboard return real results.
 
-Prerequisites: your ClickHouse Cloud service created and its host and password in
-`.env.workshop`, and the app running locally (module 00).
+Prerequisite: Module 00 is complete and your terminal is in
+`ClickHouse_Demos/workshops/build_workshop/app`.
 
-## Why
+## Step 1 — Verify the client connection
 
-Your Cloud service is empty — module 00 wired up its credentials, but it has no tables,
-which is why the dashboards render empty right now. This is the first thing you build: a
-real warehouse. Create the taxi schema on ClickHouse Cloud, seed it with historical trip
-data, and point the back end at it. This is where the dashboards get their data — you tour
-the running app next, in module 02, once it has something to show.
-
-## Goal
-
-A running ClickHouse Cloud service with the taxi schema created and seeded with
-historical trip data, and the app's back end reading from it.
-
-## Step 1 — Confirm your service and credentials
-
-You created the Cloud service in module 00, so it already exists and its host and password
-are in `.env.workshop`. Confirm the `CLICKHOUSE_*` block is filled in - `CLICKHOUSE_HOST`
-is the bare hostname (no scheme, no port), and the credentials come from the service's
-Connect modal (Console - your service -> **Connect**) if you need to re-copy them:
+Replace the two placeholders with the service hostname and password saved in Module 00:
 
 ```bash
-CLICKHOUSE_HOST=<your-service>.<region>.<cloud>.clickhouse.cloud
-CLICKHOUSE_PORT=8443
-CLICKHOUSE_USER=default
-CLICKHOUSE_PASSWORD=<from the service's Connect modal>
-CLICKHOUSE_DATABASE=nyc_tlc_data
-CLICKHOUSE_SECURE=true
+clickhouse client \
+  --host <your-service-hostname> \
+  --port 9440 \
+  --secure \
+  --user default \
+  --password '<password>' \
+  --query "SELECT version(), currentUser()"
 ```
+
+Continue only when the query returns one row.
 
 ## Step 2 — Create the schema
 
-### `db/cloud/001_cloud_schema.sql`
-
-The workshop ships an idempotent schema file. It creates the destination database
-(`CREATE DATABASE IF NOT EXISTS nyc_tlc_data`) and all the base objects in one go, so you
-can run it as a single command against your service:
+This is the complete schema command. Copy it from this page; do not open a local SQL file.
 
 ```bash
-clickhouse client --host <your-service>.<region>.<cloud>.clickhouse.cloud --port 9440 --secure \
-  --user default --password '<password>' --multiquery < db/cloud/001_cloud_schema.sql
+clickhouse client \
+  --host <your-service-hostname> \
+  --port 9440 \
+  --secure \
+  --user default \
+  --password '<password>' \
+  --multiquery <<'SQL'
+CREATE DATABASE IF NOT EXISTS nyc_tlc_data;
+
+CREATE TABLE IF NOT EXISTS nyc_tlc_data.taxi_zones
+(
+  location_id UInt16,
+  zone String,
+  borough String,
+  subregion String
+)
+ENGINE = MergeTree
+ORDER BY (location_id);
+
+CREATE TABLE IF NOT EXISTS nyc_tlc_data.fhv_trips
+(
+  hvfhs_license_num String,
+  company String,
+  dispatching_base_num Nullable(String),
+  originating_base_num Nullable(String),
+  request_datetime Nullable(DateTime('UTC')),
+  on_scene_datetime Nullable(DateTime('UTC')),
+  pickup_datetime DateTime('UTC'),
+  dropoff_datetime DateTime('UTC'),
+  pickup_location_id Nullable(UInt16),
+  dropoff_location_id Nullable(UInt16),
+  pickup_borough Nullable(String),
+  dropoff_borough Nullable(String),
+  trip_miles Nullable(Float64),
+  trip_time Nullable(UInt32),
+  base_passenger_fare Nullable(Float64),
+  tolls Nullable(Float64),
+  black_car_fund Nullable(Float64),
+  sales_tax Nullable(Float64),
+  congestion_surcharge Nullable(Float64),
+  airport_fee Nullable(Float64),
+  tips Nullable(Float64),
+  driver_pay Nullable(Float64),
+  shared_request Nullable(Bool),
+  shared_match Nullable(Bool),
+  access_a_ride Nullable(Bool),
+  wav_request Nullable(Bool),
+  wav_match Nullable(Bool),
+  legacy_shared_ride Nullable(UInt16),
+  filename String
+)
+ENGINE = MergeTree
+ORDER BY (company, pickup_datetime);
+
+CREATE TABLE IF NOT EXISTS nyc_tlc_data.taxi_trips
+(
+  car_type String,
+  vendor_id Nullable(UInt16),
+  pickup_datetime DateTime('UTC'),
+  dropoff_datetime DateTime('UTC'),
+  pickup_location_id Nullable(UInt16),
+  dropoff_location_id Nullable(UInt16),
+  pickup_borough Nullable(String),
+  dropoff_borough Nullable(String),
+  passenger_count Nullable(UInt16),
+  trip_distance Nullable(Float64),
+  rate_code_id Nullable(UInt16),
+  store_and_fwd_flag Nullable(Bool),
+  payment_type Nullable(UInt16),
+  fare_amount Nullable(Float64),
+  extra Nullable(Float64),
+  mta_tax Nullable(Float64),
+  tip_amount Nullable(Float64),
+  tolls_amount Nullable(Float64),
+  improvement_surcharge Nullable(Float64),
+  total_amount Nullable(Float64),
+  congestion_surcharge Nullable(Float64),
+  airport_fee Nullable(Float64),
+  trip_type Nullable(UInt16),
+  ehail_fee Nullable(Float64),
+  filename String
+)
+ENGINE = MergeTree
+ORDER BY (car_type, pickup_datetime);
+
+CREATE OR REPLACE VIEW nyc_tlc_data.fhv_trips_expanded AS
+SELECT
+  *,
+  trip_time / 60 AS trip_minutes,
+  trip_miles / trip_time * 3600 AS mph,
+  (
+    trip_miles >= 0.2
+    AND trip_miles < 100
+    AND trip_time >= 60
+    AND trip_time < 60 * 60 * 4
+    AND mph >= 1
+    AND mph < 100
+    AND base_passenger_fare >= 2
+    AND base_passenger_fare < 2000
+    AND driver_pay >= 1
+    AND driver_pay < 2000
+  ) AS reasonable_time_distance_fare,
+  (
+    shared_request = false
+    AND access_a_ride = false
+    AND wav_request = false
+  ) AS solo_non_special_request,
+  coalesce(tolls, 0) +
+    coalesce(black_car_fund, 0) +
+    coalesce(sales_tax, 0) +
+    coalesce(congestion_surcharge, 0) +
+    coalesce(airport_fee, 0) AS extra_charges
+FROM nyc_tlc_data.fhv_trips;
+
+CREATE OR REPLACE VIEW nyc_tlc_data.taxi_trips_expanded AS
+SELECT
+  *,
+  (dropoff_datetime - pickup_datetime) / 60 AS trip_minutes,
+  trip_distance / (dropoff_datetime - pickup_datetime) * 3600 AS mph,
+  (
+    trip_distance >= 0.2
+    AND trip_distance < 100
+    AND trip_minutes >= 1
+    AND trip_minutes < 240
+    AND mph >= 1
+    AND mph < 100
+    AND fare_amount >= 2
+    AND fare_amount < 2000
+    AND total_amount >= 2
+    AND total_amount < 2000
+  ) AS reasonable_time_distance_fare,
+  coalesce(extra, 0) +
+    coalesce(mta_tax, 0) +
+    coalesce(tolls_amount, 0) +
+    coalesce(improvement_surcharge, 0) +
+    coalesce(congestion_surcharge, 0) +
+    coalesce(airport_fee, 0) +
+    coalesce(ehail_fee, 0) AS extra_charges
+FROM nyc_tlc_data.taxi_trips;
+SQL
 ```
 
-Or paste the file into the Cloud SQL console (or run it with `clickhousectl` or your
-agent). It creates the base objects:
-
-- `taxi_zones`, `fhv_trips`, `taxi_trips` — `ENGINE = MergeTree` (Cloud backs these with
-  SharedMergeTree transparently, so no `ON CLUSTER` / `Replicated*` is needed)
-- `taxi_trips_expanded`, `fhv_trips_expanded` — enrichment views
-
-<Callout>
-  `001_cloud_schema.sql` creates only the base tables and views, and runs cleanly on its
-  own. The CDC materialized view that feeds `taxi_trips` is added in module 03 (from
-  `db/cloud/003_cdc_mv.sql`), once the ClickPipe exists.
-</Callout>
-
-You should see each statement return `Ok.` with no error. Confirm the objects exist:
-
-```sql
-SHOW TABLES FROM nyc_tlc_data;
-```
-
-You should see `taxi_zones`, `taxi_trips`, `fhv_trips`, and the two `*_expanded` views.
-
-## Step 3 — Seed historical data from object storage
-
-### `db/cloud/002_seed_historical.sql`
-
-The workshop ships a runnable seed file — no uncommenting, no local import step. It loads
-`taxi_zones` from the public TLC zone-lookup CSV and a month of yellow-taxi trips from the
-public TLC parquet exports, straight from object storage. Run it once against your service,
-after the schema file:
+Verify the objects:
 
 ```bash
-clickhouse client --host <your-service>.<region>.<cloud>.clickhouse.cloud --port 9440 --secure \
-  --user default --password '<password>' --multiquery < db/cloud/002_seed_historical.sql
+clickhouse client \
+  --host <your-service-hostname> \
+  --port 9440 \
+  --secure \
+  --user default \
+  --password '<password>' \
+  --query "SHOW TABLES FROM nyc_tlc_data"
 ```
 
-Or paste both statements into the Cloud SQL console (zones first, then trips). Both are
-idempotent — each is guarded by a `count() = 0` check — so re-running the file cannot
-double-load. To add more months, copy the second statement with the next month's file name
-(each month is ~3M rows, so keep it small for a workshop service).
+Expected: `taxi_zones`, `taxi_trips`, `fhv_trips`, and both expanded views. The CDC
+materialized view is intentionally created later, after Module 03 creates its source table.
 
-This gives the Historical dashboard real volume. Confirm the load with a count:
+## Step 3 — Seed public historical data
 
-```sql
-SELECT count() FROM nyc_tlc_data.taxi_trips;
-```
-
-You should see roughly **3.2M** rows (a single month of yellow-taxi trips), and
-`taxi_zones` returning **265** zones.
-
-## Step 4 — Point the back end at ClickHouse
-
-### `docker-compose.workshop.yml`
-
-The workshop back end is already env-driven — no code change is required. Pointing it at
-Cloud is just supplying the `CLICKHOUSE_*` values in `.env.workshop` and (re)starting the
-workshop stack:
+The command is safe to rerun: each insert has a count guard.
 
 ```bash
+clickhouse client \
+  --host <your-service-hostname> \
+  --port 9440 \
+  --secure \
+  --user default \
+  --password '<password>' \
+  --multiquery <<'SQL'
+INSERT INTO nyc_tlc_data.taxi_zones (location_id, zone, borough, subregion)
+SELECT LocationID, Zone, Borough, service_zone
+FROM url(
+  'https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv',
+  'CSVWithNames',
+  'LocationID UInt16, Borough String, Zone String, service_zone String'
+)
+WHERE (SELECT count() FROM nyc_tlc_data.taxi_zones) = 0;
+
+INSERT INTO nyc_tlc_data.taxi_trips (
+  car_type, vendor_id, pickup_datetime, dropoff_datetime, pickup_location_id,
+  dropoff_location_id, pickup_borough, dropoff_borough, passenger_count,
+  trip_distance, rate_code_id, store_and_fwd_flag, payment_type, fare_amount,
+  extra, mta_tax, tip_amount, tolls_amount, improvement_surcharge,
+  total_amount, congestion_surcharge, airport_fee, filename
+)
+SELECT
+  'yellow',
+  VendorID,
+  tpep_pickup_datetime,
+  tpep_dropoff_datetime,
+  PULocationID,
+  DOLocationID,
+  multiIf(
+    PULocationID IN (SELECT location_id FROM nyc_tlc_data.taxi_zones WHERE borough = 'Bronx'), 'Bronx',
+    PULocationID IN (SELECT location_id FROM nyc_tlc_data.taxi_zones WHERE borough = 'Brooklyn'), 'Brooklyn',
+    PULocationID IN (SELECT location_id FROM nyc_tlc_data.taxi_zones WHERE borough = 'Manhattan'), 'Manhattan',
+    PULocationID IN (SELECT location_id FROM nyc_tlc_data.taxi_zones WHERE borough = 'Queens'), 'Queens',
+    PULocationID IN (SELECT location_id FROM nyc_tlc_data.taxi_zones WHERE borough = 'Staten Island'), 'Staten Island',
+    PULocationID IN (SELECT location_id FROM nyc_tlc_data.taxi_zones WHERE borough = 'EWR'), 'EWR',
+    null
+  ),
+  multiIf(
+    DOLocationID IN (SELECT location_id FROM nyc_tlc_data.taxi_zones WHERE borough = 'Bronx'), 'Bronx',
+    DOLocationID IN (SELECT location_id FROM nyc_tlc_data.taxi_zones WHERE borough = 'Brooklyn'), 'Brooklyn',
+    DOLocationID IN (SELECT location_id FROM nyc_tlc_data.taxi_zones WHERE borough = 'Manhattan'), 'Manhattan',
+    DOLocationID IN (SELECT location_id FROM nyc_tlc_data.taxi_zones WHERE borough = 'Queens'), 'Queens',
+    DOLocationID IN (SELECT location_id FROM nyc_tlc_data.taxi_zones WHERE borough = 'Staten Island'), 'Staten Island',
+    DOLocationID IN (SELECT location_id FROM nyc_tlc_data.taxi_zones WHERE borough = 'EWR'), 'EWR',
+    null
+  ),
+  passenger_count,
+  trip_distance,
+  RatecodeID,
+  multiIf(store_and_fwd_flag = 'Y', true, store_and_fwd_flag = 'N', false, null),
+  payment_type,
+  fare_amount,
+  extra,
+  mta_tax,
+  tip_amount,
+  tolls_amount,
+  improvement_surcharge,
+  total_amount,
+  congestion_surcharge,
+  airport_fee,
+  'yellow_tripdata_2022-07.parquet'
+FROM url(
+  'https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2022-07.parquet',
+  'Parquet'
+)
+WHERE (
+  SELECT count() FROM nyc_tlc_data.taxi_trips
+  WHERE filename = 'yellow_tripdata_2022-07.parquet'
+) = 0;
+SQL
+```
+
+Verify the load:
+
+```bash
+clickhouse client \
+  --host <your-service-hostname> \
+  --port 9440 \
+  --secure \
+  --user default \
+  --password '<password>' \
+  --query "
+    SELECT 'taxi_zones' AS table, count() AS rows FROM nyc_tlc_data.taxi_zones
+    UNION ALL
+    SELECT 'taxi_trips', count() FROM nyc_tlc_data.taxi_trips
+  "
+```
+
+Expected: **265** zones and roughly **3.2 million** trips.
+
+## Step 4 — Use the skills and ClickHouse MCP
+
+Run both prompts in the agent configured in Module 00.
+
+```text
+Use the ClickHouse best-practices skill to review the taxi_trips ORDER BY key.
+Explain which workshop filters it supports and one production tradeoff. Do not change the schema.
+```
+
+```text
+Use the clickhouse-cloud MCP, with read-only queries, to verify the taxi_trips row count
+and report the busiest pickup hour.
+```
+
+The first answer should discuss `car_type, pickup_datetime`; the second must cite a query
+result from your service. This explicitly verifies both the installed skill and MCP connection.
+
+## Step 5 — Restart and query the app
+
+```bash
+cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml ps
 ```
 
-(The back end infers TLS from `CLICKHOUSE_PORT=8443`, and `CLICKHOUSE_SECURE=true` makes
-it explicit. It also allows a longer first-connect timeout because a Cloud service can
-idle-scale to zero and take a few seconds to wake.)
-
-## Step 5 — Feel the query speed
-
-Open the Historical dashboard. Now that ClickHouse Cloud is seeded, the charts render —
-try a wide date range and watch the seeded historical data (a few million rows) come back
-in well under a second.
-
-Then ask your agent your own analytical question against the data — this is your open
-step. If you want a starting point, here are a few questions that work well against the
-seeded month:
-
-- "Which pickup zones had the most yellow-taxi trips, and what was the average fare?"
-- "What's the busiest hour of the day for pickups?"
-- "How does the average tip percentage differ by borough?"
-
-For example, that first question maps to a query like this — a join across ~3.2M trips
-and the 265 zones that still returns in well under a second:
+Open the Historical dashboard, then try this dimension join in the Cloud SQL console or
+your local client:
 
 ```sql
 SELECT
-  z.zone    AS pickup_zone,
-  z.borough AS borough,
-  count()                                              AS trips,
-  round(avg(t.fare_amount), 2)                         AS avg_fare,
-  round(avg(t.tip_amount / nullIf(t.fare_amount, 0)) * 100, 1) AS avg_tip_pct
+  z.zone AS pickup_zone,
+  z.borough,
+  count() AS trips,
+  round(avg(t.fare_amount), 2) AS avg_fare
 FROM nyc_tlc_data.taxi_trips AS t
-INNER JOIN nyc_tlc_data.taxi_zones AS z
+INNER ANY JOIN nyc_tlc_data.taxi_zones AS z
   ON t.pickup_location_id = z.location_id
-GROUP BY pickup_zone, borough
+GROUP BY pickup_zone, z.borough
 ORDER BY trips DESC
 LIMIT 10;
 ```
 
-<Callout>
-  The seed loads a single month (July 2022), so even a "wide" date range in the dashboard
-  covers that one month — still a few million rows per query, which is plenty to feel how
-  fast ClickHouse aggregates. Add more months by copying statement 2 in
-  `db/cloud/002_seed_historical.sql` with the next month's file name.
-</Callout>
+`ANY JOIN` is appropriate here because `location_id` is unique and only one matching
+zone row is needed.
 
-## How to verify you are done
+## Completion check
 
-- Your Cloud service lists the taxi tables with rows in them.
-- The Historical dashboard now renders from ClickHouse, returning wide-range queries in
-  well under a second.
-- Your own analytical question returns a sensible answer.
+- The verification query reports 265 zones and about 3.2 million trips.
+- The skill review explains the ordering-key tradeoff.
+- The ClickHouse MCP returns results grounded in your service.
+- The Historical dashboard renders data.
 
-## Wrap-up
-
-The historical analytics workload now runs on ClickHouse Cloud, seeded directly from
-object storage. What is still missing is fresh data: the Ops dashboard is not live yet.
-
-## End state
-
-Historical data is on ClickHouse and the back end reads from it. Continue to
-[02 Base app](/docs/learner/02-base-app) to tour the running app now that its dashboards
-have data.
+Continue to [02 Base app](/docs/learner/02-base-app).

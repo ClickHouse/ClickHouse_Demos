@@ -78,7 +78,7 @@ services:
       # the root logger ONLY when this is true. Without it, otel_logs stays empty while
       # traces/metrics work (observability.py preserves the handler once it exists).
       - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
 
   # Additive overlay onto the workshop `frontend`: bake the ClickStack browser SDK
   # config into the build so it captures frontend UI errors, console, network, and
