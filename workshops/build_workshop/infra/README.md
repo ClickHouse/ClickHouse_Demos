@@ -16,7 +16,7 @@ This script is therefore two things:
    handed out on slips to anyone whose org cannot create a managed Postgres (beta
    availability varies).
 
-`provision_workshop_stack.sh` stands up the chain with clickhousectl (chctl): the
+`provision_workshop_stack.sh` stands up the chain with clickhousectl (clickhousectl): the
 **Postgres** the demo/fallback ClickPipes read from, a demo **ClickHouse** Cloud service,
 and the **CDC ClickPipe** between them — then proves data is syncing end to end.
 
@@ -44,7 +44,7 @@ managed Postgres (demo + FALLBACK)          demo ClickHouse Cloud service
 cd workshops/build_workshop/infra
 
 ./provision_workshop_stack.sh e2e
-# The e2e run pauses at each point where a chctl create prints a one-time
+# The e2e run pauses at each point where a clickhousectl create prints a one-time
 # credential or an id you must export (ADMIN_PGHOST/ADMIN_PGPASSWORD +
 # PG_SERVICE_ID, then CH_SERVICE_ID, then PIPE_ID). Re-run e2e after each
 # export; completed steps are skipped or are idempotent.
@@ -70,7 +70,7 @@ START_SLOT=36 PARTICIPANTS=50 ./provision_workshop_stack.sh provision
 | Slots | `provision-demo` | Slot 00, used by the demo pipe |
 | Slots | `slips` | Regenerate the printable per-participant hand-outs from the CSV |
 | CH | `create-ch` | Create the demo ClickHouse service (1 x 8 GB, idle-scaling) |
-| CH | `schema` | Apply `app/db/cloud/001_cloud_schema.sql` (base tables + views; clickhouse client when CH_HOST/CH_PASSWORD are set, else the chctl Query API). Applies cleanly on a fresh service; the CDC MV is separate — `create-mv` after `wait-pipe`, or `app/db/cloud/003_cdc_mv.sql` by hand |
+| CH | `schema` | Apply `app/db/cloud/001_cloud_schema.sql` (base tables + views; clickhouse client when CH_HOST/CH_PASSWORD are set, else the clickhousectl Query API). Applies cleanly on a fresh service; the CDC MV is separate — `create-mv` after `wait-pipe`, or `app/db/cloud/003_cdc_mv.sql` by hand |
 | CDC | `create-pipe` | Postgres CDC ClickPipe: demo slot -> demo service, using the pre-created publication. CLI pipes land the destination table in the `default` database |
 | CDC | `wait-pipe` | Poll pipe state until running; report where the destination table landed |
 | CDC | `create-mv` | Detect the pipe's actual destination table and create the MV from it into `nyc_tlc_data.taxi_trips` |
@@ -107,7 +107,7 @@ Postgres Settings tab or ClickHouse support. `verify-pg` prints this same hint o
 
 - `participants.csv` — one row per slot: database, user, password, publication
 - `slips.txt` — printable hand-outs: the `.env.workshop` PG block, the ClickPipe
-  wizard values, and an optional chctl one-liner per participant
+  wizard values, and an optional clickhousectl one-liner per participant
 
 ## Using another Postgres provider (RDS, ...)
 
@@ -119,7 +119,7 @@ unchanged.
 
 ## Live e2e results (run 2026-07-14 against a real org)
 
-The full chain was executed end to end: managed Postgres created via chctl,
+The full chain was executed end to end: managed Postgres created via clickhousectl,
 demo slot provisioned, ClickHouse service created, schema applied, CDC pipe
 created, and 5 marker rows inserted into Postgres arrived in ClickHouse within
 one sync interval and were fanned into `taxi_trips` by the MV. Teardown
@@ -140,7 +140,7 @@ script:
    feeding 30+ pipes. Raising slots requires the console Settings tab or ClickHouse
    support; this gate now applies only to the shared FALLBACK pool (else RDS for
    the fallback).
-4. The chctl Query API (`cloud service query`) fails on orgs not migrated to
+4. The clickhousectl Query API (`cloud service query`) fails on orgs not migrated to
    Custom Roles ("Use 'roles' instead of 'assignedRoleIds'"). The script
    prefers `clickhouse client` whenever CH_HOST + CH_PASSWORD are exported.
 5. CLI-created pipes ALWAYS land the destination table in the `default`

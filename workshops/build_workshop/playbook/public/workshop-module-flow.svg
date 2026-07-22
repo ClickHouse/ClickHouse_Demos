@@ -2,7 +2,7 @@
 <rect x="0" y="0" width="1756" height="402" fill="#17171A"/>
 <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L7,3 L0,6 Z" fill="#7E858E"/></marker></defs>
 <text x="40" y="48" fill="#EDEDED" font-size="20" font-weight="700">ClickHouse BUILD Workshop · Module flow</text>
-<text x="40" y="70" fill="#B7BCC2" font-size="13">~2h30 hands-on · only module 07 switches from build-workshop-v1 to a fault branch</text>
+<text x="40" y="70" fill="#B7BCC2" font-size="13">~2h30 hands-on · only module 07 switches from main to a fault branch</text>
 <rect x="40" y="92" width="300" height="96" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
 <rect x="40" y="92" width="5" height="96" rx="2.5" fill="#FAFF69"/>
 <text x="58" y="118" fill="#EDEDED" font-size="14.5" font-weight="700">00 Setup</text>
@@ -47,7 +47,7 @@
 <text x="1090" y="328" fill="#B7BCC2" font-size="12.5">builds dashboard + alert</text>
 <rect x="728" y="258" width="300" height="96" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
 <rect x="728" y="258" width="5" height="96" rx="2.5" fill="#FAFF69"/>
-<text x="746" y="284" fill="#EDEDED" font-size="14.5" font-weight="700">07 Break and fix</text>
+<text x="746" y="284" fill="#EDEDED" font-size="14.5" font-weight="700">07 Test, fail, and fix</text>
 <text x="1014" y="284" fill="#FAFF69" font-size="12.5" font-weight="600" text-anchor="end">20 min</text>
 <text x="746" y="310" fill="#B7BCC2" font-size="12.5">inject a fault, diagnose</text>
 <text x="746" y="328" fill="#B7BCC2" font-size="12.5">with the AI SRE, fix it</text>

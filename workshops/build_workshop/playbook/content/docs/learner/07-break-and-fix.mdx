@@ -1,114 +1,111 @@
 ---
-title: 07 Break and fix
-description: Check out a fault branch, watch something break, diagnose it with the AI SRE via ClickStack, and apply the fix.
+title: 07 Test, fail, and fix
+description: Inject a known fault, diagnose it through ClickStack, apply a fix, and prove recovery.
 ---
 
-## Starting point
+## Outcome
 
-This is the only module with a branch switch. From the `app` directory, check out
-fault 01 and rebuild with the observability overlay so the failure shows up in
-telemetry:
+In about **20 minutes**, you will run one incident from failure to verified recovery. This
+continues directly from Module 06a or optional 06b and uses the ClickStack MCP configured
+in Module 00.
+
+## Step 1 — Choose one fault
+
+Start with Fault 01. Fault 02 is a second short exercise; Fault 03 needs a larger dataset
+to fail reliably.
+
+| Branch | Expected failure | Rebuild |
+|---|---|---|
+| `fault/01-map-not-loading` | Map polygons disappear; other cards work | frontend |
+| `fault/02-zone-stats-500` | Zone map data fails with HTTP 500 | backend |
+| `fault/03-slow-dashboard` | Trend request times out; use only with multi-month data | backend |
+
+## Step 2 — Inject and reproduce it
+
+The following example injects Fault 01 while preserving any local work:
 
 ```bash
-git checkout fault/01-map-not-loading
+cd "$(git rev-parse --show-toplevel)"
+git stash push --include-untracked -m "before-module-07"
+git switch main
+git switch fault/01-map-not-loading
+
+cd workshops/build_workshop/app
 docker compose --env-file .env.workshop \
-  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
+  -f docker-compose.workshop.yml \
+  -f docker-compose.otel.yml \
+  up -d --build frontend
 ```
 
-(If you completed optional module 06b, fault 01 is already checked out — just make sure
-the stack was rebuilt with the overlay.)
+Open a fresh browser session at [localhost:8080](http://localhost:8080). **The empty map is
+expected now**; a failure elsewhere is not part of this scenario.
 
-Budget about **20 minutes**.
+If Module 06b already injected Fault 01, skip the branch switch and rebuild only the
+frontend.
 
-Prerequisites: ClickStack telemetry (module 05) and your agent connected to the
-ClickStack MCP with a dashboard and alert (module 06). If you completed optional module
-06b, keep the LibreChat SRE agent open: this lab is where you use it against the fault
-scenarios and verify the fixes.
+## Step 3 — Diagnose from evidence
 
-## Why
-
-This is the incident lab and the direct payoff from modules 06 and 06b. You inject a
-realistic fault, then use everything you built — the telemetry, the dashboard, and your
-MCP-connected editor or LibreChat agent — to find the root cause the way an on-call
-engineer would, with the AI doing the heavy lifting.
-
-## Goal
-
-Diagnose the injected fault from telemetry alone, using your AI SRE, then apply the fix
-and confirm the app recovers.
-
-## Step 1 — Introduce the fault
-
-### fault branch
-
-The fault branch breaks one part of the app. Here is how you know the fault is active
-(observable behavior only — the diagnosis is the exercise):
-
-- `fault/01-map-not-loading` — the zone map stays empty while everything else works.
-
-Check it out (see Starting point) and let the stack run long enough for the symptom to
-surface in the dashboards and in ClickStack.
-
-## Step 2 — Diagnose with the AI SRE
-
-Use the editor agent from module 06 or the LibreChat SRE agent from optional module 06b,
-then describe the symptom, not the cause:
+Give the agent the symptom, not the answer:
 
 ```text
-Something is wrong with the app: users are seeing errors. Using the clickstack MCP, investigate the traces and logs, localize the failure, and tell me the root cause with the evidence.
+Using the clickstack MCP, investigate the current workshop failure.
+Correlate frontend and backend telemetry, identify the root cause, and cite the exact
+events, request, response content type, or trace that supports the conclusion.
+Do not edit code yet.
 ```
 
+For Fault 01, inspect **ClickStack → Client Sessions** as well. The useful evidence is a
+frontend error and failed resource parse; healthy backend traces are also evidence because
+they narrow the blast radius.
 
-Then ask your own follow-up question about blast radius or timeline — this is your open
-step.
+![ClickStack Client Sessions showing the frontend error and replay of the empty map](/screenshots/07-client-session-error.png)
 
-Confirm the fault in the telemetry: open **Client Sessions** in the HyperDX sidebar and
-pick your session. You will see the front-end `console.error`, the failed resource load,
-and a replay of the empty map. The backend dashboard and alert can stay healthy because
-this request never reaches FastAPI.
+Before fixing anything, write down:
 
-![ClickStack Client Sessions: an anonymous session flagged "1 Errors, 92 Events" with a highlighted console.error "ZoneMap: failed to load…" in the event timeline and a session-replay player showing the app with the broken map](/screenshots/07-client-session-error.png)
+- the failing component;
+- the evidence that proves it; and
+- one recovery check that would fail before the fix and pass after it.
 
-*ClickStack → Client Sessions records the browser errors and a replay of the user's session — proof the failure was captured, not just reproduced.*
+## Step 4 — Fix and rebuild
 
-## Step 3 — Apply the fix
-
-### `backend/` or `frontend/`
-
-Once you and the agent agree on the root cause, apply the fix (compare against `build-workshop-v1` if
-you want the reference). Rebuild the affected service:
+Ask the agent to make the smallest change that addresses the proven cause, then rebuild the
+affected service. For Fault 01:
 
 ```bash
-docker compose --env-file .env.workshop -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
-```
-
-You should see the symptom clear in the UI: the map loads again. Verify a fresh browser
-session records no new `ZoneMap` error in Client Sessions; the backend signal is expected
-to remain unchanged, because this fault never reached FastAPI.
-
-## How to verify you are done
-
-- The agent named the correct root cause and cited telemetry as evidence.
-- After the fix, the map renders and a fresh browser session shows no new `ZoneMap` error
-  in Client Sessions.
-
-## Wrap-up
-
-You just ran an incident end to end: detection, AI-assisted diagnosis from telemetry,
-and remediation — on a system you built during the same session.
-
-## End state
-
-The incident is resolved. Preserve your fix for later comparison, return to the complete
-base app, and rebuild it with telemetry still enabled:
-
-```bash
-git stash push --include-untracked -m "module-07-fix"
-git switch build-workshop-v1
 docker compose --env-file .env.workshop \
-  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
+  -f docker-compose.workshop.yml \
+  -f docker-compose.otel.yml \
+  up -d --build frontend
 ```
 
-`git stash push` is safe when there is nothing to save; Git simply reports that there are
-no local changes. Continue to [08 Chat and Langfuse](/docs/learner/08-chat-langfuse) to
-wire and trace the in-app AI experience.
+For Fault 02 or 03, replace `frontend` with `backend`.
+
+Open a new browser session. The original symptom must be gone, and ClickStack must show no
+new matching error. Old incident events remain in the selected time range; compare
+timestamps instead of expecting history to disappear.
+
+## Step 5 — Return to the clean baseline
+
+Preserve your attempted fix, restore `main`, and rebuild both app services:
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+git stash push --include-untracked -m "module-07-fix"
+git switch main
+
+cd workshops/build_workshop/app
+docker compose --env-file .env.workshop \
+  -f docker-compose.workshop.yml \
+  -f docker-compose.otel.yml \
+  up -d --build frontend backend
+```
+
+## Completion check
+
+- The injected symptom appeared before the fix.
+- The agent cited telemetry that proves the root cause.
+- The same recovery check passes after the fix.
+- A fresh session creates no new matching error.
+- `git branch --show-current` returns `main`.
+
+Continue to [08 Chat and Langfuse](/docs/learner/08-chat-langfuse).
