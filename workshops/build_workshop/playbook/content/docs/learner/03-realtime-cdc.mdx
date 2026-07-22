@@ -1,233 +1,172 @@
 ---
 title: 03 Real-time CDC
-description: Create your own Postgres managed by ClickHouse, stream its rows into ClickHouse with a Postgres CDC ClickPipe, and watch the Ops dashboard go live.
+description: Create Postgres and a ClickPipe with clickhousectl, then feed live rows into the taxi table.
 ---
 
-## Starting point
+## Outcome
 
-You are on `build-workshop-v1` — no checkout needed. Budget about **20 minutes**.
+In about **20 minutes**, live trips will flow:
 
-Prerequisites: module 01 complete (Cloud service seeded, back end reading from
-ClickHouse), and the organization API key you created in module 00.
+```text
+Postgres managed by ClickHouse → ClickPipe → default.realtime_trips
+→ materialized view → nyc_tlc_data.taxi_trips → Ops dashboard
+```
 
-## Why
+Prerequisites: Modules 00–02 are complete, and your terminal is in
+`ClickHouse_Demos/workshops/build_workshop/app`.
 
-The Ops dashboard needs fresh data. Rather than build a bespoke pipeline, you use a
-Postgres CDC ClickPipe: it reads the write-ahead log of a Postgres database and
-replicates changes into ClickHouse continuously. Your dashboard goes from static to live
-without any custom ingestion code.
+## Step 1 — Create Postgres
 
-You provision that Postgres yourself, in your own trial org, with `clickhousectl` — a
-**Postgres managed by ClickHouse** instance. That keeps your Postgres and your ClickPipe
-in the same organization, and every managed instance ships CDC-ready
-(`wal_level=logical` with replication slots to spare), so there is nothing to configure
-before the pipe can read it.
-
-## Goal
-
-Your own managed Postgres instance receiving synthetic trips from the data generator,
-and a running Postgres CDC ClickPipe replicating that stream into your ClickHouse Cloud
-service, with the Ops dashboard updating live.
-
-## Step 1 — Create your own Postgres managed by ClickHouse
-
-From the directory where you run `clickhousectl` (the same one you logged in from in
-module 00 — the org API key authenticates this), create a managed Postgres instance.
-Use the **same region as your ClickHouse Cloud service** so the pipe stays in-region:
-
-<Callout title="Not authenticated? Log in with your organization API key">
-  If `clickhousectl` reports that you are not authenticated, return to the `app` directory
-  and log in again with the Key ID and Key secret you created in module 00:
-
-  ```bash
-  chctl cloud auth login --interactive
-  chctl cloud org list
-  ```
-
-  The masked prompt safely replaces stale saved credentials, and `org list` verifies them
-  against the Cloud API. Module 00 also shows the non-interactive `--api-key` /
-  `--api-secret` form for trusted automation.
-</Callout>
+Use the same region as your ClickHouse service:
 
 ```bash
 clickhousectl cloud postgres create \
-  --name my-workshop-pg \
+  --name my-workshop-postgres \
+  --provider aws \
   --region ap-southeast-1 \
   --size c6gd.large \
   --pg-version 17 \
   --ha-type none
 ```
 
-Set `--region` to your ClickHouse service's region. The command returns JSON; two fields
-matter, and the password is shown **only once**:
-
-- the instance **hostname** (ends in `...pg.clickhouse.cloud`)
-- the **one-time admin password** for the `postgres` user
-
-Copy both somewhere safe right now.
-
-<Callout type="warn" title="If you lose the one-time password">
-  It is never shown again. Reset it with
-  `clickhousectl cloud postgres reset-password <service-id>` and use the new one. Do not
-  rely on `postgres get`/`list` to read it back — those beta status APIs can return empty
-  or FORBIDDEN even while the instance itself is healthy.
-</Callout>
-
-## Step 2 — Point the data generator at your instance
-
-<Callout type="warn" title="Give the instance a few minutes to provision first">
-  `clickhousectl cloud postgres create` returns before the instance is ready — provisioning
-  takes **a few minutes**. If you jump straight here and start the generator against an
-  instance that is not accepting connections yet, you will see connection errors. That is
-  expected. Wait a couple of minutes for provisioning to
-  finish first.
-</Callout>
-
-The workshop stack already includes `pg-trip-writer`, the data generator. Put your
-instance's values into `.env.workshop` (in the `app` directory):
+Save the returned **Postgres ID**, **hostname**, and one-time `postgres` password.
 
 ```bash
-PGHOST=<hostname from the create output>
+clickhousectl cloud postgres list
+clickhousectl cloud postgres get <postgres-id>
+```
+
+If the password is lost, create a new one:
+
+```bash
+clickhousectl cloud postgres reset-password <postgres-id>
+```
+
+## Step 2 — Start the trip writer
+
+Put the Postgres values into `.env.workshop`:
+
+```bash
+PGHOST=<managed-postgres-hostname>
 PGPORT=5432
 PGDATABASE=postgres
 PGUSER=postgres
-PGPASSWORD=<one-time password from the create output>
+PGPASSWORD=<one-time-password>
 PGSSLMODE=require
 PG_PUBLICATION=pub_taxi
 ```
 
-Then restart just the generator and watch its log:
+Start the writer and follow its log:
 
 ```bash
+cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d pg-trip-writer
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml logs -f pg-trip-writer
 ```
 
-**The log is your readiness check** — you do not poll any status API. A new instance
-accepts connections within about a minute; until it does, the generator container exits
-and restarts automatically, so a connection error or two at the start is normal. When the
-instance is up you will see, in order:
+Provisioning can take a few minutes. Continue when the log repeats:
 
-```
-[loadgen] connecting: ...pg.clickhouse.cloud:5432 db=postgres user=postgres
+```text
 [loadgen] ensured realtime_trips table exists
 [loadgen] created publication pub_taxi for public.realtime_trips
 [loadgen] inserted 10 trips @ ...
 ```
 
-You should see the log settle into a repeating `[loadgen] inserted 10 trips @ ...` line
-every few seconds - that is your readiness signal.
+Press **Ctrl-C** to stop following the log; the container keeps running.
 
-Because you connect as the instance admin, the generator creates the `realtime_trips`
-table **and** the `pub_taxi` publication for you — no `psql` needed. Once you see rows
-being inserted, your Postgres is live and ready for a ClickPipe.
+## Step 3 — Create the ClickPipe
 
-## Step 3 — Create the Postgres CDC ClickPipe
-
-You can create the pipe two ways. Both produce the same live CDC stream; pick by how you
-prefer to work:
-
-| Console wizard (recommended) | `clickhousectl` CLI |
-| --- | --- |
-| Visual, step-by-step; you see each choice | Scriptable; one command, repeatable |
-| Lets you pin the destination to `nyc_tlc_data` | Lands the destination table in the `default` database |
-| Best for a first pipe and for following along | Best if you are automating or already live in a terminal |
-
-**Rule of thumb:** use the wizard here so you can pin the destination database and watch
-each step; reach for the CLI when you are scripting the same pipe repeatedly.
-
-### Console wizard
-
-Console - **Data sources** -> **Set up a ClickPipe** -> **Postgres CDC**
-
-Fill the connection step with your instance's values and select the source in the
-replication step:
-
-{/* screenshot: clickpipes-wizard-connection */}
-{/* screenshot: clickpipes-wizard-replication */}
-
-- Host: your `PGHOST`   Port: `5432`   Database: `postgres`
-- User: `postgres`   Password: the one-time password
-- Publication: `pub_taxi`
-- Table: `public.realtime_trips`
-
-### `clickhousectl` CLI
-
-Create the same pipe from the command line against your **ClickHouse** service id:
+Replace the ClickHouse service ID and Postgres values:
 
 ```bash
-clickhousectl cloud clickpipe create postgres <your-clickhouse-service-id> \
-  --name taxi-cdc --host "$PGHOST" --port 5432 \
-  --pg-database postgres --username postgres --password '<one-time password>' \
+clickhousectl cloud clickpipe create postgres <clickhouse-service-id> \
+  --name taxi-cdc \
+  --host <managed-postgres-hostname> \
+  --port 5432 \
+  --pg-database postgres \
+  --username postgres \
+  --password '<one-time-password>' \
   --publication-name pub_taxi \
   --replication-mode cdc \
   --table-mapping "public.realtime_trips:realtime_trips"
 ```
 
-As the table above notes, a CLI-created pipe lands its destination table in the `default`
-database (the `--table-mapping` target does not accept a database qualifier), whereas the
-wizard lets you pin the destination to `nyc_tlc_data` in the next step.
+A CLI-created ClickPipe places this target at `default.realtime_trips`. Check its state:
 
-## Step 4 — Accept the destination mapping
-
-The wizard auto-creates the destination table as
-`ENGINE = ReplacingMergeTree(_peerdb_version)` with `_peerdb_synced_at`,
-`_peerdb_is_deleted`, and `_peerdb_version` bookkeeping columns. Pin the destination to
-database `nyc_tlc_data` and keep the source table name, which yields
-`nyc_tlc_data.realtime_trips`.
-
-### `db/cloud/003_cdc_mv.sql`
-
-After the ClickPipe's initial snapshot creates `realtime_trips`, confirm the column
-types and run the CDC materialized view that feeds `taxi_trips`:
-
-```sql
-DESCRIBE nyc_tlc_data.realtime_trips;   -- expect the PeerDB mapping:
-                                        --   timestamptz     -> DateTime64(6)
-                                        --   int2/int4/int8  -> Int16/Int32/Int64
--- Then run db/cloud/003_cdc_mv.sql. It creates realtime_trips_to_taxi_trips_mv, which
--- selects from realtime_trips into taxi_trips WHERE _peerdb_is_deleted = 0. An MV fires
--- per inserted block, so no FINAL is needed; the loadgen is append-only, so no version
--- churn occurs.
+```bash
+clickhousectl cloud clickpipe list <clickhouse-service-id>
+clickhousectl cloud clickpipe get <clickhouse-service-id> <clickpipe-id>
 ```
 
-If you created the pipe with the CLI alternative (Step 3), its destination table is
-`default.realtime_trips` rather than `nyc_tlc_data.realtime_trips`; `003_cdc_mv.sql`
-includes a variant for that source, so run the one matching the table the pipe created.
+Continue when the pipe is running and the initial snapshot has created the target table.
 
-## Step 5 — Watch the Ops dashboard go live
+## Step 4 — Create the CDC materialized view
 
-Open the Ops dashboard at `http://localhost:8080/` and watch counts move as new trips
-flow Postgres -> ClickPipe -> ClickHouse -> dashboard.
+First verify the exact source table:
 
-In the Filters bar, set **Interval** to `1m` and **Auto-refresh** to `5s` so the charts
-redraw every few seconds — that is how you see the new data arriving from the CDC pipeline
-in near real time.
+```bash
+clickhousectl cloud service query --id <clickhouse-service-id> --query "
+  SELECT database, name, engine
+  FROM system.tables
+  WHERE name = 'realtime_trips'
+"
+```
 
-![NYC Taxi Ops (Live) dashboard with Interval set to 1m and Auto-refresh to 5s, its trip, fare, and duration charts filling in from the CDC pipeline](/screenshots/03-ops-dashboard-live.png)
+Expected: `default.realtime_trips`. Now create one incremental materialized view; there is
+no variant to select or file to edit:
 
-*The Ops (Live) dashboard updating from the CDC pipeline with Interval `1m` and Auto-refresh `5s`.*
+```bash
+clickhousectl cloud service query --id <clickhouse-service-id> --query "
+CREATE MATERIALIZED VIEW IF NOT EXISTS nyc_tlc_data.realtime_trips_to_taxi_trips_mv
+TO nyc_tlc_data.taxi_trips
+AS
+SELECT
+  car_type,
+  CAST(vendor_id AS UInt16) AS vendor_id,
+  CAST(pickup_datetime AS DateTime('UTC')) AS pickup_datetime,
+  CAST(dropoff_datetime AS DateTime('UTC')) AS dropoff_datetime,
+  CAST(pickup_location_id AS UInt16) AS pickup_location_id,
+  CAST(dropoff_location_id AS UInt16) AS dropoff_location_id,
+  CAST(passenger_count AS UInt16) AS passenger_count,
+  trip_distance,
+  CAST(payment_type AS UInt16) AS payment_type,
+  fare_amount,
+  tip_amount,
+  total_amount,
+  'realtime_cdc' AS filename
+FROM default.realtime_trips
+WHERE _peerdb_is_deleted = 0
+"
+```
 
-You should see the ClickPipe in the console (Console - **Data sources**) reporting a
-**Running** state, and `SELECT count() FROM nyc_tlc_data.realtime_trips` climbing each
-time you re-run it.
+Use the installed best-practices skill to check the design:
 
-## How to verify you are done
+```text
+Use the ClickHouse best-practices skill to review this incremental materialized view.
+Confirm why it processes inserted blocks and why FINAL is not part of this append-only path.
+```
 
-- The generator log shows your managed instance reachable and the publication ready
-  (`created publication pub_taxi`), followed by `inserted N trips`.
-- The ClickPipe shows an active, replicating state in the console.
-- The destination table row count in ClickHouse increases over time.
+## Step 5 — Prove rows are moving
+
+Run this twice, about 15 seconds apart:
+
+```bash
+clickhousectl cloud service query --id <clickhouse-service-id> --query "
+  SELECT
+    (SELECT count() FROM default.realtime_trips) AS clickpipe_rows,
+    (SELECT count() FROM nyc_tlc_data.taxi_trips
+      WHERE filename = 'realtime_cdc') AS dashboard_rows
+"
+```
+
+Both counts should increase. Then open [localhost:8080](http://localhost:8080), set the
+Ops dashboard interval to `1m` and auto-refresh to `5s`.
+
+## Completion check
+
+- The writer log shows repeated inserts.
+- `clickhousectl cloud clickpipe get ...` reports a running pipe.
+- `default.realtime_trips` and the dashboard-row count both increase.
 - The Ops dashboard updates without a manual refresh.
 
-## Wrap-up
-
-You now have both halves of the data plane on ClickHouse: seeded history from module 01
-and a live CDC stream from this module, sourced from a Postgres you provisioned yourself
-in the same org. The app is fully backed by ClickHouse Cloud.
-
-## End state
-
-Live data is flowing into ClickHouse. Continue to
-[04 ClickHouse Agents](/docs/learner/04-clickhouse-agents) to query it in natural
-language.
+Continue to [04 ClickHouse Agents](/docs/learner/04-clickhouse-agents).

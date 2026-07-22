@@ -106,7 +106,7 @@ def module_flow():
         ("04 ClickHouse Agents", "10 min", "conversational BI", "over your taxi data"),
         ("05 ClickStack", "15 min", "OTel overlay: traces", "+ logs in HyperDX"),
         ("06 AI SRE", "15 min", "agent + ClickStack MCP", "builds dashboard + alert"),
-        ("07 Break and fix", "20 min", "inject a fault, diagnose", "with the AI SRE, fix it"),
+        ("07 Test, fail, and fix", "20 min", "inject a fault, diagnose", "with the AI SRE, fix it"),
         ("08 Chat + Langfuse", "15 min", "in-app AI chat,", "every turn traced"),
         ("09 Wrap-up", "10 min", "running prototype,", "take it home"),
     ]
@@ -121,7 +121,7 @@ def module_flow():
     s += (f'<text x="{gx}" y="{gy+8}" fill="{INK}" font-size="20" font-weight="700">'
           f'ClickHouse BUILD Workshop · Module flow</text>\n')
     s += (f'<text x="{gx}" y="{gy+30}" fill="{SUBINK}" font-size="13">'
-          f'~2h30 hands-on · only module 07 switches from build-workshop-v1 to a fault branch</text>\n')
+          f'~2h30 hands-on · only module 07 switches from main to a fault branch</text>\n')
 
     top = gy + 52
     pos = {}
