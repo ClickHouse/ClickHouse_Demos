@@ -44,14 +44,16 @@ clickhousectl cloud postgres reset-password <postgres-id>
 
 ## Step 2 — Start the trip writer
 
-Put the Postgres values into `.env.workshop`:
+The app starts with the valid local literal `PGHOST=postgres`. In `.env.workshop`,
+replace that value and the local credentials with the values returned by
+`clickhousectl`:
 
 ```bash
-PGHOST=<managed-postgres-hostname>
+PGHOST=replace-with-hostname-from-clickhousectl
 PGPORT=5432
 PGDATABASE=postgres
 PGUSER=postgres
-PGPASSWORD=<one-time-password>
+PGPASSWORD=replace-with-one-time-password
 PGSSLMODE=require
 PG_PUBLICATION=pub_taxi
 ```
