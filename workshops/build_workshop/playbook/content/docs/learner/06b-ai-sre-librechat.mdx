@@ -1,0 +1,137 @@
+---
+title: 06b AI SRE with LibreChat
+description: Optional — run a prebuilt LibreChat SRE agent that investigates telemetry (ClickStack MCP) and source code (GitHub MCP) to root-cause a fault.
+---
+
+## Starting point
+
+Optional module. You are on `main` — no checkout needed yet. Budget about
+**20 minutes**.
+
+Prerequisites: module 05 complete (telemetry flowing into ClickStack), the workshop repo
+cloned locally (you did this in module 00 — you check out a fault branch in Step 4), your
+OpenAI key in `.env.workshop`, and Docker with headroom for a second small stack.
+
+## Why
+
+Module 06a put the agent in your editor. Here you get a **chat-native** SRE agent in
+LibreChat that investigates across two planes at once — your **telemetry** (ClickStack MCP)
+and the **source code** (GitHub MCP) — so it can go from symptom to the exact line of code.
+
+## Step 1 — Bring up LibreChat
+
+This add-on reuses the **same `.env.workshop`** you already filled in.
+Open `app/.env.workshop` and add the values from its **"Module 06b"** section (they are in
+`.env.workshop.example` for reference). `OPENAI_API_KEY` is already there; the LibreChat
+defaults (`LIBRECHAT_PORT`, login, secrets) are pre-filled, so you only need two values:
+- `CLICKSTACK_SERVICE_ID` — your ClickStack **Service ID**. In ClickStack, open
+  **Team Settings** → the **Data** tab → and under **Connections**, the **Default**
+  connection shows a **Service ID** (a UUID like `b96dfec2-44a8-48f7-998f-036a0d16a871`).
+  Copy that value.
+
+![ClickStack Team Settings → Data tab: the Default connection panel showing the Service ID UUID to copy into CLICKSTACK_SERVICE_ID](/screenshots/06b-clickstack-service-id.png)
+
+*Find `CLICKSTACK_SERVICE_ID` in ClickStack → **Team Settings** → **Data** → **Connections** → **Default** → **Service ID**.*
+
+- `GITHUB_PAT` — a **fine-grained, read-only** GitHub PAT scoped to
+  `ClickHouse/ClickHouse_Demos` (github.com → Settings → Developer settings → Fine-grained
+  tokens → read-only Contents on that repo). This is the same repo you cloned in module 00;
+  the GitHub MCP reads its branches from GitHub, so the agent can see the fault-branch source.
+
+Then start it (the command works from any directory inside the clone and LibreChat reads
+`../.env.workshop`):
+
+```bash
+cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app/librechat"
+docker compose --env-file ../.env.workshop -f docker-compose.librechat.yml up -d
+```
+
+Give it a minute, then open [localhost:3090](http://localhost:3090).
+
+<Callout>
+  LibreChat is a second stack (its own MongoDB). It runs in its own compose project, so it
+  never touches the main workshop stack. Stop it any time with
+  `docker compose -f docker-compose.librechat.yml down`.
+</Callout>
+
+## Step 2 — Log in as the default user
+
+There is no signup — a default user is pre-created. Log in with:
+
+- **Email:** `workshop@example.com`
+- **Password:** `clickhouse`
+
+## Step 3 — Import the SRE agent (one time)
+
+Open **Agent Builder** (the agents panel) and **Create New Agent**. Give it a name, paste the
+**Instructions** from `workshops/build_workshop/app/librechat/sre-agent-definition.md`, and
+pick a strong model on the OpenAI endpoint (e.g. `gpt-5.4` / `gpt-5.5` — avoid `-mini`/`-nano`;
+the multi-hop reasoning needs a capable model).
+
+![LibreChat Agent Builder "Create New Agent" form with a name and the SRE instructions pasted into the Instructions box, and an OpenAI model selected](/screenshots/06b-agent-create.png)
+
+Scroll to **MCP Servers** → **Add MCP Server Tools** and add both servers — `clickstack` and
+`github`:
+
+![The MCP Server Tools picker showing the clickstack and github MCP servers, each with an Add button](/screenshots/06b-agent-add-mcp.png)
+
+- **`clickstack`** — on first use, complete the browser OAuth (your ClickHouse Cloud login)
+  so the agent can read your telemetry. This is the redirect that must land back on
+  `localhost:3090`.
+- **`github`** — uses the read-only PAT you put in `.env.workshop`.
+
+Both should now be listed under **MCP Servers** on the agent:
+
+![The agent's MCP Servers section listing both clickstack and github](/screenshots/06b-agent-mcp-attached.png)
+
+**Save** the agent, then open a chat with it and ask "what can you do?" to confirm it is
+wired up — it should describe investigating the NYC Taxi app across ClickStack telemetry
+(`otel.otel_traces` / `otel.otel_logs`) and the `ClickHouse/ClickHouse_Demos` source:
+
+![The saved agent answering "what can you do?", describing symptom confirmation, querying ClickStack telemetry, localizing failures, and reading source from ClickHouse/ClickHouse_Demos](/screenshots/06b-agent-ready.png)
+
+## Step 4 — Break something, then ask the agent
+
+Inject a fault (see [07 Test, fail, and fix](/docs/learner/07-break-and-fix) for the branches),
+for example the map fault, and rebuild the app stack:
+
+```bash
+cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
+git checkout fault/01-map-not-loading
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
+```
+
+Open the app so the failure is exercised (the broken map is recorded by the browser SDK from
+module 05). Then, in LibreChat, ask your SRE agent — you don't even need to name the fault;
+let it localize from the telemetry:
+
+```text
+User reports there are some UI errors. Can you check and find the root cause? Is this a code bug?
+```
+
+The agent confirms the symptom in ClickStack (the `nyc-taxi-frontend` `console.error` and the
+failing `/static/taxi_zones.geojson` fetch that returns `text/html` instead of JSON), then
+reads the source via the GitHub MCP and pinpoints the offending code in
+`frontend/src/ui/ZoneMap.tsx` — with the fix.
+
+![The SRE agent in LibreChat answering the UI-errors prompt: "Root cause: frontend code bug — ZoneMap.tsx fetches /static/taxi_zones.geojson but the file is served at /taxi_zones.geojson", with an evidence chain (console.error, the 200 text/html resource fetch) built from the clickstack + github tools](/screenshots/06b-fault01-agent-diagnosis.png)
+
+## How to verify you are done
+
+- LibreChat is reachable at `localhost:3090` and you logged in without signing up.
+- The SRE agent has both `clickstack` and `github` tools attached and authorized.
+- For a checked-out fault, the agent names the correct root cause **and** cites the source
+  file/line on that branch as evidence.
+
+## Wrap-up
+
+You now have a chat-native SRE agent that reasons across telemetry and code — the same
+pattern teams use to shorten incident triage. Leave fault 01 checked out: module 07 picks
+up this same incident and completes the workflow — confirm it in ClickStack, apply the
+fix, and watch the app recover.
+
+## End state
+
+The LibreChat SRE agent is ready to investigate fault scenarios and verify their fixes.
+Continue directly to [07 Test, fail, and fix](/docs/learner/07-break-and-fix) to turn this
+diagnosis into the full incident workflow: confirm, fix, and verify recovery.

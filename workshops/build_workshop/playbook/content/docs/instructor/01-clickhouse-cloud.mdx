@@ -1,0 +1,39 @@
+---
+title: 01 ClickHouse Cloud
+description: Instructor notes for module 01 — timing, talk track, common failures, and reset steps.
+---
+
+Facilitator companion to the learner lesson
+[01 ClickHouse Cloud](/docs/learner/01-clickhouse-cloud).
+
+## Timing
+
+About 15 minutes. The seed-from-object-storage step is fire-and-wait; start it and
+keep talking while it loads.
+
+## Talk track
+
+- This is the first "wow" and the first time the dashboards show data at all: the
+  Historical dashboard, backed by the freshly seeded ~3M-row ClickHouse table, returns
+  wide-range aggregations in well under a second.
+- Explain why ClickHouse is fast on this shape of query (columnar, `ORDER BY`-aligned
+  scans) at a level matched to the room.
+- TODO: expand.
+
+## Common failures
+
+- Attendee did not copy the service password (shown once); they must reset it in the
+  console.
+- Wrong `CLICKHOUSE_HOST` (they pasted a full URL with scheme/port instead of the bare
+  hostname). `CLICKHOUSE_PORT=8443` and `CLICKHOUSE_SECURE=true` are separate.
+- Seed load fails on object-storage access; confirm the public TLC URL.
+- Dry-run reference: schema + one-month seed applied in ~12s and produced 265 zones /
+  ~3.17M trips. Before the seed runs the app renders **empty, not errored** (the not-seeded
+  state is handled), so an empty dashboard here is expected, not a failure. Confirmed in the 2026-07 clean-room dry run.
+
+## Reset steps
+
+- Re-issue the service password from the console and re-fill `.env.workshop`, then
+  restart: `docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d`.
+- Re-copy the complete schema command from
+  [learner Module 01, Step 2](/docs/learner/01-clickhouse-cloud); it is idempotent.

@@ -1,0 +1,206 @@
+---
+title: Troubleshooting
+description: A symptom, cause, and fix reference for every failure seen while building and testing this workshop, grouped by where it surfaces.
+---
+
+Every entry below is a failure that actually happened while building and testing this
+workshop. Find your symptom, read the why, apply the fix. If nothing here matches, hand
+the problem to your coding agent - the [self-paced guide](/docs/learner/self-paced#your-coding-agent-is-your-instructor)
+has a ready-to-paste prompt that turns it into your instructor.
+
+## Docker
+
+### Containers stick in "Created" and never start
+
+- **Symptom** - `docker info` answers fine, but `docker compose ... up` leaves containers
+  in `Created` and nothing ever becomes healthy.
+- **Why** - the Docker engine is wedged: the daemon responds, yet it cannot actually start
+  a container. Seen with OrbStack during a live bring-up.
+- **Fix** - restart your Docker engine (Docker Desktop, OrbStack, or Colima) and wait until
+  it reports Running, then bring the stack up again. From anywhere inside the cloned
+  repository, run
+  `cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app" && ./preflight.sh`;
+  it catches this before you start the stack by running a throwaway container as a test.
+
+### "port is already allocated" on up
+
+- **Symptom** - `docker compose ... up` fails with `Bind for 0.0.0.0:8080 failed: port is
+  already allocated` (or `:8000`, `:5432`).
+- **Why** - another process, or an old workshop container, already holds that host port.
+- **Fix** - from anywhere inside the cloned repository, run
+  `cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app" && ./preflight.sh`.
+  It names what is holding the port and prints the exact override to set, following the
+  base-port + 20000 convention, for example
+  `set FRONTEND_HOST_PORT=28080 in .env.workshop`. The override vars are
+  `FRONTEND_HOST_PORT`, `BACKEND_HOST_PORT`, `POSTGRES_HOST_PORT`, and for the observability
+  overlay `OTEL_GRPC_HOST_PORT` / `OTEL_HTTP_HOST_PORT`. Set the suggested value, re-run
+  preflight, then start the stack. Only the host ports move; the in-container ports are
+  unchanged, so this is safe.
+
+### "platform does not match" warning
+
+- **Symptom** - Docker prints a platform-mismatch warning (for example `linux/amd64` vs
+  `linux/arm64`) on pull or up.
+- **Why** - an image was built for a different CPU architecture than your machine, common
+  on Apple Silicon.
+- **Fix** - harmless. It is a warning, not a failure; the image runs under emulation. Let
+  it proceed.
+
+## ClickHouse Cloud
+
+### First request after idle is slow or 500s once
+
+- **Symptom** - the first query or dashboard load after the service has been idle is slow,
+  or a request 500s once and then works.
+- **Why** - a Cloud service idle-scales to zero and takes about 30 seconds to wake; the
+  first request pays that wake cost. The back end already allows a longer first-connect
+  timeout and retries once.
+- **Fix** - just retry, or wait about 30 seconds. This is not a fault. It also matters in
+  [07 Test, fail, and fix](/docs/learner/07-break-and-fix): a waking service makes the fault 03
+  timeout fire more readily.
+
+### Lost the service password
+
+- **Symptom** - you did not save the `default`-user password and cannot find it.
+- **Why** - the service password is not shown again after you leave the creation flow.
+- **Fix** - open the service, go to its **Settings** and reset the `default`-user password,
+  then update `CLICKHOUSE_PASSWORD` in `.env.workshop`. The host is always available from
+  the **Connect** modal.
+
+### Lost the managed-Postgres password
+
+- **Symptom** - you did not save the one-time `postgres` admin password from
+  `clickhousectl cloud postgres create`.
+- **Why** - it is shown only once, and the beta `postgres get` / `list` APIs can return
+  empty or FORBIDDEN even while the instance is healthy.
+- **Fix** - `clickhousectl cloud postgres reset-password <service-id>`, then use the new
+  password in `.env.workshop` (`PGPASSWORD`) and in the ClickPipe connection.
+
+### ClickHouse Cloud unreachable
+
+- **Symptom** - preflight FAILs the connectivity check, or the back end cannot connect;
+  `curl https://<host>:8443/ping` fails.
+- **Why** - wifi, VPN, or firewall; a wrong host (a scheme or port pasted into
+  `CLICKHOUSE_HOST`); a TLS or port mismatch; or a Cloud IP-access-list blocking your IP.
+- **Fix** - confirm `CLICKHOUSE_HOST` is the bare hostname (no `https://`, no port),
+  `CLICKHOUSE_PORT=8443`, and `CLICKHOUSE_SECURE=true`; check VPN and firewall; confirm the
+  service's IP access list allows your address. Preflight names the specific failure - DNS,
+  refused, timeout, or TLS handshake.
+
+## CDC (module 03)
+
+### ClickPipe stuck in "Provisioning"
+
+- **Symptom** - the pipe shows Provisioning for a while after you create it.
+- **Why** - normal startup. A pipe takes about 2 to 3 minutes to go Provisioning ->
+  Running for a small table.
+- **Fix** - wait 2 to 3 minutes. Confirm state in the console or with
+  `clickhousectl cloud clickpipe list`.
+
+### Rows are not arriving in ClickHouse
+
+- **Symptom** - the pipe is Running but the destination row count is not growing and the
+  Ops dashboard does not move.
+- **Why** - the default sync interval is about 60 seconds, so expect lag; or the generator
+  is not inserting; or the publication the pipe reads does not exist.
+- **Fix** - wait at least 60 seconds. Check the `pg-trip-writer` log shows `inserted N
+  trips` and either `created publication pub_taxi` (your own instance) or `publication ...
+  already exists` (shared fallback). Confirm the pipe state is Running. If the publication
+  is missing, the pipe has nothing to read - the generator creates it on first run against
+  an instance where you are admin.
+
+### Materialized view has no rows
+
+- **Symptom** - `realtime_trips` fills, but `taxi_trips` (fed by the CDC materialized view)
+  stays empty.
+- **Why** - the materialized view was created before the ClickPipe target existed, or it
+  does not read the CLI target at `default.realtime_trips`.
+- **Fix** - wait for the target table, then copy the complete materialized-view command
+  from [Module 03, Step 4](/docs/learner/03-realtime-cdc). Verify the source first:
+
+  ```bash
+  clickhousectl cloud service query --id <clickhouse-service-id> --query "
+    SELECT database, name, engine
+    FROM system.tables
+    WHERE name = 'realtime_trips'
+  "
+  ```
+
+  A materialized view processes rows inserted after it exists; keep the trip writer
+  running after creation.
+
+### Replication slot stalls
+
+- **Symptom** - the pipe stalls and WAL grows on the source Postgres.
+- **Why** - a stalled slot retains WAL; a resync creates a new slot.
+- **Fix** - on your own managed Postgres (one slot, ample headroom) just resync the pipe
+  from the console. Deleting a pipe drops its slot on the source. The shared fallback pool
+  is an instructor-side concern - see `infra/README.md`.
+
+## Environment variables
+
+### A shell export overrides .env.workshop
+
+- **Symptom** - you set a value in `.env.workshop`, but the container uses a different one
+  (often a stale `OPENAI_API_KEY`, a `LANGFUSE_*`, or `CLICKHOUSE_PASSWORD`).
+- **Why** - `docker compose` interpolates `${VAR}` from your shell first, and an exported
+  shell variable WINS over the file.
+- **Fix** - in the shell you run compose from,
+  `unset OPENAI_API_KEY LANGFUSE_PUBLIC_KEY LANGFUSE_SECRET_KEY LANGFUSE_BASE_URL CLICKHOUSE_PASSWORD`,
+  then bring the stack up again. Preflight warns when it detects this.
+
+### Duplicate keys in .env.workshop
+
+- **Symptom** - a value you set in the file is ignored.
+- **Why** - the same key appears twice; the last occurrence wins, matching `docker compose`
+  semantics (preflight reads it the same way).
+- **Fix** - remove the earlier duplicate so only the intended value remains.
+
+## Chat (module 08)
+
+### POST /api/chat returns 503 with a setup hint
+
+- **Symptom** - the chat panel shows a setup hint and `/api/chat` returns 503; the rest of
+  the app is fine.
+- **Why** - no `OPENAI_API_KEY` is set on the back end.
+- **Fix** - add `OPENAI_API_KEY` to `.env.workshop`, then
+  `docker compose --env-file .env.workshop -f docker-compose.workshop.yml
+  -f docker-compose.otel.yml up -d --build backend`.
+  Chat is the only feature that needs it.
+
+### Cannot create a first OpenAI key
+
+- **Symptom** - OpenAI will not issue an API key on a new account.
+- **Why** - new accounts require one-time phone verification and have no free credits.
+- **Fix** - complete phone verification, then **Settings -> Billing**: add a payment method
+  and buy the **$5** minimum of prepaid credit. Turn **off auto-recharge** (it is on by
+  default during setup) so you are never billed beyond the $5 you added.
+
+## MCP and OAuth (modules 00 and 06)
+
+### 401 on the MCP endpoint
+
+- **Symptom** - hitting `https://mcp.clickhouse.cloud/mcp` (or `/clickstack`) returns 401.
+- **Why** - expected before you complete the browser OAuth flow; the endpoint is
+  authenticated.
+- **Fix** - add the server to your agent, then run the OAuth flow and authorize in the
+  browser, using your tool's command:
+  - **Claude Code** - run `/mcp`, select the server, and authorize (or `claude mcp login <name>`).
+  - **Codex CLI** - `codex mcp login <name>`.
+  - **Cursor** - open the MCP settings pane and click the server's authorize/login control.
+
+  Also confirm the **Connect with MCP** toggle is on for your service.
+
+### Corporate laptop blocks MCP or OAuth
+
+- **Symptom** - your agent cannot add an MCP server, or the OAuth redirect is blocked.
+- **Why** - a managed-laptop policy blocks adding MCP servers or outbound OAuth.
+- **Fix** - a personal machine is the fastest fallback.
+
+### Windsurf cannot connect over native HTTP
+
+- **Symptom** - Windsurf fails to connect to the MCP endpoint, or its OAuth is flaky.
+- **Why** - Windsurf connects through `mcp-remote` rather than native streamable HTTP.
+- **Fix** - use the `mcp-remote` command form:
+  `{ "command": "npx", "args": ["-y", "mcp-remote", "https://mcp.clickhouse.cloud/mcp"] }`
+  (swap `/mcp` for `/clickstack` when wiring the ClickStack MCP in module 06).

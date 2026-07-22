@@ -1,0 +1,69 @@
+---
+title: 03 Real-time CDC
+description: Instructor notes for module 03 — timing, talk track, common failures, and reset steps.
+---
+
+Facilitator companion to the learner lesson
+[03 Real-time CDC](/docs/learner/03-realtime-cdc).
+
+## Timing
+
+About 20 minutes. A managed Postgres instance accepts connections within about a minute
+of `clickhousectl cloud postgres create`, so participants can provision it and fill their
+env while you narrate CDC. The ClickPipe then takes a couple of minutes to snapshot and
+begin streaming; account for it.
+
+## Talk track
+
+- Each participant creates their OWN Postgres managed by ClickHouse in their trial org —
+  there is no shared instance on the primary path. One participant needs exactly one
+  replication slot, and every managed instance ships `wal_level=logical` with 10 slots by
+  default, so the "raise max_replication_slots" gate simply does not apply to them.
+- Their Postgres and ClickPipe live in the same org and are both created with
+  `clickhousectl`; no console-wizard fork is required.
+- Explain CDC at a high level (reads the write-ahead log) and why destination tables carry
+  `_peerdb_*` bookkeeping columns; the MV filters `_peerdb_is_deleted = 0`.
+- Point out that the generator's own log is the readiness signal — the app is the probe;
+  they never poll a status API (the beta `postgres get`/`list` calls can return empty or
+  FORBIDDEN even on a healthy instance).
+
+## Common failures
+
+- **Lost the one-time password.** It is shown only once by `create`. Reset it:
+  `clickhousectl cloud postgres reset-password <service-id>`, then update `.env.workshop`
+  and restart the generator.
+- **Generator logs connection errors at first.** The instance is still provisioning; the
+  container exits and restarts automatically, so it self-heals within about a minute. Only
+  investigate if errors persist past a couple of minutes.
+- **ClickPipe cannot connect.** Usually a wrong host or password, or `PGSSLMODE` not set to
+  `require` (managed Postgres mandates TLS).
+- **Region mismatch.** Cross-region Postgres-to-ClickHouse works but adds latency; steer
+  participants to create the Postgres in the same region as their ClickHouse service.
+- **Data generator not started**, so nothing appears to move — check `pg-trip-writer` is
+  up and its log shows `inserted N trips`.
+- **Pipe create fails with `BAD_REQUEST: table realtime_trips exists and is not empty`.**
+  Only on a **re-run/reset**, not a fresh participant: deleting a ClickPipe drops the
+  source replication slot but leaves its destination table behind, and the CLI refuses to
+  reuse a non-empty one. Drop the leftover first, then recreate the pipe:
+  `DROP TABLE IF EXISTS default.realtime_trips;`. Confirmed in the dry run.
+- **Managed Postgres unavailable in the org** (beta availability varies) — this is the one
+  case that falls back to the shared instructor pool; see below.
+
+## Fallback: shared instructor Postgres
+
+If a participant's org cannot create a managed Postgres, hand them a shared-Postgres slip.
+The shared pool (and the slot/sender caveats that come with it at 30+ scale) is
+provisioned and documented in `infra/README.md`. On the shared path the table and
+publication are pre-created, so the generator log shows `publication ... already exists`
+rather than creating one — that is expected, not an error.
+
+## Reset steps
+
+- Delete and recreate the ClickPipe with the commands in learner Module 03.
+- Restart the data generator:
+  `docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d pg-trip-writer`
+  (turn it off with `--scale pg-trip-writer=0`).
+- Reset a lost Postgres password with `clickhousectl cloud postgres reset-password`.
+- After the event, participants delete their ClickPipe (module 09); a participant's
+  managed Postgres is theirs to delete from the console or with
+  `clickhousectl cloud postgres delete <service-id>`.

@@ -1,0 +1,27 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+clickhouse-connect==0.8.15
+pydantic==2.10.4
+pydantic-settings==2.7.0
+# AI chat (NL-to-SQL) + observability. langfuse.openai is a drop-in wrapper around openai.
+# Langfuse v4 SDK (requires Python >=3.10 and Pydantic v2, both satisfied here).
+openai==2.45.0
+langfuse>=4.14,<5
+
+# OpenTelemetry instrumentation for ClickStack. We use the VANILLA OTel distro
+# rather than the ClickStack docs' hyperdx-opentelemetry package: that package
+# hard-pins opentelemetry-api==1.30.0, which conflicts with the Langfuse SDK v4
+# used by the chat feature (Langfuse requires opentelemetry-api>=1.33.1). The
+# ClickStack collector accepts standard OTLP, so vanilla behaves identically.
+# All four are pinned to one consistent release line (core 1.43.0 /
+# instrumentation 0.64b0). opentelemetry-distro provides the opentelemetry-bootstrap
+# and opentelemetry-instrument entry points, and `opentelemetry-bootstrap -a install`
+# (run in the Dockerfile) adds any remaining auto-detected instrumentations at the
+# same line. FastAPI + logging instrumentation are pinned explicitly so traces and
+# log correlation are deterministic. Import-guarded in app/observability.py, so the
+# app still runs if these are absent.
+opentelemetry-distro==0.64b0
+opentelemetry-exporter-otlp==1.43.0
+opentelemetry-instrumentation-fastapi==0.64b0
+opentelemetry-instrumentation-logging==0.64b0
+

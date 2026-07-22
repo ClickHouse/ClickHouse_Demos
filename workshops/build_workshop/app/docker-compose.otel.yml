@@ -1,0 +1,116 @@
+# ClickStack observability OVERLAY.
+#
+# This file is NOT standalone. It layers on top of docker-compose.workshop.yml
+# (which defines the `backend`, `frontend`, `pg-trip-writer` services) and:
+#   - adds a ClickStack OpenTelemetry collector that forwards traces + logs to
+#     the participant's ClickHouse Cloud service,
+#   - turns on OpenTelemetry in the backend and points it at that collector,
+#   - (optional, `--profile container-logs`) adds a second collector that scrapes
+#     raw Docker container stdout so non-instrumented services (e.g. the loadgen)
+#     also land in HyperDX.
+#
+# Usage (all vars, including the OTel additions OTLP_AUTH_TOKEN / CLICKSTACK_DATABASE /
+# OTEL_SERVICE_NAME / LOG_LEVEL, live in the single .env.workshop — see the
+# "ClickStack observability" section of .env.workshop.example):
+#
+#   docker compose --env-file .env.workshop \
+#     -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d
+#
+# Add raw container-log scraping (optional, see VERIFY-LIVE notes in OBSERVABILITY.md):
+#   ... -f docker-compose.otel.yml --profile container-logs up -d
+#
+# See OBSERVABILITY.md for the full env var table and how to verify in HyperDX.
+
+services:
+  # ClickStack OTel collector. Receives OTLP from the backend and writes to the
+  # participant's ClickHouse Cloud service. CLICKHOUSE_ENDPOINT is assembled from
+  # the same CLICKHOUSE_HOST/PORT used by the app so there is one source of truth.
+  otel-collector:
+    image: clickhouse/clickstack-otel-collector:latest
+    container_name: nyc-taxi-workshop-otel-collector
+    restart: unless-stopped
+    environment:
+      - CLICKHOUSE_ENDPOINT=https://${CLICKHOUSE_HOST:-}:${CLICKHOUSE_PORT:-8443}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
+      # Arbitrary shared secret. Clients must send it back (see backend
+      # OTEL_EXPORTER_OTLP_HEADERS below). Leave empty to disable OTLP auth.
+      - OTLP_AUTH_TOKEN=${OTLP_AUTH_TOKEN:-}
+      # Target database for ClickStack's own otel_* tables (distinct from the
+      # app's data database, CLICKHOUSE_DATABASE=nyc_tlc_data).
+      - HYPERDX_OTEL_EXPORTER_CLICKHOUSE_DATABASE=${CLICKSTACK_DATABASE:-otel}
+      # Merge a custom config on top of the image's baked-in pipelines. This
+      # redirects the image's `metrics/promql` pipeline (a Prometheus remote-write
+      # fan-out we never use) to a no-op exporter, silencing the repeating
+      # "prometheusremotewrite ... context deadline exceeded" error. Metrics still
+      # reach ClickHouse via the primary `metrics` pipeline. See main.config.yaml.
+      - CUSTOM_OTELCOL_CONFIG_FILE=/etc/otelcol-contrib/main.config.yaml
+    volumes:
+      - ./otel-collector/main.config.yaml:/etc/otelcol-contrib/main.config.yaml:ro
+    ports:
+      # Host mappings are only needed if you send OTLP from the host; the backend
+      # reaches the collector in-network at http://otel-collector:4318.
+      - "${OTEL_GRPC_HOST_PORT:-4317}:4317"
+      - "${OTEL_HTTP_HOST_PORT:-4318}:4318"
+
+  # Additive overlay onto the workshop `backend`: enable OpenTelemetry and point
+  # it at the collector. Only env keys are added here; the service body comes
+  # from docker-compose.workshop.yml.
+  backend:
+    depends_on:
+      - otel-collector
+    environment:
+      - OTEL_ENABLED=true
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-nyc-taxi-backend}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      # We target the 4318 (HTTP) port, so force the HTTP/protobuf protocol
+      # rather than the OTLP default of gRPC.
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      # VERIFY-LIVE: sends the collector's OTLP_AUTH_TOKEN back as the
+      # `authorization` header. The exact header name/format the collector
+      # expects is not spelled out in the docs; confirm against a live service.
+      - OTEL_EXPORTER_OTLP_HEADERS=authorization=${OTLP_AUTH_TOKEN:-}
+      # Export app logs over OTLP (in addition to stdout, which the container-logs
+      # collector can scrape).
+      - OTEL_LOGS_EXPORTER=otlp
+      # REQUIRED for logs to actually flow. OTEL_LOGS_EXPORTER=otlp only wires up the
+      # exporter; opentelemetry-instrument attaches the stdlib-logging OTLP handler to
+      # the root logger ONLY when this is true. Without it, otel_logs stays empty while
+      # traces/metrics work (observability.py preserves the handler once it exists).
+      - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+
+  # Additive overlay onto the workshop `frontend`: bake the ClickStack browser SDK
+  # config into the build so it captures frontend UI errors, console, network, and
+  # session replay. These are BUILD args (Vite inlines them), so enabling this
+  # requires a rebuild -- bring the overlay up with `up -d --build`. The browser
+  # runs on the host, so it reaches the collector at localhost:<OTEL_HTTP_HOST_PORT>
+  # and authenticates with the same OTLP_AUTH_TOKEN the backend uses.
+  frontend:
+    build:
+      args:
+        - VITE_HYPERDX_URL=http://localhost:${OTEL_HTTP_HOST_PORT:-4318}
+        - VITE_HYPERDX_API_KEY=${OTLP_AUTH_TOKEN:-}
+        - VITE_HYPERDX_SERVICE=${OTEL_FRONTEND_SERVICE_NAME:-nyc-taxi-frontend}
+
+  # OPTIONAL (profile: container-logs). A second collector that tails raw Docker
+  # container stdout/stderr and ships it through the base `clickhouse` exporter,
+  # capturing services that are NOT OTel-instrumented (loadgen, postgres, ...).
+  # It does not publish OTLP host ports, so it never conflicts with the main
+  # collector. See the VERIFY-LIVE notes in custom.config.yaml / OBSERVABILITY.md.
+  otel-collector-container-logs:
+    image: clickhouse/clickstack-otel-collector:latest
+    container_name: nyc-taxi-workshop-otel-collector-logs
+    profiles: ["container-logs"]
+    restart: unless-stopped
+    environment:
+      - CLICKHOUSE_ENDPOINT=https://${CLICKHOUSE_HOST:-}:${CLICKHOUSE_PORT:-8443}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
+      - HYPERDX_OTEL_EXPORTER_CLICKHOUSE_DATABASE=${CLICKSTACK_DATABASE:-otel}
+      - CUSTOM_OTELCOL_CONFIG_FILE=/etc/otelcol-contrib/custom.config.yaml
+    volumes:
+      - ./otel-collector/custom.config.yaml:/etc/otelcol-contrib/custom.config.yaml:ro
+      # Raw Docker container logs. VERIFY-LIVE: path is host/runtime dependent
+      # and may not be mountable on Docker Desktop (daemon runs in a VM).
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro

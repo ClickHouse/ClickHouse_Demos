@@ -1,0 +1,37 @@
+# Custom ClickStack collector config: scrape raw Docker container stdout/stderr
+# and ship it through the base `clickhouse` exporter.
+#
+# Per the ClickStack docs, a custom config only DEFINES new receivers,
+# processors and pipelines. The base processors (`memory_limiter`, `batch`) and
+# the `clickhouse` exporter already exist in the image and are referenced by name.
+#
+# VERIFY-LIVE (both items inferred from the documented /var/log/**/*.log filelog
+# example, not from an official docker-json example):
+#   1. Host path /var/lib/docker/containers/*/*-json.log. On Docker Desktop
+#      (macOS/Windows) the daemon runs inside a VM and this host path may not be
+#      directly mountable; confirm on the workshop's runtime (Linux hosts are fine).
+#   2. The json line shape below ({"log","stream","time"}) is the json-file log
+#      driver format. Confirm the daemon uses the json-file driver.
+#
+# Timestamp parsing is intentionally omitted so a layout mismatch can't drop
+# logs; the collector uses observed (ingestion) time. To parse the real event
+# time, add a `timestamp:` block to the json_parser using attributes.time.
+receivers:
+  filelog/docker:
+    include:
+      - /var/lib/docker/containers/*/*-json.log
+    start_at: end
+    operators:
+      # Docker json-file lines look like:
+      #   {"log":"...\n","stream":"stdout","time":"2024-01-01T00:00:00.000000000Z"}
+      - type: json_parser
+      - type: move
+        from: attributes.log
+        to: body
+
+service:
+  pipelines:
+    logs/docker:
+      receivers: [filelog/docker]
+      processors: [memory_limiter, batch]
+      exporters: [clickhouse]
