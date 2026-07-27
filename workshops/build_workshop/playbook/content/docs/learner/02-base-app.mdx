@@ -5,7 +5,8 @@ description: Tour the running NYC-taxi app, now that ClickHouse is seeded, so yo
 
 ## Starting point
 
-You are on `main` (cloned in module 00) — no checkout needed. Budget about **5 minutes**.
+You are on `build-workshop-v1` (selected in Module 00) — no checkout needed. Budget
+about **5 minutes**.
 The workshop stack you started in module 00 should still be running.
 
 Prerequisites: modules 00 and 01 complete (the stack healthy, ClickHouse seeded), the
@@ -35,6 +36,12 @@ stays empty for now — the live view fills in only once you stream real-time ro
 in module 03. The historical data you seeded in module 01 shows up on the Historical
 dashboard next.
 
+The screenshot below shows the Ops dashboard with the **Use sample window** button
+applied, so you can see the layout populated with seeded data — by default it opens on the
+live (today) window, which stays empty until you start CDC in module 03.
+
+![The NYC Taxi Ops (Live) dashboard: the Filters card set to the July 2022 sample window, the "Act 1 — What's happening now?" chart of trips, fare, and p50/p95 duration, and the Top pickup zones bar chart](/screenshots/02-ops-dashboard.png)
+
 ## Step 2 — Open the Historical dashboard
 
 ### `frontend/`
@@ -43,6 +50,8 @@ Open `http://localhost:8080/historical`. This dashboard is built for large-range
 aggregations and drilldowns over historical trip data — and it now renders, because you
 seeded a month of trips into ClickHouse Cloud in module 01. Try a wide date range over
 that month and the filter controls, and watch the queries come back in well under a second.
+
+![The Historical Metrics dashboard over a full-year 2022 window: the Filters card, the KPI Timeseries chart of trips by month, and the day-of-week by hour Seasonality heatmap](/screenshots/02-historical-dashboard.png)
 
 ## Step 3 — Find the chat panel and trace the data flow
 

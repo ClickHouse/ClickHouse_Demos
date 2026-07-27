@@ -4,6 +4,7 @@ import maplibregl from "maplibre-gl";
 
 import { api } from "../api/client";
 import type { HistoricalFilters } from "./HistoricalFilterBar";
+import { applyDarkBasemap, choroplethFill, ZONE_OUTLINE_COLOR } from "./mapTheme";
 
 type Props = { filters: HistoricalFilters };
 
@@ -90,6 +91,8 @@ export function HistoricalZoneMap({ filters }: Props) {
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
 
     map.on("load", () => {
+      applyDarkBasemap(map);
+
       map.addSource("zones", {
         type: "geojson",
         data: choroplethGeojson ?? { type: "FeatureCollection", features: [] }
@@ -100,20 +103,8 @@ export function HistoricalZoneMap({ filters }: Props) {
         type: "fill",
         source: "zones",
         paint: {
-          "fill-color": [
-            "step",
-            ["get", "value"],
-            "#fff7bc",
-            breaks[0],
-            "#fec44f",
-            breaks[1],
-            "#fe9929",
-            breaks[2],
-            "#ec7014",
-            breaks[3],
-            "#cc4c02"
-          ],
-          "fill-opacity": 0.65
+          "fill-color": choroplethFill(breaks),
+          "fill-opacity": 0.8
         }
       });
 
@@ -121,7 +112,7 @@ export function HistoricalZoneMap({ filters }: Props) {
         id: "zones-outline",
         type: "line",
         source: "zones",
-        paint: { "line-color": "#0b1f3a", "line-width": 0.6, "line-opacity": 0.55 }
+        paint: { "line-color": ZONE_OUTLINE_COLOR, "line-width": 0.5, "line-opacity": 0.25 }
       });
 
       map.on("mousemove", "zones-fill", (e) => {
@@ -134,9 +125,9 @@ export function HistoricalZoneMap({ filters }: Props) {
         (map as any).__popup
           .setLngLat(e.lngLat)
           .setHTML(
-            `<div style="font-weight:600">${props.zone ?? "Zone"}</div>
-             <div style="color:#666">${props.borough ?? ""}</div>
-             <div style="margin-top:4px"><span style="color:#666">Value:</span> ${Number(value).toLocaleString()}</div>`
+            `<div style="font-weight:600;color:#fff">${props.zone ?? "Zone"}</div>
+             <div style="color:#9a9ea7">${props.borough ?? ""}</div>
+             <div style="margin-top:4px"><span style="color:#9a9ea7">Value:</span> <span style="color:#faff69">${Number(value).toLocaleString()}</span></div>`
           )
           .addTo(map);
       });
@@ -161,19 +152,7 @@ export function HistoricalZoneMap({ filters }: Props) {
     if (!src || !choroplethGeojson) return;
     src.setData(choroplethGeojson as any);
     if (map.getLayer("zones-fill")) {
-      map.setPaintProperty("zones-fill", "fill-color", [
-        "step",
-        ["get", "value"],
-        "#fff7bc",
-        breaks[0],
-        "#fec44f",
-        breaks[1],
-        "#fe9929",
-        breaks[2],
-        "#ec7014",
-        breaks[3],
-        "#cc4c02"
-      ]);
+      map.setPaintProperty("zones-fill", "fill-color", choroplethFill(breaks));
     }
   }, [choroplethGeojson, breaks]);
 

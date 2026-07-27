@@ -6,9 +6,11 @@ with ClickPipes, conversational BI with ClickHouse Agents, observability with Cl
 (including an AI-built SRE dashboard), a break-and-fix incident lab diagnosed by an AI
 SRE, and an in-app AI chat traced to Langfuse Cloud.
 
-Learners clone `main`. Maintainers create a feature branch, open a PR to protected `dev`,
-verify [dev-workshop.demohouse.cloud](https://dev-workshop.demohouse.cloud), then promote
-`dev` to protected `main` for [workshop.demohouse.cloud](https://workshop.demohouse.cloud).
+Learners clone the repository, then switch to `build-workshop-v1`. Maintainers create a
+feature branch, open a PR to protected `dev-build-workshop-v1`, verify
+[dev-workshop.demohouse.cloud](https://dev-workshop.demohouse.cloud), then promote
+`dev-build-workshop-v1` to protected `build-workshop-v1` for
+[workshop.demohouse.cloud](https://workshop.demohouse.cloud).
 
 ## Architecture
 
@@ -80,7 +82,7 @@ flowchart LR
   M07 -.->|pick one or more| F["fault/01-map-not-loading<br/>fault/02-zone-stats-500<br/>fault/03-slow-dashboard"]
 ```
 
-Every module except 07 stays on `main`; the only branch switches are the
+Every module except 07 stays on `build-workshop-v1`; the only branch switches are the
 fault branches in module 07.
 
 ### How a trip row flows (live CDC path)
@@ -111,7 +113,7 @@ flowchart LR
   OTEL --> HDX2["HyperDX UI<br/>search, traces, dashboards"]
   SRE["coding agent via ClickStack MCP<br/>clickstack_search, save_dashboard,<br/>save_alert"] -.-> OTEL
   FAULT["module 07: git checkout fault/*<br/>a realistic bug ships"] --> APP
-  SRE -->|diagnose from telemetry| FIX["apply the fix,<br/>return to main"]
+  SRE -->|diagnose from telemetry| FIX["apply the fix,<br/>return to build-workshop-v1"]
 ```
 
 ## Layout
@@ -125,7 +127,7 @@ flowchart LR
 
 ## Fault branches (module 07, break and fix)
 
-Kept current with `main`, each differs from the base by one innocent-looking
+Kept current with `build-workshop-v1`, each differs from the base by one innocent-looking
 change touching one file under `app/`:
 
 - `fault/01-map-not-loading`
@@ -139,8 +141,10 @@ deliberately not documented in this directory.
 ## Quick start (participant)
 
 ```bash
-git clone -b main <this-repo>
-cd ClickHouse_Demos/workshops/build_workshop/app
+git clone <this-repo>
+cd ClickHouse_Demos
+git switch build-workshop-v1
+cd workshops/build_workshop/app
 cp .env.workshop.example .env.workshop   # fill in your ClickHouse Cloud values
 ./preflight.sh                           # must print "Overall: READY"
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
