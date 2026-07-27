@@ -32,17 +32,25 @@ python3 --version
   ask your administrator if the OAuth step in Step 7 cannot open.
 </Callout>
 
-## Step 2 — Clone `main` and enter the app directory
+## Step 2 — Clone the repo and switch to the workshop branch
 
 ```bash
-git clone --branch main https://github.com/ClickHouse/ClickHouse_Demos.git
-cd ClickHouse_Demos/workshops/build_workshop/app
+git clone https://github.com/ClickHouse/ClickHouse_Demos.git
+cd ClickHouse_Demos
+git switch build-workshop-v1
+cd workshops/build_workshop/app
 cp .env.workshop.example .env.workshop
 ```
 
 Keep this terminal in `ClickHouse_Demos/workshops/build_workshop/app`. The preflight script
-is `./preflight.sh` **inside this directory**. Stay on `main` except during Module 07 fault
-tests.
+is `./preflight.sh` **inside this directory**. Stay on `build-workshop-v1` except during
+Module 07 fault tests. Confirm the branch now:
+
+```bash
+git branch --show-current
+```
+
+Expected: `build-workshop-v1`.
 
 ## Step 3 — Create a ClickHouse Cloud account and API key
 
