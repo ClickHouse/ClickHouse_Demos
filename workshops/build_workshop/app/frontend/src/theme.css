@@ -1,0 +1,304 @@
+/*
+  ClickHouse Click UI dark theme for the NYC Taxi Ops app.
+
+  Imported after Bootstrap in main.tsx. Rather than rewrite components, this
+  maps the Click UI token palette onto Bootstrap 5.3's CSS variables and adds
+  a thin polish layer (app shell, panels, states). Colors mirror
+  ClickHouse/click-ui src/theme/tokens/variables.dark.ts.
+*/
+
+:root {
+  /* Click UI dark palette */
+  --ch-bg: #131312;
+  --ch-surface: #1f1f1c;   /* cards / panels */
+  --ch-surface-2: #282828; /* inputs / raised */
+  --ch-surface-3: #2f2f2c; /* hover */
+  --ch-border: #323232;
+  --ch-border-strong: #414141;
+  --ch-text: #e6e7e9;
+  --ch-text-strong: #ffffff;
+  --ch-muted: #9a9ea7;
+  --ch-muted-2: #b3b6bd;
+
+  --ch-accent: #faff69;      /* ClickHouse yellow */
+  --ch-accent-strong: #eef400;
+  --ch-amber: #ffc300;
+  --ch-blue: #6d9bf3;
+  --ch-cyan: #00cbeb;
+  --ch-green: #33ff44;
+  --ch-orange: #ff7729;
+  --ch-red: #ff5353;
+
+  --ch-radius: 10px;
+  --ch-radius-sm: 7px;
+  --ch-shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 12px 28px -18px rgba(0, 0, 0, 0.8);
+  --ch-font: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --ch-mono: "SFMono Regular", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ---- Map Click UI tokens onto Bootstrap variables ---- */
+:root,
+[data-bs-theme="dark"] {
+  --bs-body-bg: var(--ch-bg);
+  --bs-body-color: var(--ch-text);
+  --bs-body-font-family: var(--ch-font);
+  --bs-emphasis-color: var(--ch-text-strong);
+  --bs-secondary-color: var(--ch-muted);
+  --bs-tertiary-color: var(--ch-muted);
+  --bs-border-color: var(--ch-border);
+  --bs-border-color-translucent: var(--ch-border);
+  --bs-link-color: var(--ch-blue);
+  --bs-link-color-rgb: 109, 155, 243;
+  --bs-link-hover-color: #9dbcf8;
+  --bs-code-color: var(--ch-accent);
+  --bs-heading-color: var(--ch-text-strong);
+  --bs-secondary-bg: var(--ch-surface-2);
+  --bs-tertiary-bg: var(--ch-surface);
+  --bs-emphasis-color-rgb: 255, 255, 255;
+}
+
+body {
+  background-color: var(--ch-bg);
+  color: var(--ch-text);
+  font-family: var(--ch-font);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  color: var(--ch-text-strong);
+  letter-spacing: -0.01em;
+}
+.text-secondary { color: var(--ch-muted) !important; }
+::selection { background: rgba(250, 255, 105, 0.28); color: #fff; }
+
+/* ---- App shell ---- */
+.app-main { padding: 0 clamp(16px, 3vw, 40px) 48px; max-width: 1600px; margin: 0 auto; }
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px clamp(16px, 3vw, 40px);
+  max-width: 1600px;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--ch-border);
+}
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand-logo { height: 20px; width: auto; display: block; flex: none; color: var(--ch-text-strong); }
+.brand-name { font-weight: 700; color: var(--ch-text-strong); letter-spacing: -0.02em; }
+.brand-sep { color: var(--ch-border-strong); }
+.app-name { font-weight: 600; color: var(--ch-text); }
+.app-badge {
+  font-family: var(--ch-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ch-accent); border: 1px solid var(--ch-border-strong);
+  padding: 3px 8px; border-radius: 100px; white-space: nowrap;
+}
+
+.app-nav { display: flex; align-items: center; gap: 6px; }
+.app-nav .tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-radius: 8px;
+  color: var(--ch-muted-2); text-decoration: none; font-weight: 500; font-size: 14px;
+  border: 1px solid transparent; transition: background-color .15s, color .15s, border-color .15s;
+}
+.app-nav .tab:hover { background: var(--ch-surface-2); color: var(--ch-text); }
+.app-nav .tab.active { background: var(--ch-surface-2); color: var(--ch-text-strong); border-color: var(--ch-border-strong); }
+.app-nav .tab.active .live-dot { box-shadow: 0 0 0 0 rgba(51, 255, 68, 0.5); }
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--ch-green);
+  animation: livepulse 2s ease-out infinite;
+}
+@keyframes livepulse {
+  0% { box-shadow: 0 0 0 0 rgba(51, 255, 68, 0.45); }
+  70% { box-shadow: 0 0 0 6px rgba(51, 255, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(51, 255, 68, 0); }
+}
+.app-nav .ghost-link {
+  color: var(--ch-muted); text-decoration: none; font-size: 13px; padding: 7px 12px; margin-left: 4px;
+  border-radius: 8px; border: 1px solid var(--ch-border);
+}
+.app-nav .ghost-link:hover { color: var(--ch-text); border-color: var(--ch-border-strong); }
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+
+/* ---- Cards / panels ---- */
+.card {
+  --bs-card-bg: var(--ch-surface);
+  --bs-card-color: var(--ch-text);
+  --bs-card-border-color: var(--ch-border);
+  --bs-card-border-radius: var(--ch-radius);
+  --bs-card-inner-border-radius: calc(var(--ch-radius) - 1px);
+  --bs-card-cap-bg: transparent;
+  box-shadow: var(--ch-shadow);
+  transition: border-color .15s ease;
+}
+.card:hover { border-color: var(--ch-border-strong); }
+.card.shadow { box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.85) !important; }
+
+/* Panel title: the "h5 + subtitle" header pattern used across the dashboards */
+.card-body > .d-flex > .h5,
+.card-body > .h5 { font-size: 0.98rem; font-weight: 650; }
+.card-body > .d-flex > .h5::before,
+.card-body > .h5.panel-title::before {
+  content: ""; display: inline-block; width: 3px; height: 0.9em;
+  background: var(--ch-accent); border-radius: 2px; margin-right: 9px; vertical-align: -1px;
+}
+
+/* ---- Tables ---- */
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--ch-text);
+  --bs-table-border-color: var(--ch-border);
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.025);
+  --bs-table-striped-color: var(--ch-text);
+  --bs-table-hover-bg: rgba(250, 255, 105, 0.06);
+  --bs-table-hover-color: var(--ch-text-strong);
+  font-size: 0.9rem;
+}
+.table > thead th {
+  color: var(--ch-muted);
+  font-weight: 600; font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase;
+  border-bottom: 1px solid var(--ch-border-strong);
+  background: transparent;
+}
+.table > :not(caption) > * > * { border-bottom-color: var(--ch-border); }
+
+/* ---- Forms ---- */
+.form-label { color: var(--ch-muted-2); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.02em; }
+.form-control, .form-select {
+  --bs-body-bg: var(--ch-surface-2);
+  background-color: var(--ch-surface-2);
+  border-color: var(--ch-border-strong);
+  color: var(--ch-text);
+  border-radius: var(--ch-radius-sm);
+}
+.form-control::placeholder { color: #6b6f77; }
+.form-control:focus, .form-select:focus {
+  background-color: var(--ch-surface-2);
+  border-color: var(--ch-accent);
+  color: var(--ch-text);
+  box-shadow: 0 0 0 3px rgba(250, 255, 105, 0.18);
+}
+.form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%239a9ea7' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+.form-check-input {
+  background-color: var(--ch-surface-2);
+  border-color: var(--ch-border-strong);
+}
+.form-check-input:checked {
+  background-color: var(--ch-accent);
+  border-color: var(--ch-accent);
+}
+.form-check-input:focus { border-color: var(--ch-accent); box-shadow: 0 0 0 3px rgba(250, 255, 105, 0.18); }
+
+/* ---- Buttons ---- */
+.btn { --bs-btn-border-radius: var(--ch-radius-sm); font-weight: 550; }
+.btn-primary {
+  --bs-btn-bg: var(--ch-accent);
+  --bs-btn-border-color: var(--ch-accent);
+  --bs-btn-color: #14130f;
+  --bs-btn-hover-bg: var(--ch-accent-strong);
+  --bs-btn-hover-border-color: var(--ch-accent-strong);
+  --bs-btn-hover-color: #14130f;
+  --bs-btn-active-bg: var(--ch-accent-strong);
+  --bs-btn-active-color: #14130f;
+  --bs-btn-disabled-bg: #5c5f2b;
+  --bs-btn-disabled-border-color: #5c5f2b;
+  --bs-btn-disabled-color: rgba(20, 19, 15, 0.6);
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--ch-accent);
+  --bs-btn-border-color: var(--ch-border-strong);
+  --bs-btn-hover-bg: rgba(250, 255, 105, 0.12);
+  --bs-btn-hover-border-color: var(--ch-accent);
+  --bs-btn-hover-color: var(--ch-accent);
+  --bs-btn-active-bg: rgba(250, 255, 105, 0.16);
+  --bs-btn-active-color: var(--ch-accent);
+}
+.btn-outline-secondary {
+  --bs-btn-color: var(--ch-muted-2);
+  --bs-btn-border-color: var(--ch-border-strong);
+  --bs-btn-hover-bg: var(--ch-surface-3);
+  --bs-btn-hover-border-color: var(--ch-border-strong);
+  --bs-btn-hover-color: var(--ch-text-strong);
+  --bs-btn-active-bg: var(--ch-surface-3);
+  --bs-btn-active-color: var(--ch-text-strong);
+}
+.btn:focus-visible { box-shadow: 0 0 0 3px rgba(250, 255, 105, 0.35); }
+.btn-close { filter: invert(1) grayscale(1) brightness(1.6); opacity: 0.6; }
+.btn-close:hover { opacity: 1; }
+
+/* ---- Nav pills (fallback if any remain) ---- */
+.nav-pills {
+  --bs-nav-pills-link-active-bg: var(--ch-surface-2);
+  --bs-nav-pills-link-active-color: var(--ch-text-strong);
+  --bs-nav-link-color: var(--ch-muted-2);
+  --bs-nav-link-hover-color: var(--ch-text);
+}
+
+/* ---- Badges ---- */
+.badge.text-bg-primary, .badge.bg-primary { background-color: var(--ch-accent) !important; color: #14130f !important; }
+.badge.text-bg-secondary, .badge.bg-secondary { background-color: var(--ch-surface-3) !important; color: var(--ch-text) !important; }
+
+/* ---- Alerts ---- */
+.alert-danger {
+  --bs-alert-bg: rgba(255, 83, 83, 0.1);
+  --bs-alert-border-color: rgba(255, 83, 83, 0.35);
+  --bs-alert-color: #ffb3b3;
+}
+.alert-warning {
+  --bs-alert-bg: rgba(255, 119, 41, 0.1);
+  --bs-alert-border-color: rgba(255, 119, 41, 0.35);
+  --bs-alert-color: #ffb88f;
+}
+.alert-info {
+  --bs-alert-bg: rgba(67, 126, 239, 0.1);
+  --bs-alert-border-color: rgba(67, 126, 239, 0.35);
+  --bs-alert-color: #a9c4fb;
+}
+
+/* ---- Bootstrap utility bg overrides used inside ChatPanel ---- */
+.bg-light { background-color: var(--ch-surface-2) !important; color: var(--ch-text) !important; }
+.bg-light.border { border-color: var(--ch-border) !important; }
+.bg-dark { background-color: #0e0e0d !important; }
+/* user chat bubble: bg-primary text-white would be white-on-yellow — force dark ink */
+.bg-primary { background-color: var(--ch-accent) !important; }
+.bg-primary.text-white { color: #14130f !important; }
+pre.bg-dark.text-light { color: #e6e7e9 !important; border: 1px solid var(--ch-border); font-family: var(--ch-mono); font-size: 0.8rem; }
+
+/* ---- Spinner / loading ---- */
+.spinner-border, .spinner-grow { color: var(--ch-accent); }
+.text-danger { color: var(--ch-red) !important; }
+
+/* ---- MapLibre dark polish ---- */
+.maplibregl-popup-content {
+  background: var(--ch-surface); color: var(--ch-text);
+  border: 1px solid var(--ch-border-strong); border-radius: var(--ch-radius-sm);
+  box-shadow: 0 12px 28px -14px rgba(0, 0, 0, 0.85); font-family: var(--ch-font); font-size: 12px;
+}
+.maplibregl-popup-tip { border-top-color: var(--ch-surface) !important; border-bottom-color: var(--ch-surface) !important; }
+.maplibregl-ctrl-group { background: var(--ch-surface); border: 1px solid var(--ch-border); }
+.maplibregl-ctrl-group button + button { border-top: 1px solid var(--ch-border); }
+.maplibregl-ctrl button .maplibregl-ctrl-icon { filter: invert(0.85); }
+.maplibregl-ctrl-attrib { background: rgba(19, 19, 18, 0.7) !important; }
+.maplibregl-ctrl-attrib a { color: var(--ch-muted); }
+
+/* ---- Scrollbars ---- */
+* { scrollbar-width: thin; scrollbar-color: var(--ch-border-strong) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--ch-border-strong); border-radius: 6px; border: 2px solid var(--ch-bg); }
+*::-webkit-scrollbar-thumb:hover { background: #53575f; }
+
+/* ---- Error fallback (main.tsx) ---- */
+.app-error { min-height: 60vh; display: grid; place-items: center; padding: 40px; }
+.app-error-card {
+  max-width: 520px; background: var(--ch-surface); border: 1px solid var(--ch-border);
+  border-left: 3px solid var(--ch-red); border-radius: var(--ch-radius); padding: 24px 26px;
+  box-shadow: var(--ch-shadow);
+}
+.app-error-card .title { color: var(--ch-text-strong); font-weight: 650; font-size: 1.1rem; }
+.app-error-card .detail { color: var(--ch-muted); font-family: var(--ch-mono); font-size: 0.82rem; margin-top: 8px; word-break: break-word; }
