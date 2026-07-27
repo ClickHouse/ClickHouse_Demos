@@ -5,8 +5,8 @@ description: Create a ClickHouse Agent over your taxi data and explore it conver
 
 ## Starting point
 
-You are on `build-workshop-v1` — no checkout needed. Budget about **10 minutes**. This module is
-entirely in the ClickHouse Cloud console; there is nothing to run locally.
+You are on `build-workshop-v1` — no checkout needed. Budget about **10 minutes**. This
+module is entirely in the ClickHouse Cloud console; there is nothing to run locally.
 
 Prerequisites: modules 01 and 03 complete (seeded history plus a live CDC stream in your
 Cloud service).
@@ -33,16 +33,16 @@ Two entry points, both using your existing ClickHouse Cloud identity:
 
 *Find ClickHouse Agents in the left sidebar of the Cloud console (or go directly to ai.clickhouse.cloud).*
 
-<Callout>
-  ClickHouse Agents is in beta, available to all Cloud customers, and Claude-powered.
-  Expect the UI to keep evolving.
-</Callout>
-
 ## Step 2 — Create an agent over your taxi data
 
 Click **Create New Agent**, give it a **Name**, **Instructions** (for example: answer
-questions about the NYC taxi data in `nyc_tlc_data`), and pick a **Model**, then start
-chatting. The agent introspects your schema so its SQL is grounded.
+questions about the NYC taxi data in `nyc_tlc_data`), and pick a **Model**.
+
+Add a tool called **ClickHouse** and confirm it shows as **Connected** — this is what
+lets the agent introspect your schema and run SQL against your service. Without a
+connected ClickHouse tool the agent has nothing to query.
+
+Then start chatting. The agent introspects your schema so its SQL is grounded.
 
 ## Step 3 — Explore conversationally
 
@@ -58,10 +58,22 @@ You should see the agent return a written answer with the generated SQL shown al
 it, and its numbers should line up with what the Historical dashboard shows for the same
 period.
 
+## Step 4 — Cross-check through the ClickHouse MCP
+
+Use the connection from Module 00 to verify one number independently:
+
+```text
+Use the clickhouse-cloud MCP to run the generated SELECT as read-only SQL. Compare its
+result with the ClickHouse Agent answer and report any difference.
+```
+
+The values should match. If they do not, compare filters and time ranges before accepting
+the natural-language answer.
+
 ## How to verify you are done
 
 - Your agent answers a question over the taxi data and shows the generated SQL.
-- The answer is consistent with what the dashboards show.
+- The ClickHouse MCP cross-check returns the same result.
 
 ## Wrap-up
 

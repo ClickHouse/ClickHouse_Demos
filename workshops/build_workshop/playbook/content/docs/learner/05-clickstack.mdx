@@ -5,9 +5,9 @@ description: Enable ClickStack, run the local OpenTelemetry collector overlay, a
 
 ## Starting point
 
-You are on `build-workshop-v1` — no checkout needed. Budget about **15 minutes**. The app is already
-instrumented for OpenTelemetry on `build-workshop-v1`; in this module you turn it on with the collector
-overlay.
+You are on `build-workshop-v1` — no checkout needed. Budget about **15 minutes**. The app
+is already instrumented for OpenTelemetry; in this module you turn it on with the
+collector overlay.
 
 Prerequisites: your Cloud service running (module 01).
 
@@ -20,9 +20,8 @@ produces telemetry you can query.
 
 ## Goal
 
-App traces flowing into ClickStack and visible in HyperDX, with at least one end-to-end
-request trace you can open. Traces are the signal you verify here; application logs are
-available via `docker compose ... logs` and the optional container-logs profile.
+App traces and backend query logs flowing into ClickStack, with at least one end-to-end
+request trace and a visible stream of successful query records.
 
 ## Step 1 — Enable Managed ClickStack on your service
 
@@ -33,21 +32,37 @@ them there. Enable it in the console:
 Console - your service -> **ClickStack** -> **Start Ingestion** -> skip the collector
 step (the app ships its own collector in Step 2) -> **Launch ClickStack**
 
-That single-signs you on into HyperDX.
+That single-signs you on into HyperDX. (The UI is empty at this point — telemetry starts
+flowing once the collector overlay is running in Step 2.)
 
-![HyperDX Search view showing nyc-taxi-backend traces — a live list of GET /api/health and POST spans with timestamp, service, and duration columns](/screenshots/05-hyperdx-traces.png)
-
-*HyperDX rendering the app's traces: the `nyc-taxi-backend` service with its `/api/...` request spans.*
+<Callout title="Managed ClickStack: what diverges from the classic setup">
+  - The back end uses vanilla OpenTelemetry, not the convenience
+    `hyperdx-opentelemetry` package the ClickStack docs suggest. That package hard-pins
+    `opentelemetry-api==1.30.0`, which conflicts with the Langfuse v4 SDK the chat
+    feature uses (needs `opentelemetry-api>=1.33.1`) — the two cannot share one
+    environment. The ClickStack collector ingests standard OTLP, so the vanilla distro
+    behaves identically; the workshop just sets the exporter env vars itself.
+  - ClickStack's telemetry lives in a separate database on your service
+    (`CLICKSTACK_DATABASE=otel`), distinct from the app's data database
+    (`CLICKHOUSE_DATABASE=nyc_tlc_data`).
+  - Traces and backend Python logs flow over OTLP from the auto-instrumented back end.
+    The optional `--profile container-logs` collector is only for non-instrumented
+    services such as the trip writer; its Linux Docker log path may not be available on
+    Docker Desktop.
+</Callout>
 
 ## Step 2 — Run the OpenTelemetry collector overlay
 
 <Callout title="Check the collector ports first">
   The collector publishes OTLP on host ports **4317** and **4318**, which are commonly
-  already in use. If `./preflight.sh` in module 00 WARNed on them, set
+  already in use. If `./preflight.sh` in `ClickHouse_Demos/workshops/build_workshop/app`
+  WARNed on them in module 00, set
   `OTEL_GRPC_HOST_PORT` and `OTEL_HTTP_HOST_PORT` in `.env.workshop` to the values
   preflight suggests (for example `24317` / `24318`) before starting the overlay. The
-  back end reaches the collector in-network, so remapping the host ports is safe. Re-run
-  `./preflight.sh` to confirm the ports are clear.
+  back end reaches the collector in-network, so remapping the host ports is safe. From
+  anywhere inside the cloned repository, re-run
+  `cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app" && ./preflight.sh`
+  to confirm the ports are clear.
 </Callout>
 
 ### `.env.workshop` and `docker-compose.otel.yml`
@@ -68,7 +83,7 @@ in your `.env.workshop`:
 OTLP_AUTH_TOKEN=change-me-workshop-token   # shared secret securing OTLP ingest
 CLICKSTACK_DATABASE=otel                   # ClickStack's own otel_* tables
 OTEL_SERVICE_NAME=nyc-taxi-backend         # the service name shown in HyperDX
-LOG_LEVEL=INFO
+LOG_LEVEL=DEBUG                            # show successful queries in Log source
 ```
 
 The collector reuses `CLICKHOUSE_HOST` / `CLICKHOUSE_PORT` / `CLICKHOUSE_USER` /
@@ -76,30 +91,41 @@ The collector reuses `CLICKHOUSE_HOST` / `CLICKHOUSE_PORT` / `CLICKHOUSE_USER` /
 `http://otel-collector:4318` (HTTP/protobuf). To also scrape raw container stdout on a
 Linux host, add `--profile container-logs`.
 
-## Step 3 — Generate and find traffic in HyperDX
+## Step 3 — Generate and find traffic in ClickStack
 
-Click around both dashboards to generate requests, then open HyperDX and find the
-resulting traces. Follow one request end to end (front end -> back end -> ClickHouse).
-(Application logs are not in HyperDX in this setup; read them with `docker compose ...
-logs backend`.)
+Open the Ops dashboard and leave its default `1m` interval and `5s` auto-refresh running
+for about 30 seconds. Then open ClickStack:
+
+1. In **Traces**, follow one request end to end (front end -> back end -> ClickHouse).
+2. In **Logs**, select `nyc-taxi-backend` and find repeated
+   `ClickHouse query ok` records. Their timestamps should advance every refresh.
+3. Keep severity meaningful: successful queries are `DEBUG`; real idle-wake retries and
+   failures appear as `WARNING` or `ERROR`.
 
 You should see a service named `nyc-taxi-backend` appear in HyperDX, with `/api/...`
 requests showing as traces, each carrying a child `clickhouse.query` span.
+
+![HyperDX Search view showing nyc-taxi-backend traces — a live list of GET /api/health and POST spans with timestamp, service, and duration columns](/screenshots/05-hyperdx-traces.png)
+
+*HyperDX rendering the app's traces: the `nyc-taxi-backend` service with its `/api/...` request spans.*
 
 ## How to verify you are done
 
 - A service named `nyc-taxi-backend` appears in HyperDX.
 - Requests to `/api/...` show as traces, each with a child `clickhouse.query` span
   carrying `db.statement`, `db.elapsed_ms`, and `db.rows_returned`.
+- The Log source shows fresh `DEBUG ... ClickHouse query ok` records while the Ops
+  dashboard remains open.
 - You will not see query errors here yet: a healthy, seeded app does not trip the safety
   limits, and 4xx requests never reach ClickHouse. In module 07 the injected fault makes
   an errored `clickhouse.query` span (with `error.category`) observable.
 
 ## Wrap-up
 
-The app is now observable: its behavior is recorded as traces in ClickHouse and
-explorable in HyperDX (with logs available via `docker compose ... logs` and the
-container-logs profile). That telemetry is the substrate for the AI SRE work next.
+The app is now observable: traces and backend query logs are recorded in ClickHouse and
+explorable in ClickStack. The optional container-logs profile adds stdout from the trip
+writer on compatible Linux hosts. That telemetry is the substrate for the AI SRE work
+next.
 
 ## End state
 

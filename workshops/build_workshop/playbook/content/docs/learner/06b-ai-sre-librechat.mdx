@@ -92,7 +92,7 @@ wired up — it should describe investigating the NYC Taxi app across ClickStack
 
 ## Step 4 — Break something, then ask the agent
 
-Inject a fault (see [07 Break and fix](/docs/learner/07-break-and-fix) for the branches),
+Inject a fault (see [07 Test, fail, and fix](/docs/learner/07-break-and-fix) for the branches),
 for example the map fault, and rebuild the app stack:
 
 ```bash
@@ -126,12 +126,12 @@ reads the source via the GitHub MCP and pinpoints the offending code in
 ## Wrap-up
 
 You now have a chat-native SRE agent that reasons across telemetry and code — the same
-pattern teams use to shorten incident triage. Leave fault 01 checked out: module 07 switches
-to fault 02 so you can apply the same workflow to a new incident instead of repeating this
-diagnosis.
+pattern teams use to shorten incident triage. Leave fault 01 checked out: module 07 picks
+up this same incident and completes the workflow — confirm it in ClickStack, apply the
+fix, and watch the app recover.
 
 ## End state
 
 The LibreChat SRE agent is ready to investigate fault scenarios and verify their fixes.
-Continue directly to [07 Break and fix](/docs/learner/07-break-and-fix), select fault 02,
-and turn this first diagnosis into a repeatable test-and-remediate workflow.
+Continue directly to [07 Test, fail, and fix](/docs/learner/07-break-and-fix) to turn this
+diagnosis into the full incident workflow: confirm, fix, and verify recovery.
