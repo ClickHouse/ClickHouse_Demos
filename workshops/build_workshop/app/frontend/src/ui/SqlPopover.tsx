@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 type Props = {
   /** Inlined, runnable SQL from the response `meta`. When empty the affordance is hidden. */
@@ -14,8 +14,11 @@ type Props = {
 // absolutely positioned relative to the trigger.
 export function SqlPopover({ sql, align = "end" }: Props) {
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">("idle");
   const rootRef = useRef<HTMLSpanElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const copyRef = useRef<HTMLButtonElement | null>(null);
+  const dialogId = useId();
 
   // Close on outside-click / Escape while open.
   useEffect(() => {
@@ -24,7 +27,10 @@ export function SqlPopover({ sql, align = "end" }: Props) {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
     };
     document.addEventListener("mousedown", onPointer);
     document.addEventListener("keydown", onKey);
@@ -34,11 +40,17 @@ export function SqlPopover({ sql, align = "end" }: Props) {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (open) copyRef.current?.focus();
+  }, [open]);
+
   if (!sql) return null;
 
   const copy = async () => {
+    let copied = false;
     try {
       await navigator.clipboard.writeText(sql);
+      copied = true;
     } catch {
       // clipboard API unavailable (rare on localhost/https) — fall back to execCommand.
       const ta = document.createElement("textarea");
@@ -48,32 +60,36 @@ export function SqlPopover({ sql, align = "end" }: Props) {
       document.body.appendChild(ta);
       ta.select();
       try {
-        document.execCommand("copy");
+        copied = document.execCommand("copy");
       } catch {
         /* give up silently; the SQL is still visible to copy manually */
       }
       document.body.removeChild(ta);
     }
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+    setCopyStatus(copied ? "success" : "error");
+    window.setTimeout(() => setCopyStatus("idle"), 1500);
   };
 
   return (
     <span ref={rootRef} style={{ position: "relative", display: "inline-block", lineHeight: 0 }}>
       <button
+        ref={triggerRef}
         type="button"
         className="btn btn-sm btn-outline-secondary"
         title="Show the SQL that powered this panel"
         aria-label="Show SQL"
+        aria-haspopup="dialog"
+        aria-controls={dialogId}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        style={{ padding: "1px 7px", fontFamily: "monospace", fontSize: 12, lineHeight: 1.4, opacity: 0.85 }}
+        style={{ minWidth: 44, minHeight: 44, padding: "0 8px", fontFamily: "monospace", fontSize: 12, lineHeight: 1.4, opacity: 0.85 }}
       >
         &lt;/&gt;
       </button>
 
       {open ? (
         <div
+          id={dialogId}
           className="shadow"
           role="dialog"
           aria-label="Executed SQL"
@@ -92,8 +108,8 @@ export function SqlPopover({ sql, align = "end" }: Props) {
         >
           <div className="d-flex justify-content-between align-items-center mb-2">
             <span style={{ color: "#9a9ea7", fontSize: 12, fontWeight: 600 }}>Executed SQL</span>
-            <button type="button" className="btn btn-sm btn-primary py-0 px-2" onClick={copy}>
-              {copied ? "Copied ✓" : "Copy"}
+            <button ref={copyRef} type="button" className="btn btn-sm btn-primary py-0 px-2" onClick={copy} aria-live="polite">
+              {copyStatus === "success" ? "Copied ✓" : copyStatus === "error" ? "Copy failed" : "Copy"}
             </button>
           </div>
           <pre

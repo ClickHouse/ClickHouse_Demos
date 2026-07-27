@@ -265,7 +265,7 @@ jobs:
           SITE_URL: ${{ steps.target.outputs.url }}
         run: |
           set -euo pipefail
-          for path in / /docs/learner/00-setup /docs/learner/07-break-and-fix /docs/learner/08-chat-langfuse; do
+          for path in / /build-workshop /rta-mini/index.html /docs/learner/00-setup /docs/learner/07-break-and-fix /docs/learner/08-chat-langfuse; do
             curl --fail --show-error --silent --retry 12 --retry-delay 5 \
               --output /dev/null "${SITE_URL}${path}"
           done

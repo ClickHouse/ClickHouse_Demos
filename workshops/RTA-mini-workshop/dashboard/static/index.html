@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClickHouse Forex Live Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img class="ch-logo" src="/static/clickhouse-logo-black.png" alt="ClickHouse">
+      <div>
+        <h1>Forex Live Dashboard</h1>
+        <span class="tag">Powered by ClickHouse Cloud</span>
+      </div>
+    </div>
+    <div class="latency" id="latency" title="ClickHouse query time for the current view">
+      <div class="big"><b id="lat-ms">—</b> ms</div>
+      <div class="sub">
+        <div id="lat-label">query time</div>
+        <div><span class="rows" id="lat-rows">—</span> rows scanned</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="banner" id="banner"></div>
+
+    <section class="controls">
+      <div class="field">
+        <label for="pair">Currency pair</label>
+        <select id="pair"></select>
+      </div>
+      <div class="field">
+        <label for="start">From</label>
+        <input type="date" id="start">
+      </div>
+      <div class="field">
+        <label for="end">To</label>
+        <input type="date" id="end">
+      </div>
+      <div class="field">
+        <label>Granularity</label>
+        <div class="toggle" id="bucket">
+          <button data-bucket="day" class="on">Day</button>
+          <button data-bucket="hour">Hour</button>
+        </div>
+      </div>
+      <div class="field" style="flex:1">
+        <label>Quick ranges</label>
+        <div class="presets" id="presets">
+          <button data-preset="month">Full month</button>
+          <button data-preset="week">First week</button>
+          <button data-preset="day">Single day</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="kpis" id="kpis">
+      <div class="kpi"><div class="k-label">Ticks in view</div><div class="k-value" id="kpi-ticks">—</div></div>
+      <div class="kpi"><div class="k-label">Last bid</div><div class="k-value" id="kpi-last">—</div></div>
+      <div class="kpi"><div class="k-label">Range low / high</div><div class="k-value" id="kpi-range">—</div></div>
+      <div class="kpi"><div class="k-label">Median spread</div><div class="k-value" id="kpi-median">—</div></div>
+      <div class="kpi"><div class="k-label">99th-pct spread</div><div class="k-value" id="kpi-p99">—</div></div>
+    </section>
+
+    <section class="card">
+      <h2 id="chart-title">Price &amp; volume</h2>
+      <p class="hint">Drag on the chart to zoom, scroll to pan. Change a filter above and watch the query time.</p>
+      <div id="chart"></div>
+    </section>
+  </main>
+
+  <footer>ClickHouse &middot; Real-Time Market Analytics mini workshop &middot; dashboard</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
