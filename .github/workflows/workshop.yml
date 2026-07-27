@@ -274,9 +274,40 @@ jobs:
           SITE_URL: ${{ steps.target.outputs.url }}
         run: |
           set -euo pipefail
+
+          probe_route() {
+            local path=$1
+            local attempt result status redirect
+
+            for attempt in $(seq 1 12); do
+              result=$(curl --show-error --silent \
+                --connect-timeout 10 \
+                --max-time 30 \
+                --output /dev/null \
+                --write-out $'%{http_code}\t%{redirect_url}' \
+                "${SITE_URL}${path}" || true)
+              status=${result%%$'\t'*}
+              redirect=${result#*$'\t'}
+
+              if [[ "${status}" == "200" && -z "${redirect}" ]]; then
+                echo "${path}: HTTP 200"
+                return 0
+              fi
+
+              echo "${path}: attempt ${attempt}/12 returned HTTP ${status:-000} redirect=${redirect:-none}"
+              sleep 5
+            done
+
+            if [[ "${redirect:-}" == */login* ]]; then
+              echo "::error::${SITE_URL}${path} is routed to the authenticated DemoHouse login page."
+            else
+              echo "::error::${SITE_URL}${path} did not return a direct HTTP 200 response."
+            fi
+            return 1
+          }
+
           for path in / /build-workshop /rta-mini/index.html /docs/learner/00-setup /docs/learner/07-break-and-fix /docs/learner/08-chat-langfuse; do
-            curl --fail --show-error --silent --retry 12 --retry-delay 5 \
-              --output /dev/null "${SITE_URL}${path}"
+            probe_route "${path}"
           done
 
       - name: Deployment summary
