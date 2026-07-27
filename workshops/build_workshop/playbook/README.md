@@ -7,7 +7,9 @@ an NYC-taxi ride-hailing analytics app end to end on ClickHouse Cloud.
 This directory is the documentation site only. The workshop app that participants clone
 and build on lives alongside it at `workshops/build_workshop/app` in this repository, on
 the `build-workshop-v1` branch. The site is built with [Next.js](https://nextjs.org)
-and [Fumadocs](https://fumadocs.dev), and is published at `demohouse.cloud/workshop`.
+and [Fumadocs](https://fumadocs.dev). Production is
+[workshop.demohouse.cloud](https://workshop.demohouse.cloud); dev is
+[dev-workshop.demohouse.cloud](https://dev-workshop.demohouse.cloud).
 
 ## Prerequisites
 
@@ -37,43 +39,23 @@ npm run types:check   # optional: regenerate types and run tsc
 
 ## Deployment
 
-The site is served from a sub-path (`demohouse.cloud/workshop`), so `basePath` is the
-key deployment lever. It is configurable via environment variables read in
-`next.config.mjs`:
-
-| Variable | Purpose | Example |
-|---|---|---|
-| `NEXT_PUBLIC_BASE_PATH` | Prefixes every route and asset. Set for sub-path hosting. | `/workshop` |
-| `NEXT_PUBLIC_SITE_URL` | Absolute origin for Open Graph / social image URLs. | `https://demohouse.cloud` |
-
-Both are empty/localhost by default so local development works with no configuration.
-
-### Option A — Node hosting (recommended)
-
-Run the Next.js server behind whatever fronts `demohouse.cloud`. This supports search and
-the generated OG images with no caveats.
+The site is built for `/` with an empty `NEXT_PUBLIC_BASE_PATH`.
 
 ```bash
-NEXT_PUBLIC_BASE_PATH=/workshop \
-NEXT_PUBLIC_SITE_URL=https://demohouse.cloud \
-npm run build
-
-NEXT_PUBLIC_BASE_PATH=/workshop npm run start   # then reverse-proxy /workshop to it
+NEXT_PUBLIC_BASE_PATH= \
+NEXT_PUBLIC_SITE_URL=https://dev-workshop.demohouse.cloud \
+npm run build -- --webpack
 ```
 
-### Option B — Static export
+Promotion is branch-based:
 
-Fumadocs can be exported to static HTML, but the default Orama search route
-(`/api/search`) and the OG image routes are server routes and do not run in a static
-export. To go fully static you must switch search to Fumadocs' static/client search and
-either drop or pre-render the OG images. If you take this path:
+1. Create a feature branch and PR it to protected `dev-build-workshop-v1`.
+2. Required workshop CI passes; merging deploys that SHA to the dev hostname.
+3. Test dev, then open a `dev-build-workshop-v1` to `build-workshop-v1` PR.
+4. Merging deploys the same source revision to the production hostname.
 
-1. Add `output: 'export'` to `next.config.mjs`.
-2. Switch search to the static build (see the Fumadocs search docs).
-3. Build with the same `NEXT_PUBLIC_BASE_PATH=/workshop`, then serve the `out/`
-   directory under `/workshop`.
-
-Node hosting is recommended unless the target can only serve static files.
+The public workflow uses GitHub OIDC, ECR immutable SHA tags, SSM, container health, and
+route probes. Old `/workshop` URLs redirect to the matching dedicated hostname.
 
 Legacy module 07/08 lesson paths remain as unlisted compatibility pages for static exports;
 the recommended Node deployment redirects those paths to their new module numbers.
@@ -112,7 +94,7 @@ content/docs/
 Every learner module page follows this skeleton, in order:
 
 1. Frontmatter `title` (`NN Module Name`) and `description`.
-2. `## Starting point` — the `git checkout checkpoint/NN-name` command and prerequisites.
+2. `## Outcome` or `## Starting point` — the result, time budget, and prerequisites.
 3. `## Why` — the motivation for the step.
 4. `## Goal` — the single concrete outcome.
 5. `## Step N — verb phrase` — one section per step. Each step names the literal file
@@ -128,11 +110,11 @@ Every instructor module page has these four sections: `## Timing`, `## Talk trac
 `## Common failures`, `## Reset steps`. Content is filled in from rehearsal; unknowns are
 marked `TODO`.
 
-### Checkpoint branch convention
+### Learner branch convention
 
-The workshop app repository uses `checkpoint/NN-name` branches (for example
-`checkpoint/03-realtime-cdc`) as the starting state for each module; `main` is the
-complete reference. Learner pages reference these branches in their "Starting point".
+Learners clone the repository's default branch, then Module 00 switches them to
+`build-workshop-v1`, the complete workshop reference. They stay there except while
+running a Module 07 `fault/*` scenario, then switch back to `build-workshop-v1`.
 
 ## Project layout
 

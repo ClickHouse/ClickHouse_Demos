@@ -155,13 +155,13 @@ the host ports does NOT change the backend wiring.
 | `OTEL_EXPORTER_OTLP_HEADERS` | `authorization=${OTLP_AUTH_TOKEN}` | Sends the shared token back to the collector. **VERIFY-LIVE.** |
 | `OTEL_LOGS_EXPORTER` | `otlp` | Wires up the OTLP log exporter/provider. Necessary but NOT sufficient on its own — see the next row. |
 | `OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED` | `true` | **Required for logs to flow.** Only when this is `true` does `opentelemetry-instrument` attach the stdlib-logging OTLP handler to the root logger; `configure_logging()` then preserves it. Without it, `otel_logs` stays empty while traces/metrics work fine. |
-| `LOG_LEVEL` | `INFO` | App + uvicorn log level (`DEBUG`/`INFO`/`WARNING`/`ERROR`). |
+| `LOG_LEVEL` | `DEBUG` | App + uvicorn log level. `DEBUG` makes successful per-query records visible in ClickStack while real retries/failures remain `WARNING`/`ERROR`. |
 
 ### Loadgen
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `LOG_LEVEL` | `INFO` | Loadgen log level. |
+| `LOG_LEVEL` | `DEBUG` | Loadgen log threshold. Its batch records are `INFO`; use the optional container-log collector to ingest them. |
 
 ## uvicorn caveat (documented)
 
@@ -185,9 +185,11 @@ dashboard, or `curl` the API), in the ClickHouse Cloud HyperDX UI:
 3. **Error traces** – trigger a failure (e.g. a query that exceeds the safety
    limits) and the `clickhouse.query` span shows `error.category` and a recorded
    exception; the matching request span is marked error.
-4. **Logs** – backend `ERROR` logs from failing ClickHouse queries appear (via
-   OTLP and/or container scraping). With `--profile container-logs`, loadgen
-   `[loadgen] inserted N trips ...` lines appear too.
+4. **Logs** – leave the Ops dashboard open with its default 5-second refresh.
+   Backend `DEBUG ... ClickHouse query ok` records appear through OTLP on every
+   refresh. Real idle-wake retries and failures retain `WARNING`/`ERROR` severity.
+   With `--profile container-logs`, loadgen `[loadgen] inserted N trips ...`
+   lines appear too.
 
 Quick smoke check without the UI:
 
@@ -213,9 +215,10 @@ ClickStack service; confirm during the first live run:
    the actual root cause — `configure_logging()` was correctly *preserving* a
    handler that was never installed); and (b) `configure_logging()` keeps that
    handler instead of evicting it. **Severity note:** successful queries log at
-   `DEBUG` (`db.py`), so with the default `LOG_LEVEL=INFO` a healthy app is quiet
-   and only WARN/ERROR records flow — which is the point (you see logs in HyperDX
-   exactly when something goes wrong). Set `LOG_LEVEL=DEBUG` to see per-query rows.
+   `DEBUG` (`db.py`). The workshop now defaults to `LOG_LEVEL=DEBUG`, so the Ops
+   dashboard's 5-second refresh produces a visible stream of successful query
+   records. Real retry and failure paths remain `WARNING`/`ERROR`; the workshop
+   does not manufacture warnings just to populate the Log source.
    The `--profile container-logs` path remains the fallback for non-instrumented
    services. **Deprecation:** OTel Python 0.64b0 logs a warning that the SDK's
    env-var-driven LoggingHandler is deprecated and "will be removed in a future

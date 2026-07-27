@@ -22,94 +22,10 @@ and puts it to work.
 Your agent, connected to the ClickStack MCP, has saved an SRE dashboard and at least one
 alert against your telemetry.
 
-## Step 1 — Add the ClickStack MCP to your agent
+## Step 1 — Verify the ClickStack connection from Module 00
 
-First enable MCP on your service (skip if you already did this in module 00):
-
-Console - your service -> **Connect** -> **Enable Model Context Protocol**
-
-Then connect your coding agent to the hosted ClickStack MCP endpoint (`https://mcp.clickhouse.cloud/clickstack`,
-streamable HTTP with browser OAuth using your ClickHouse Cloud login). The endpoint
-exposes the tools this lab uses: `clickstack_search`, `clickstack_timeseries`,
-`clickstack_query_tile`, `clickstack_save_dashboard`, and `clickstack_save_alert`.
-
-### your tool's MCP config
-
-Add the server with your tool's command, then authorize in the browser:
-
-<Tabs items={['Claude Code', 'Codex CLI', 'Cursor', 'Windsurf']}>
-  <Tab value="Claude Code">
-
-```bash
-claude mcp add --transport http clickstack https://mcp.clickhouse.cloud/clickstack
-```
-
-Authorize by running `/mcp` inside Claude Code, or `claude mcp login clickstack`.
-
-  </Tab>
-  <Tab value="Codex CLI">
-
-```bash
-codex mcp add clickstack --url https://mcp.clickhouse.cloud/clickstack
-codex mcp login clickstack
-```
-
-  </Tab>
-  <Tab value="Cursor">
-
-In `.cursor/mcp.json`, then authorize from the MCP settings pane:
-
-```jsonc
-{ "mcpServers": { "clickstack": { "url": "https://mcp.clickhouse.cloud/clickstack" } } }
-```
-
-  </Tab>
-  <Tab value="Windsurf">
-
-In `~/.codeium/windsurf/mcp_config.json`:
-
-```jsonc
-{ "mcpServers": { "clickstack": { "serverUrl": "https://mcp.clickhouse.cloud/clickstack" } } }
-```
-
-If native OAuth is flaky, use the `mcp-remote` command form instead:
-
-```jsonc
-{ "mcpServers": { "clickstack": { "command": "npx", "args": ["-y", "mcp-remote", "https://mcp.clickhouse.cloud/clickstack"] } } }
-```
-
-  </Tab>
-</Tabs>
-
-### auto-approve so the investigation is not interrupted
-
-Allow the ClickStack tools to run without a prompt on every call:
-
-<Tabs items={['Claude Code', 'Codex CLI', 'Cursor', 'Windsurf']}>
-  <Tab value="Claude Code">
-  In `.claude/settings.json`: `"permissions": { "allow": ["mcp__clickstack"] }`
-  </Tab>
-  <Tab value="Codex CLI">
-  In `~/.codex/config.toml`, under `[mcp_servers.clickstack]`: `default_tools_approval_mode = "auto"`
-  </Tab>
-  <Tab value="Cursor">
-  In `.cursor/permissions.json`: `"mcpAllowlist": ["clickstack:*"]`
-  </Tab>
-  <Tab value="Windsurf">
-  Set auto-execution to Allowlist (or Turbo for the session) in settings.
-  </Tab>
-</Tabs>
-
-<Callout>
-  Your trial org has a single service, so no extra scoping is needed. If you are on an
-  instructor loaner service, your hand-out includes the service id — add the
-  `x-service-id` header to the clickstack MCP entry as shown in your tool's config above.
-</Callout>
-
-
-
-Confirm the connection works by asking the agent how the service is doing — a quick health
-check exercises the `clickstack_*` tools end to end:
+Do not add another MCP server here. Use the `clickstack` connection already configured
+and authorized in Module 00. Ask for a health check that exercises its tools end to end:
 
 ```text
 Using the clickstack MCP, check the health of the nyc-taxi-backend service over the last 24h — request volume, error rate, and latency — and tell me if anything looks off.
@@ -117,7 +33,8 @@ Using the clickstack MCP, check the health of the nyc-taxi-backend service over 
 
 ![Coding agent calling the ClickStack MCP tools to assess nyc-taxi-backend health, reporting total spans, error rate, p95 and max latency, and last activity in a summary table](/screenshots/06-agent-health-check.png)
 
-*The agent reads traces, logs, and metrics through the ClickStack MCP and summarizes service health — total spans, a negligible error rate, p95 vs. a slow-outlier max latency, and whether the service is currently emitting. A grounded answer here confirms the MCP is wired up.*
+Expected: a grounded summary with request volume, error rate, latency, and last activity.
+If the tool asks for a service, select the ClickHouse service used by this workshop.
 
 ## Step 2 — Have the agent build an SRE dashboard
 
@@ -156,9 +73,24 @@ top-endpoints table — all reading live from the `nyc-taxi-backend` service.
 Ask the agent to save an alert (via `clickstack_save_alert`) on the error-rate signal,
 with a threshold it can justify from the baseline it just observed.
 
+The agent can save the alert, but it cannot create the notification channel the alert
+delivers to — there is no MCP tool for that. Pre-create a webhook in the HyperDX UI
+first, then let the agent's saved alert target it:
+
+1. Open one of your dashboard charts — the error-rate tile is a good pick — and click
+   its **Alert** button (the bell icon on the tile).
+2. In the alert's notification settings, choose **Generic Webhook** as the channel.
+3. You need a URL to point it at. For a throwaway endpoint that needs zero setup, open
+   [webhook.site](https://webhook.site) in another tab; it hands you a unique URL and
+   shows every request it receives in real time. Copy that URL and paste it in as the
+   webhook URL.
+4. Save. The channel now exists, so the agent's saved alert can target it — and when the
+   alert fires you can watch the payload arrive live on your webhook.site page.
+
 <Callout>
-  There is no MCP tool to create a notification webhook. Pre-create the webhook in the
-  HyperDX UI first; then the agent's saved alert can target it.
+  webhook.site URLs are public and ephemeral — great for seeing an alert fire in a
+  workshop, but not for anything real. In production you would wire the alert to Slack,
+  PagerDuty, or your own endpoint instead.
 </Callout>
 
 ## Step 4 (optional) — AI Notebooks: investigate inside HyperDX
@@ -196,5 +128,5 @@ artifacts from it. That is exactly what you will lean on when something breaks.
 An AI-built SRE dashboard and alert are in place. Continue to optional
 [06b AI SRE with LibreChat](/docs/learner/06b-ai-sre-librechat) if you want a chat-native
 agent that reads both telemetry and source, then use that agent in
-[07 Break and fix](/docs/learner/07-break-and-fix). If you are skipping 06b, go straight
+[07 Test, fail, and fix](/docs/learner/07-break-and-fix). If you are skipping 06b, go straight
 to module 07 with the editor agent you configured here.

@@ -17,16 +17,20 @@ has a ready-to-paste prompt that turns it into your instructor.
 - **Why** - the Docker engine is wedged: the daemon responds, yet it cannot actually start
   a container. Seen with OrbStack during a live bring-up.
 - **Fix** - restart your Docker engine (Docker Desktop, OrbStack, or Colima) and wait until
-  it reports Running, then bring the stack up again. `./preflight.sh` catches this before
-  you start the stack by running a throwaway container as a test.
+  it reports Running, then bring the stack up again. From anywhere inside the cloned
+  repository, run
+  `cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app" && ./preflight.sh`;
+  it catches this before you start the stack by running a throwaway container as a test.
 
 ### "port is already allocated" on up
 
 - **Symptom** - `docker compose ... up` fails with `Bind for 0.0.0.0:8080 failed: port is
   already allocated` (or `:8000`, `:5432`).
 - **Why** - another process, or an old workshop container, already holds that host port.
-- **Fix** - run `./preflight.sh`. It names what is holding the port and prints the exact
-  override to set, following the base-port + 20000 convention, for example
+- **Fix** - from anywhere inside the cloned repository, run
+  `cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app" && ./preflight.sh`.
+  It names what is holding the port and prints the exact override to set, following the
+  base-port + 20000 convention, for example
   `set FRONTEND_HOST_PORT=28080 in .env.workshop`. The override vars are
   `FRONTEND_HOST_PORT`, `BACKEND_HOST_PORT`, `POSTGRES_HOST_PORT`, and for the observability
   overlay `OTEL_GRPC_HOST_PORT` / `OTEL_HTTP_HOST_PORT`. Set the suggested value, re-run
@@ -52,7 +56,7 @@ has a ready-to-paste prompt that turns it into your instructor.
   first request pays that wake cost. The back end already allows a longer first-connect
   timeout and retries once.
 - **Fix** - just retry, or wait about 30 seconds. This is not a fault. It also matters in
-  [07 Break and fix](/docs/learner/07-break-and-fix): a waking service makes the fault 03
+  [07 Test, fail, and fix](/docs/learner/07-break-and-fix): a waking service makes the fault 03
   timeout fire more readily.
 
 ### Lost the service password
@@ -109,13 +113,21 @@ has a ready-to-paste prompt that turns it into your instructor.
 
 - **Symptom** - `realtime_trips` fills, but `taxi_trips` (fed by the CDC materialized view)
   stays empty.
-- **Why** - either `003_cdc_mv.sql` was not run after the snapshot, or the MV reads a
-  different database than the pipe landed in. A console-wizard pipe lands the table in
-  `nyc_tlc_data`; a CLI-created pipe always lands it in `default`.
-- **Fix** - run `db/cloud/003_cdc_mv.sql` **after** the ClickPipe's initial snapshot has
-  created `realtime_trips`, and run the variant that matches where your pipe landed the
-  table (console -> `nyc_tlc_data.realtime_trips`, CLI -> `default.realtime_trips`). A
-  materialized view only sees rows inserted after it exists.
+- **Why** - the materialized view was created before the ClickPipe target existed, or it
+  does not read the CLI target at `default.realtime_trips`.
+- **Fix** - wait for the target table, then copy the complete materialized-view command
+  from [Module 03, Step 4](/docs/learner/03-realtime-cdc). Verify the source first:
+
+  ```bash
+  clickhousectl cloud service query --id <clickhouse-service-id> --query "
+    SELECT database, name, engine
+    FROM system.tables
+    WHERE name = 'realtime_trips'
+  "
+  ```
+
+  A materialized view processes rows inserted after it exists; keep the trip writer
+  running after creation.
 
 ### Replication slot stalls
 

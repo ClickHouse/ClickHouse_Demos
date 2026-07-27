@@ -1,13 +1,13 @@
 # =============================================================================
 # BUILD workshop playbook -- multi-stage Next.js (Fumadocs) container
 # =============================================================================
-# Serves the docs site under a sub-path (default /workshop) behind the
-# demohouse nginx/ALB. basePath is baked at build time via NEXT_PUBLIC_BASE_PATH
+# Serves the docs site from a dedicated hostname behind the DemoHouse nginx/ALB.
+# basePath is baked at build time via NEXT_PUBLIC_BASE_PATH
 # (see next.config.mjs), so pass it as a build-arg -- it cannot be changed at
 # runtime once the bundle is compiled.
 #
-#   docker build --build-arg NEXT_PUBLIC_BASE_PATH=/workshop \
-#                --build-arg NEXT_PUBLIC_SITE_URL=https://dev.demohouse.cloud \
+#   docker build --build-arg NEXT_PUBLIC_BASE_PATH= \
+#                --build-arg NEXT_PUBLIC_SITE_URL=https://dev-workshop.demohouse.cloud \
 #                -t posthouse-demo-workshop:dev .
 #
 # Node >= 22.12 is required (package.json engines); the base image is 22-slim.
@@ -23,8 +23,8 @@ RUN npm ci --ignore-scripts
 
 FROM node:22-slim AS builder
 WORKDIR /app
-ARG NEXT_PUBLIC_BASE_PATH=/workshop
-ARG NEXT_PUBLIC_SITE_URL=https://dev.demohouse.cloud
+ARG NEXT_PUBLIC_BASE_PATH=
+ARG NEXT_PUBLIC_SITE_URL=https://dev-workshop.demohouse.cloud
 ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_TELEMETRY_DISABLED=1

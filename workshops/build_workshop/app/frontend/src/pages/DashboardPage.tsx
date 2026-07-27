@@ -36,8 +36,8 @@ export function DashboardPage() {
   const resetFilters = (): DashboardFilters => ({
     start: utcStartOfTodayIso(),
     end: utcEndOfTodayIso(),
-    interval: "15m",
-    auto_refresh_s: 0,
+    interval: "1m",
+    auto_refresh_s: 5,
     vendor_id: undefined,
     payment_type: undefined,
     pickup_zone_id: [],
@@ -47,8 +47,8 @@ export function DashboardPage() {
   const [filters, setFilters] = useState<DashboardFilters>({
     start: utcStartOfTodayIso(),
     end: utcEndOfTodayIso(),
-    interval: "15m",
-    auto_refresh_s: 0,
+    interval: "1m",
+    auto_refresh_s: 5,
     vendor_id: undefined,
     payment_type: undefined,
     pickup_zone_id: [],
@@ -171,4 +171,3 @@ export function DashboardPage() {
     </div>
   );
 }
-

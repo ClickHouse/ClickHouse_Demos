@@ -1,462 +1,294 @@
 ---
 title: 00 Setup
-description: Go from zero accounts to a running prototype - the accounts, keys, tools, agent skills, and app repo you need for the rest of the workshop, each one verified before you move on.
+description: Create the workshop services, install the CLIs, connect your agent once, and start the local app.
 ---
 
-## Starting point
+## Outcome
 
-This is the first module, so there is nothing to check out yet. You will install the
-tools, create the accounts, and clone the app during this module. Work top to bottom:
-each step ends with a **You should now have** checkpoint, and later modules assume every
-one of them passed.
+In about **25 minutes** you will have:
 
-Budget about **25 minutes** for this module in the room.
+- a ClickHouse Cloud service and organization API key;
+- `clickhousectl` and the `clickhouse` database client;
+- ClickHouse skills plus ClickHouse and ClickStack MCP connections in your coding agent;
+- Langfuse and OpenAI keys; and
+- the app healthy at [localhost:8080](http://localhost:8080).
 
-Working through this on your own? Read [Running this workshop self-paced](/docs/learner/self-paced)
-first - it maps what an instructor would otherwise provide onto the self-serve replacements
-built into these materials.
+Run every command in this module from the app directory unless a step says otherwise.
 
-<Callout title="Do the account signups before the day if you can">
-  Three of the steps below create external accounts - ClickHouse Cloud, Langfuse Cloud,
-  and OpenAI. Each takes 5 to 10 minutes on its own, mostly waiting on email or phone
-  verification. If you create them before the session (the links are all in this module),
-  you arrive with keys in hand and the 25 minutes is plenty. If not, come to the staffed
-  setup clinic before doors open - or, on your own, lean on `./preflight.sh` (Step 10) and
-  the [Troubleshooting](/docs/learner/troubleshooting) page, which lists every setup failure
-  seen in testing with its fix.
-</Callout>
+## Step 1 — Check prerequisites
 
-## Why
-
-Over the next few hours you build a real-time, observable, AI-assisted analytics
-application on ClickHouse Cloud - and your own coding agent does most of the typing. You
-leave with that prototype still running on your 30-day trial and this repository on your
-laptop, so you can show your team exactly what you built and rebuild it against your own
-data.
-
-None of that starts until four things are in place: a ClickHouse Cloud service, a coding
-agent that knows ClickHouse and speaks the Model Context Protocol (MCP), the accounts the
-in-app AI chat needs (Langfuse and OpenAI), and the app running locally. This module gets
-all four verified so the rest of the session moves fast.
-
-## Goal
-
-By the end of this module you have: a ClickHouse Cloud service with its host and password
-saved, an organization API key, `clickhousectl` installed, your coding agent loaded with
-the ClickHouse agent skills and connected to the remote ClickHouse MCP, a Langfuse Cloud
-project and an OpenAI key saved, and the app running locally at `http://localhost:8080`
-with every value in `.env.workshop` filled in.
-
-## Steps
-
-### Step 1 - Check your machine
-
-You need a laptop with roughly 16 GB of RAM and about 10 GB of free disk, plus:
-
-- **Docker**, running, with at least **6 GB of memory allocated** to it (Docker Desktop:
-  Settings then Resources). The workshop stack will not come up healthy with less.
-- **git**, to clone the repo.
-- **Node.js 20 or newer**, for the `npx`-based tooling in later steps
-  (`node --version` to check).
-- **python3**, available on the command line.
-- **An agentic coding tool** - Claude Code, Cursor, Codex CLI, or Windsurf - installed,
-  signed in, and on an active plan. This is the tool that does the building; the workshop
-  assumes you can run it and add MCP servers to it.
-
-<Callout type="warn" title="Corporate laptops block MCP sometimes">
-  Some managed laptops block adding MCP servers or outbound OAuth. If you hit that in
-  Step 7, a personal machine is the fastest fallback. Flag an instructor either way.
-</Callout>
-
-**You should now have:** Docker running with 6 GB+, git, Node 20+, python3, and your
-coding agent signed in.
-
-### Step 2 - Clone the repo and create your env file
-
-Clone the monorepo, move into the app directory, and copy the environment template. That
-template, `.env.workshop`, is the single file every later step fills in.
+You need Docker with at least 6 GB of memory, Git, Node.js 20+, Python 3, and one MCP-capable
+coding agent: Claude Code, Cursor, Codex CLI, or Windsurf.
 
 ```bash
-git clone -b build-workshop-v1 https://github.com/ClickHouse/ClickHouse_Demos.git
-cd ClickHouse_Demos/workshops/build_workshop/app
+docker version
+git --version
+node --version
+python3 --version
+```
+
+<Callout type="warn" title="Managed laptop?">
+  Corporate policy can block MCP installation or browser OAuth. Use a personal machine or
+  ask your administrator if the OAuth step in Step 7 cannot open.
+</Callout>
+
+## Step 2 — Clone the repo and switch to the workshop branch
+
+```bash
+git clone https://github.com/ClickHouse/ClickHouse_Demos.git
+cd ClickHouse_Demos
+git switch build-workshop-v1
+cd workshops/build_workshop/app
 cp .env.workshop.example .env.workshop
 ```
 
-You stay on the `build-workshop-v1` branch throughout the workshop except for the fault
-scenarios in module 07. The app is complete, so there is no other per-module checkout.
-`.env.workshop` is git-ignored, so your keys never get committed.
-
-<Callout type="warn" title="Shell variables override the env file">
-  Compose fills unset variables from `.env.workshop`, but a value you have `export`ed in
-  your shell WINS over the file. If `OPENAI_API_KEY`, any `LANGFUSE_*`, or
-  `CLICKHOUSE_PASSWORD` is exported in the shell you run `docker compose` from, `unset` it
-  first so the file's value is used. (`./preflight.sh` warns when it detects this.)
-</Callout>
-
-**You should now have:** the repo cloned, a terminal in the `app` directory, and a
-fresh `.env.workshop` you can open in an editor.
-
-### Step 3 - Create your ClickHouse Cloud account and first service
-
-Go to [console.clickhouse.cloud/signUp](https://console.clickhouse.cloud/signUp) (or click
-**Start free trial** on [clickhouse.com/cloud](https://clickhouse.com/cloud)). Sign up
-with your email or with single sign-on (Google, Microsoft, and others). If you use email
-and password, verify your email within 24 hours using the link you receive. The trial is
-**30 days and $300 in credits**, which is far more than this workshop needs.
-
-<Callout title="Use a personal email if your work email is already on a ClickHouse org">
-  If your company already has a ClickHouse Cloud organization tied to your work email, you
-  may land in it with no trial credits. A personal email gives you a clean trial org.
-</Callout>
-
-On first login the onboarding wizard walks you through creating your first service. It
-asks you to pick a region and name the service, then you click **Create service**; it may
-also ask a couple of questions about your use case. Accept the defaults for everything
-else - the default service size is fine for the workshop. Provisioning takes a minute or
-two.
-
-Once the service exists, get its credentials from the **Connect** dialog rather than
-hunting for a password screen:
-
-Console - your service -> **Connect**
-
-A modal opens with the connection details for your service. Copy the **host** (the bare
-hostname, no `https://` and no port) and the **password** for the `default` user into
-`.env.workshop`:
-
-{/* screenshot: connect-modal */}
-
+Keep this terminal in `ClickHouse_Demos/workshops/build_workshop/app`. The preflight script
+is `./preflight.sh` **inside this directory**. Stay on `build-workshop-v1` except during
+Module 07 fault tests. Confirm the branch now:
 
 ```bash
-# From the Connect modal for your service:
-CLICKHOUSE_HOST=            # e.g. abc123xyz.us-east-1.aws.clickhouse.cloud
-CLICKHOUSE_PORT=8443        # pre-filled; leave as-is
-CLICKHOUSE_USER=default     # pre-filled; leave as-is
-CLICKHOUSE_PASSWORD=        # the password for the default user
-CLICKHOUSE_DATABASE=nyc_tlc_data
-CLICKHOUSE_SECURE=true      # pre-filled; leave as-is
+git branch --show-current
 ```
 
-The service is empty for now - you create the schema and load data in module 01. The
-`CLICKHOUSE_DATABASE=nyc_tlc_data` name is what you will create there.
+Expected: `build-workshop-v1`.
 
-**You should now have:** a running Cloud service and `CLICKHOUSE_HOST` plus
-`CLICKHOUSE_PASSWORD` filled in.
+## Step 3 — Create a ClickHouse Cloud account and API key
 
-### Step 4 - Create an organization API key
+1. Sign in or start a trial at [console.clickhouse.cloud](https://console.clickhouse.cloud).
+2. Open **API Keys**, create an **Admin** organization key, and save its Key ID and secret.
 
-Later modules use `clickhousectl` to create a ClickPipe from the command line, and that
-needs an organization API key. The same key also lets `clickhousectl` create your own
-Postgres instance managed by ClickHouse in module 03. Create it now while you are in the
-console.
+The secret is displayed once. Store it outside the repository; do not put it in
+`.env.workshop`.
 
-Console - left menu -> **API Keys** -> **New API Key** (the first key may appear as an
-inline prompt instead). Give it a name, choose **Admin** permissions (full read and
-write), and set an expiration. Click **Generate API Key**. The next screen shows the
-**Key ID** and the **Key secret** - the secret is shown only once and cannot be retrieved
-after you leave the screen, so save both somewhere safe now.
-
-{/* screenshot: api-keys-page */}
-
-
-**You should now have:** a Key ID and Key secret saved outside the repo. (These do not go
-in `.env.workshop`; you paste them into `clickhousectl` when it prompts.)
-
-### Step 5 - Install clickhousectl
-
-`clickhousectl` is the ClickHouse CLI. It installs the agent skills, creates ClickPipes,
-and authenticates to your Cloud org.
+## Step 4 — Install `clickhousectl` and ClickHouse client
 
 ```bash
 curl https://clickhouse.com/cli | sh
-```
-
-On macOS the binary lands in `~/.local/bin`. Make sure that directory is on your `PATH`,
-then confirm the install:
-
-```bash
-export PATH="$HOME/.local/bin:$PATH"   # add to your shell profile to make it permanent
+export PATH="$HOME/.local/bin:$PATH"
 clickhousectl --version
+
+# Installs the stable ClickHouse binary and creates ~/.local/bin/clickhouse.
+clickhousectl local use stable
+clickhouse client --version
 ```
 
-You should see a version string like `clickhousectl version 0.x.y`. If the shell reports
-`command not found`, the `~/.local/bin` directory is not on your `PATH` yet.
+Add `~/.local/bin` to your shell profile if a new terminal cannot find either command.
 
-<Callout title="Run cloud commands from one directory">
-  `clickhousectl` stores its login tokens relative to the current working directory. Pick
-  one directory - the `app` directory is a good choice - and run every
-  `clickhousectl cloud ...` command from there so you stay authenticated.
-</Callout>
+## Step 5 — Authenticate `clickhousectl`
 
-**You should now have:** `clickhousectl --version` printing a version number.
-
-### Step 6 - Load ClickHouse skills and docs into your agent
-
-Agent skills teach your coding agent how to write good ClickHouse SQL, choose engines and
-schemas, and operate the CLI. Install them into your agent:
+Use the API key from Step 3. The interactive form keeps the secret out of shell history:
 
 ```bash
-# Uses the clickhousectl you just installed; interactive, auto-detects your agents:
-clickhousectl skills
-# Non-interactive for a specific agent (repeatable):
-clickhousectl skills --agent claude    # or: cursor | codex | windsurf
-# Alternative installer:
-#   npx skills add clickhouse/agent-skills
+clickhousectl cloud auth login --interactive
 ```
 
-The installer prints the current set — at the time of writing it includes
-`clickhouse-best-practices`, the architecture advisor, chdb and clickhousectl helpers, and
-more. It downloads them from GitHub at run time, so it needs live network access.
+Trusted automation can use the explicit form the CLI expects:
 
-Where they land depends on the `--agent` you pass: `.claude/skills/` for Claude Code,
-`.cursor/skills/` for Cursor, and `.codex/skills/` for Codex CLI. The installer also writes
-the universal `.agents/skills/` copy, which Cursor and Codex both read natively - so if you
-run it without a flag and let it auto-detect, every tool on your machine picks the skills
-up.
+```bash
+clickhousectl cloud auth login --api-key <key> --api-secret <secret>
+```
 
-Point your agent at the docs too. The machine-readable index at
-[clickhouse.com/docs/llms.txt](https://clickhouse.com/docs/llms.txt) lists every docs page
-with a description your agent can pull from - add that URL to your agent's context or docs
-sources.
+Verify both saved credentials and Cloud access:
 
-<Callout title="There is no public ClickHouse docs MCP server">
-  If you go looking for a documentation MCP, you will not find one - it does not exist
-  today. The agent skills plus the `llms.txt` index above are what ground your agent in
-  ClickHouse knowledge, so do not spend time hunting for a docs MCP.
-</Callout>
+```bash
+clickhousectl cloud auth status
+clickhousectl cloud org list
+```
 
-<Callout title="Claude Code users: optional plugin">
-  There is an official Claude Code plugin that bundles the best-practices skill and the
-  remote MCP config in one step: `claude plugin install clickhouse@claude-plugins-official`
-  (pending marketplace approval; if it is not yet listed, clone the plugin repo and use
-  `claude --plugin-dir`). Optional - the skills above already cover the workshop.
-</Callout>
+`clickhousectl` stores project credentials under `.clickhouse/` in the current directory.
+Keep running Cloud commands from the app directory and never commit or share that folder.
 
-**You should now have:** the ClickHouse skills installed in your agent, and your agent
-pointed at `clickhouse.com/docs/llms.txt`. Ask it something like "what is a
-ReplacingMergeTree and when would I use one?" - a grounded answer means the skills are
-live.
+## Step 6 — Create the ClickHouse service
 
-### Step 7 - Connect the remote ClickHouse MCP to your agent
+Choose the region you will also use for Postgres in Module 03. Replace the example region
+if needed:
 
-The remote MCP lets your agent query your Cloud service directly (read-only: it only runs
-`SELECT` statements). First enable it on the service:
+```bash
+clickhousectl cloud service create \
+  --name my-workshop-clickhouse \
+  --provider aws \
+  --region ap-southeast-1 \
+  --min-replica-memory-gb 8 \
+  --max-replica-memory-gb 8 \
+  --num-replicas 1 \
+  --idle-scaling true \
+  --idle-timeout-minutes 15
+```
 
-Console - your service -> **Connect** -> **Enable Model Context Protocol**
+Save the returned **service ID** and one-time **default-user password**. Check readiness:
 
-The toggle is off by default. The endpoint is `https://mcp.clickhouse.cloud/mcp` and it
-authenticates with a browser OAuth flow using your ClickHouse Cloud login.
+```bash
+clickhousectl cloud service list
+clickhousectl cloud service get <service-id>
+```
 
-{/* screenshot: connect-mcp-modal */}
+From the service **Connect** dialog, copy the hostname and verify the local client. The
+`--password` flag prompts without echoing the password:
 
-Add it to your agent with the command for your tool, then complete the OAuth flow in the
-browser:
+```bash
+clickhouse client \
+  --host <your-service-hostname> \
+  --secure \
+  --user default \
+  --password \
+  --query "SELECT version(), currentUser()"
+```
+
+Expected: one row containing the ClickHouse version and `default`.
+
+## Step 7 — Configure agent skills and both MCP servers once
+
+These integrations have distinct jobs:
+
+| Integration | Purpose | Used in |
+|---|---|---|
+| ClickHouse skills | Review schema and SQL against ClickHouse practices | Modules 01 and 03 |
+| ClickHouse MCP (`/mcp`) | Read your service with `SELECT` queries | Modules 01 and 04 |
+| ClickStack MCP (`/clickstack`) | Search telemetry and save SRE artifacts | Modules 06 and 07 |
+
+First install the skills for your agent:
+
+```bash
+clickhousectl skills --agent <claude|cursor|codex|windsurf>
+```
+
+In ClickHouse Cloud, open your service's **Connect** dialog and enable **Connect with
+MCP**. Then add **both** endpoints and complete browser OAuth:
 
 <Tabs items={['Claude Code', 'Codex CLI', 'Cursor', 'Windsurf']}>
   <Tab value="Claude Code">
 
 ```bash
 claude mcp add --transport http clickhouse-cloud https://mcp.clickhouse.cloud/mcp
+claude mcp add --transport http clickstack https://mcp.clickhouse.cloud/clickstack
+claude mcp login clickhouse-cloud
+claude mcp login clickstack
 ```
-
-Then run `/mcp` inside Claude Code, select `clickhouse-cloud`, and authorize in the browser
-(or `claude mcp login clickhouse-cloud`).
 
   </Tab>
   <Tab value="Codex CLI">
 
 ```bash
 codex mcp add clickhouse-cloud --url https://mcp.clickhouse.cloud/mcp
+codex mcp add clickstack --url https://mcp.clickhouse.cloud/clickstack
 codex mcp login clickhouse-cloud
+codex mcp login clickstack
 ```
-
-The config lands in `~/.codex/config.toml` under `[mcp_servers.clickhouse-cloud]`. The
-`login` command opens the browser OAuth flow.
 
   </Tab>
   <Tab value="Cursor">
 
-Add it from the Cursor Marketplace: search "ClickHouse", click **Add to Cursor**, then
-authorize with OAuth from the MCP settings pane. No manual JSON needed. To wire it by hand
-instead, add to `.cursor/mcp.json`:
+Add this once to `.cursor/mcp.json`, then authorize both servers in Cursor settings:
 
 ```jsonc
-{ "mcpServers": { "clickhouse-cloud": { "url": "https://mcp.clickhouse.cloud/mcp" } } }
+{
+  "mcpServers": {
+    "clickhouse-cloud": { "url": "https://mcp.clickhouse.cloud/mcp" },
+    "clickstack": { "url": "https://mcp.clickhouse.cloud/clickstack" }
+  }
+}
 ```
 
   </Tab>
   <Tab value="Windsurf">
 
-Windsurf connects through `mcp-remote` rather than native HTTP. Add to `mcp_config.json`:
+Add this once to `~/.codeium/windsurf/mcp_config.json`, then authorize both servers:
 
 ```jsonc
-{ "mcpServers": { "clickhouse-cloud": { "command": "npx", "args": ["-y", "mcp-remote", "https://mcp.clickhouse.cloud/mcp"] } } }
+{
+  "mcpServers": {
+    "clickhouse-cloud": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.clickhouse.cloud/mcp"]
+    },
+    "clickstack": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.clickhouse.cloud/clickstack"]
+    }
+  }
+}
 ```
 
   </Tab>
 </Tabs>
 
-The same **Connect with MCP** toggle also exposes a ClickStack observability endpoint,
-`https://mcp.clickhouse.cloud/clickstack`, which you wire up in module 06 - you do not
-need it yet. The full reference is at
-[clickhouse.com/docs/use-cases/AI/MCP/remote_mcp](https://clickhouse.com/docs/use-cases/AI/MCP/remote_mcp).
+Verify the ClickHouse connection now:
 
-Optionally, auto-approve the read-only `clickhouse-cloud` tools so they run without a
-prompt on every call (the same pattern you will use for ClickStack in module 06):
+```text
+Use the clickhouse-cloud MCP to list my databases. Run read-only queries only.
+```
 
-<Tabs items={['Claude Code', 'Codex CLI', 'Cursor', 'Windsurf']}>
-  <Tab value="Claude Code">
-  In `.claude/settings.json`: `"permissions": { "allow": ["mcp__clickhouse-cloud"] }`
-  </Tab>
-  <Tab value="Codex CLI">
-  In `~/.codex/config.toml`, under `[mcp_servers.clickhouse-cloud]`: `default_tools_approval_mode = "auto"`
-  </Tab>
-  <Tab value="Cursor">
-  In `.cursor/permissions.json`: `"mcpAllowlist": ["clickhouse-cloud:*"]`
-  </Tab>
-  <Tab value="Windsurf">
-  Set auto-execution to Allowlist (or Turbo for the session) in settings.
-  </Tab>
-</Tabs>
+An empty ClickStack result is expected until Module 05 sends telemetry. Do not repeat MCP
+setup later; Modules 06 and 07 use the `clickstack` connection configured here.
 
-**You should now have:** your agent connected to `clickhouse-cloud` over MCP, authorized
-in the browser. Ask it to "list my databases" - a response confirms the connection.
+## Step 8 — Create Langfuse and OpenAI keys
 
-### Step 8 - Create a Langfuse Cloud project
+Langfuse records the AI chat traces used in Module 08.
 
-Langfuse is where you watch the in-app AI chat's traces in module 08. Pick your region by
-its URL - they are separate accounts:
+1. Create a project at [US Langfuse Cloud](https://us.cloud.langfuse.com) or
+   [EU Langfuse Cloud](https://cloud.langfuse.com).
+2. Create a project API key pair and save the public and secret keys.
+3. Create a project-scoped API key at
+   [platform.openai.com/api-keys](https://platform.openai.com/api-keys) and enable billing.
 
-- **US:** [us.cloud.langfuse.com](https://us.cloud.langfuse.com) - matches the app default.
-- **EU:** [cloud.langfuse.com](https://cloud.langfuse.com).
-
-Sign up on the region you want. The quickest option is to **sign in with your ClickHouse
-Cloud account** (available since May 2026) - it is one fewer password, and signing in with
-the same email links to an existing Langfuse account if you have one. The onboarding flow
-walks you through creating an organization and then a project.
-
-Open your project's settings and find its **API Keys**. Create a key pair; you get a
-public key (`pk-lf-...`) and a secret key (`sk-lf-...`). The secret is shown in full only
-once, so copy both into `.env.workshop` right away, along with the base URL for the region
-you signed up on:
+Use the Langfuse URL for the region where you created the project:
 
 ```bash
 LANGFUSE_PUBLIC_KEY=pk-lf-...
 LANGFUSE_SECRET_KEY=sk-lf-...
-# Must match the region you signed up on:
-#   US: https://us.cloud.langfuse.com   EU: https://cloud.langfuse.com
 LANGFUSE_BASE_URL=https://us.cloud.langfuse.com
+
+OPENAI_API_KEY=sk-...
 ```
 
-The free **Hobby** plan needs no credit card and includes 50k units per month, 30 days of
-data retention, and 2 users - ample for the workshop.
+Keep the model and API-base defaults already present in `.env.workshop`.
 
-<Callout>
-  `LANGFUSE_BASE_URL` is the Langfuse v4 environment name (v4 renamed the older
-  `LANGFUSE_HOST`, still accepted as a fallback). The chat back end reads exactly these
-  three `LANGFUSE_*` names. `LANGFUSE_BASE_URL` must match the region domain you signed up
-  on, or your traces will not appear.
-</Callout>
+## Step 9 — Fill `.env.workshop`
 
-**You should now have:** a Langfuse project and `LANGFUSE_PUBLIC_KEY`,
-`LANGFUSE_SECRET_KEY`, and a region-matched `LANGFUSE_BASE_URL` filled in.
-
-### Step 9 - Create an OpenAI API key
-
-The in-app chat calls an LLM at runtime. Your coding agent's subscription does not cover
-that, so you need one OpenAI key with a few dollars of prepaid credit.
-
-Create an account at [platform.openai.com](https://platform.openai.com). OpenAI requires
-**one-time phone verification** before you can create your first API key. There are **no
-free credits** on new accounts, so add prepaid billing:
-
-1. Go to **Settings then Billing**, add a payment method, and buy prepaid credit. The
-   minimum is **$5**, which covers this workshop many times over.
-2. **Turn off auto-recharge.** It is on by default during setup; disable it so you are
-   never billed beyond the $5 you added.
-
-Then create a project-scoped key at
-[platform.openai.com/api-keys](https://platform.openai.com/api-keys): create a new secret
-key, scope it to your project, and copy it - it starts with `sk-proj-...` and is shown only
-once. Put it in `.env.workshop`:
+Copy the service values from Step 6 and the keys from Step 8 into the existing fields:
 
 ```bash
-OPENAI_API_KEY=sk-proj-...
-LLM_MODEL=gpt-5.4-mini                 # current small-tier default; gpt-5.4-nano is cheaper
-LLM_BASE_URL=https://api.openai.com/v1
+CLICKHOUSE_HOST=<hostname without https:// or port>
+CLICKHOUSE_PORT=8443
+CLICKHOUSE_USER=default
+CLICKHOUSE_PASSWORD=<one-time service password>
+CLICKHOUSE_DATABASE=nyc_tlc_data
+CLICKHOUSE_SECURE=true
+
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_BASE_URL=https://us.cloud.langfuse.com
+OPENAI_API_KEY=sk-...
 ```
 
-`gpt-5.4-mini` is the app default and a good balance of quality and cost for turning
-questions into SQL; `gpt-5.4-nano` is the budget alternative if you want to stretch the $5
-further.
+Do not export these names in the shell: exported values override the env file.
 
-**You should now have:** phone-verified OpenAI account, $5 of prepaid credit with
-auto-recharge off, and `OPENAI_API_KEY` filled in.
+## Step 10 — Run preflight and start the app
 
-### Step 10 - Run the preflight check, then start the stack
-
-Everything the app needs is now in `.env.workshop`. Before starting the stack, run the
-preflight check from the `app` directory. It verifies Docker (including that the daemon
-can actually start a container), that your effective host ports are free, that
-`.env.workshop` has the required values, and that your ClickHouse Cloud service is
-reachable - each as a PASS, WARN, or FAIL with a one-line fix hint:
+The commands below enter the correct directory from anywhere inside the cloned repository:
 
 ```bash
+cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
 ./preflight.sh
 ```
 
-You should see a run of `PASS` lines ending with `Overall: READY`. It must end with
-**Overall: READY** before you continue. Warnings are safe to proceed on
-(for example, the OpenAI key is needed for optional module 06b and module 08, while the
-Langfuse keys are only needed in module 08). If a host port
-is already taken, preflight names the process holding it and prints the exact override to
-set - for example `set FRONTEND_HOST_PORT=28080 in .env.workshop` - so you never hit the
-raw `Bind ... port is already allocated` error. Apply the suggested value, re-run
-preflight, then start the stack:
+Continue only when the last line is `Overall: READY`. Apply any printed fix and rerun the
+script. Then start the stack:
 
 ```bash
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml ps
 ```
 
-Give it a couple of minutes to become healthy, then open
-[localhost:8080](http://localhost:8080) (or your overridden `FRONTEND_HOST_PORT`).
+Within about two minutes, services should report `healthy` and the app should load at
+[localhost:8080](http://localhost:8080). Empty dashboards are correct until Module 01.
 
-You should see, after `docker compose ps`, every workshop service with a `STATUS` of
-`healthy` (it reads `Up` for the first ~30s while still starting), and the front end
-loading at [localhost:8080](http://localhost:8080).
+## Completion check
 
-## How to verify you are done
+- `clickhousectl cloud service get <service-id>` reports the service is ready.
+- `clickhouse client ... --query "SELECT version()"` succeeds.
+- Your agent lists databases through the ClickHouse MCP.
+- `./preflight.sh` ends with `Overall: READY` from the app directory.
+- Docker services are healthy and the local app loads.
 
-Run through this checklist - it is the exact set of things later modules assume:
-
-- `docker compose ps` shows the app services healthy (the STATUS column reads `healthy`
-  after about 30s; `Up` means still starting), and the front end loads at
-  [localhost:8080](http://localhost:8080).
-- The API docs (FastAPI Swagger) answer at [localhost:8000/docs](http://localhost:8000/docs)
-  on the backend port (use your `BACKEND_HOST_PORT` if you overrode it).
-- Your agent gives a grounded answer using the ClickHouse skills (for example, the
-  ReplacingMergeTree question from Step 6).
-- Your agent, over MCP, answers "list my databases" against your Cloud service.
-- `.env.workshop` has all of these filled in: `CLICKHOUSE_HOST`, `CLICKHOUSE_PASSWORD`,
-  `OPENAI_API_KEY`, `LLM_MODEL`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and a
-  region-matched `LANGFUSE_BASE_URL` (seven values, plus the pre-filled defaults).
-
-<Callout title="Dashboards are empty right now, and that is expected">
-  The Cloud service has no tables yet, so the dashboards will not show data until you
-  create the schema and seed it in module 01. The app handles the not-yet-seeded state
-  gracefully - the dashboards render empty rather than erroring. "The front end loads" is
-  all you need here.
-</Callout>
-
-## Wrap-up
-
-You now have every account, key, and tool the workshop needs; your agent knows ClickHouse
-and can query your Cloud service directly; and the app is running locally. The only thing
-your Cloud service is missing is data - that is exactly what module 01 adds.
-
-## End state
-
-The app runs locally against an empty Cloud service, your agent is wired up with skills
-and MCP, and every credential is saved. Continue to
-[01 ClickHouse Cloud](/docs/learner/01-clickhouse-cloud) to give it a real analytics
-warehouse.
+Continue to [01 ClickHouse Cloud](/docs/learner/01-clickhouse-cloud).

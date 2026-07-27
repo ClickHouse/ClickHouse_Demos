@@ -7,8 +7,8 @@ Facilitator companion to the learner lesson [06 AI SRE](/docs/learner/06-ai-sre)
 
 ## Timing
 
-About 15 minutes. The ClickStack MCP OAuth flow is the fragile moment; budget extra
-and pre-stage per-tool config.
+About 15 minutes. MCP installation and OAuth already happened in Module 00; this module
+starts with a health-check prompt and then builds SRE artifacts.
 
 ## Talk track
 
@@ -16,13 +16,12 @@ and pre-stage per-tool config.
   work.
 - Name the tools it will use: `clickstack_search`, `clickstack_save_dashboard`,
   `clickstack_save_alert`.
-- Stress applying the auto-approve/allowlist so the agent is not stopped by permission
-  prompts.
-- TODO: expand.
+- If permission prompts appear, approve only the expected `clickstack_*` tools.
 
 ## Common failures
 
-- MCP OAuth fails or is slow across many concurrent first-time flows.
+- The Module 00 MCP OAuth session expired; reauthorize the existing server instead of
+  adding a duplicate.
 - Permission prompts interrupt the agent mid-build (allowlist not applied).
 - Agent picks an unjustified alert threshold; coach it to baseline first.
 - AI Notebooks (optional Step 4) needs a one-time admin toggle: HyperDX Team Settings,
@@ -33,6 +32,6 @@ and pre-stage per-tool config.
 
 ## Reset steps
 
-- Re-add the MCP server and re-run the OAuth login.
+- Reauthorize the MCP server configured in Module 00.
 - Delete a bad dashboard/alert in HyperDX and re-prompt.
 - TODO: confirm reset commands and the fallback (local `mcp-clickhouse` over stdio).

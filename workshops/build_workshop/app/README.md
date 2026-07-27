@@ -6,7 +6,7 @@ a local Postgres with a synthetic trip generator, and an optional ClickStack
 OpenTelemetry overlay. ClickHouse itself is your own ClickHouse Cloud service; live
 ingestion is Postgres CDC via ClickPipes.
 
-Follow the playbook (`../playbook`, published at demohouse.cloud/workshop) from
+Follow the playbook (`../playbook`, published at workshop.demohouse.cloud) from
 module 00 — it walks through every step below in order.
 
 ## Requirements
@@ -39,6 +39,9 @@ Run the preflight check first — it verifies Docker, the effective ports, your
 `.env.workshop`, and Cloud connectivity, and must report `READY` before you start:
 
 ```bash
+# From anywhere inside the cloned ClickHouse_Demos repository:
+cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
+
 cp .env.workshop.example .env.workshop     # fill in your ClickHouse Cloud values
 ./preflight.sh                             # must print "Overall: READY" (exit 0)
 
@@ -63,7 +66,7 @@ use those ports instead of 8080 / 8000.
 | `loadgen/` | `pg_trip_writer.py` — synthetic trips into Postgres (throttled via env) |
 | `db/cloud/001_cloud_schema.sql` | Idempotent base schema (tables + views) for your Cloud service; applies cleanly on a fresh service |
 | `db/cloud/002_seed_historical.sql` | Optional runnable historical seed (taxi_zones + a yellow-taxi month) from public object storage; idempotent, run after 001 |
-| `db/cloud/003_cdc_mv.sql` | ClickPipes CDC materialized view into taxi_trips; run after the pipe's initial snapshot (ships console + CLI destination variants) |
+| `db/cloud/003_cdc_mv.sql` | Maintainer fixture for the CLI ClickPipe CDC materialized view mirrored as a copyable block in Module 03 |
 | `db/postgres/` | Local-fallback Postgres init (CDC source table, publication) |
 | `otel-collector/` | Optional container-log scrape config for the ClickStack overlay |
 | `.env.workshop.example` | The single env template — copy to `.env.workshop` |
