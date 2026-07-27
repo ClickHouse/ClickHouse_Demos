@@ -19,6 +19,7 @@ export function ZoneMap({ zones, filters, sqlKey }: Props) {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [geojson, setGeojson] = useState<any | null>(null);
   const [geojsonError, setGeojsonError] = useState<string | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // Load taxi zone polygons (GeoJSON generated from shapefile) once.
   useEffect(() => {
@@ -98,12 +99,20 @@ export function ZoneMap({ zones, filters, sqlKey }: Props) {
   useEffect(() => {
     if (!ref.current || mapRef.current) return;
 
-    const map = new maplibregl.Map({
-      container: ref.current,
-      style: "https://demotiles.maplibre.org/style.json",
-      center: [-73.9855, 40.758],
-      zoom: 10
-    });
+    let map: maplibregl.Map;
+    try {
+      map = new maplibregl.Map({
+        container: ref.current,
+        style: "https://demotiles.maplibre.org/style.json",
+        center: [-73.9855, 40.758],
+        zoom: 10
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "WebGL is unavailable";
+      console.warn("ZoneMap: MapLibre unavailable; rendering the map fallback", error);
+      setMapError(message);
+      return;
+    }
     mapRef.current = map;
 
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
@@ -177,12 +186,18 @@ export function ZoneMap({ zones, filters, sqlKey }: Props) {
 
   return (
     <div>
-      <div ref={ref} style={{ width: "100%", height: 320, borderRadius: 8, overflow: "hidden" }} />
+      {mapError ? (
+        <div className="alert alert-secondary mb-0" role="status" style={{ minHeight: 320 }}>
+          Map unavailable in this browser. The other dashboard panels still work.
+        </div>
+      ) : (
+        <div ref={ref} style={{ width: "100%", height: 320, borderRadius: 8, overflow: "hidden" }} />
+      )}
       <div className="text-secondary small mt-2">
         Choropleth by pickup trips (brighter = more trips). {statsQ.data ? `Query ${statsQ.data.meta.elapsed_ms}ms` : ""}
         {geojsonError ? <span className="text-danger"> • {geojsonError}</span> : null}
+        {mapError ? <span className="text-danger"> • {mapError}</span> : null}
       </div>
     </div>
   );
 }
-
