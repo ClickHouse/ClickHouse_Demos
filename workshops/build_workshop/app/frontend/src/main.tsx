@@ -1,5 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import "maplibre-gl/dist/maplibre-gl.css";
+import "./theme.css";
 
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -28,10 +29,10 @@ const queryClient = new QueryClient({
 function ErrorFallback({ error }: FallbackProps) {
   const message = error instanceof Error ? error.message : String(error);
   return (
-    <div className="container-fluid py-4">
-      <div className="alert alert-danger" role="alert">
-        <div className="fw-bold">Something went wrong.</div>
-        <div className="small mt-1">{message}</div>
+    <div className="app-error">
+      <div className="app-error-card" role="alert">
+        <div className="title">Something went wrong.</div>
+        <div className="detail">{message}</div>
       </div>
     </div>
   );

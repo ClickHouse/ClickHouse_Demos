@@ -6,7 +6,7 @@ an NYC-taxi ride-hailing analytics app end to end on ClickHouse Cloud.
 
 This directory is the documentation site only. The workshop app that participants clone
 and build on lives alongside it at `workshops/build_workshop/app` in this repository, on
-the `main` branch. The site is built with [Next.js](https://nextjs.org)
+the `build-workshop-v1` branch. The site is built with [Next.js](https://nextjs.org)
 and [Fumadocs](https://fumadocs.dev). Production is
 [workshop.demohouse.cloud](https://workshop.demohouse.cloud); dev is
 [dev-workshop.demohouse.cloud](https://dev-workshop.demohouse.cloud).
@@ -49,9 +49,9 @@ npm run build -- --webpack
 
 Promotion is branch-based:
 
-1. Create a feature branch and PR it to protected `dev`.
+1. Create a feature branch and PR it to protected `dev-build-workshop-v1`.
 2. Required workshop CI passes; merging deploys that SHA to the dev hostname.
-3. Test dev, then open a `dev` to `main` PR.
+3. Test dev, then open a `dev-build-workshop-v1` to `build-workshop-v1` PR.
 4. Merging deploys the same source revision to the production hostname.
 
 The public workflow uses GitHub OIDC, ECR immutable SHA tags, SSM, container health, and
@@ -110,11 +110,11 @@ Every instructor module page has these four sections: `## Timing`, `## Talk trac
 `## Common failures`, `## Reset steps`. Content is filled in from rehearsal; unknowns are
 marked `TODO`.
 
-### Checkpoint branch convention
+### Learner branch convention
 
-The workshop app repository uses `checkpoint/NN-name` branches (for example
-`checkpoint/03-realtime-cdc`) as the starting state for each module; `main` is the
-complete reference. Learner pages reference these branches in their "Starting point".
+Learners clone the repository's default branch, then Module 00 switches them to
+`build-workshop-v1`, the complete workshop reference. They stay there except while
+running a Module 07 `fault/*` scenario, then switch back to `build-workshop-v1`.
 
 ## Project layout
 
