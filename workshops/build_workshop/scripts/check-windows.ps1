@@ -42,7 +42,7 @@ Assert-Literal 'wrong-shell recovery' 'not recognized" in PowerShell' $Troublesh
 Assert-Literal 'CRLF recovery' "bash\r" $Troubleshooting
 Assert-Literal 'OAuth browser recovery' 'paste it into the normal Windows' $Troubleshooting
 
-$shellScripts = Get-ChildItem -Path $WorkshopRoot -Recurse -File -Include '*.sh', '*.bash'
+$shellScripts = @(Get-ChildItem -Path $WorkshopRoot -Recurse -File -Include '*.sh', '*.bash')
 foreach ($script in $shellScripts) {
     $bytes = [System.IO.File]::ReadAllBytes($script.FullName)
     for ($index = 0; $index -lt ($bytes.Length - 1); $index++) {
@@ -52,7 +52,7 @@ foreach ($script in $shellScripts) {
     }
 }
 
-$powershellScripts = Get-ChildItem -Path $WorkshopRoot -Recurse -File -Filter '*.ps1'
+$powershellScripts = @(Get-ChildItem -Path $WorkshopRoot -Recurse -File -Filter '*.ps1')
 foreach ($script in $powershellScripts) {
     $tokens = $null
     $errors = $null
@@ -67,7 +67,7 @@ foreach ($script in $powershellScripts) {
     }
 }
 
-$mdxFiles = Get-ChildItem -Path $ContentRoot -Recurse -File -Filter '*.mdx'
+$mdxFiles = @(Get-ChildItem -Path $ContentRoot -Recurse -File -Filter '*.mdx')
 $powershellBlockCount = 0
 foreach ($file in $mdxFiles) {
     $content = Get-Content -LiteralPath $file.FullName -Raw
