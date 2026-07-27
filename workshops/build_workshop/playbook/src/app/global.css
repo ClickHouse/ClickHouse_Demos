@@ -63,3 +63,126 @@ html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
 }
+
+/* Persistent workshop platform choice. Learners choose once; every docs page then
+ * reinforces the shell contract before showing any commands. */
+.workshop-platform-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-fd-foreground);
+}
+
+.workshop-platform-label {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.workshop-platform-options {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 0.65rem;
+  background: var(--color-fd-muted);
+}
+
+.workshop-platform-option {
+  min-height: 2.5rem;
+  padding: 0.35rem 0.75rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--color-fd-muted-foreground);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.workshop-platform-option[aria-checked='true'] {
+  background: var(--color-fd-primary);
+  color: var(--color-fd-primary-foreground);
+}
+
+.workshop-platform-option:focus-visible {
+  outline: 3px solid var(--color-fd-ring);
+  outline-offset: 2px;
+}
+
+.workshop-doc-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.workshop-shell-note {
+  margin-top: 1rem;
+  padding: 0.75rem 0.9rem;
+  border-left: 3px solid var(--color-fd-primary);
+  border-radius: 0.35rem;
+  background: var(--color-fd-muted);
+  color: var(--color-fd-muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.workshop-shell-note strong {
+  color: var(--color-fd-foreground);
+}
+
+.landing-platform-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  margin: 1.25rem 0 1.5rem;
+}
+
+.landing-platform-choice .workshop-platform-selector {
+  color: #fff;
+}
+
+.landing-platform-choice .workshop-platform-options {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.landing-platform-choice .workshop-platform-option {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.landing-platform-choice .workshop-platform-option[aria-checked='true'] {
+  background: #faff69;
+  color: #151515;
+}
+
+.landing-platform-choice > p {
+  max-width: 29rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.67);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .workshop-doc-toolbar {
+    align-items: flex-start;
+    flex-direction: column-reverse;
+  }
+
+  .workshop-platform-selector:not(.is-compact) {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .workshop-platform-options {
+    width: 100%;
+  }
+
+  .workshop-platform-option {
+    flex: 1;
+  }
+}

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import './landing.css';
+import { PlatformSelector } from '@/components/platform';
 
 // Workshop landing page (the site root, /). Ported from the standalone one-pager;
 // styles live in landing.css, scoped under `.op`. CTAs use next/link so they are
@@ -31,6 +32,10 @@ export default function LandingPage() {
                 <span className="chip"><b>100%</b> hands-on</span>
                 <span className="chip"><b>$0</b> on trial credits</span>
                 <span className="chip">bring your <b>own agent</b></span>
+              </div>
+              <div className="landing-platform-choice">
+                <PlatformSelector />
+                <p>Choose once. The workshop keeps the right setup visible on every page.</p>
               </div>
               <div className="cta">
                 <div className="cta-row">
