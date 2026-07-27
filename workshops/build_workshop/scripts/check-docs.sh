@@ -15,8 +15,8 @@ fail_if_found() {
 }
 
 fail_if_found \
-  "active workshop docs must use the dev/main promotion model" \
-  'build-workshop-v1' \
+  "active workshop docs must not use the retired dev/main promotion commands" \
+  'git switch main|git clone[^[:cntrl:]]*--branch main|`dev` to (protected )?`main`|PR it to protected `dev`' \
   "${ROOT}/README.md" "${CONTENT}"
 
 fail_if_found \
@@ -38,6 +38,16 @@ require_fixed() {
     exit 1
   fi
 }
+
+require_fixed \
+  "maintainer docs must name the workshop staging branch" \
+  'dev-build-workshop-v1' \
+  "${ROOT}/README.md"
+
+require_fixed \
+  "learner setup must switch to the production workshop branch" \
+  'git switch build-workshop-v1' \
+  "${CONTENT}/learner/00-setup.mdx"
 
 require_count() {
   local description=$1

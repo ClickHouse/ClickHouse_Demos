@@ -5,11 +5,11 @@ export const docsContentRoute = '/llms.mdx/docs';
 
 // GitHub info for the "Edit on GitHub" links and the nav GitHub button.
 // The playbook lives in the ClickHouse_Demos monorepo under
-// workshops/build_workshop/playbook on the main branch.
+// workshops/build_workshop/playbook on the production workshop branch.
 export const gitConfig = {
   user: 'ClickHouse',
   repo: 'ClickHouse_Demos',
-  branch: 'main',
+  branch: 'build-workshop-v1',
 };
 
 // The repo participants clone; the app lives at workshops/build_workshop/app.
