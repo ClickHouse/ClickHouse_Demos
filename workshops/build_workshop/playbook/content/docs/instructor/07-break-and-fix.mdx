@@ -28,7 +28,8 @@ so the wrap-up is not squeezed.
 ## Answer key
 
 Do not share this section with learners; it lives in the playbook only and is never
-committed to the app repo. Each fault is one small change on its own branch off `main`;
+committed to the app repo. Each fault is one small change on its own branch off
+`build-workshop-v1`;
 the fix is to revert it. Run one fault at a time. The lab's incident is fault 01 (5-15 min,
 curveball — the backend is innocent). Optional extras for a fast room: fault 02 (5-10 min,
 warm-up, the trace tells all) and fault 03 only when the full dataset is available
@@ -39,7 +40,7 @@ branch switch):
 
 ```bash
 git stash push --include-untracked -m "module-07-fix"
-git switch main
+git switch build-workshop-v1
 docker compose --env-file .env.workshop \
   -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
 ```
