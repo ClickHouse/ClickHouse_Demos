@@ -1,12 +1,17 @@
 name: Workshop
 
+# dev-build-workshop-v1 deploys dev; build-workshop-v1 deploys production.
+
 on:
   pull_request:
-    branches: [dev, main]
+    # Keep the required workshop check available on the existing protected repo
+    # branches, but only the dedicated workshop branches deploy on push.
+    branches: [dev, main, dev-build-workshop-v1, build-workshop-v1]
   push:
-    branches: [dev, main]
+    branches: [dev-build-workshop-v1, build-workshop-v1]
     paths:
       - "workshops/build_workshop/**"
+      - ".github/workflows/workshop.yml"
   workflow_dispatch: {}
 
 concurrency:
@@ -71,7 +76,8 @@ jobs:
     name: Deploy workshop
     if: >-
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
-      (github.ref_name == 'dev' || github.ref_name == 'main')
+      (github.ref_name == 'dev-build-workshop-v1' ||
+       github.ref_name == 'build-workshop-v1')
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -88,7 +94,7 @@ jobs:
           PROD_INSTANCE_ID: ${{ vars.WORKSHOP_PROD_INSTANCE_ID }}
         run: |
           set -euo pipefail
-          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+          if [[ "${GITHUB_REF_NAME}" == "build-workshop-v1" ]]; then
             echo "instance_id=${PROD_INSTANCE_ID}" >> "${GITHUB_OUTPUT}"
             echo "image_alias=prod" >> "${GITHUB_OUTPUT}"
             echo "url=https://workshop.demohouse.cloud" >> "${GITHUB_OUTPUT}"
