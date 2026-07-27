@@ -49,14 +49,14 @@ export function SeasonalityHeatmap({ filters }: Props) {
         orient: "horizontal" as const,
         left: "center",
         bottom: 0,
-        inRange: { color: ["#fff7bc", "#fec44f", "#fe9929", "#ec7014", "#cc4c02"] }
+        inRange: { color: ["#454722", "#7e8a2f", "#b9c53f", "#e4ec55", "#faff69"] }
       },
       series: [
         {
           name: "value",
           type: "heatmap" as const,
           data,
-          emphasis: { itemStyle: { borderColor: "#333", borderWidth: 1 } },
+          emphasis: { itemStyle: { borderColor: "#ffffff", borderWidth: 1 } },
           progressive: 1000
         }
       ]
