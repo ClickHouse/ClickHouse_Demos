@@ -27,7 +27,7 @@ The following example injects Fault 01 while preserving any local work:
 ```bash
 cd "$(git rev-parse --show-toplevel)"
 git stash push --include-untracked -m "before-module-07"
-git switch main
+git switch build-workshop-v1
 git switch fault/01-map-not-loading
 
 cd workshops/build_workshop/app
@@ -86,12 +86,12 @@ timestamps instead of expecting history to disappear.
 
 ## Step 5 — Return to the clean baseline
 
-Preserve your attempted fix, restore `main`, and rebuild both app services:
+Preserve your attempted fix, restore `build-workshop-v1`, and rebuild both app services:
 
 ```bash
 cd "$(git rev-parse --show-toplevel)"
 git stash push --include-untracked -m "module-07-fix"
-git switch main
+git switch build-workshop-v1
 
 cd workshops/build_workshop/app
 docker compose --env-file .env.workshop \
@@ -106,6 +106,6 @@ docker compose --env-file .env.workshop \
 - The agent cited telemetry that proves the root cause.
 - The same recovery check passes after the fix.
 - A fresh session creates no new matching error.
-- `git branch --show-current` returns `main`.
+- `git branch --show-current` returns `build-workshop-v1`.
 
 Continue to [08 Chat and Langfuse](/docs/learner/08-chat-langfuse).
