@@ -5,14 +5,15 @@ import { api } from "../api/client";
 import type { TimeseriesPoint } from "../api/types";
 import type { DashboardFilters } from "./FilterBar";
 import { EChart } from "./EChart";
+import { useReportSql } from "./SqlRegistry";
 
-type Props = { filters: DashboardFilters };
+type Props = { filters: DashboardFilters; sqlKey: string };
 
 function toSeries(points: TimeseriesPoint[], key: keyof TimeseriesPoint) {
   return points.map((p) => [p.ts, p[key]] as [string, any]);
 }
 
-export function TimeseriesChart({ filters }: Props) {
+export function TimeseriesChart({ filters, sqlKey }: Props) {
   const refetchInterval = filters.auto_refresh_s ? filters.auto_refresh_s * 1000 : false;
   const q = useQuery({
     queryKey: ["timeseries", filters],
@@ -29,6 +30,8 @@ export function TimeseriesChart({ filters }: Props) {
     refetchInterval,
     refetchIntervalInBackground: true
   });
+
+  useReportSql(sqlKey, q.data?.meta?.sql);
 
   const option = useMemo(() => {
     const pts = q.data?.series ?? [];

@@ -50,6 +50,10 @@ jobs:
           python -m pip install -r requirements-dev.txt
           python -m pytest tests/test_chat_guardrails.py tests/test_db_retry.py -q
 
+      - name: Run RTA dashboard tests
+        working-directory: workshops/RTA-mini-workshop/dashboard
+        run: python -m pytest test_app.py -q
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22.12.0"
@@ -72,13 +76,74 @@ jobs:
           NEXT_TELEMETRY_DISABLED: "1"
         run: npm run build -- --webpack
 
+  windows:
+    name: Windows compatibility
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: workshops/build_workshop
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Windows and WSL documentation contract
+        shell: pwsh
+        run: ./scripts/check-windows.ps1
+
+      - name: Validate Bash scripts after Windows checkout
+        shell: bash
+        run: |
+          find . -type f \( -name '*.sh' -o -name '*.bash' \) -print0 \
+            | xargs -0 -n1 bash -n
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            workshops/build_workshop/app/backend/requirements.txt
+            workshops/build_workshop/app/backend/requirements-dev.txt
+
+      - name: Run backend tests on Windows
+        working-directory: workshops/build_workshop/app/backend
+        shell: pwsh
+        run: |
+          python -m pip install -r requirements-dev.txt
+          python -m pytest tests/test_chat_guardrails.py tests/test_db_retry.py -q
+
+      - name: Run RTA dashboard tests on Windows
+        working-directory: workshops/RTA-mini-workshop/dashboard
+        shell: pwsh
+        run: python -m pytest test_app.py -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+          cache: npm
+          cache-dependency-path: workshops/build_workshop/playbook/package-lock.json
+
+      - name: Install playbook dependencies on Windows
+        working-directory: workshops/build_workshop/playbook
+        run: npm ci
+
+      - name: Check playbook types on Windows
+        working-directory: workshops/build_workshop/playbook
+        run: npm run types:check
+
+      - name: Build root-path playbook on Windows
+        working-directory: workshops/build_workshop/playbook
+        env:
+          NEXT_PUBLIC_BASE_PATH: ""
+          NEXT_PUBLIC_SITE_URL: https://workshop.demohouse.cloud
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npm run build -- --webpack
+
   deploy:
     name: Deploy workshop
     if: >-
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (github.ref_name == 'dev-build-workshop-v1' ||
        github.ref_name == 'build-workshop-v1')
-    needs: verify
+    needs: [verify, windows]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -209,9 +274,40 @@ jobs:
           SITE_URL: ${{ steps.target.outputs.url }}
         run: |
           set -euo pipefail
-          for path in / /docs/learner/00-setup /docs/learner/07-break-and-fix /docs/learner/08-chat-langfuse; do
-            curl --fail --show-error --silent --retry 12 --retry-delay 5 \
-              --output /dev/null "${SITE_URL}${path}"
+
+          probe_route() {
+            local path=$1
+            local attempt result status redirect
+
+            for attempt in $(seq 1 12); do
+              result=$(curl --show-error --silent \
+                --connect-timeout 10 \
+                --max-time 30 \
+                --output /dev/null \
+                --write-out $'%{http_code}\t%{redirect_url}' \
+                "${SITE_URL}${path}" || true)
+              status=${result%%$'\t'*}
+              redirect=${result#*$'\t'}
+
+              if [[ "${status}" == "200" && -z "${redirect}" ]]; then
+                echo "${path}: HTTP 200"
+                return 0
+              fi
+
+              echo "${path}: attempt ${attempt}/12 returned HTTP ${status:-000} redirect=${redirect:-none}"
+              sleep 5
+            done
+
+            if [[ "${redirect:-}" == */login* ]]; then
+              echo "::error::${SITE_URL}${path} is routed to the authenticated DemoHouse login page."
+            else
+              echo "::error::${SITE_URL}${path} did not return a direct HTTP 200 response."
+            fi
+            return 1
+          }
+
+          for path in / /build-workshop /rta-mini/index.html /docs/learner/00-setup /docs/learner/07-break-and-fix /docs/learner/08-chat-langfuse; do
+            probe_route "${path}"
           done
 
       - name: Deployment summary

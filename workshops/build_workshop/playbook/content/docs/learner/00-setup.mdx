@@ -3,6 +3,10 @@ title: 00 Setup
 description: Create the workshop services, install the CLIs, connect your agent once, and start the local app.
 ---
 
+Choose **macOS** or **Windows** in the page header before you begin. Your choice persists
+across the workshop. Windows uses Ubuntu on WSL 2 so the same Bash, Docker, ClickHouse,
+and agent commands work in every module.
+
 ## Outcome
 
 In about **25 minutes** you will have:
@@ -13,19 +17,112 @@ In about **25 minutes** you will have:
 - Langfuse and OpenAI keys; and
 - the app healthy at [localhost:8080](http://localhost:8080).
 
-Run every command in this module from the app directory unless a step says otherwise.
+After Step 2, run every command from the app directory unless a step says otherwise.
 
 ## Step 1 — Check prerequisites
 
 You need Docker with at least 6 GB of memory, Git, Node.js 20+, Python 3, and one MCP-capable
 coding agent: Claude Code, Cursor, Codex CLI, or Windsurf.
 
+<PlatformOnly platform="macos">
+
+**macOS setup**
+
+Install [Docker Desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/)
+and allocate at least 6 GB in **Settings -> Resources**. Open Terminal and run:
+
 ```bash
 docker version
+docker compose version
 git --version
 node --version
 python3 --version
 ```
+
+Continue only when every command prints a version and `docker version` shows both a
+Client and Server section.
+
+</PlatformOnly>
+
+<PlatformOnly platform="windows">
+
+**Windows setup**
+
+The workshop requires **Ubuntu on WSL 2**. Native PowerShell, Command Prompt, Git Bash,
+and WSL 1 are not supported workshop shells. PowerShell is used only to install and
+inspect WSL; all later command blocks run in the Ubuntu terminal.
+
+<Callout type="warn" title="Windows prerequisites — check these before the workshop">
+
+- Windows 11, or Windows 10 version 2004 (build 19041) or later;
+- an account allowed to run PowerShell as Administrator and install Docker Desktop;
+- hardware virtualization enabled in the BIOS/UEFI;
+- 16 GB of host RAM recommended, with at least 6 GB available to WSL and Docker;
+- at least 20 GB of free disk space; and
+- permission from your administrator to use WSL 2, Docker Desktop, and browser OAuth on
+  a managed corporate machine.
+
+Installing WSL may require a Windows restart. Complete this before a live session. If
+corporate policy blocks any item, use a personal machine or ask your administrator before
+the workshop.
+
+</Callout>
+
+Microsoft maintains the current [WSL installation guide](https://learn.microsoft.com/windows/wsl/install).
+
+Open **PowerShell as Administrator** and run:
+
+```powershell
+wsl --install -d Ubuntu
+wsl --update
+wsl --status
+wsl --version
+wsl --list --verbose
+```
+
+Restart Windows if prompted, open **Ubuntu** from the Start menu, and finish its Linux
+username and password setup. These credentials are separate from the Windows login and
+are used by `sudo`. In the PowerShell output, Ubuntu must show `VERSION 2` and WSL must
+report a current version. If Ubuntu shows version 1, run `wsl --set-version Ubuntu 2` in
+Administrator PowerShell.
+
+Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/).
+In Docker Desktop, enable **Settings -> General -> Use the WSL 2 based engine**, then
+**Settings -> Resources -> WSL Integration -> Ubuntu**. Docker and WSL must expose at
+least 6 GB of memory; the verification below reports the exact value. Do not install a
+second Docker Engine with `apt` inside Ubuntu; the Docker Desktop integration supplies it.
+
+Now open the **Ubuntu** terminal and install the Linux prerequisites:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl git python3
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
+git config --global core.autocrlf input
+```
+
+Still in Ubuntu, verify the toolchain and your working directory:
+
+```bash
+docker version
+docker compose version
+docker info --format 'Docker memory: {{.MemTotal}} bytes'
+git --version
+node --version
+python3 --version
+pwd
+```
+
+Continue only when every command succeeds, Docker shows Client and Server sections, and
+Docker reports at least `6442450944` bytes (6 GB), and `pwd` begins with `/home/`. If
+Docker reports less memory, apply the `.wslconfig` fix in
+[Troubleshooting](/docs/learner/troubleshooting#wsl-or-docker-has-less-than-6-gb-of-memory).
+Do not put the repository under `/mnt/c`; Linux files are faster and avoid permission and
+line-ending failures. Windows can still open the local app at
+[localhost:8080](http://localhost:8080) in its normal browser.
+
+</PlatformOnly>
 
 <Callout type="warn" title="Managed laptop?">
   Corporate policy can block MCP installation or browser OAuth. Use a personal machine or
@@ -33,6 +130,22 @@ python3 --version
 </Callout>
 
 ## Step 2 — Clone the repo and switch to the workshop branch
+
+<PlatformOnly platform="macos">
+
+Run this in macOS Terminal:
+
+</PlatformOnly>
+
+<PlatformOnly platform="windows">
+
+Run this in the Ubuntu terminal. Start in your Linux home directory, not `/mnt/c`:
+
+```bash
+cd ~
+```
+
+</PlatformOnly>
 
 ```bash
 git clone https://github.com/ClickHouse/ClickHouse_Demos.git
@@ -42,7 +155,8 @@ cd workshops/build_workshop/app
 cp .env.workshop.example .env.workshop
 ```
 
-Keep this terminal in `ClickHouse_Demos/workshops/build_workshop/app`. The preflight script
+Keep this terminal in `ClickHouse_Demos/workshops/build_workshop/app`. On Windows, this
+means the Ubuntu terminal. The preflight script
 is `./preflight.sh` **inside this directory**. Stay on `build-workshop-v1` except during
 Module 07 fault tests. Confirm the branch now:
 
@@ -51,6 +165,19 @@ git branch --show-current
 ```
 
 Expected: `build-workshop-v1`.
+
+<PlatformOnly platform="windows">
+
+Your coding agent must use this same WSL checkout:
+
+- Run CLI agents such as Claude Code or Codex from the Ubuntu terminal.
+- In a desktop agent such as Cursor or Windsurf, open the WSL folder through its WSL
+  integration. The integrated terminal must report Linux when you run `uname -s`.
+- Do not create or open a second copy under `C:\Users`. If a Windows folder picker is
+  required, the checkout is under
+  `\\wsl.localhost\Ubuntu\home\<your-linux-user>\ClickHouse_Demos`.
+
+</PlatformOnly>
 
 ## Step 3 — Create a ClickHouse Cloud account and API key
 
@@ -73,6 +200,8 @@ clickhouse client --version
 ```
 
 Add `~/.local/bin` to your shell profile if a new terminal cannot find either command.
+On Windows, both commands are installed inside Ubuntu; do not install or run their Windows
+executables in PowerShell.
 
 ## Step 5 — Authenticate `clickhousectl`
 

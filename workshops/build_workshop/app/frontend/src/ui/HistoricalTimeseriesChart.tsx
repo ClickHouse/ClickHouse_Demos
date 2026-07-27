@@ -5,8 +5,9 @@ import { api } from "../api/client";
 import type { HistoricalTimeseriesPoint } from "../api/types";
 import type { HistoricalFilters } from "./HistoricalFilterBar";
 import { EChart } from "./EChart";
+import { useReportSql } from "./SqlRegistry";
 
-type Props = { filters: HistoricalFilters };
+type Props = { filters: HistoricalFilters; sqlKey: string };
 
 function metricLabel(m: HistoricalFilters["metric"]) {
   return {
@@ -18,7 +19,7 @@ function metricLabel(m: HistoricalFilters["metric"]) {
   }[m];
 }
 
-export function HistoricalTimeseriesChart({ filters }: Props) {
+export function HistoricalTimeseriesChart({ filters, sqlKey }: Props) {
   const refetchInterval = filters.auto_refresh_s ? filters.auto_refresh_s * 1000 : false;
   const q = useQuery({
     queryKey: ["historicalTimeseries", filters],
@@ -37,6 +38,8 @@ export function HistoricalTimeseriesChart({ filters }: Props) {
     refetchInterval,
     refetchIntervalInBackground: true
   });
+
+  useReportSql(sqlKey, q.data?.meta?.sql);
 
   const series = (q.data?.series ?? []) as HistoricalTimeseriesPoint[];
   const m = filters.metric;

@@ -215,3 +215,33 @@ def test_trips_pagination_and_filtering(api_base_url: str, http: httpx.Client, s
     for row in rows:
         assert row["pickup_zone"]
 
+
+def test_meta_includes_inlined_sql(api_base_url: str, http: httpx.Client, sample_window: tuple[str, str]) -> None:
+    # Every analytics panel gets the executed SQL back in meta.sql so the UI can show it.
+    start, end = sample_window
+    r = http.get(
+        f"{api_base_url}/api/metrics/top_zones",
+        params={"start": start, "end": end, "metric": "trips", "direction": "pickup", "limit": 10},
+    )
+    assert r.status_code == 200
+    sql = r.json()["meta"]["sql"]
+    assert isinstance(sql, str) and sql
+    # Runnable: no leftover {name:Type} bind placeholders, real table, inlined window + limit.
+    assert "{" not in sql and "}" not in sql
+    assert "FROM taxi_trips" in sql
+    assert "2022-07-02 20:00:00" in sql
+    assert "LIMIT 10" in sql
+
+
+def test_meta_sql_inlines_filters(api_base_url: str, http: httpx.Client, sample_window: tuple[str, str]) -> None:
+    # A bound scalar filter (vendor_id) is inlined as a literal, not left as a placeholder.
+    start, end = sample_window
+    r = http.get(
+        f"{api_base_url}/api/metrics/timeseries",
+        params={"start": start, "end": end, "interval": "15m", "vendor_id": 1},
+    )
+    assert r.status_code == 200
+    sql = r.json()["meta"]["sql"]
+    assert "{" not in sql
+    assert "vendor_id = 1" in sql
+

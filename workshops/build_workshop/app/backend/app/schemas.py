@@ -11,6 +11,9 @@ class Meta(BaseModel):
     elapsed_ms: int
     rows_returned: int
     cached: bool = False
+    # The executed query with bind parameters inlined, so the UI can show the SQL
+    # behind each panel. None when unavailable (e.g. endpoints that don't run a query).
+    sql: str | None = None
 
 
 class Interval(str, Enum):

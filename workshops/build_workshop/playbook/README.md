@@ -89,6 +89,21 @@ content/docs/
   imports are needed for these.
 - No emojis anywhere, in content or code.
 
+### Platform contract
+
+The learner track supports macOS and Windows. Windows means Ubuntu on WSL 2 with Docker
+Desktop WSL integration; it does not mean translating shared Bash blocks into PowerShell.
+
+- Put Windows host bootstrap or repair commands in a `powershell` fence inside
+  `<PlatformOnly platform="windows">`.
+- Keep all workshop, Docker, Git, `clickhousectl`, ClickHouse client, and preflight commands
+  in `bash` fences. Windows learners run them in Ubuntu.
+- Put platform-specific macOS text inside `<PlatformOnly platform="macos">` when the
+  Windows path differs.
+- Never tell Windows learners to clone under `/mnt/c`; use their WSL home directory.
+- Keep shell scripts LF-only. The Windows CI job enforces the platform contract and builds
+  the complete playbook on a Windows runner.
+
 ### The per-module learner contract
 
 Every learner module page follows this skeleton, in order:

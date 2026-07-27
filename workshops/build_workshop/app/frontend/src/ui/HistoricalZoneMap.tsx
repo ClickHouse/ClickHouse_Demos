@@ -5,14 +5,16 @@ import maplibregl from "maplibre-gl";
 import { api } from "../api/client";
 import type { HistoricalFilters } from "./HistoricalFilterBar";
 import { applyDarkBasemap, choroplethFill, ZONE_OUTLINE_COLOR } from "./mapTheme";
+import { useReportSql } from "./SqlRegistry";
 
-type Props = { filters: HistoricalFilters };
+type Props = { filters: HistoricalFilters; sqlKey: string };
 
-export function HistoricalZoneMap({ filters }: Props) {
+export function HistoricalZoneMap({ filters, sqlKey }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [geojson, setGeojson] = useState<any | null>(null);
   const [geojsonError, setGeojsonError] = useState<string | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +56,8 @@ export function HistoricalZoneMap({ filters }: Props) {
     refetchIntervalInBackground: true
   });
 
+  useReportSql(sqlKey, mapQ.data?.meta?.sql);
+
   const valueByZoneId = useMemo(() => {
     const m = new Map<number, number>();
     for (const r of mapQ.data?.rows ?? []) m.set(r.zone_id, r.value);
@@ -81,12 +85,20 @@ export function HistoricalZoneMap({ filters }: Props) {
 
   useEffect(() => {
     if (!ref.current || mapRef.current) return;
-    const map = new maplibregl.Map({
-      container: ref.current,
-      style: "https://demotiles.maplibre.org/style.json",
-      center: [-73.9855, 40.758],
-      zoom: 9.8
-    });
+    let map: maplibregl.Map;
+    try {
+      map = new maplibregl.Map({
+        container: ref.current,
+        style: "https://demotiles.maplibre.org/style.json",
+        center: [-73.9855, 40.758],
+        zoom: 9.8
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "WebGL is unavailable";
+      console.warn("HistoricalZoneMap: MapLibre unavailable; rendering the map fallback", error);
+      setMapError(message);
+      return;
+    }
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
 
@@ -158,12 +170,18 @@ export function HistoricalZoneMap({ filters }: Props) {
 
   return (
     <div>
-      <div ref={ref} style={{ width: "100%", height: 320, borderRadius: 8, overflow: "hidden" }} />
+      {mapError ? (
+        <div className="alert alert-secondary mb-0" role="status" style={{ minHeight: 320 }}>
+          Map unavailable in this browser. The other dashboard panels still work.
+        </div>
+      ) : (
+        <div ref={ref} style={{ width: "100%", height: 320, borderRadius: 8, overflow: "hidden" }} />
+      )}
       <div className="text-secondary small mt-2">
         {mapQ.data ? `Query ${mapQ.data.meta.elapsed_ms}ms` : mapQ.isLoading ? "Loading…" : ""}
         {geojsonError ? <span className="text-danger"> • {geojsonError}</span> : null}
+        {mapError ? <span className="text-danger"> • {mapError}</span> : null}
       </div>
     </div>
   );
 }
-

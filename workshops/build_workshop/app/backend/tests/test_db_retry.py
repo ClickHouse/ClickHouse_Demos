@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 import pytest
 from clickhouse_connect.driver.exceptions import DatabaseError, OperationalError
 from fastapi import HTTPException
 
 import app.db as db
-from app.db import IDLE_WAKE_TIMEOUT_SECONDS, run_query
+from app.db import IDLE_WAKE_TIMEOUT_SECONDS, inline_sql, run_query
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -135,3 +137,35 @@ def test_success_first_try_does_not_build_retry_client(monkeypatch) -> None:
     assert rows == [{"n": 7}]
     assert meta.rows_returned == 1
     assert client.calls == 1
+
+
+def test_inline_sql_formats_scalars_dates_and_arrays() -> None:
+    sql = """
+        SELECT * FROM taxi_trips
+        WHERE vendor_id = {vendor_id:UInt8}
+          AND pickup_datetime >= {start:DateTime}
+          AND pickup_zone_id IN {zone_ids:Array(UInt16)}
+    """
+
+    rendered = inline_sql(
+        sql,
+        {
+            "vendor_id": 1,
+            "start": datetime(2022, 7, 2, 20, 0, 0),
+            "zone_ids": [161, 162],
+        },
+    )
+
+    assert "vendor_id = 1" in rendered
+    assert "pickup_datetime >= '2022-07-02 20:00:00'" in rendered
+    assert "pickup_zone_id IN [161, 162]" in rendered
+    assert "{" not in rendered
+
+
+def test_inline_sql_escapes_display_strings_and_preserves_unknown_tokens() -> None:
+    rendered = inline_sql(
+        "SELECT {name:String}, {missing:String}",
+        {"name": "O'Reilly\\books"},
+    )
+
+    assert rendered == "SELECT 'O\\'Reilly\\\\books', {missing:String}"
