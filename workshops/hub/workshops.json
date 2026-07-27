@@ -1,0 +1,29 @@
+{
+  "$comment": "Source of truth for the workshops hub. To add a workshop: append an entry here and a matching card in index.html. 'url' is where the workshop is served (adjust per your deploy/reverse-proxy topology).",
+  "workshops": [
+    {
+      "id": "build-workshop",
+      "title": "Build AI with AI",
+      "tagline": "Build it, end to end.",
+      "blurb": "In one three-hour sitting, take a real analytics app live on ClickHouse Cloud with your own AI coding agent — real-time CDC, conversational BI, observability, an AI SRE, and traced AI chat.",
+      "duration": "3 hours",
+      "level": "Intermediate",
+      "tags": ["CDC", "Agents", "ClickStack", "Langfuse", "AI coding agent"],
+      "module": "workshops/build_workshop",
+      "url": "https://demohouse.cloud/workshop",
+      "status": "live"
+    },
+    {
+      "id": "rta-mini",
+      "title": "Real-Time Market Analytics",
+      "tagline": "26.5M forex ticks, answered in milliseconds.",
+      "blurb": "A 90-minute hands-on lab: load ~26.5M forex ticks from object storage, run real market-analytics queries, and try the built-in AI Assistant and Agents. Optional live dashboard on your own data.",
+      "duration": "90 minutes",
+      "level": "Beginner",
+      "tags": ["ClickPipes", "S3", "AI Assistant", "Agents", "dashboard"],
+      "module": "workshops/RTA-mini-workshop",
+      "url": "../RTA-mini-workshop/index.html",
+      "status": "live"
+    }
+  ]
+}

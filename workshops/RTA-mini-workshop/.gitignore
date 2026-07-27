@@ -1,0 +1,21 @@
+# Secrets — never commit real connection details
+.env
+dashboard/.env
+**/.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Pages build output
+_site/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

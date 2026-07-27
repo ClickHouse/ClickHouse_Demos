@@ -1,0 +1,135 @@
+<!doctype html>
+<!--
+  ClickHouse Workshops — hub / portal.
+  Workshop-agnostic entry point that lists workshops and links to each one.
+  Self-contained (no external fonts/scripts/network). Cards mirror workshops.json;
+  to add a workshop, add an entry there and a matching <a class="card"> below.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ClickHouse Workshops</title>
+<meta name="description" content="Hands-on ClickHouse workshops — pick one and start building." />
+<style>
+  :root {
+    --ink: #14130F; --ink-2: #201E18; --paper: #FFFFFF;
+    --line-d: rgba(255,255,255,.14); --line-strong: rgba(255,255,255,.24);
+    --muted: rgba(255,255,255,.62); --yellow: #FAFF69; --yellow-d: #E7EC4A;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --maxw: 1080px; --pad: clamp(20px, 5vw, 64px);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ink); color: var(--paper); font-family: var(--sans);
+    line-height: 1.55; font-size: 17px; -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding-inline: var(--pad); }
+
+  header.top { position: relative; overflow: hidden; border-bottom: 1px solid var(--line-d); }
+  header.top::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(620px 380px at 88% -10%, rgba(250,255,105,.16), transparent 60%);
+    pointer-events: none;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding-top: clamp(32px, 6vw, 56px); }
+  .brand-logo { height: 22px; width: auto; color: #fff; }
+  .brand-name { font-weight: 700; letter-spacing: -0.02em; }
+  .brand-sep { color: var(--line-strong); }
+  .brand-sub { font-family: var(--mono); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-size: clamp(2.4rem, 6vw, 4rem); letter-spacing: -0.035em; font-weight: 800; margin: 26px 0 16px; line-height: 1.02; }
+  h1 .ai { color: var(--yellow); }
+  .lede { color: rgba(255,255,255,.82); font-size: clamp(1.05rem, 1.6vw, 1.25rem); max-width: 46ch; padding-bottom: clamp(40px, 7vw, 72px); }
+
+  .grid-section { padding-block: clamp(40px, 6vw, 72px); }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); margin: 0 0 22px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    display: flex; flex-direction: column; gap: 14px;
+    background: var(--ink-2); border: 1px solid var(--line-d); border-radius: 16px;
+    padding: 26px 24px 24px; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+  .card:hover { transform: translateY(-3px); border-color: var(--yellow); box-shadow: 0 24px 50px -28px rgba(0,0,0,.8); }
+  .card:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+  .card-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .card-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--line-strong); }
+  .card-title { font-size: 1.5rem; font-weight: 750; letter-spacing: -0.02em; line-height: 1.1; }
+  .card-tagline { color: var(--yellow-d); font-weight: 600; margin-top: -6px; }
+  .card-blurb { color: rgba(255,255,255,.72); font-size: .98rem; }
+  .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 2px; }
+  .tag { font-family: var(--mono); font-size: 11px; letter-spacing: .02em; color: var(--muted); border: 1px solid var(--line-d); border-radius: 100px; padding: 4px 9px; }
+  .card-cta { margin-top: auto; display: inline-flex; align-items: center; gap: 8px; font-weight: 650; color: var(--yellow); padding-top: 8px; }
+  .card:hover .card-cta .arrow { transform: translateX(3px); }
+  .card-cta .arrow { transition: transform .15s ease; }
+  .badge-soon { color: var(--muted); }
+
+  footer { border-top: 1px solid var(--line-d); color: var(--muted); font-size: 13.5px; }
+  footer .wrap { padding-block: 30px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: center; }
+  footer .links { display: flex; gap: 20px; font-family: var(--mono); font-size: 12.5px; }
+  footer a:hover { color: var(--yellow); }
+</style>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <div class="brand">
+        <svg class="brand-logo" viewBox="0 0 54 54" fill="none" role="img" aria-label="ClickHouse">
+          <rect width="5.9998" height="53.9982" rx="1.45943" fill="currentColor" />
+          <rect x="12" width="5.9998" height="53.9982" rx="1.45943" fill="currentColor" />
+          <rect x="24.001" width="5.9998" height="53.9982" rx="1.45943" fill="currentColor" />
+          <rect x="35.998" width="5.9998" height="53.9982" rx="1.45943" fill="currentColor" />
+          <rect x="48.001" y="21.0005" width="5.9998" height="11.9996" rx="1.45943" fill="currentColor" />
+        </svg>
+        <span class="brand-name">ClickHouse</span>
+        <span class="brand-sep">/</span>
+        <span class="brand-sub">Workshops</span>
+      </div>
+      <h1>Pick a workshop.<br />Start <span class="ai">building.</span></h1>
+      <p class="lede">Hands-on ClickHouse labs — from a 90-minute analytics sprint to a full afternoon building a real-time, AI-assisted app. Each runs on your own free ClickHouse Cloud trial.</p>
+    </div>
+  </header>
+
+  <section class="grid-section">
+    <div class="wrap">
+      <p class="eyebrow">Available workshops</p>
+      <div class="grid">
+
+        <a class="card" href="https://demohouse.cloud/workshop">
+          <div class="card-meta"><span>3 hours</span><span class="dot"></span><span>Intermediate</span></div>
+          <div class="card-title">Build AI with AI</div>
+          <div class="card-tagline">Build it, end to end.</div>
+          <p class="card-blurb">In one three-hour sitting, take a real analytics app live on ClickHouse Cloud with your own AI coding agent — real-time CDC, conversational BI, observability, an AI SRE, and traced AI chat.</p>
+          <div class="tags"><span class="tag">CDC</span><span class="tag">Agents</span><span class="tag">ClickStack</span><span class="tag">Langfuse</span></div>
+          <span class="card-cta">Open workshop <span class="arrow">→</span></span>
+        </a>
+
+        <a class="card" href="../RTA-mini-workshop/index.html">
+          <div class="card-meta"><span>90 minutes</span><span class="dot"></span><span>Beginner</span></div>
+          <div class="card-title">Real-Time Market Analytics</div>
+          <div class="card-tagline">26.5M forex ticks, answered in milliseconds.</div>
+          <p class="card-blurb">A 90-minute hands-on lab: load ~26.5M forex ticks from object storage, run real market-analytics queries, and try the built-in AI Assistant and Agents. Optional live dashboard on your own data.</p>
+          <div class="tags"><span class="tag">ClickPipes</span><span class="tag">S3</span><span class="tag">AI Assistant</span><span class="tag">dashboard</span></div>
+          <span class="card-cta">Open workshop <span class="arrow">→</span></span>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div>ClickHouse · Workshops</div>
+      <div class="links">
+        <a href="https://clickhouse.com/cloud">ClickHouse Cloud</a>
+        <a href="https://clickhouse.com/docs">Docs</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
