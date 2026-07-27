@@ -4,13 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { Zone } from "../api/types";
 import type { DashboardFilters } from "./FilterBar";
+import { useReportSql } from "./SqlRegistry";
 
 type Props = {
   filters: DashboardFilters;
   zonesById: Map<number, Zone>;
+  sqlKey: string;
 };
 
-export function DrilldownTable({ filters }: Props) {
+export function DrilldownTable({ filters, sqlKey }: Props) {
   const [page, setPage] = useState(0);
   const limit = 10;
   const offset = page * limit;
@@ -34,6 +36,8 @@ export function DrilldownTable({ filters }: Props) {
     refetchInterval,
     refetchIntervalInBackground: true
   });
+
+  useReportSql(sqlKey, q.data?.meta?.sql);
 
   if (q.isLoading) return <div className="text-secondary">Loading…</div>;
   if (q.isError) return <div className="text-danger">Failed to load: {(q.error as Error).message}</div>;

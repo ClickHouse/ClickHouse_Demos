@@ -4,13 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { DashboardFilters } from "./FilterBar";
 import { EChart } from "./EChart";
+import { useReportSql } from "./SqlRegistry";
 
 type Props = {
   filters: DashboardFilters;
   direction: "pickup" | "dropoff";
+  sqlKey: string;
 };
 
-export function TopZonesBar({ filters, direction }: Props) {
+export function TopZonesBar({ filters, direction, sqlKey }: Props) {
   const refetchInterval = filters.auto_refresh_s ? filters.auto_refresh_s * 1000 : false;
   const q = useQuery({
     queryKey: ["topZones", direction, filters],
@@ -29,6 +31,8 @@ export function TopZonesBar({ filters, direction }: Props) {
     refetchInterval,
     refetchIntervalInBackground: true
   });
+
+  useReportSql(sqlKey, q.data?.meta?.sql);
 
   const option = useMemo(() => {
     const rows = q.data?.rows ?? [];
