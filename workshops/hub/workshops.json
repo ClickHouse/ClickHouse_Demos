@@ -10,7 +10,7 @@
       "level": "Intermediate",
       "tags": ["CDC", "Agents", "ClickStack", "Langfuse", "AI coding agent"],
       "module": "workshops/build_workshop",
-      "url": "https://demohouse.cloud/workshop",
+      "url": "/workshop",
       "status": "live"
     },
     {
@@ -22,7 +22,7 @@
       "level": "Beginner",
       "tags": ["ClickPipes", "S3", "AI Assistant", "Agents", "dashboard"],
       "module": "workshops/RTA-mini-workshop",
-      "url": "../RTA-mini-workshop/index.html",
+      "url": "/rta-mini/",
       "status": "live"
     }
   ]

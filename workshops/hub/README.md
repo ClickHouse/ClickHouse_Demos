@@ -37,9 +37,39 @@ The hub is self-contained static HTML — no build step, no dependencies.
    its `href` at the workshop's served URL.
 4. Wire the reverse proxy to serve the new workshop at its path.
 
-## Links
+## Wiring the reverse proxy
 
-Card `href`s reflect the deploy topology above and are easy to change:
-- **Build AI with AI** → the live build-workshop playbook.
-- **Real-Time Market Analytics** → the RTA mini guide (relative link within the
-  repo; swap for the deployed path once routing is wired).
+The site is served behind the demohouse reverse proxy (nginx / ALB). The hub is
+static and the workshops are independent units; the proxy just maps origin paths
+to each. Card `href`s are origin-relative (`/workshop`, `/rta-mini/`) to match.
+
+Reference nginx routing:
+
+```nginx
+# / → the hub (this folder, served as static files)
+location = / {
+  root /srv/workshops/hub;
+  try_files /index.html =404;
+}
+
+# /workshop → the build_workshop playbook (Next standalone container on :3000,
+# already built with basePath=/workshop)
+location /workshop/ {
+  proxy_pass http://build-workshop:3000;
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+# /rta-mini → the RTA mini guide (static: workshops/RTA-mini-workshop/)
+location /rta-mini/ {
+  alias /srv/workshops/RTA-mini-workshop/;
+  try_files $uri $uri/ /index.html;
+}
+```
+
+Each new workshop adds one `location` block + one manifest entry + one card.
+
+> **Local preview:** because the links are origin-relative, open the hub through a
+> static server rooted at `workshops/` (e.g. `python3 -m http.server` from there,
+> then visit `/hub/`) rather than `file://`, so `/workshop` and `/rta-mini/`
+> resolve.
