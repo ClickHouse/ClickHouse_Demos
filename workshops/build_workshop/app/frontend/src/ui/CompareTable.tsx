@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { api } from "../api/client";
 import type { DashboardFilters } from "./FilterBar";
+import { useReportSql } from "./SqlRegistry";
 
 type Props = {
   filters: DashboardFilters;
@@ -9,9 +10,10 @@ type Props = {
   aEnd: string;
   bStart: string;
   bEnd: string;
+  sqlKey: string;
 };
 
-export function CompareTable({ filters, aStart, aEnd, bStart, bEnd }: Props) {
+export function CompareTable({ filters, aStart, aEnd, bStart, bEnd, sqlKey }: Props) {
   const refetchInterval = filters.auto_refresh_s ? filters.auto_refresh_s * 1000 : false;
   const q = useQuery({
     queryKey: ["comparePeriod", filters, aStart, aEnd, bStart, bEnd],
@@ -32,6 +34,8 @@ export function CompareTable({ filters, aStart, aEnd, bStart, bEnd }: Props) {
     refetchInterval,
     refetchIntervalInBackground: true
   });
+
+  useReportSql(sqlKey, q.data?.meta?.sql);
 
   if (q.isLoading) return <div className="text-secondary">Loading…</div>;
   if (q.isError) return <div className="text-danger">Failed to load: {(q.error as Error).message}</div>;

@@ -11,6 +11,7 @@ import { ZoneMap } from "../ui/ZoneMap";
 import { DrilldownTable } from "../ui/DrilldownTable";
 import { AnomaliesTable } from "../ui/AnomaliesTable";
 import { ChatPanel } from "../ui/ChatPanel";
+import { PanelSqlButton, SqlRegistryProvider } from "../ui/SqlRegistry";
 
 // Defaults that exist in the TLC datasets commonly used in demos.
 const SAMPLE_START = "2022-07-02T20:00:00Z";
@@ -75,6 +76,7 @@ export function DashboardPage() {
   }, [filters.start, filters.end]);
 
   return (
+    <SqlRegistryProvider>
     <div>
       <FilterBar
         zones={zonesQ.data?.zones ?? []}
@@ -95,10 +97,13 @@ export function DashboardPage() {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="h5 mb-0">Act 1 — What’s happening now?</div>
+                <div className="h5 mb-0 d-flex align-items-center gap-2">
+                  <span>Act 1 — What’s happening now?</span>
+                  <PanelSqlButton sqlKey="timeseries" />
+                </div>
                 <div className="text-secondary small">Trips, revenue, p50/p95 duration</div>
               </div>
-              <TimeseriesChart filters={filters} />
+              <TimeseriesChart filters={filters} sqlKey="timeseries" />
             </div>
           </div>
         </div>
@@ -106,14 +111,20 @@ export function DashboardPage() {
         <div className="col-12 col-xl-4">
           <div className="card mb-3">
             <div className="card-body">
-              <div className="h5 mb-2">Top pickup zones</div>
-              <TopZonesBar filters={filters} direction="pickup" />
+              <div className="h5 mb-2 d-flex align-items-center gap-2">
+                <span>Top pickup zones</span>
+                <PanelSqlButton sqlKey="topPickup" />
+              </div>
+              <TopZonesBar filters={filters} direction="pickup" sqlKey="topPickup" />
             </div>
           </div>
           <div className="card">
             <div className="card-body">
-              <div className="h5 mb-2">Top dropoff zones</div>
-              <TopZonesBar filters={filters} direction="dropoff" />
+              <div className="h5 mb-2 d-flex align-items-center gap-2">
+                <span>Top dropoff zones</span>
+                <PanelSqlButton sqlKey="topDropoff" />
+              </div>
+              <TopZonesBar filters={filters} direction="dropoff" sqlKey="topDropoff" />
             </div>
           </div>
         </div>
@@ -122,10 +133,13 @@ export function DashboardPage() {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="h5 mb-0">Act 3 — Compare vs last Friday</div>
+                <div className="h5 mb-0 d-flex align-items-center gap-2">
+                  <span>Act 3 — Compare vs last Friday</span>
+                  <PanelSqlButton sqlKey="compare" />
+                </div>
                 <div className="text-secondary small">Auto: B = A - 7 days</div>
               </div>
-              <CompareTable filters={filters} aStart={compareParams.a_start} aEnd={compareParams.a_end} bStart={compareParams.b_start} bEnd={compareParams.b_end} />
+              <CompareTable filters={filters} aStart={compareParams.a_start} aEnd={compareParams.a_end} bStart={compareParams.b_start} bEnd={compareParams.b_end} sqlKey="compare" />
             </div>
           </div>
         </div>
@@ -134,10 +148,13 @@ export function DashboardPage() {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="h5 mb-0">Map</div>
+                <div className="h5 mb-0 d-flex align-items-center gap-2">
+                  <span>Map</span>
+                  <PanelSqlButton sqlKey="map" />
+                </div>
                 <div className="text-secondary small">Taxi zones choropleth</div>
               </div>
-              <ZoneMap zones={zonesQ.data?.zones ?? []} filters={filters} />
+              <ZoneMap zones={zonesQ.data?.zones ?? []} filters={filters} sqlKey="map" />
             </div>
           </div>
         </div>
@@ -146,10 +163,13 @@ export function DashboardPage() {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="h5 mb-0">Drilldown</div>
+                <div className="h5 mb-0 d-flex align-items-center gap-2">
+                  <span>Drilldown</span>
+                  <PanelSqlButton sqlKey="drilldown" />
+                </div>
                 <div className="text-secondary small">Raw trips (paginated)</div>
               </div>
-              <DrilldownTable filters={filters} zonesById={zonesById} />
+              <DrilldownTable filters={filters} zonesById={zonesById} sqlKey="drilldown" />
             </div>
           </div>
         </div>
@@ -158,10 +178,13 @@ export function DashboardPage() {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="h5 mb-0">Act 4 — Suspicious trips</div>
+                <div className="h5 mb-0 d-flex align-items-center gap-2">
+                  <span>Act 4 — Suspicious trips</span>
+                  <PanelSqlButton sqlKey="anomalies" />
+                </div>
                 <div className="text-secondary small">Outliers (rule-based)</div>
               </div>
-              <AnomaliesTable filters={filters} />
+              <AnomaliesTable filters={filters} sqlKey="anomalies" />
             </div>
           </div>
         </div>
@@ -169,5 +192,6 @@ export function DashboardPage() {
 
       <ChatPanel />
     </div>
+    </SqlRegistryProvider>
   );
 }

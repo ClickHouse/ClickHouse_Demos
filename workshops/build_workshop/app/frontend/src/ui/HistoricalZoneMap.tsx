@@ -5,10 +5,11 @@ import maplibregl from "maplibre-gl";
 import { api } from "../api/client";
 import type { HistoricalFilters } from "./HistoricalFilterBar";
 import { applyDarkBasemap, choroplethFill, ZONE_OUTLINE_COLOR } from "./mapTheme";
+import { useReportSql } from "./SqlRegistry";
 
-type Props = { filters: HistoricalFilters };
+type Props = { filters: HistoricalFilters; sqlKey: string };
 
-export function HistoricalZoneMap({ filters }: Props) {
+export function HistoricalZoneMap({ filters, sqlKey }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [geojson, setGeojson] = useState<any | null>(null);
@@ -53,6 +54,8 @@ export function HistoricalZoneMap({ filters }: Props) {
     refetchInterval,
     refetchIntervalInBackground: true
   });
+
+  useReportSql(sqlKey, mapQ.data?.meta?.sql);
 
   const valueByZoneId = useMemo(() => {
     const m = new Map<number, number>();

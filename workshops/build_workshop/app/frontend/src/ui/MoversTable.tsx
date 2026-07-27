@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { MoversRow } from "../api/types";
 import type { HistoricalFilters } from "./HistoricalFilterBar";
+import { useReportSql } from "./SqlRegistry";
 
 type Props = {
   filters: HistoricalFilters;
@@ -11,6 +12,7 @@ type Props = {
   aEnd: string;
   bStart: string;
   bEnd: string;
+  sqlKey: string;
 };
 
 function fmt(n: number) {
@@ -19,7 +21,7 @@ function fmt(n: number) {
   return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-export function MoversTable({ filters, aStart, aEnd, bStart, bEnd }: Props) {
+export function MoversTable({ filters, aStart, aEnd, bStart, bEnd, sqlKey }: Props) {
   const refetchInterval = filters.auto_refresh_s ? filters.auto_refresh_s * 1000 : false;
   const q = useQuery({
     queryKey: ["historicalMovers", filters, aStart, aEnd, bStart, bEnd],
@@ -42,6 +44,8 @@ export function MoversTable({ filters, aStart, aEnd, bStart, bEnd }: Props) {
     refetchInterval,
     refetchIntervalInBackground: true
   });
+
+  useReportSql(sqlKey, q.data?.meta?.sql);
 
   const rows: MoversRow[] = q.data?.rows ?? [];
 

@@ -8,6 +8,7 @@ import { HistoricalTimeseriesChart } from "../ui/HistoricalTimeseriesChart";
 import { SeasonalityHeatmap } from "../ui/SeasonalityHeatmap";
 import { MoversTable } from "../ui/MoversTable";
 import { HistoricalZoneMap } from "../ui/HistoricalZoneMap";
+import { PanelSqlButton, SqlRegistryProvider } from "../ui/SqlRegistry";
 
 function utcStartOfYearIso() {
   const now = new Date();
@@ -65,6 +66,7 @@ export function HistoricalPage() {
   const zoneOptions: Zone[] = zonesQ.data?.zones ?? [];
 
   return (
+    <SqlRegistryProvider>
     <div>
       <div className="mb-2">
         <div className="h4 mb-0">Historical Metrics</div>
@@ -78,10 +80,13 @@ export function HistoricalPage() {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="h5 mb-0">KPI Timeseries</div>
+                <div className="h5 mb-0 d-flex align-items-center gap-2">
+                  <span>KPI Timeseries</span>
+                  <PanelSqlButton sqlKey="histTimeseries" />
+                </div>
                 <div className="text-secondary small">Bucket: {filters.bucket}</div>
               </div>
-              <HistoricalTimeseriesChart filters={filters} />
+              <HistoricalTimeseriesChart filters={filters} sqlKey="histTimeseries" />
             </div>
           </div>
         </div>
@@ -90,10 +95,13 @@ export function HistoricalPage() {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="h5 mb-0">Seasonality</div>
+                <div className="h5 mb-0 d-flex align-items-center gap-2">
+                  <span>Seasonality</span>
+                  <PanelSqlButton sqlKey="seasonality" />
+                </div>
                 <div className="text-secondary small">{filters.seasonality_mode}</div>
               </div>
-              <SeasonalityHeatmap filters={filters} />
+              <SeasonalityHeatmap filters={filters} sqlKey="seasonality" />
             </div>
           </div>
         </div>
@@ -102,10 +110,13 @@ export function HistoricalPage() {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="h5 mb-0">Movers</div>
+                <div className="h5 mb-0 d-flex align-items-center gap-2">
+                  <span>Movers</span>
+                  <PanelSqlButton sqlKey="movers" />
+                </div>
                 <div className="text-secondary small">A vs previous period</div>
               </div>
-              <MoversTable filters={filters} aStart={compare.aStart} aEnd={compare.aEnd} bStart={compare.bStart} bEnd={compare.bEnd} />
+              <MoversTable filters={filters} aStart={compare.aStart} aEnd={compare.aEnd} bStart={compare.bStart} bEnd={compare.bEnd} sqlKey="movers" />
             </div>
           </div>
         </div>
@@ -114,10 +125,13 @@ export function HistoricalPage() {
           <div className="card">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="h5 mb-0">Map</div>
+                <div className="h5 mb-0 d-flex align-items-center gap-2">
+                  <span>Map</span>
+                  <PanelSqlButton sqlKey="histMap" />
+                </div>
                 <div className="text-secondary small">Metric: {filters.metric}</div>
               </div>
-              <HistoricalZoneMap filters={filters} />
+              <HistoricalZoneMap filters={filters} sqlKey="histMap" />
             </div>
           </div>
         </div>
@@ -127,6 +141,7 @@ export function HistoricalPage() {
         Tip: for large ranges, use bucket=month and metric=trips/revenue for fastest interaction.
       </div>
     </div>
+    </SqlRegistryProvider>
   );
 }
 

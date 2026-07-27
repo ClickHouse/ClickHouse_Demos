@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.chat import router as chat_router
 from app.chat_service import shutdown_tracing
-from app.db import IDLE_WAKE_TIMEOUT_SECONDS, get_client, run_query
+from app.db import IDLE_WAKE_TIMEOUT_SECONDS, QueryMeta, get_client, run_query
 from app.observability import configure_logging
 from app.query_builders import (
     anomalies_sql,
@@ -81,6 +81,12 @@ app.add_middleware(
 app.include_router(chat_router)
 
 
+def _meta(m: QueryMeta) -> Meta:
+    """Build the response Meta from a QueryMeta, carrying the inlined SQL through
+    so every analytics panel can surface the query that produced it."""
+    return Meta(elapsed_ms=m.elapsed_ms, rows_returned=m.rows_returned, cached=m.cached, sql=m.sql)
+
+
 @app.get("/api/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     # A ClickHouse Cloud service can idle-scale to zero and take ~5-30s to wake, so
@@ -149,7 +155,7 @@ def metrics_timeseries(
         dropoff_zone_id=dropoff_zone_id,
     )
     series, meta = run_query(client, sql, params)
-    return TimeseriesResponse(meta=Meta(elapsed_ms=meta.elapsed_ms, rows_returned=meta.rows_returned, cached=meta.cached), series=series)
+    return TimeseriesResponse(meta=_meta(meta), series=series)
 
 
 @app.get("/api/metrics/top_zones", response_model=TopZonesResponse)
@@ -178,7 +184,7 @@ def metrics_top_zones(
         dropoff_zone_id=dropoff_zone_id,
     )
     rows, meta = run_query(client, sql, params)
-    return TopZonesResponse(meta=Meta(elapsed_ms=meta.elapsed_ms, rows_returned=meta.rows_returned, cached=meta.cached), rows=rows)
+    return TopZonesResponse(meta=_meta(meta), rows=rows)
 
 
 @app.get("/api/metrics/zone_stats", response_model=ZoneStatsResponse)
@@ -202,7 +208,7 @@ def metrics_zone_stats(
         dropoff_zone_id=dropoff_zone_id,
     )
     rows, meta = run_query(client, sql, params)
-    return ZoneStatsResponse(meta=Meta(elapsed_ms=meta.elapsed_ms, rows_returned=meta.rows_returned, cached=meta.cached), rows=rows)
+    return ZoneStatsResponse(meta=_meta(meta), rows=rows)
 
 
 @app.get("/api/metrics/worst_pairs", response_model=WorstPairsResponse)
@@ -229,7 +235,7 @@ def metrics_worst_pairs(
         dropoff_zone_id=dropoff_zone_id,
     )
     rows, meta = run_query(client, sql, params)
-    return WorstPairsResponse(meta=Meta(elapsed_ms=meta.elapsed_ms, rows_returned=meta.rows_returned, cached=meta.cached), rows=rows)
+    return WorstPairsResponse(meta=_meta(meta), rows=rows)
 
 
 @app.get("/api/compare/period", response_model=CompareResponse)
@@ -262,7 +268,7 @@ def compare_period(
         dropoff_zone_id=dropoff_zone_id,
     )
     rows, meta = run_query(client, sql, params)
-    return CompareResponse(meta=Meta(elapsed_ms=meta.elapsed_ms, rows_returned=meta.rows_returned, cached=meta.cached), rows=rows)
+    return CompareResponse(meta=_meta(meta), rows=rows)
 
 
 @app.get("/api/anomalies/fare_outliers", response_model=AnomaliesResponse)
@@ -291,7 +297,7 @@ def anomalies_fare_outliers(
         dropoff_zone_id=dropoff_zone_id,
     )
     rows, meta = run_query(client, sql, params)
-    return AnomaliesResponse(meta=Meta(elapsed_ms=meta.elapsed_ms, rows_returned=meta.rows_returned, cached=meta.cached), rows=rows)
+    return AnomaliesResponse(meta=_meta(meta), rows=rows)
 
 
 @app.get("/api/trips", response_model=TripsResponse)
@@ -323,7 +329,7 @@ def trips(
         dropoff_zone_id=dropoff_zone_id,
     )
     rows, meta = run_query(client, sql, params)
-    return TripsResponse(meta=Meta(elapsed_ms=meta.elapsed_ms, rows_returned=meta.rows_returned, cached=meta.cached), rows=rows)
+    return TripsResponse(meta=_meta(meta), rows=rows)
 
 
 @app.get("/api/historical/timeseries", response_model=HistoricalTimeseriesResponse)
@@ -352,7 +358,7 @@ def historical_timeseries(
     )
     rows, meta = run_query(client, sql, params)
     return HistoricalTimeseriesResponse(
-        meta=Meta(elapsed_ms=meta.elapsed_ms, rows_returned=meta.rows_returned, cached=meta.cached),
+        meta=_meta(meta),
         series=rows,
     )
 
@@ -385,7 +391,7 @@ def historical_seasonality(
     )
     rows, meta = run_query(client, sql, params)
     return SeasonalityResponse(
-        meta=Meta(elapsed_ms=meta.elapsed_ms, rows_returned=meta.rows_returned, cached=meta.cached),
+        meta=_meta(meta),
         x_labels=x_labels,
         y_labels=y_labels,
         cells=rows,
@@ -426,7 +432,7 @@ def historical_movers(
         reasonable_only=bool(reasonable_only),
     )
     rows, meta = run_query(client, sql, params)
-    return MoversResponse(meta=Meta(elapsed_ms=meta.elapsed_ms, rows_returned=meta.rows_returned, cached=meta.cached), rows=rows)
+    return MoversResponse(meta=_meta(meta), rows=rows)
 
 
 @app.get("/api/historical/map", response_model=MapResponse)
@@ -454,5 +460,5 @@ def historical_map(
         reasonable_only=bool(reasonable_only),
     )
     rows, meta = run_query(client, sql, params)
-    return MapResponse(meta=Meta(elapsed_ms=meta.elapsed_ms, rows_returned=meta.rows_returned, cached=meta.cached), rows=rows)
+    return MapResponse(meta=_meta(meta), rows=rows)
 

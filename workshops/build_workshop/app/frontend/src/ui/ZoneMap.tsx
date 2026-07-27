@@ -6,13 +6,15 @@ import { api } from "../api/client";
 import type { Zone } from "../api/types";
 import type { DashboardFilters } from "./FilterBar";
 import { applyDarkBasemap, choroplethFill, ZONE_OUTLINE_COLOR } from "./mapTheme";
+import { useReportSql } from "./SqlRegistry";
 
 type Props = {
   zones: Zone[];
   filters: DashboardFilters;
+  sqlKey: string;
 };
 
-export function ZoneMap({ zones, filters }: Props) {
+export function ZoneMap({ zones, filters, sqlKey }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [geojson, setGeojson] = useState<any | null>(null);
@@ -60,6 +62,8 @@ export function ZoneMap({ zones, filters }: Props) {
     refetchInterval,
     refetchIntervalInBackground: true
   });
+
+  useReportSql(sqlKey, statsQ.data?.meta?.sql);
 
   const valueByZoneId = useMemo(() => {
     const m = new Map<number, number>();

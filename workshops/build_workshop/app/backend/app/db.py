@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import logging
+import re
 import time
 from dataclasses import dataclass
+from datetime import date, datetime
 from typing import Any
 
 import clickhouse_connect
@@ -110,6 +112,59 @@ class QueryMeta:
     elapsed_ms: int
     rows_returned: int
     cached: bool = False
+    # The query as executed, with parameter placeholders inlined as literals so it
+    # can be copy-pasted and run directly (see inline_sql). Surfaced to the UI via
+    # the response `meta` so each dashboard panel can show its own SQL.
+    sql: str | None = None
+
+
+# Matches a clickhouse-connect server-side bind token, e.g. {start:DateTime} or
+# {pickup_zone_ids:Array(UInt16)}. Only the parameter name is captured; the type
+# annotation is discarded because the inlined literal carries its own type.
+_PARAM_TOKEN = re.compile(r"\{(\w+):[^{}]+\}")
+
+
+def _format_literal(value: Any) -> str:
+    """Render a Python bind value as a ClickHouse SQL literal for display.
+
+    Kept deliberately small and dependency-free (rather than reaching into
+    clickhouse-connect internals) since it only has to cover the value types the
+    query builders bind: datetimes, ints/floats, bools, strings and arrays of
+    those. The result is semantically equivalent to the server-side-bound query,
+    just inlined so it is runnable as-is."""
+    if value is None:
+        return "NULL"
+    if isinstance(value, bool):
+        return "1" if value else "0"
+    if isinstance(value, (int, float)):
+        return str(value)
+    if isinstance(value, datetime):
+        return "'" + value.strftime("%Y-%m-%d %H:%M:%S") + "'"
+    if isinstance(value, date):
+        return "'" + value.strftime("%Y-%m-%d") + "'"
+    if isinstance(value, (list, tuple)):
+        return "[" + ", ".join(_format_literal(v) for v in value) + "]"
+    # Fall back to a single-quoted, escaped string literal.
+    escaped = str(value).replace("\\", "\\\\").replace("'", "\\'")
+    return "'" + escaped + "'"
+
+
+def inline_sql(sql: str, parameters: dict[str, Any] | None) -> str:
+    """Inline bound parameters into `sql`, returning a runnable statement.
+
+    Unknown tokens (a name absent from `parameters`) are left untouched so the
+    output never silently drops a clause."""
+    text = sql.strip()
+    if not parameters:
+        return text
+
+    def _sub(match: re.Match[str]) -> str:
+        name = match.group(1)
+        if name in parameters:
+            return _format_literal(parameters[name])
+        return match.group(0)
+
+    return _PARAM_TOKEN.sub(_sub, text)
 
 
 def _execute(client: Client, sql: str, parameters: dict[str, Any] | None):
@@ -177,7 +232,7 @@ def _http_error_for(e: ClickHouseError, sql: str, start: float, span: Any) -> HT
 
 
 def _empty_not_seeded_result(
-    sql: str, start: float, span: Any
+    sql: str, parameters: dict[str, Any] | None, start: float, span: Any
 ) -> tuple[list[dict[str, Any]], QueryMeta]:
     """Treat a missing database/table as an empty result set (see
     is_not_seeded_error). Annotates the span with a distinct category so the
@@ -192,7 +247,12 @@ def _empty_not_seeded_result(
         "(create + seed the schema in module 02) | sql=%s",
         sql[:_SQL_ATTR_MAXLEN],
     )
-    return [], QueryMeta(elapsed_ms=elapsed_ms, rows_returned=0, cached=False)
+    return [], QueryMeta(
+        elapsed_ms=elapsed_ms,
+        rows_returned=0,
+        cached=False,
+        sql=inline_sql(sql, parameters),
+    )
 
 
 def run_query(
@@ -227,11 +287,11 @@ def run_query(
                 result = _execute(retry_client, sql, parameters)
             except ClickHouseError as retry_error:
                 if is_not_seeded_error(str(retry_error)):
-                    return _empty_not_seeded_result(sql, start, span)
+                    return _empty_not_seeded_result(sql, parameters, start, span)
                 raise _http_error_for(retry_error, sql, start, span) from retry_error
         except ClickHouseError as e:
             if is_not_seeded_error(str(e)):
-                return _empty_not_seeded_result(sql, start, span)
+                return _empty_not_seeded_result(sql, parameters, start, span)
             raise _http_error_for(e, sql, start, span) from e
 
         elapsed_ms = int((time.perf_counter() - start) * 1000)
@@ -241,5 +301,10 @@ def run_query(
         span.set_attribute("db.elapsed_ms", elapsed_ms)
         span.set_attribute("db.rows_returned", len(out))
         logger.debug("ClickHouse query ok (elapsed_ms=%d, rows=%d)", elapsed_ms, len(out))
-        return out, QueryMeta(elapsed_ms=elapsed_ms, rows_returned=len(out), cached=False)
+        return out, QueryMeta(
+            elapsed_ms=elapsed_ms,
+            rows_returned=len(out),
+            cached=False,
+            sql=inline_sql(sql, parameters),
+        )
 
