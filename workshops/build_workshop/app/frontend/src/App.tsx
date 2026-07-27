@@ -1,9 +1,9 @@
-import { NavLink, Navigate, Route, Routes } from "react-router-dom";
-
 import { DashboardPage } from "./pages/DashboardPage";
 import { HistoricalPage } from "./pages/HistoricalPage";
 
 export function App() {
+  const historical = window.location.pathname === "/historical";
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -24,13 +24,13 @@ export function App() {
         </div>
 
         <nav className="app-nav">
-          <NavLink to="/" end className="tab">
+          <a href="/" className={`tab${historical ? "" : " active"}`} aria-current={historical ? undefined : "page"}>
             <span className="live-dot" aria-hidden="true" />
             Ops · Live
-          </NavLink>
-          <NavLink to="/historical" className="tab">
+          </a>
+          <a href="/historical" className={`tab${historical ? " active" : ""}`} aria-current={historical ? "page" : undefined}>
             Historical
-          </NavLink>
+          </a>
           <a className="ghost-link" href="/api/docs" target="_blank" rel="noreferrer">
             API Docs ↗
           </a>
@@ -38,13 +38,8 @@ export function App() {
       </header>
 
       <main className="app-main pt-3">
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/historical" element={<HistoricalPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        {historical ? <HistoricalPage /> : <DashboardPage />}
       </main>
     </div>
   );
 }
-

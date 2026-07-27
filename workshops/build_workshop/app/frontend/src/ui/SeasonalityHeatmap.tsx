@@ -5,10 +5,11 @@ import { api } from "../api/client";
 import type { HeatmapCell } from "../api/types";
 import type { HistoricalFilters } from "./HistoricalFilterBar";
 import { EChart } from "./EChart";
+import { useReportSql } from "./SqlRegistry";
 
-type Props = { filters: HistoricalFilters };
+type Props = { filters: HistoricalFilters; sqlKey: string };
 
-export function SeasonalityHeatmap({ filters }: Props) {
+export function SeasonalityHeatmap({ filters, sqlKey }: Props) {
   const refetchInterval = filters.auto_refresh_s ? filters.auto_refresh_s * 1000 : false;
   const q = useQuery({
     queryKey: ["historicalSeasonality", filters],
@@ -28,6 +29,8 @@ export function SeasonalityHeatmap({ filters }: Props) {
     refetchInterval,
     refetchIntervalInBackground: true
   });
+
+  useReportSql(sqlKey, q.data?.meta?.sql);
 
   const option = useMemo(() => {
     const xLabels = q.data?.x_labels ?? [];

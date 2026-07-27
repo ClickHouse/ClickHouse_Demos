@@ -2,6 +2,7 @@ import { RootProvider } from 'fumadocs-ui/provider/next';
 import './global.css';
 import { Inter, Inconsolata } from 'next/font/google';
 import type { Metadata } from 'next';
+import { PlatformProvider } from '@/components/platform';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -29,7 +30,7 @@ export default function Layout({ children }: LayoutProps<'/'>) {
     >
       <body className="flex flex-col min-h-screen">
         <RootProvider theme={{ defaultTheme: 'dark', enableSystem: false }}>
-          {children}
+          <PlatformProvider>{children}</PlatformProvider>
         </RootProvider>
       </body>
     </html>

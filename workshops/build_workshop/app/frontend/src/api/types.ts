@@ -2,6 +2,8 @@ export type Meta = {
   elapsed_ms: number;
   rows_returned: number;
   cached: boolean;
+  // The executed query with bind parameters inlined; shown by the per-panel SqlPopover.
+  sql?: string | null;
 };
 
 export type Zone = {

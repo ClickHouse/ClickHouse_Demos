@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 
 import { api } from "../api/client";
 import type { DashboardFilters } from "./FilterBar";
+import { useReportSql } from "./SqlRegistry";
 
-type Props = { filters: DashboardFilters };
+type Props = { filters: DashboardFilters; sqlKey: string };
 
-export function AnomaliesTable({ filters }: Props) {
+export function AnomaliesTable({ filters, sqlKey }: Props) {
   const [rule, setRule] = useState<"fare_per_mile" | "fare_per_minute" | "tip_ratio">("tip_ratio");
   const [minThreshold, setMinThreshold] = useState<number>(0.15);
 
@@ -28,6 +29,8 @@ export function AnomaliesTable({ filters }: Props) {
     refetchInterval,
     refetchIntervalInBackground: true
   });
+
+  useReportSql(sqlKey, q.data?.meta?.sql);
 
   return (
     <div>

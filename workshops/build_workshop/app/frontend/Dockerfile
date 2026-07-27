@@ -15,8 +15,8 @@ ENV VITE_HYPERDX_API_KEY=$VITE_HYPERDX_API_KEY
 ARG VITE_HYPERDX_SERVICE=nyc-taxi-frontend
 ENV VITE_HYPERDX_SERVICE=$VITE_HYPERDX_SERVICE
 
-COPY package.json /app/package.json
-RUN npm install
+COPY package.json package-lock.json /app/
+RUN npm ci
 
 COPY index.html tsconfig.json vite.config.ts /app/
 COPY public /app/public
@@ -34,4 +34,3 @@ COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]
-

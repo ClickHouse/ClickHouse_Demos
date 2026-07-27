@@ -8,6 +8,114 @@ workshop. Find your symptom, read the why, apply the fix. If nothing here matche
 the problem to your coding agent - the [self-paced guide](/docs/learner/self-paced#your-coding-agent-is-your-instructor)
 has a ready-to-paste prompt that turns it into your instructor.
 
+## Windows and WSL 2
+
+### `wsl --install` is unavailable or only prints help
+
+- **Symptom** - Administrator PowerShell does not recognize `wsl --install`, or it prints
+  help instead of installing Ubuntu.
+- **Why** - Windows is below the workshop minimum, pending updates have not been applied,
+  or corporate policy disables WSL.
+- **Fix** - run Windows Update and confirm Windows 11 or Windows 10 version 2004 (build
+  19041) or later. Restart, then follow
+  [Microsoft's manual WSL installation steps](https://learn.microsoft.com/windows/wsl/install-manual).
+  On a managed machine, an administrator must permit the required Windows features.
+
+### A command is "not recognized" in PowerShell
+
+- **Symptom** - PowerShell rejects `./preflight.sh`, `export`, `source`, or another Bash
+  command from the workshop.
+- **Why** - Windows setup uses PowerShell only for the explicitly labelled WSL bootstrap.
+  Workshop commands run inside Ubuntu on WSL 2.
+- **Fix** - open **Ubuntu** from the Start menu, then return to the app directory and run
+  preflight there:
+
+  ```bash
+  cd ~/ClickHouse_Demos/workshops/build_workshop/app
+  ./preflight.sh
+  ```
+
+### The repository is under `/mnt/c`
+
+- **Symptom** - Docker bind mounts are slow, scripts have permission or line-ending
+  failures, or the repository path begins `/mnt/c/Users/...`.
+- **Why** - the repository was cloned onto the Windows filesystem instead of WSL's Linux
+  filesystem.
+- **Fix** - keep the old copy only if you need uncommitted work. Otherwise, open Ubuntu
+  and clone a clean copy in your Linux home directory:
+
+  ```bash
+  cd ~
+  git config --global core.autocrlf input
+  git clone https://github.com/ClickHouse/ClickHouse_Demos.git
+  cd ClickHouse_Demos
+  git switch build-workshop-v1
+  cd workshops/build_workshop/app
+  cp .env.workshop.example .env.workshop
+  ```
+
+### Ubuntu is running as WSL 1
+
+- **Symptom** - `wsl --list --verbose` shows Ubuntu with `VERSION 1`, or Docker Desktop
+  cannot integrate with the distro.
+- **Why** - the distro predates WSL 2 or was installed with WSL 1 as its default.
+- **Fix** - open **PowerShell as Administrator**, convert it, then reopen Ubuntu:
+
+  ```powershell
+  wsl --set-version Ubuntu 2
+  wsl --set-default-version 2
+  wsl --list --verbose
+  ```
+
+### `docker` is unavailable inside Ubuntu
+
+- **Symptom** - Docker Desktop is running, but Ubuntu says `docker: command not found` or
+  cannot reach the daemon.
+- **Why** - Docker Desktop's WSL engine or Ubuntu integration is disabled.
+- **Fix** - enable **Docker Desktop -> Settings -> General -> Use the WSL 2 based engine**
+  and **Resources -> WSL Integration -> Ubuntu**, apply the change, then run
+  `wsl --shutdown` in PowerShell and reopen Ubuntu. `docker version` must then show both
+  Client and Server sections.
+
+### WSL or Docker has less than 6 GB of memory
+
+- **Symptom** - preflight reports insufficient memory, or
+  `docker info --format 'Docker memory: {{.MemTotal}} bytes'` prints less than
+  `6442450944` bytes.
+- **Why** - Docker Desktop's WSL 2 backend uses the WSL virtual machine's memory limit.
+- **Fix** - close Docker Desktop, open PowerShell, and create an 8 GB WSL limit:
+
+  ```powershell
+  @('[wsl2]', 'memory=8GB', 'processors=4') |
+    Set-Content -Encoding ascii "$env:USERPROFILE\.wslconfig"
+  wsl --shutdown
+  ```
+
+  Start Docker Desktop and reopen Ubuntu. Re-run the `docker info` command and preflight.
+
+### A script reports `/usr/bin/env: 'bash\r': No such file or directory`
+
+- **Symptom** - a `.sh` file fails immediately and the error includes `bash\r` or `^M`.
+- **Why** - Windows CRLF line endings replaced the repository's required LF endings.
+- **Fix** - in Ubuntu, set Git's WSL policy and restore a clean checkout:
+
+  ```bash
+  git config --global core.autocrlf input
+  git status --short
+  git add --renormalize .
+  ```
+
+  Review `git status` before discarding or committing anything. If the checkout has no
+  work you need, a clean clone under `~/ClickHouse_Demos` is the safest recovery.
+
+### OAuth does not open the Windows browser
+
+- **Symptom** - an MCP login prints a URL but no browser window opens.
+- **Why** - the coding agent is running inside WSL and browser forwarding is unavailable
+  or blocked by corporate policy.
+- **Fix** - copy the complete login URL from Ubuntu and paste it into the normal Windows
+  browser. Complete authorization there, then return to the Ubuntu terminal.
+
 ## Docker
 
 ### Containers stick in "Created" and never start
