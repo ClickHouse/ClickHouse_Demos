@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
 import type { Zone } from "../api/types";
 import type { DashboardFilters } from "./FilterBar";
+import { applyDarkBasemap, choroplethFill, ZONE_OUTLINE_COLOR } from "./mapTheme";
 
 type Props = {
   zones: Zone[];
@@ -104,6 +105,8 @@ export function ZoneMap({ zones, filters }: Props) {
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
 
     map.on("load", () => {
+      applyDarkBasemap(map);
+
       map.addSource("zones", {
         type: "geojson",
         data: choroplethGeojson ?? { type: "FeatureCollection", features: [] }
@@ -114,20 +117,8 @@ export function ZoneMap({ zones, filters }: Props) {
         type: "fill",
         source: "zones",
         paint: {
-          "fill-color": [
-            "step",
-            ["get", "value"],
-            "#fff7bc",
-            breaks[0],
-            "#fec44f",
-            breaks[1],
-            "#fe9929",
-            breaks[2],
-            "#ec7014",
-            breaks[3],
-            "#cc4c02"
-          ],
-          "fill-opacity": 0.65
+          "fill-color": choroplethFill(breaks),
+          "fill-opacity": 0.8
         }
       });
 
@@ -135,7 +126,7 @@ export function ZoneMap({ zones, filters }: Props) {
         id: "zones-outline",
         type: "line",
         source: "zones",
-        paint: { "line-color": "#0b1f3a", "line-width": 0.6, "line-opacity": 0.6 }
+        paint: { "line-color": ZONE_OUTLINE_COLOR, "line-width": 0.5, "line-opacity": 0.25 }
       });
 
       map.on("mousemove", "zones-fill", (e) => {
@@ -148,9 +139,9 @@ export function ZoneMap({ zones, filters }: Props) {
         (map as any).__popup
           .setLngLat(e.lngLat)
           .setHTML(
-            `<div style="font-weight:600">${props.zone ?? "Zone"}</div>
-             <div style="color:#666">${props.borough ?? ""}</div>
-             <div style="margin-top:4px"><span style="color:#666">Trips:</span> ${value}</div>`
+            `<div style="font-weight:600;color:#fff">${props.zone ?? "Zone"}</div>
+             <div style="color:#9a9ea7">${props.borough ?? ""}</div>
+             <div style="margin-top:4px"><span style="color:#9a9ea7">Trips:</span> <span style="color:#faff69">${value}</span></div>`
           )
           .addTo(map);
       });
@@ -176,19 +167,7 @@ export function ZoneMap({ zones, filters }: Props) {
     src.setData(choroplethGeojson as any);
 
     if (map.getLayer("zones-fill")) {
-      map.setPaintProperty("zones-fill", "fill-color", [
-        "step",
-        ["get", "value"],
-        "#fff7bc",
-        breaks[0],
-        "#fec44f",
-        breaks[1],
-        "#fe9929",
-        breaks[2],
-        "#ec7014",
-        breaks[3],
-        "#cc4c02"
-      ]);
+      map.setPaintProperty("zones-fill", "fill-color", choroplethFill(breaks));
     }
   }, [choroplethGeojson, breaks]);
 
@@ -196,7 +175,7 @@ export function ZoneMap({ zones, filters }: Props) {
     <div>
       <div ref={ref} style={{ width: "100%", height: 320, borderRadius: 8, overflow: "hidden" }} />
       <div className="text-secondary small mt-2">
-        Choropleth by pickup trips (darker = more trips). {statsQ.data ? `Query ${statsQ.data.meta.elapsed_ms}ms` : ""}
+        Choropleth by pickup trips (brighter = more trips). {statsQ.data ? `Query ${statsQ.data.meta.elapsed_ms}ms` : ""}
         {geojsonError ? <span className="text-danger"> • {geojsonError}</span> : null}
       </div>
     </div>
