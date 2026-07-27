@@ -1,0 +1,102 @@
+:root{
+  --paper:#FBFBF9;
+  --ink:#1A1A17;
+  --muted:#6B6B63;
+  --hair:#E6E5DD;
+  --accent:#FFE000;
+  --panel:#FFFFFF;
+  --up:#2F7D4F;
+  --down:#C0392B;
+  --display:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--body);font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---- Top bar ---- */
+header{
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+  padding:16px 28px;border-bottom:2px solid var(--ink);background:var(--panel);
+  position:sticky;top:0;z-index:10;flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:14px}
+.brand .ch-logo{display:block;height:26px;width:auto}
+.brand h1{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.01em;margin:0}
+.brand .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* ---- Latency badge (the showpiece) ---- */
+.latency{
+  display:flex;align-items:center;gap:14px;
+  border:1.5px solid var(--ink);border-radius:10px;background:var(--ink);color:#fff;
+  padding:8px 16px;font-family:var(--mono);
+}
+.latency .big{font-size:24px;font-weight:500;line-height:1;letter-spacing:-.01em}
+.latency .big b{color:var(--accent);font-weight:600}
+.latency .sub{font-size:11px;color:#B9B8AC;line-height:1.3}
+.latency .sub .rows{color:#fff}
+.latency.flash{animation:flash .5s ease}
+@keyframes flash{0%{box-shadow:0 0 0 0 rgba(255,224,0,.9)}100%{box-shadow:0 0 0 14px rgba(255,224,0,0)}}
+
+/* ---- Layout ---- */
+main{max-width:1180px;margin:0 auto;padding:22px 28px 60px}
+
+/* ---- Controls ---- */
+.controls{
+  display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap;
+  background:var(--panel);border:1px solid var(--hair);border-radius:12px;
+  padding:16px 18px;margin-bottom:20px;
+}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+select,input[type=date]{
+  font-family:var(--body);font-size:14px;color:var(--ink);background:var(--paper);
+  border:1.5px solid var(--hair);border-radius:8px;padding:8px 10px;min-width:150px;
+}
+select:focus,input[type=date]:focus{outline:none;border-color:var(--ink)}
+.toggle{display:inline-flex;border:1.5px solid var(--ink);border-radius:8px;overflow:hidden}
+.toggle button{
+  font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+  border:none;background:var(--paper);color:var(--ink);padding:8px 14px;cursor:pointer;
+}
+.toggle button.on{background:var(--accent);font-weight:600}
+.presets{display:flex;gap:8px;flex-wrap:wrap}
+.presets button{
+  font-family:var(--body);font-size:13px;cursor:pointer;
+  border:1.5px solid var(--hair);border-radius:20px;background:var(--paper);color:var(--ink);
+  padding:7px 14px;transition:border-color .12s,background .12s;
+}
+.presets button:hover{border-color:var(--ink);background:#F5F4EC}
+
+/* ---- KPI tiles ---- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
+.kpi{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:14px 16px}
+.kpi .k-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.kpi .k-value{font-family:var(--display);font-weight:600;font-size:24px;letter-spacing:-.01em}
+.kpi .k-value small{font-size:13px;color:var(--muted);font-weight:500}
+
+/* ---- Chart ---- */
+.card{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:16px 16px 8px}
+.card h2{font-family:var(--display);font-weight:600;font-size:16px;margin:0 0 4px}
+.card .hint{font-size:12.5px;color:var(--muted);margin:0 0 8px}
+#chart{width:100%;height:520px}
+
+/* ---- Error / empty ---- */
+.banner{
+  display:none;background:#FFF1F0;border:1.5px solid var(--down);color:#7a2018;
+  border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:14px;
+}
+.banner.show{display:block}
+.banner code{font-family:var(--mono);font-size:.9em}
+
+footer{max-width:1180px;margin:0 auto;padding:0 28px 40px;color:var(--muted);font-family:var(--mono);font-size:12px}
+
+@media (max-width:640px){
+  header{padding:14px 18px}
+  main{padding:18px}
+  #chart{height:440px}
+}
