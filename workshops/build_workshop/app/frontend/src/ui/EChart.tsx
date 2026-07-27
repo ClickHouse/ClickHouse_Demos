@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as echarts from "echarts";
 
+import { clickhouseEChartsTheme } from "./echartsTheme";
+
+// Register the ClickHouse theme once so every chart picks up the dark palette,
+// axis, and tooltip styling without setting colors itself.
+echarts.registerTheme("clickhouse", clickhouseEChartsTheme);
+
 type Props = {
   option: echarts.EChartsOption;
   height?: number;
@@ -13,7 +19,7 @@ export function EChart({ option, height = 320 }: Props) {
 
   useEffect(() => {
     if (!ref.current) return;
-    const chart = echarts.init(ref.current, undefined, { renderer: "canvas" });
+    const chart = echarts.init(ref.current, "clickhouse", { renderer: "canvas" });
     chart.setOption(stableOption, { notMerge: true });
 
     const ro = new ResizeObserver(() => chart.resize());
