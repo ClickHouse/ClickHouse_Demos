@@ -2,41 +2,41 @@
 <rect x="0" y="0" width="1200" height="620" fill="#17171A"/>
 <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L7,3 L0,6 Z" fill="#7E858E"/></marker></defs>
 <text x="30" y="44" fill="#EDEDED" font-size="22" font-weight="700">ClickHouse BUILD Workshop · A trip's path</text>
-<text x="30" y="70" fill="#B7BCC2" font-size="13.5">Read left to right: generate a trip, stream it into ClickHouse, then show it in the app.</text>
+<text x="30" y="70" fill="#B7BCC2" font-size="13.5">Follow steps 1–6: across the top, then back across the bottom.</text>
 <rect x="40" y="135" width="300" height="110" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="190.0" y="157" fill="#EDEDED" font-size="17" font-weight="600" text-anchor="middle">Load generator</text>
-<text x="190.0" y="179" fill="#B7BCC2" font-size="14" text-anchor="middle">creates synthetic trips</text>
-<text x="190.0" y="197" fill="#B7BCC2" font-size="14" text-anchor="middle">on your laptop</text>
+<text x="190.0" y="157" fill="#EDEDED" font-size="18" font-weight="600" text-anchor="middle">Load generator</text>
+<text x="190.0" y="179" fill="#B7BCC2" font-size="14.5" text-anchor="middle">creates synthetic trips</text>
+<text x="190.0" y="197" fill="#B7BCC2" font-size="14.5" text-anchor="middle">on your laptop</text>
 <circle cx="60" cy="155" r="12" fill="#FAFF69"/>
 <text x="60" y="159" fill="#17171A" font-size="11" font-weight="700" text-anchor="middle">1</text>
 <rect x="450" y="135" width="300" height="110" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="600.0" y="157" fill="#EDEDED" font-size="17" font-weight="600" text-anchor="middle">Managed Postgres</text>
-<text x="600.0" y="179" fill="#B7BCC2" font-size="14" text-anchor="middle">source table:</text>
-<text x="600.0" y="197" fill="#B7BCC2" font-size="14" text-anchor="middle">public.realtime_trips</text>
+<text x="600.0" y="157" fill="#EDEDED" font-size="18" font-weight="600" text-anchor="middle">Managed Postgres</text>
+<text x="600.0" y="179" fill="#B7BCC2" font-size="14.5" text-anchor="middle">source table:</text>
+<text x="600.0" y="197" fill="#B7BCC2" font-size="14.5" text-anchor="middle">public.realtime_trips</text>
 <circle cx="470" cy="155" r="12" fill="#FAFF69"/>
 <text x="470" y="159" fill="#17171A" font-size="11" font-weight="700" text-anchor="middle">2</text>
 <rect x="860" y="135" width="300" height="110" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="1010.0" y="157" fill="#EDEDED" font-size="17" font-weight="600" text-anchor="middle">ClickPipes</text>
-<text x="1010.0" y="179" fill="#B7BCC2" font-size="14" text-anchor="middle">streams each change</text>
-<text x="1010.0" y="197" fill="#B7BCC2" font-size="14" text-anchor="middle">with Postgres CDC</text>
+<text x="1010.0" y="157" fill="#EDEDED" font-size="18" font-weight="600" text-anchor="middle">ClickPipes</text>
+<text x="1010.0" y="179" fill="#B7BCC2" font-size="14.5" text-anchor="middle">streams each change</text>
+<text x="1010.0" y="197" fill="#B7BCC2" font-size="14.5" text-anchor="middle">with Postgres CDC</text>
 <circle cx="880" cy="155" r="12" fill="#FAFF69"/>
 <text x="880" y="159" fill="#17171A" font-size="11" font-weight="700" text-anchor="middle">3</text>
 <rect x="860" y="345" width="300" height="110" rx="12" fill="#26262B" stroke="#FAFF69" stroke-width="2"/>
-<text x="1010.0" y="367" fill="#EDEDED" font-size="17" font-weight="600" text-anchor="middle">ClickHouse</text>
-<text x="1010.0" y="389" fill="#B7BCC2" font-size="14" text-anchor="middle">first landing table:</text>
-<text x="1010.0" y="407" fill="#B7BCC2" font-size="14" text-anchor="middle">default.realtime_trips</text>
+<text x="1010.0" y="367" fill="#EDEDED" font-size="18" font-weight="600" text-anchor="middle">ClickHouse</text>
+<text x="1010.0" y="389" fill="#B7BCC2" font-size="14.5" text-anchor="middle">first landing table:</text>
+<text x="1010.0" y="407" fill="#B7BCC2" font-size="14.5" text-anchor="middle">default.realtime_trips</text>
 <circle cx="880" cy="365" r="12" fill="#FAFF69"/>
 <text x="880" y="369" fill="#17171A" font-size="11" font-weight="700" text-anchor="middle">4</text>
 <rect x="450" y="345" width="300" height="110" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="600.0" y="367" fill="#EDEDED" font-size="17" font-weight="600" text-anchor="middle">Materialized view</text>
-<text x="600.0" y="389" fill="#B7BCC2" font-size="14" text-anchor="middle">moves new rows into</text>
-<text x="600.0" y="407" fill="#B7BCC2" font-size="14" text-anchor="middle">nyc_tlc_data.taxi_trips</text>
+<text x="600.0" y="367" fill="#EDEDED" font-size="18" font-weight="600" text-anchor="middle">Materialized view</text>
+<text x="600.0" y="389" fill="#B7BCC2" font-size="14.5" text-anchor="middle">moves new rows into</text>
+<text x="600.0" y="407" fill="#B7BCC2" font-size="14.5" text-anchor="middle">nyc_tlc_data.taxi_trips</text>
 <circle cx="470" cy="365" r="12" fill="#FAFF69"/>
 <text x="470" y="369" fill="#17171A" font-size="11" font-weight="700" text-anchor="middle">5</text>
 <rect x="40" y="345" width="300" height="110" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="190.0" y="367" fill="#EDEDED" font-size="17" font-weight="600" text-anchor="middle">Frontend + FastAPI</text>
-<text x="190.0" y="389" fill="#B7BCC2" font-size="14" text-anchor="middle">reads taxi_trips for</text>
-<text x="190.0" y="407" fill="#B7BCC2" font-size="14" text-anchor="middle">the live dashboards</text>
+<text x="190.0" y="367" fill="#EDEDED" font-size="18" font-weight="600" text-anchor="middle">Frontend + FastAPI</text>
+<text x="190.0" y="389" fill="#B7BCC2" font-size="14.5" text-anchor="middle">reads taxi_trips for</text>
+<text x="190.0" y="407" fill="#B7BCC2" font-size="14.5" text-anchor="middle">the live dashboards</text>
 <circle cx="60" cy="365" r="12" fill="#FAFF69"/>
 <text x="60" y="369" fill="#17171A" font-size="11" font-weight="700" text-anchor="middle">6</text>
 <path d="M340,190 L443,190" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>

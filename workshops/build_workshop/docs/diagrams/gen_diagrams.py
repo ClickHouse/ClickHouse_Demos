@@ -20,9 +20,9 @@ MONO      = "Inconsolata, ui-monospace, monospace"
 
 # zone tints (muted, harmonious)
 ZONES = {
-    "laptop": {"fill": "#1B2531", "stroke": "#3E5A78", "label": "PARTICIPANT LAPTOP  ·  the NYC-taxi app runs here"},
-    "cloud":  {"fill": "#211F14", "stroke": YELLOW,    "label": "CLICKHOUSE CLOUD  ·  your trial org (you create all of this)"},
-    "third":  {"fill": "#1E1E22", "stroke": "#54545C", "label": "THIRD-PARTY"},
+    "laptop": {"fill": "#1B2531", "stroke": "#3E5A78", "label": "PARTICIPANT LAPTOP · local app + tools"},
+    "cloud":  {"fill": "#211F14", "stroke": YELLOW,    "label": "CLICKHOUSE CLOUD · your trial org"},
+    "third":  {"fill": "#1E1E22", "stroke": "#54545C", "label": "EXTERNAL SERVICES"},
 }
 
 
@@ -46,21 +46,22 @@ def box(x, y, w, h, title, lines=None, accent=False, rounded=12, fill=BOX_FILL, 
     cx = x + w / 2
     # title
     ty = y + (22 if lines else h/2 + 5)
-    s += (f'<text x="{cx}" y="{ty}" fill="{INK}" font-size="17" font-weight="600" '
+    s += (f'<text x="{cx}" y="{ty}" fill="{INK}" font-size="18" font-weight="600" '
           f'text-anchor="middle">{escape(title)}</text>\n')
     if lines:
         for i, ln in enumerate(lines):
-            s += (f'<text x="{cx}" y="{y+44+i*18}" fill="{SUBINK}" font-size="14" '
+            s += (f'<text x="{cx}" y="{y+44+i*18}" fill="{SUBINK}" font-size="14.5" '
                   f'text-anchor="middle">{escape(ln)}</text>\n')
     return s
 
 
 def zone(x, y, w, h, key):
     z = ZONES[key]
+    label_color = YELLOW if key == "cloud" else SUBINK
     s = (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="16" fill="{z["fill"]}" '
          f'stroke="{z["stroke"]}" stroke-width="1.6" opacity="0.96"/>\n')
-    s += (f'<text x="{x+18}" y="{y+26}" fill="{z["stroke"] if key!="cloud" else YELLOW}" '
-          f'font-size="15" font-weight="700" letter-spacing="0.5">{escape(z["label"])}</text>\n')
+    s += (f'<text x="{x+18}" y="{y+26}" fill="{label_color}" '
+          f'font-size="16" font-weight="700" letter-spacing="0.5">{escape(z["label"])}</text>\n')
     return s
 
 
@@ -169,39 +170,35 @@ def module_flow():
 # ARCHITECTURE  (three simple groups; the data-flow diagram owns sequencing)
 # ===========================================================================
 def architecture():
-    W, H = 1500, 650
+    W, H = 1200, 650
     s = _svg_header(W, H)
     s += (f'<text x="30" y="44" fill="{INK}" font-size="22" font-weight="700">'
           f'ClickHouse BUILD Workshop · Where each component runs</text>\n')
     s += (f'<text x="30" y="70" fill="{SUBINK}" font-size="13.5">'
-          f'Group components by location first. Follow the next diagram for the trip data path.</text>\n')
+          f'Grouped by location; no data direction is implied. Follow the next diagram for the trip path.</text>\n')
 
     # zones
-    s += zone(30, 110, 430, 480, "laptop")
-    s += zone(510, 110, 620, 480, "cloud")
-    s += zone(1180, 110, 290, 480, "third")
+    s += zone(30, 110, 330, 480, "laptop")
+    s += zone(400, 110, 500, 480, "cloud")
+    s += zone(940, 110, 230, 480, "third")
 
     # Participant laptop: application edge and stateless tools only.
-    s += box(60, 165, 370, 78, "Frontend + FastAPI", ["dashboards, chat, and API", "runs with Docker Compose"])
-    s += box(60, 270, 370, 68, "Load generator", ["creates synthetic trip rows"])
-    s += box(60, 365, 370, 68, "OpenTelemetry forwarder", ["sends app telemetry to ClickStack"])
-    s += box(60, 460, 370, 78, "Coding agent + clickhousectl", ["workshop commands, MCP,", "and ClickHouse skills"])
+    s += box(50, 165, 290, 78, "Frontend + FastAPI", ["dashboards, chat, and API", "runs with Docker Compose"])
+    s += box(50, 270, 290, 68, "Load generator", ["creates synthetic trip rows"])
+    s += box(50, 365, 290, 68, "OTel forwarder", ["sends telemetry to ClickStack"])
+    s += box(50, 460, 290, 78, "Coding agent + CLI", ["workshop commands, MCP,", "and ClickHouse skills"])
 
     # ClickHouse Cloud: state, ingestion, observability, and AI surfaces.
-    s += box(540, 165, 560, 88, "ClickHouse service", ["default.realtime_trips lands here", "nyc_tlc_data.taxi_trips powers the app"], accent=True)
-    s += box(540, 285, 265, 78, "Managed Postgres", ["public.realtime_trips"])
-    s += box(835, 285, 265, 78, "ClickPipes", ["streams Postgres changes"])
-    s += box(540, 395, 265, 88, "Managed ClickStack", ["HyperDX traces, logs,", "dashboards, and alerts"])
-    s += box(835, 395, 265, 88, "Agents + remote MCP", ["ask questions and let", "the coding agent use tools"])
+    s += box(425, 165, 450, 88, "ClickHouse service", ["default.realtime_trips lands here", "nyc_tlc_data.taxi_trips powers the app"], accent=True)
+    s += box(425, 285, 215, 78, "Managed Postgres", ["public.realtime_trips"])
+    s += box(660, 285, 215, 78, "ClickPipes", ["streams Postgres changes"])
+    s += box(425, 395, 215, 88, "Managed ClickStack", ["HyperDX traces, logs,", "dashboards, and alerts"])
+    s += box(660, 395, 215, 88, "Agents + MCP", ["data questions and", "coding-agent tools"])
 
     # External services used by the app, kept separate from workshop data storage.
-    s += box(1210, 175, 230, 82, "OpenAI API", ["chat completions"])
-    s += box(1210, 290, 230, 82, "Langfuse Cloud", ["chat traces and cost"])
-    s += box(1210, 405, 230, 92, "NYC TLC dataset", ["one-time historical", "seed source"])
-
-    # Only zone-level relationships. Detailed sequencing belongs in data_flow().
-    s += edge(460, 565, 510, 565, "uses", mid=(485, 548))
-    s += edge(1130, 565, 1180, 565, "calls", mid=(1155, 548))
+    s += box(960, 175, 190, 82, "OpenAI API", ["chat completions"])
+    s += box(960, 290, 190, 82, "Langfuse Cloud", ["chat traces and cost"])
+    s += box(960, 405, 190, 92, "NYC TLC dataset", ["one-time historical", "seed source"])
 
     s += "</svg>\n"
     return s
@@ -303,7 +300,7 @@ def data_flow():
     s += (f'<text x="30" y="44" fill="{INK}" font-size="22" font-weight="700">'
           f'ClickHouse BUILD Workshop · A trip\'s path</text>\n')
     s += (f'<text x="30" y="70" fill="{SUBINK}" font-size="13.5">'
-          f'Read left to right: generate a trip, stream it into ClickHouse, then show it in the app.</text>\n')
+          f'Follow steps 1–6: across the top, then back across the bottom.</text>\n')
 
     xcols, yrows, bw, bh = [40, 450, 860], [135, 345], 300, 110
     steps = [
