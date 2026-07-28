@@ -1,105 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="900" viewBox="0 0 1560 900" font-family="Inter, -apple-system, Segoe UI, Roboto, sans-serif">
-<rect x="0" y="0" width="1560" height="900" fill="#17171A"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" font-family="Inter, -apple-system, Segoe UI, Roboto, sans-serif">
+<rect x="0" y="0" width="1200" height="620" fill="#17171A"/>
 <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L7,3 L0,6 Z" fill="#7E858E"/></marker></defs>
-<text x="30" y="44" fill="#EDEDED" font-size="22" font-weight="700">ClickHouse BUILD Workshop · Data flow</text>
-<text x="30" y="70" fill="#B7BCC2" font-size="13.5">How a row moves: seeded once, streamed continuously, then read and observed — all through your ClickHouse service.</text>
-<rect x="30" y="96" width="1500" height="96" rx="14" fill="#1C1C22" stroke="#3A3A45" stroke-width="1.3"/>
-<rect x="30" y="96" width="6" height="96" rx="3" fill="#FAFF69"/>
-<text x="52" y="126" fill="#EDEDED" font-size="14.5" font-weight="700">Seed</text>
-<text x="52" y="148" fill="#B7BCC2" font-size="11">one-time, module 01</text>
-<rect x="216" y="113" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="324.0" y="135" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">NYC TLC parquet</text>
-<text x="324.0" y="157" fill="#B7BCC2" font-size="12.5" text-anchor="middle">~3.2M rows, public</text>
-<rect x="928" y="113" width="216" height="62" rx="10" fill="#26262B" stroke="#FAFF69" stroke-width="2"/>
-<text x="1036.0" y="135" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">ClickHouse service</text>
-<text x="1036.0" y="157" fill="#B7BCC2" font-size="12.5" text-anchor="middle">nyc_tlc_data.taxi_trips</text>
-<path d="M432,144 L922,144" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="538.8" y="122.0" width="276.40000000000003" height="18" rx="4" fill="#17171A" opacity="0.92"/>
-<text x="677.0" y="135.0" fill="#B7BCC2" font-size="11.5" text-anchor="middle">url() seed — one statement, module 01</text>
-<rect x="30" y="212" width="1500" height="110" rx="14" fill="#1C1C22" stroke="#3A3A45" stroke-width="1.3"/>
-<rect x="30" y="212" width="6" height="110" rx="3" fill="#FAFF69"/>
-<text x="52" y="242" fill="#EDEDED" font-size="14.5" font-weight="700">Live CDC</text>
-<text x="52" y="264" fill="#B7BCC2" font-size="11">continuous, module 03</text>
-<rect x="216" y="236" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="324.0" y="258" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">pg-trip-writer</text>
-<text x="324.0" y="280" fill="#B7BCC2" font-size="12.5" text-anchor="middle">synthetic trips</text>
-<rect x="572" y="236" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="680.0" y="258" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">Managed Postgres</text>
-<text x="680.0" y="280" fill="#B7BCC2" font-size="12.5" text-anchor="middle">public.realtime_trips</text>
-<rect x="928" y="236" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="1036.0" y="258" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">ClickPipes</text>
-<text x="1036.0" y="280" fill="#B7BCC2" font-size="12.5" text-anchor="middle">Postgres CDC pipe</text>
-<rect x="1284" y="236" width="216" height="62" rx="10" fill="#26262B" stroke="#FAFF69" stroke-width="2"/>
-<text x="1392.0" y="258" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">ClickHouse service</text>
-<text x="1392.0" y="280" fill="#B7BCC2" font-size="12.5" text-anchor="middle">MV → taxi_trips</text>
-<path d="M432,267 L566,267" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="450.8" y="245.0" width="96.4" height="18" rx="4" fill="#17171A" opacity="0.92"/>
-<text x="499.0" y="258.0" fill="#B7BCC2" font-size="11.5" text-anchor="middle">INSERT · TLS</text>
-<path d="M788,267 L922,267" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="810.4" y="245.0" width="89.2" height="18" rx="4" fill="#17171A" opacity="0.92"/>
-<text x="855.0" y="258.0" fill="#B7BCC2" font-size="11.5" text-anchor="middle">replication</text>
-<path d="M1144,267 L1278,267" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="1159.2" y="245.0" width="103.60000000000001" height="18" rx="4" fill="#17171A" opacity="0.92"/>
-<text x="1211.0" y="258.0" fill="#B7BCC2" font-size="11.5" text-anchor="middle">CDC rows ~60s</text>
-<rect x="30" y="342" width="1500" height="176" rx="14" fill="#1C1C22" stroke="#3A3A45" stroke-width="1.3"/>
-<rect x="30" y="342" width="6" height="176" rx="3" fill="#FAFF69"/>
-<text x="52" y="372" fill="#EDEDED" font-size="14.5" font-weight="700">Read</text>
-<text x="52" y="394" fill="#B7BCC2" font-size="11">modules 02, 04, 08</text>
-<rect x="216" y="364" width="216" height="62" rx="10" fill="#26262B" stroke="#FAFF69" stroke-width="2"/>
-<text x="324.0" y="386" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">ClickHouse service</text>
-<text x="324.0" y="408" fill="#B7BCC2" font-size="12.5" text-anchor="middle">nyc_tlc_data</text>
-<rect x="572" y="364" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="680.0" y="386" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">FastAPI</text>
-<text x="680.0" y="408" fill="#B7BCC2" font-size="12.5" text-anchor="middle">safe parameterized SQL</text>
-<rect x="928" y="364" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="1036.0" y="386" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">Ops + Historical</text>
-<text x="1036.0" y="408" fill="#B7BCC2" font-size="12.5" text-anchor="middle">React dashboards</text>
-<path d="M432,395 L566,395" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="472.4" y="373.0" width="53.2" height="18" rx="4" fill="#17171A" opacity="0.92"/>
-<text x="499.0" y="386.0" fill="#B7BCC2" font-size="11.5" text-anchor="middle">SELECT</text>
-<path d="M788,395 L922,395" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="814.0" y="373.0" width="82.0" height="18" rx="4" fill="#17171A" opacity="0.92"/>
-<text x="855.0" y="386.0" fill="#B7BCC2" font-size="11.5" text-anchor="middle">GET /api/*</text>
-<rect x="572" y="446" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="680.0" y="468" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">in-app AI chat</text>
-<text x="680.0" y="490" fill="#B7BCC2" font-size="12.5" text-anchor="middle">guarded SELECT (module 08)</text>
-<rect x="928" y="446" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="1036.0" y="468" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">ClickHouse Agents</text>
-<text x="1036.0" y="490" fill="#B7BCC2" font-size="12.5" text-anchor="middle">RBAC SQL (module 04)</text>
-<path d="M324.0,426 L324.0,477 L566,477" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="360.2" y="455" width="67.6" height="18" rx="4" fill="#17171A" opacity="0.92"/>
-<text x="394.0" y="468" fill="#B7BCC2" font-size="11.5" text-anchor="middle">NL → SQL</text>
-<path d="M788,477 L922,477" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="821.2" y="455.0" width="67.6" height="18" rx="4" fill="#17171A" opacity="0.92"/>
-<text x="855.0" y="468.0" fill="#B7BCC2" font-size="11.5" text-anchor="middle">RBAC SQL</text>
-<rect x="30" y="538" width="1500" height="176" rx="14" fill="#1C1C22" stroke="#3A3A45" stroke-width="1.3"/>
-<rect x="30" y="538" width="6" height="176" rx="3" fill="#FAFF69"/>
-<text x="52" y="568" fill="#EDEDED" font-size="14.5" font-weight="700">Observe</text>
-<text x="52" y="590" fill="#B7BCC2" font-size="11">modules 05, 06, 07</text>
-<rect x="216" y="560" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="324.0" y="582" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">backend spans</text>
-<text x="324.0" y="604" fill="#B7BCC2" font-size="12.5" text-anchor="middle">clickhouse.query + logs</text>
-<rect x="572" y="560" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="680.0" y="582" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">stateless OTel forwarder</text>
-<text x="680.0" y="604" fill="#B7BCC2" font-size="12.5" text-anchor="middle">local OTLP :4318</text>
-<rect x="928" y="560" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="1036.0" y="582" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">otel db</text>
-<text x="1036.0" y="604" fill="#B7BCC2" font-size="12.5" text-anchor="middle">in your service</text>
-<rect x="1284" y="560" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="1392.0" y="582" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">HyperDX UI</text>
-<text x="1392.0" y="604" fill="#B7BCC2" font-size="12.5" text-anchor="middle">search, traces, dashboards</text>
-<path d="M432,591 L566,591" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="479.6" y="569.0" width="38.8" height="18" rx="4" fill="#17171A" opacity="0.92"/>
-<text x="499.0" y="582.0" fill="#B7BCC2" font-size="11.5" text-anchor="middle">OTLP</text>
-<path d="M788,591 L922,591" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="832.0" y="569.0" width="46.0" height="18" rx="4" fill="#17171A" opacity="0.92"/>
-<text x="855.0" y="582.0" fill="#B7BCC2" font-size="11.5" text-anchor="middle">write</text>
-<path d="M1144,591 L1278,591" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
-<rect x="1191.6" y="569.0" width="38.8" height="18" rx="4" fill="#17171A" opacity="0.92"/>
-<text x="1211.0" y="582.0" fill="#B7BCC2" font-size="11.5" text-anchor="middle">read</text>
-<rect x="572" y="642" width="216" height="62" rx="10" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
-<text x="680.0" y="664" fill="#EDEDED" font-size="15" font-weight="600" text-anchor="middle">coding agent</text>
-<text x="680.0" y="686" fill="#B7BCC2" font-size="12.5" text-anchor="middle">via ClickStack MCP</text>
-<path d="M680.0,642 L680.0,622" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
-<text x="922" y="676" fill="#B7BCC2" font-size="11.5">clickstack_search / save_dashboard / save_alert</text>
+<text x="30" y="44" fill="#EDEDED" font-size="22" font-weight="700">ClickHouse BUILD Workshop · A trip's path</text>
+<text x="30" y="70" fill="#B7BCC2" font-size="13.5">Read left to right: generate a trip, stream it into ClickHouse, then show it in the app.</text>
+<rect x="40" y="135" width="300" height="110" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
+<text x="190.0" y="157" fill="#EDEDED" font-size="17" font-weight="600" text-anchor="middle">Load generator</text>
+<text x="190.0" y="179" fill="#B7BCC2" font-size="14" text-anchor="middle">creates synthetic trips</text>
+<text x="190.0" y="197" fill="#B7BCC2" font-size="14" text-anchor="middle">on your laptop</text>
+<circle cx="60" cy="155" r="12" fill="#FAFF69"/>
+<text x="60" y="159" fill="#17171A" font-size="11" font-weight="700" text-anchor="middle">1</text>
+<rect x="450" y="135" width="300" height="110" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
+<text x="600.0" y="157" fill="#EDEDED" font-size="17" font-weight="600" text-anchor="middle">Managed Postgres</text>
+<text x="600.0" y="179" fill="#B7BCC2" font-size="14" text-anchor="middle">source table:</text>
+<text x="600.0" y="197" fill="#B7BCC2" font-size="14" text-anchor="middle">public.realtime_trips</text>
+<circle cx="470" cy="155" r="12" fill="#FAFF69"/>
+<text x="470" y="159" fill="#17171A" font-size="11" font-weight="700" text-anchor="middle">2</text>
+<rect x="860" y="135" width="300" height="110" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
+<text x="1010.0" y="157" fill="#EDEDED" font-size="17" font-weight="600" text-anchor="middle">ClickPipes</text>
+<text x="1010.0" y="179" fill="#B7BCC2" font-size="14" text-anchor="middle">streams each change</text>
+<text x="1010.0" y="197" fill="#B7BCC2" font-size="14" text-anchor="middle">with Postgres CDC</text>
+<circle cx="880" cy="155" r="12" fill="#FAFF69"/>
+<text x="880" y="159" fill="#17171A" font-size="11" font-weight="700" text-anchor="middle">3</text>
+<rect x="860" y="345" width="300" height="110" rx="12" fill="#26262B" stroke="#FAFF69" stroke-width="2"/>
+<text x="1010.0" y="367" fill="#EDEDED" font-size="17" font-weight="600" text-anchor="middle">ClickHouse</text>
+<text x="1010.0" y="389" fill="#B7BCC2" font-size="14" text-anchor="middle">first landing table:</text>
+<text x="1010.0" y="407" fill="#B7BCC2" font-size="14" text-anchor="middle">default.realtime_trips</text>
+<circle cx="880" cy="365" r="12" fill="#FAFF69"/>
+<text x="880" y="369" fill="#17171A" font-size="11" font-weight="700" text-anchor="middle">4</text>
+<rect x="450" y="345" width="300" height="110" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
+<text x="600.0" y="367" fill="#EDEDED" font-size="17" font-weight="600" text-anchor="middle">Materialized view</text>
+<text x="600.0" y="389" fill="#B7BCC2" font-size="14" text-anchor="middle">moves new rows into</text>
+<text x="600.0" y="407" fill="#B7BCC2" font-size="14" text-anchor="middle">nyc_tlc_data.taxi_trips</text>
+<circle cx="470" cy="365" r="12" fill="#FAFF69"/>
+<text x="470" y="369" fill="#17171A" font-size="11" font-weight="700" text-anchor="middle">5</text>
+<rect x="40" y="345" width="300" height="110" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
+<text x="190.0" y="367" fill="#EDEDED" font-size="17" font-weight="600" text-anchor="middle">Frontend + FastAPI</text>
+<text x="190.0" y="389" fill="#B7BCC2" font-size="14" text-anchor="middle">reads taxi_trips for</text>
+<text x="190.0" y="407" fill="#B7BCC2" font-size="14" text-anchor="middle">the live dashboards</text>
+<circle cx="60" cy="365" r="12" fill="#FAFF69"/>
+<text x="60" y="369" fill="#17171A" font-size="11" font-weight="700" text-anchor="middle">6</text>
+<path d="M340,190 L443,190" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="368.4" y="153" width="53.2" height="20" rx="4" fill="#17171A"/>
+<text x="395" y="167" fill="#B7BCC2" font-size="12.5" text-anchor="middle">INSERT</text>
+<path d="M750,190 L853,190" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="789.2" y="153" width="31.6" height="20" rx="4" fill="#17171A"/>
+<text x="805" y="167" fill="#B7BCC2" font-size="12.5" text-anchor="middle">CDC</text>
+<path d="M1010,245 L1010,338" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="969.0" y="288" width="82.0" height="20" rx="4" fill="#17171A"/>
+<text x="1010" y="302" fill="#B7BCC2" font-size="12.5" text-anchor="middle">lands here</text>
+<path d="M860,400 L757,400" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="782.0" y="363" width="46.0" height="20" rx="4" fill="#17171A"/>
+<text x="805" y="377" fill="#B7BCC2" font-size="12.5" text-anchor="middle">feeds</text>
+<path d="M450,400 L347,400" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="372.0" y="363" width="46.0" height="20" rx="4" fill="#17171A"/>
+<text x="395" y="377" fill="#B7BCC2" font-size="12.5" text-anchor="middle">reads</text>
+<rect x="40" y="505" width="1120" height="75" rx="12" fill="#1C1C22" stroke="#3A3A45" stroke-width="1.3"/>
+<text x="65" y="535" fill="#FAFF69" font-size="13" font-weight="700">What the other workshop tools do</text>
+<text x="65" y="560" fill="#B7BCC2" font-size="12.5">ClickStack observes the app · ClickHouse Agents answers data questions · Langfuse traces the chat</text>
 </svg>

@@ -98,7 +98,7 @@ sequenceDiagram
   G->>P: INSERT trips (throttled, TLS)
   Note over G,P: first run also creates the table<br/>and publication pub_taxi
   P->>CP: WAL changes via publication + slot
-  CP->>CH: rows land in realtime_trips (_peerdb_* cols), about 60s
+  CP->>CH: rows land in default.realtime_trips, about 60s
   CH->>CH: materialized view fans rows into nyc_tlc_data.taxi_trips
   UI->>CH: parameterized SQL / guarded NL-to-SQL / RBAC-governed BI
   CH-->>UI: live Ops dashboard + 3M-row Historical seed

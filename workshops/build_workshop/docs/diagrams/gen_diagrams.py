@@ -46,11 +46,11 @@ def box(x, y, w, h, title, lines=None, accent=False, rounded=12, fill=BOX_FILL, 
     cx = x + w / 2
     # title
     ty = y + (22 if lines else h/2 + 5)
-    s += (f'<text x="{cx}" y="{ty}" fill="{INK}" font-size="15" font-weight="600" '
+    s += (f'<text x="{cx}" y="{ty}" fill="{INK}" font-size="17" font-weight="600" '
           f'text-anchor="middle">{escape(title)}</text>\n')
     if lines:
         for i, ln in enumerate(lines):
-            s += (f'<text x="{cx}" y="{y+44+i*18}" fill="{SUBINK}" font-size="12.5" '
+            s += (f'<text x="{cx}" y="{y+44+i*18}" fill="{SUBINK}" font-size="14" '
                   f'text-anchor="middle">{escape(ln)}</text>\n')
     return s
 
@@ -60,7 +60,7 @@ def zone(x, y, w, h, key):
     s = (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="16" fill="{z["fill"]}" '
          f'stroke="{z["stroke"]}" stroke-width="1.6" opacity="0.96"/>\n')
     s += (f'<text x="{x+18}" y="{y+26}" fill="{z["stroke"] if key!="cloud" else YELLOW}" '
-          f'font-size="13" font-weight="700" letter-spacing="0.5">{escape(z["label"])}</text>\n')
+          f'font-size="15" font-weight="700" letter-spacing="0.5">{escape(z["label"])}</text>\n')
     return s
 
 
@@ -72,9 +72,9 @@ def edge(x1, y1, x2, y2, label=None, mid=None, dashed=False, label_dx=0, label_d
         lx = (x1 + x2) / 2 + label_dx if mid is None else mid[0]
         ly = (y1 + y2) / 2 + label_dy if mid is None else mid[1]
         w = 7.2 * len(label) + 10
-        s += (f'<rect x="{lx-w/2}" y="{ly-13}" width="{w}" height="18" rx="4" '
-              f'fill="{BG}" opacity="0.92"/>\n')
-        s += (f'<text x="{lx}" y="{ly}" fill="{SUBINK}" font-size="11.5" '
+        s += (f'<rect x="{lx-w/2}" y="{ly-14}" width="{w}" height="20" rx="4" '
+              f'fill="{BG}"/>\n')
+        s += (f'<text x="{lx}" y="{ly}" fill="{SUBINK}" font-size="12.5" '
               f'text-anchor="middle">{escape(label)}</text>\n')
     return s
 
@@ -87,9 +87,9 @@ def elbow(pts, label=None, mid=None, dashed=False):
          f'marker-end="url(#arrow)"/>\n')
     if label and mid:
         w = 7.2 * len(label) + 10
-        s += (f'<rect x="{mid[0]-w/2}" y="{mid[1]-13}" width="{w}" height="18" rx="4" '
-              f'fill="{BG}" opacity="0.92"/>\n')
-        s += (f'<text x="{mid[0]}" y="{mid[1]}" fill="{SUBINK}" font-size="11.5" '
+        s += (f'<rect x="{mid[0]-w/2}" y="{mid[1]-14}" width="{w}" height="20" rx="4" '
+              f'fill="{BG}"/>\n')
+        s += (f'<text x="{mid[0]}" y="{mid[1]}" fill="{SUBINK}" font-size="12.5" '
               f'text-anchor="middle">{escape(label)}</text>\n')
     return s
 
@@ -166,65 +166,42 @@ def module_flow():
 
 
 # ===========================================================================
-# ARCHITECTURE  (3 zones, aligned rows, top bus for third-party API calls)
+# ARCHITECTURE  (three simple groups; the data-flow diagram owns sequencing)
 # ===========================================================================
 def architecture():
-    W, H = 1700, 1000
+    W, H = 1500, 650
     s = _svg_header(W, H)
     s += (f'<text x="30" y="44" fill="{INK}" font-size="22" font-weight="700">'
-          f'ClickHouse BUILD Workshop · Architecture (target end state)</text>\n')
+          f'ClickHouse BUILD Workshop · Where each component runs</text>\n')
     s += (f'<text x="30" y="70" fill="{SUBINK}" font-size="13.5">'
-          f'App-side components run locally; stateful data services run in ClickHouse Cloud. '
-          f'Dashed lines are control/OAuth; solid lines are data.</text>\n')
+          f'Group components by location first. Follow the next diagram for the trip data path.</text>\n')
 
     # zones
-    s += zone(30, 135, 515, 700, "laptop")
-    s += zone(590, 135, 650, 760, "cloud")
-    s += zone(1290, 135, 380, 560, "third")
+    s += zone(30, 110, 430, 480, "laptop")
+    s += zone(510, 110, 620, 480, "cloud")
+    s += zone(1180, 110, 290, 480, "third")
 
-    # --- laptop boxes ---
-    s += box(60, 190, 455, 62, "frontend", ["React SPA · nginx :8080", "Ops + Historical dashboards, chat"])
-    s += box(60, 300, 455, 62, "backend", ["FastAPI :8000", "analytics API + /api/chat (NL-to-SQL)"])
-    s += box(60, 410, 455, 56, "otel-collector", ["ClickStack overlay (module 05)"])
-    s += box(60, 520, 455, 62, "pg-trip-writer", ["synthetic trips; creates the CDC", "table + publication on first run"])
-    s += box(60, 660, 455, 62, "coding agent + clickhousectl", ["Claude Code / Cursor / Codex", "+ ClickHouse skills + docs llms.txt"])
+    # Participant laptop: application edge and stateless tools only.
+    s += box(60, 165, 370, 78, "Frontend + FastAPI", ["dashboards, chat, and API", "runs with Docker Compose"])
+    s += box(60, 270, 370, 68, "Load generator", ["creates synthetic trip rows"])
+    s += box(60, 365, 370, 68, "OpenTelemetry forwarder", ["sends app telemetry to ClickStack"])
+    s += box(60, 460, 370, 78, "Coding agent + clickhousectl", ["workshop commands, MCP,", "and ClickHouse skills"])
 
-    # --- cloud boxes ---
-    s += box(620, 185, 590, 96, "ClickHouse service  :8443 TLS", ["nyc_tlc_data (taxi_trips, taxi_zones,", "views, CDC MV)   +   otel db (logs, traces)"], accent=True)
-    s += box(620, 330, 280, 88, "ClickPipes", ["Postgres CDC pipe", "snapshot + stream (~60s)"])
-    s += box(930, 330, 280, 88, "Managed ClickStack / HyperDX", ["traces + logs UI", "module 05"])
-    s += box(620, 500, 590, 82, "Postgres managed by ClickHouse  :5432 TLS", ["you create it with clickhousectl (module 03) · public.realtime_trips + pub_taxi"])
-    s += box(620, 628, 280, 74, "Remote MCP", ["/mcp + /clickstack (OAuth)"])
-    s += box(930, 628, 280, 74, "ClickHouse Agents", ["ai.clickhouse.cloud (module 04)"])
-    s += box(620, 748, 590, 60, "Instructor cloud fallback only", ["managed Postgres pool when a trial org cannot create one"], dashed=True, fill="#1C1B14")
+    # ClickHouse Cloud: state, ingestion, observability, and AI surfaces.
+    s += box(540, 165, 560, 88, "ClickHouse service", ["default.realtime_trips lands here", "nyc_tlc_data.taxi_trips powers the app"], accent=True)
+    s += box(540, 285, 265, 78, "Managed Postgres", ["public.realtime_trips"])
+    s += box(835, 285, 265, 78, "ClickPipes", ["streams Postgres changes"])
+    s += box(540, 395, 265, 88, "Managed ClickStack", ["HyperDX traces, logs,", "dashboards, and alerts"])
+    s += box(835, 395, 265, 88, "Agents + remote MCP", ["ask questions and let", "the coding agent use tools"])
 
-    # --- third-party boxes ---
-    s += box(1315, 195, 330, 74, "Langfuse Cloud", ["chat traces, sessions, cost"])
-    s += box(1315, 300, 330, 74, "OpenAI API", ["chat completions (gpt-5.4-mini)"])
-    s += box(1315, 410, 330, 88, "NYC TLC dataset", ["public parquet; read once by the", "module 01 seed. Data source only."])
+    # External services used by the app, kept separate from workshop data storage.
+    s += box(1210, 175, 230, 82, "OpenAI API", ["chat completions"])
+    s += box(1210, 290, 230, 82, "Langfuse Cloud", ["chat traces and cost"])
+    s += box(1210, 405, 230, 92, "NYC TLC dataset", ["one-time historical", "seed source"])
 
-    # --- edges (laptop internal) ---
-    s += edge(287, 252, 287, 300, "/api proxy", label_dx=42)
-    s += edge(180, 362, 180, 410, "OTLP", label_dx=-34)
-
-    # laptop -> cloud (near-horizontal, labels in the gap)
-    s += elbow([(515, 331), (560, 331), (560, 250), (620, 250)], "SQL · TLS :8443", mid=(567, 300))
-    s += elbow([(515, 438), (585, 438), (585, 262), (620, 262)], "traces → otel db", mid=(585, 400), dashed=False)
-    s += edge(515, 545, 620, 541, "INSERT trips · TLS", label_dy=-8)
-    s += edge(515, 690, 620, 665, "MCP · OAuth", label_dy=-8)
-
-    # cloud internal (CDC chain + reads)
-    s += edge(760, 500, 760, 418, "logical replication", label_dx=0, label_dy=-4)
-    s += edge(760, 330, 760, 281, "CDC rows ~60s", label_dy=-4)
-    s += edge(1070, 330, 1070, 281, "reads otel db", label_dy=-4)
-    # agents -> service (RBAC), up the cloud's right margin
-    s += elbow([(1070, 628), (1215, 628), (1215, 235), (1210, 235)], "RBAC SQL", mid=(1215, 470))
-
-    # third-party: backend -> OpenAI / Langfuse along the top bus (above zones)
-    s += elbow([(360, 300), (360, 118), (1480, 118), (1480, 300)], "chat completions", mid=(950, 112))
-    s += elbow([(330, 300), (330, 96), (1430, 96), (1430, 195)], "chat traces (Langfuse SDK)", mid=(760, 90))
-    # TLC seed -> service (in the cloud/third gap)
-    s += elbow([(1315, 452), (1262, 452), (1262, 215), (1210, 215)], "url() seed", mid=(1262, 305))
+    # Only zone-level relationships. Detailed sequencing belongs in data_flow().
+    s += edge(460, 565, 510, 565, "uses", mid=(485, 548))
+    s += edge(1130, 565, 1180, 565, "calls", mid=(1155, 548))
 
     s += "</svg>\n"
     return s
@@ -318,99 +295,56 @@ def platform_stack():
 
 
 # ===========================================================================
-# DATA FLOW  (four swimlanes: seed, live CDC, read, observe)
+# DATA FLOW  (one learner-facing left-to-right story)
 # ===========================================================================
 def data_flow():
-    W, H = 1560, 900
+    W, H = 1200, 620
     s = _svg_header(W, H)
     s += (f'<text x="30" y="44" fill="{INK}" font-size="22" font-weight="700">'
-          f'ClickHouse BUILD Workshop · Data flow</text>\n')
+          f'ClickHouse BUILD Workshop · A trip\'s path</text>\n')
     s += (f'<text x="30" y="70" fill="{SUBINK}" font-size="13.5">'
-          f'How a row moves: seeded once, streamed continuously, then read and observed — '
-          f'all through your ClickHouse service.</text>\n')
+          f'Read left to right: generate a trip, stream it into ClickHouse, then show it in the app.</text>\n')
 
-    LX, LW = 30, W - 60
-    TITLE_W = 176  # left title gutter per lane
+    xcols, yrows, bw, bh = [40, 450, 860], [135, 345], 300, 110
+    steps = [
+        ("Load generator", ["creates synthetic trips", "on your laptop"], False),
+        ("Managed Postgres", ["source table:", "public.realtime_trips"], False),
+        ("ClickPipes", ["streams each change", "with Postgres CDC"], False),
+        ("ClickHouse", ["first landing table:", "default.realtime_trips"], True),
+        ("Materialized view", ["moves new rows into", "nyc_tlc_data.taxi_trips"], False),
+        ("Frontend + FastAPI", ["reads taxi_trips for", "the live dashboards"], False),
+    ]
 
-    def lane(y, h, title, subtitle):
-        t = (f'<rect x="{LX}" y="{y}" width="{LW}" height="{h}" rx="14" fill="#1C1C22" '
-             f'stroke="#3A3A45" stroke-width="1.3"/>\n')
-        t += (f'<rect x="{LX}" y="{y}" width="6" height="{h}" rx="3" fill="{YELLOW}"/>\n')
-        t += (f'<text x="{LX+22}" y="{y+30}" fill="{INK}" font-size="14.5" '
-              f'font-weight="700">{escape(title)}</text>\n')
-        # wrap subtitle into the gutter
-        words, line, ln = subtitle.split(), "", 0
-        for wd in words:
-            if len(line) + len(wd) > 20:
-                t += (f'<text x="{LX+22}" y="{y+52+ln*16}" fill="{SUBINK}" '
-                      f'font-size="11">{escape(line)}</text>\n'); line = wd; ln += 1
-            else:
-                line = (line + " " + wd).strip()
-        if line:
-            t += (f'<text x="{LX+22}" y="{y+52+ln*16}" fill="{SUBINK}" font-size="11">{escape(line)}</text>\n')
-        return t
+    # Numbered snake: left-to-right on row one, then right-to-left on row two.
+    positions = [
+        (xcols[0], yrows[0]),
+        (xcols[1], yrows[0]),
+        (xcols[2], yrows[0]),
+        (xcols[2], yrows[1]),
+        (xcols[1], yrows[1]),
+        (xcols[0], yrows[1]),
+    ]
+    for i, (title, lines, accent) in enumerate(steps):
+        x, y = positions[i]
+        s += box(x, y, bw, bh, title, lines, accent=accent, rounded=12)
+        s += (f'<circle cx="{x+20}" cy="{y+20}" r="12" fill="{YELLOW}"/>\n'
+              f'<text x="{x+20}" y="{y+24}" fill="{BG}" font-size="11" font-weight="700" '
+              f'text-anchor="middle">{i+1}</text>\n')
 
-    def fbox(x, y, w, label, sub, accent=False):
-        return box(x, y, w, 62, label, [sub] if sub else None, accent=accent, rounded=10)
+    # Every connector stays in the gutter between boxes. Label chips are painted
+    # after each line, so a line can never cut through its text.
+    s += edge(340, 190, 443, 190, "INSERT", mid=(395, 167))
+    s += edge(750, 190, 853, 190, "CDC", mid=(805, 167))
+    s += elbow([(1010, 245), (1010, 338)], "lands here", mid=(1010, 302))
+    s += edge(860, 400, 757, 400, "feeds", mid=(805, 377))
+    s += edge(450, 400, 347, 400, "reads", mid=(395, 377))
 
-    def harrow(x1, x2, y, label):
-        return edge(x1, y, x2, y, label, label_dy=-9)
-
-    x0 = LX + TITLE_W + 10     # where the flow chain starts
-    bw = 216                   # box width
-    gap = 140                  # arrow gap (wide enough for the longest label chip)
-
-    def col(i):
-        return x0 + i*(bw+gap)
-
-    # Lane 1 — SEED (module 01)
-    y = 96; s += lane(y, 96, "Seed", "one-time, module 01")
-    by = y + 17
-    s += fbox(col(0), by, bw, "NYC TLC parquet", "~3.2M rows, public")
-    s += fbox(col(2), by, bw, "ClickHouse service", "nyc_tlc_data.taxi_trips", accent=True)
-    s += harrow(col(0)+bw, col(2)-6, by+31, "url() seed — one statement, module 01")
-
-    # Lane 2 — LIVE CDC (module 03)
-    y = 212; s += lane(y, 110, "Live CDC", "continuous, module 03")
-    by = y + 24
-    s += fbox(col(0), by, bw, "pg-trip-writer", "synthetic trips")
-    s += fbox(col(1), by, bw, "Managed Postgres", "public.realtime_trips")
-    s += fbox(col(2), by, bw, "ClickPipes", "Postgres CDC pipe")
-    s += fbox(col(3), by, bw, "ClickHouse service", "MV → taxi_trips", accent=True)
-    s += harrow(col(0)+bw, col(1)-6, by+31, "INSERT · TLS")
-    s += harrow(col(1)+bw, col(2)-6, by+31, "replication")
-    s += harrow(col(2)+bw, col(3)-6, by+31, "CDC rows ~60s")
-
-    # Lane 3 — READ (modules 02, 04, 08)
-    y = 342; s += lane(y, 176, "Read", "modules 02, 04, 08")
-    by = y + 22
-    s += fbox(col(0), by, bw, "ClickHouse service", "nyc_tlc_data", accent=True)
-    s += fbox(col(1), by, bw, "FastAPI", "safe parameterized SQL")
-    s += fbox(col(2), by, bw, "Ops + Historical", "React dashboards")
-    s += harrow(col(0)+bw, col(1)-6, by+31, "SELECT")
-    s += harrow(col(1)+bw, col(2)-6, by+31, "GET /api/*")
-    # two more consumers off the service (stacked below)
-    by2 = y + 104
-    s += fbox(col(1), by2, bw, "in-app AI chat", "guarded SELECT (module 08)")
-    s += fbox(col(2), by2, bw, "ClickHouse Agents", "RBAC SQL (module 04)")
-    s += elbow([(col(0)+bw/2, by+62), (col(0)+bw/2, by2+31), (col(1)-6, by2+31)], "NL → SQL", mid=(col(0)+bw/2+70, by2+22))
-    s += harrow(col(1)+bw, col(2)-6, by2+31, "RBAC SQL")
-
-    # Lane 4 — OBSERVE (modules 05, 06, 07)
-    y = 538; s += lane(y, 176, "Observe", "modules 05, 06, 07")
-    by = y + 22
-    s += fbox(col(0), by, bw, "backend spans", "clickhouse.query + logs")
-    s += fbox(col(1), by, bw, "stateless OTel forwarder", "local OTLP :4318")
-    s += fbox(col(2), by, bw, "otel db", "in your service")
-    s += fbox(col(3), by, bw, "HyperDX UI", "search, traces, dashboards")
-    s += harrow(col(0)+bw, col(1)-6, by+31, "OTLP")
-    s += harrow(col(1)+bw, col(2)-6, by+31, "write")
-    s += harrow(col(2)+bw, col(3)-6, by+31, "read")
-    by2 = y + 104
-    s += fbox(col(1), by2, bw, "coding agent", "via ClickStack MCP")
-    s += elbow([(col(1)+bw/2, by2), (col(1)+bw/2, by+62)], None)
-    s += (f'<text x="{col(2)-6}" y="{by2+34}" fill="{SUBINK}" font-size="11.5">'
-          f'clickstack_search / save_dashboard / save_alert</text>\n')
+    s += (f'<rect x="40" y="505" width="1120" height="75" rx="12" fill="#1C1C22" '
+          f'stroke="#3A3A45" stroke-width="1.3"/>\n')
+    s += (f'<text x="65" y="535" fill="{YELLOW}" font-size="13" font-weight="700">'
+          f'What the other workshop tools do</text>\n')
+    s += (f'<text x="65" y="560" fill="{SUBINK}" font-size="12.5">'
+          f'ClickStack observes the app · ClickHouse Agents answers data questions · Langfuse traces the chat</text>\n')
     s += "</svg>\n"
     return s
 
