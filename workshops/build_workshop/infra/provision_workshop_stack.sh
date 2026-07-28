@@ -2,7 +2,8 @@
 # End-to-end workshop stack provisioning via clickhousectl (clickhousectl):
 # managed Postgres -> ClickHouse Cloud service -> Postgres CDC ClickPipe -> data sync.
 #
-# Instructor-side tool. It stands up the SHARED Postgres every participant's
+# Instructor-side tool. It stands up the CLOUD-HOSTED managed Postgres fallback
+# that selected participants'
 # ClickPipe reads from, provisions the per-participant slots, and can bring up
 # a complete demo stack (instructor's own ClickHouse service + CDC pipe) to
 # prove the whole chain end to end — the same chain participants build by hand.
@@ -235,7 +236,7 @@ provision_slot() { # provision_slot <NN>
   if [ "$(psqla postgres -c "SELECT 1 FROM pg_database WHERE datname = '$db'")" != "1" ]; then
     psqla postgres -c "CREATE DATABASE $db OWNER $role" >/dev/null
   fi
-  # CDC source table (same DDL as the app's local fallback) + pre-created
+  # CDC source table + pre-created
   # publication, so participants never need CREATE PUBLICATION rights.
   psqla "$db" <<SQL >/dev/null
 CREATE TABLE IF NOT EXISTS public.realtime_trips (

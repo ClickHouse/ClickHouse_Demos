@@ -22,8 +22,9 @@
 # See OBSERVABILITY.md for the full env var table and how to verify in HyperDX.
 
 services:
-  # ClickStack OTel collector. Receives OTLP from the backend and writes to the
-  # participant's ClickHouse Cloud service. CLICKHOUSE_ENDPOINT is assembled from
+  # Stateless OTel forwarder for Managed ClickStack. HyperDX, storage, and query
+  # compute stay in ClickHouse Cloud. This receives OTLP from the backend and
+  # writes to the participant's Cloud service. CLICKHOUSE_ENDPOINT is assembled from
   # the same CLICKHOUSE_HOST/PORT used by the app so there is one source of truth.
   otel-collector:
     image: clickhouse/clickstack-otel-collector:latest
@@ -95,7 +96,7 @@ services:
 
   # OPTIONAL (profile: container-logs). A second collector that tails raw Docker
   # container stdout/stderr and ships it through the base `clickhouse` exporter,
-  # capturing services that are NOT OTel-instrumented (loadgen, postgres, ...).
+  # capturing services that are NOT OTel-instrumented (for example, the loadgen).
   # It does not publish OTLP host ports, so it never conflicts with the main
   # collector. See the VERIFY-LIVE notes in custom.config.yaml / OBSERVABILITY.md.
   otel-collector-container-logs:

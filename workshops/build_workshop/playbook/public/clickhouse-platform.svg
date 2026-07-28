@@ -11,14 +11,14 @@
 <rect x="90" y="196" width="880" height="104" rx="12" fill="#1E1E24" stroke="#3A3A45" stroke-width="1.3"/>
 <text x="106" y="252.0" fill="#B7BCC2" font-size="11" font-weight="700" letter-spacing="1.5">UIs</text>
 <rect x="168" y="218" width="196" height="60" rx="9" fill="#33333F" stroke="#50505C" stroke-width="1.3"/>
-<text x="184" y="245.0" fill="#EDEDED" font-size="14.5" font-weight="700">LibreChat</text>
-<text x="184" y="263.0" fill="#B7BCC2" font-size="11">agentic AI chat</text>
+<text x="184" y="245.0" fill="#EDEDED" font-size="14.5" font-weight="700">SQL Console</text>
+<text x="184" y="263.0" fill="#B7BCC2" font-size="11">query + data explorer</text>
 <rect x="380" y="218" width="196" height="60" rx="9" fill="#33333F" stroke="#50505C" stroke-width="1.3"/>
 <text x="396" y="245.0" fill="#EDEDED" font-size="14.5" font-weight="700">HyperDX</text>
-<text x="396" y="263.0" fill="#B7BCC2" font-size="11">system observability</text>
+<text x="396" y="263.0" fill="#B7BCC2" font-size="11">managed observability</text>
 <rect x="592" y="218" width="196" height="60" rx="9" fill="#33333F" stroke="#50505C" stroke-width="1.3"/>
-<text x="608" y="245.0" fill="#EDEDED" font-size="14.5" font-weight="700">Langfuse</text>
-<text x="608" y="263.0" fill="#B7BCC2" font-size="11">LLM observability</text>
+<text x="608" y="245.0" fill="#EDEDED" font-size="14.5" font-weight="700">Agents</text>
+<text x="608" y="263.0" fill="#B7BCC2" font-size="11">conversational BI</text>
 <rect x="804" y="218" width="150" height="60" rx="9" fill="#191920" stroke="#3A3A45" stroke-width="1.2" stroke-dasharray="5 4"/>
 <text x="879.0" y="242" fill="#B7BCC2" font-size="11" font-weight="700" letter-spacing="1.2" text-anchor="middle">LLMs</text>
 <text x="879.0" y="260" fill="#B7BCC2" font-size="10.5" text-anchor="middle">OpenAI / Claude / Gemini</text>

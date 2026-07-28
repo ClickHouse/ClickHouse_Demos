@@ -1,6 +1,6 @@
 ---
 title: 00 Setup
-description: Create the workshop services, install the CLIs, connect your agent once, and start the local app.
+description: Create the cloud services, install local clients, connect your agent once, and start the local app.
 ---
 
 Choose **macOS** or **Windows** in the page header before you begin. Your choice persists
@@ -16,6 +16,10 @@ In about **25 minutes** you will have:
 - ClickHouse skills plus ClickHouse and ClickStack MCP connections in your coding agent;
 - Langfuse and OpenAI keys; and
 - the app healthy at [localhost:8080](http://localhost:8080).
+
+ClickHouse, Postgres, ClickPipes, ClickStack/HyperDX, Langfuse, LibreChat, and MCP
+endpoints are cloud-hosted. Only the workshop app, CLI/client tools, coding agent,
+load generator, and stateless telemetry collector run on your machine.
 
 After Step 2, run every command from the app directory unless a step says otherwise.
 
@@ -198,6 +202,9 @@ clickhousectl --version
 clickhousectl local use stable
 clickhouse client --version
 ```
+
+Here `local use` selects the local **client binary version**. It does not install or
+start a ClickHouse server; every query in this workshop targets ClickHouse Cloud.
 
 Add `~/.local/bin` to your shell profile if a new terminal cannot find either command.
 On Windows, both commands are installed inside Ubuntu; do not install or run their Windows
@@ -409,8 +416,9 @@ docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml ps
 ```
 
-Within about two minutes, services should report `healthy` and the app should load at
-[localhost:8080](http://localhost:8080). Empty dashboards are correct until Module 01.
+Within about two minutes, the local `backend` and `frontend` app containers should report
+`healthy` and the app should load at [localhost:8080](http://localhost:8080). No database
+server is started locally. Empty dashboards are correct until Module 01.
 
 ## Completion check
 

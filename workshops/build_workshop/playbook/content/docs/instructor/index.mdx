@@ -25,12 +25,13 @@ the dry run and record the final numbers here.
 | Module | Learner lesson | Budget | Notes |
 |---|---|---|---|
 | 00 | Setup | 25 min | Fire-and-wait steps (service create, `docker compose up`) start before the talk |
-| 01 | Base app | 5 min | Nothing to build; keep it short |
-| 02 | ClickHouse Cloud | 15 min | First "wow" on query speed |
-| 03 | Real-time CDC | 20 min | Shared managed Postgres is a room-wide dependency |
+| 01 | ClickHouse Cloud | 15 min | First "wow" on query speed |
+| 02 | Base app | 5 min | Nothing to build; keep it short |
+| 03 | Managed Postgres CDC | 20 min | Each learner creates a managed instance; keep a managed cloud fallback pool |
 | 04 | ClickHouse Agents | 10 min | Beta tool; have a fallback question ready |
 | 05 | ClickStack | 15 min | Telemetry needs time to accumulate before module 07 |
 | 06 | AI SRE | 15 min | MCP OAuth is the fragile moment; pre-stage config |
+| 06b | Hosted LibreChat AI SRE | Optional, 15 min | Pre-provision HTTPS instance, model, accounts, and remote MCPs |
 | 07 | Break and fix | 20 min | Direct payoff from 06/06b; hard-stop management matters |
 | 08 | Chat and Langfuse | 15 min | Keys already set in module 00; restart plus trace tour |
 | 09 | Wrap-up | 10 min | Volunteers demo; reset any shared state |
@@ -46,12 +47,13 @@ three-hour session covers the opening, transitions between modules, and the fina
 
 ## Shared-resource checklist
 
-Some resources are shared across the whole room. Confirm each is provisioned and healthy
+Some fallback resources are shared across the whole room. Confirm each is provisioned and healthy
 before doors open:
 
-- **Managed Postgres for CDC** — the shared source database every attendee's ClickPipe
-  reads from (module 03). TODO: confirm host, replication user, publication/slot, and
-  per-attendee isolation.
+- **Managed Postgres fallback pool** — cloud-hosted instances only for attendees whose
+  org cannot create one. The primary path is one ClickHouse-managed Postgres per learner.
+- **Hosted LibreChat** — an HTTPS cloud deployment and learner accounts for optional
+  Module 06b. Do not run LibreChat or MongoDB on learner machines.
 - **Loaner ClickHouse Cloud services** — a small pool for attendees whose trial fails.
   TODO: pool size and distribution method.
 - **Runtime LLM key pool** — spend-capped fallback keys for the in-app chat (module 08).
@@ -71,10 +73,11 @@ should arrive then. TODO: confirm the clinic start time and staffing.
   <Card title="00 Setup" href="/docs/instructor/00-setup" />
   <Card title="01 ClickHouse Cloud" href="/docs/instructor/01-clickhouse-cloud" />
   <Card title="02 Base app" href="/docs/instructor/02-base-app" />
-  <Card title="03 Real-time CDC" href="/docs/instructor/03-realtime-cdc" />
+  <Card title="03 Managed Postgres CDC" href="/docs/instructor/03-realtime-cdc" />
   <Card title="04 ClickHouse Agents" href="/docs/instructor/04-clickhouse-agents" />
   <Card title="05 ClickStack" href="/docs/instructor/05-clickstack" />
   <Card title="06 AI SRE" href="/docs/instructor/06-ai-sre" />
+  <Card title="06b Hosted LibreChat SRE" href="/docs/instructor/06b-ai-sre-librechat" />
   <Card title="07 Test, fail, and fix" href="/docs/instructor/07-break-and-fix" />
   <Card title="08 Chat and Langfuse" href="/docs/instructor/08-chat-langfuse" />
   <Card title="09 Wrap-up" href="/docs/instructor/09-wrap-up" />

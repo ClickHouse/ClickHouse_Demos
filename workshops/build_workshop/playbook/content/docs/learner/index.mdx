@@ -17,20 +17,22 @@ on WSL 2, so all shared command blocks are identical after setup.
 0. [Setup](/docs/learner/00-setup) - accounts, keys, tools, agent skills, and the app running locally.
 1. [ClickHouse Cloud](/docs/learner/01-clickhouse-cloud) - build the schema and seed 3.2M+ real taxi rows from object storage.
 2. [Base app](/docs/learner/02-base-app) - tour the running app, now that ClickHouse is seeded, so you know what you are extending.
-3. [Real-time CDC](/docs/learner/03-realtime-cdc) - stream your own Postgres into ClickHouse with a ClickPipe.
+3. [Managed Postgres CDC](/docs/learner/03-realtime-cdc) - stream ClickHouse-managed Postgres into ClickHouse with a ClickPipe.
 4. [ClickHouse Agents](/docs/learner/04-clickhouse-agents) - ask your data questions in plain language.
 5. [ClickStack](/docs/learner/05-clickstack) - see the app's own traces and logs in HyperDX.
 6. [AI SRE](/docs/learner/06-ai-sre) - have your agent build an SRE dashboard and alert over that telemetry.
+6b. [Hosted LibreChat AI SRE](/docs/learner/06b-ai-sre-librechat) - optional hosted chat workflow over ClickStack and GitHub MCP.
 7. [Break and fix](/docs/learner/07-break-and-fix) - continue from AI SRE or optional 06b, inject a fault, diagnose it, and fix it.
 8. [Chat and Langfuse](/docs/learner/08-chat-langfuse) - wire an in-app AI chat and trace every turn.
 9. [Wrap-up](/docs/learner/09-wrap-up) - recap, take it home, extend it to your own data.
 
 ## What you'll build
 
-By the end you have, all running on your own trial service:
+By the end, your stateful data and observability services run in the cloud. The app,
+load generator, client tools, and telemetry forwarder run locally:
 
 - a **live ops dashboard** over **3.2M+ real NYC taxi rows** seeded straight from object storage,
-- a **change-data-capture pipeline** streaming your own Postgres into ClickHouse continuously,
+- a **change-data-capture pipeline** streaming ClickHouse-managed Postgres into ClickHouse continuously,
 - **conversational BI** over that data with ClickHouse Agents,
 - an **AI-built SRE dashboard and alert** over the app's own telemetry,
 - and an **in-app AI chat** traced end to end in Langfuse.
@@ -41,7 +43,9 @@ About **2h30 hands-on** - and your dashboard is live on real data within the fir
 
 ## Cost
 
-**$0** - ClickHouse Cloud trial credits cover everything. The only paid key is about **$5 of OpenAI credit** for the chat module (module 08), and even that stretches across many runs.
+ClickHouse Cloud trial credits cover the ClickHouse-managed services. Budget about
+**$5 of OpenAI credit** for Module 08. Optional self-paced Module 06b may also incur a
+small Railway hosting charge; instructor-led sessions use the provided hosted instance.
 
 ## Everything is copy-paste
 

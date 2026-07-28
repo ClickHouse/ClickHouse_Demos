@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 import psycopg
 from psycopg import errors, sql
+from config import env, load_postgres_config
 
 # Structured stdout logging so container logs are parseable by the ClickStack
 # collector (filelog receiver) instead of bare prints. Level from LOG_LEVEL.
@@ -19,21 +20,18 @@ logging.basicConfig(
 logger = logging.getLogger("loadgen")
 
 
-def env(name: str, default: str) -> str:
-    v = os.getenv(name)
-    return default if v is None or v == "" else v
-
-
-PGHOST = env("PGHOST", "postgres")
-PGPORT = int(env("PGPORT", "5432"))
-PGDATABASE = env("PGDATABASE", "taxi")
-PGUSER = env("PGUSER", "taxi")
-PGPASSWORD = env("PGPASSWORD", "taxi")
+POSTGRES = load_postgres_config()
+PGHOST = POSTGRES.host
+PGPORT = POSTGRES.port
+PGDATABASE = POSTGRES.database
+PGUSER = POSTGRES.user
+PGPASSWORD = POSTGRES.password
+PGSSLMODE = POSTGRES.sslmode
 # Publication the CDC ClickPipe subscribes to. On the participant's own managed
 # Postgres the loadgen creates it (the connection user is the instance admin);
-# on the shared-fallback instance the instructor pre-creates it and the scoped
+# on an instructor-provided managed instance the instructor pre-creates it and the scoped
 # role lacks CREATE rights, so ensure_publication() below is a logged no-op.
-PG_PUBLICATION = env("PG_PUBLICATION", "pub_taxi")
+PG_PUBLICATION = POSTGRES.publication
 
 RATE_PER_SEC = float(env("RATE_PER_SEC", "5"))
 BATCH_SIZE = int(env("BATCH_SIZE", "25"))
@@ -43,7 +41,7 @@ def ensure_publication(conn: psycopg.Connection, pub_name: str) -> None:
     """Idempotently ensure the CDC publication exists for public.realtime_trips.
 
     Removes any psql prerequisite for participants: on their own managed Postgres
-    the loadgen creates the publication; on the shared-fallback instance it is
+    the loadgen creates the publication; on an instructor-provided managed instance it is
     pre-created and the scoped role cannot create it, so we swallow the
     insufficient-privilege error and log clearly. Either way the loadgen keeps
     running and the ClickPipe finds a publication to subscribe to.
@@ -66,11 +64,11 @@ def ensure_publication(conn: psycopg.Connection, pub_name: str) -> None:
         # Lost a race with another writer; the publication now exists.
         logger.info(f"[loadgen] publication {pub_name} created concurrently; leaving as-is")
     except errors.InsufficientPrivilege:
-        # Shared-fallback path: the scoped role cannot CREATE PUBLICATION, but the
+        # Managed instructor-fallback path: the scoped role cannot CREATE PUBLICATION, but the
         # instructor pre-created it out of band, so this is expected and harmless.
         logger.warning(
             f"[loadgen] no privilege to create publication {pub_name}; assuming it was "
-            "pre-created (shared-fallback path) and continuing"
+            "pre-created (managed instructor fallback) and continuing"
         )
 
 
@@ -84,7 +82,6 @@ def pick_zone_id() -> int:
 
 
 def main() -> None:
-    dsn = f"host={PGHOST} port={PGPORT} dbname={PGDATABASE} user={PGUSER} password={PGPASSWORD}"
     logger.info(f"[loadgen] connecting: {PGHOST}:{PGPORT} db={PGDATABASE} user={PGUSER}")
 
     # Create table if missing (idempotent). Debezium will capture changes.
@@ -121,7 +118,15 @@ def main() -> None:
     delay = max(0.01, BATCH_SIZE / max(0.001, RATE_PER_SEC))
     now = datetime.now(timezone.utc)
 
-    with psycopg.connect(dsn, autocommit=True) as conn:
+    with psycopg.connect(
+        host=PGHOST,
+        port=PGPORT,
+        dbname=PGDATABASE,
+        user=PGUSER,
+        password=PGPASSWORD,
+        sslmode=PGSSLMODE,
+        autocommit=True,
+    ) as conn:
         with conn.cursor() as cur:
             cur.execute(create_sql)
             logger.info(f"[loadgen] ensured realtime_trips table exists")
@@ -166,4 +171,3 @@ def main() -> None:
 if __name__ == "__main__":
     random.seed()
     main()
-

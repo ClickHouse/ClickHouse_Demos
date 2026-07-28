@@ -1,6 +1,6 @@
 ---
 title: 05 ClickStack
-description: Enable ClickStack, run the local OpenTelemetry collector overlay, and see your app's traces in HyperDX.
+description: Enable Managed ClickStack, forward telemetry with a local stateless collector, and inspect it in cloud-hosted HyperDX.
 ---
 
 ## Starting point
@@ -52,6 +52,10 @@ flowing once the collector overlay is running in Step 2.)
 </Callout>
 
 ## Step 2 — Run the OpenTelemetry collector overlay
+
+HyperDX, storage, and query compute stay managed in ClickHouse Cloud. The only local
+component here is a stateless OpenTelemetry collector beside the local app; it forwards
+telemetry and is not a local ClickStack or HyperDX deployment.
 
 <Callout title="Check the collector ports first">
   The collector publishes OTLP on host ports **4317** and **4318**, which are commonly
