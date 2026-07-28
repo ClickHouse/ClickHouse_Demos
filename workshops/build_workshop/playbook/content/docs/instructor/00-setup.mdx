@@ -16,6 +16,14 @@ For mixed rooms, budget another 10 minutes before the session for Windows learne
 have not yet installed WSL 2 and Docker Desktop. A restart can be required after
 `wsl --install`.
 
+For in-person sessions with trainer-provided credentials:
+
+- Issue separate temporary ClickHouse Cloud organization and OpenAI project API keys to
+  each learner. Never share one key across the room.
+- Deliver each key through an approved secret-sharing channel, not chat or slides.
+- Apply an OpenAI project budget and rate limits, then monitor usage during the session.
+- Revoke both keys after the workshop. Rotate either key immediately if it is exposed.
+
 ## Talk track
 
 - Frame the session: they will move an existing app onto ClickHouse Cloud, and the agent
