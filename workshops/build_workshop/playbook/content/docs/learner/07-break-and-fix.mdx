@@ -6,8 +6,7 @@ description: Inject a known fault, diagnose it through ClickStack, apply a fix, 
 ## Outcome
 
 In about **20 minutes**, you will run one incident from failure to verified recovery. This
-continues directly from Module 06a or optional 06b and uses the ClickStack MCP configured
-in Module 00.
+continues directly from Module 06 and uses the ClickStack MCP configured in Module 00.
 
 ## Step 1 — Choose one fault
 
@@ -39,9 +38,6 @@ docker compose --env-file .env.workshop \
 
 Open a fresh browser session at [localhost:8080](http://localhost:8080). **The empty map is
 expected now**; a failure elsewhere is not part of this scenario.
-
-If Module 06b already injected Fault 01, skip the branch switch and rebuild only the
-frontend.
 
 ## Step 3 — Diagnose from evidence
 

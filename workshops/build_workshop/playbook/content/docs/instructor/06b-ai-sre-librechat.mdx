@@ -1,17 +1,24 @@
 ---
-title: 06b AI SRE with hosted LibreChat
-description: Instructor prework and facilitation notes for the optional cloud-hosted LibreChat module.
+title: "Archived: 06b AI SRE with hosted LibreChat"
+description: Archived instructor reference for the former optional hosted LibreChat module.
 ---
+
+<Callout type="warn" title="Archived module">
+  Module 06b is no longer part of the run of show. Do not provision LibreChat, learner
+  accounts, or its MCP connections for the current workshop. Continue directly from
+  Module 06 to [Module 07](/docs/instructor/07-break-and-fix). The notes below remain
+  only as a historical reference.
+</Callout>
 
 Facilitator companion to
 [06b AI SRE with hosted LibreChat](/docs/learner/06b-ai-sre-librechat).
 
-## Timing
+## Historical timing
 
-Optional, about 15 minutes. Run it immediately before Module 07. Skip it if the room is
-tight; Module 06a already covers the remote ClickStack MCP workflow.
+This module previously took about 15 minutes immediately before Module 07. Module 06
+already covers the remote ClickStack MCP workflow.
 
-## Required cloud prework
+## Historical cloud prework
 
 Learners must not deploy LibreChat or MongoDB locally.
 
@@ -41,14 +48,14 @@ LibreChat documents remote MCP OAuth, per-user credentials, and agent sharing in
 
 ## Talk track
 
-- Module 06a is an agent in the editor; 06b is the same evidence chain in a hosted chat UI.
+- Module 06 is an agent in the editor; 06b was the same evidence chain in a hosted chat UI.
 - LibreChat is a client surface. ClickStack/HyperDX and the telemetry remain managed in
   ClickHouse Cloud; GitHub remains the source-of-truth service.
 - Each learner owns their ClickHouse OAuth session and GitHub PAT.
 
 ## Common failures
 
-- **Hosted URL is unavailable**: skip 06b and continue with Module 06a. Do not improvise a
+- **Hosted URL is unavailable**: skip this archived module and continue with Module 06. Do not improvise a
   local Docker deployment during the workshop.
 - **OAuth returns to the wrong host**: correct LibreChat's public `DOMAIN_SERVER` and
   `DOMAIN_CLIENT` to the HTTPS deployment URL, then reconnect.

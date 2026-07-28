@@ -48,7 +48,7 @@ docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
 
 # with the ClickStack observability overlay (module 05 onward):
 docker compose --env-file .env.workshop \
-  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d
+  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
 ```
 
 Frontend: http://localhost:8080 - Backend API docs (FastAPI Swagger):

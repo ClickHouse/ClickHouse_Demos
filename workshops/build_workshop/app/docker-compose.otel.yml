@@ -14,7 +14,7 @@
 # "ClickStack observability" section of .env.workshop.example):
 #
 #   docker compose --env-file .env.workshop \
-#     -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d
+#     -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
 #
 # Add raw container-log scraping (optional, see VERIFY-LIVE notes in OBSERVABILITY.md):
 #   ... -f docker-compose.otel.yml --profile container-logs up -d

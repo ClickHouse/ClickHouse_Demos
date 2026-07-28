@@ -31,8 +31,7 @@ the dry run and record the final numbers here.
 | 04 | ClickHouse Agents | 10 min | Beta tool; have a fallback question ready |
 | 05 | ClickStack | 15 min | Telemetry needs time to accumulate before module 07 |
 | 06 | AI SRE | 15 min | MCP OAuth is the fragile moment; pre-stage config |
-| 06b | Hosted LibreChat AI SRE | Optional, 15 min | Pre-provision HTTPS instance, model, accounts, and remote MCPs |
-| 07 | Break and fix | 20 min | Direct payoff from 06/06b; hard-stop management matters |
+| 07 | Break and fix | 20 min | Direct payoff from 06; hard-stop management matters |
 | 08 | Chat and Langfuse | 15 min | Keys already set in module 00; restart plus trace tour |
 | 09 | Wrap-up | 10 min | Volunteers demo; reset any shared state |
 
@@ -52,8 +51,6 @@ before doors open:
 
 - **Managed Postgres fallback pool** — cloud-hosted instances only for attendees whose
   org cannot create one. The primary path is one ClickHouse-managed Postgres per learner.
-- **Hosted LibreChat** — an HTTPS cloud deployment and learner accounts for optional
-  Module 06b. Do not run LibreChat or MongoDB on learner machines.
 - **Loaner ClickHouse Cloud services** — a small pool for attendees whose trial fails.
   TODO: pool size and distribution method.
 - **Runtime LLM key pool** — spend-capped fallback keys for the in-app chat (module 08).
@@ -77,7 +74,6 @@ should arrive then. TODO: confirm the clinic start time and staffing.
   <Card title="04 ClickHouse Agents" href="/docs/instructor/04-clickhouse-agents" />
   <Card title="05 ClickStack" href="/docs/instructor/05-clickstack" />
   <Card title="06 AI SRE" href="/docs/instructor/06-ai-sre" />
-  <Card title="06b Hosted LibreChat SRE" href="/docs/instructor/06b-ai-sre-librechat" />
   <Card title="07 Test, fail, and fix" href="/docs/instructor/07-break-and-fix" />
   <Card title="08 Chat and Langfuse" href="/docs/instructor/08-chat-langfuse" />
   <Card title="09 Wrap-up" href="/docs/instructor/09-wrap-up" />
