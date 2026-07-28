@@ -23,13 +23,13 @@ The guide loads a public forex Parquet dataset via a ClickPipe and via a one-sho
 `s3(...)` query:
 
 ```
-https://inox-techtalkthai-fsq-th-959934561610.s3.ap-southeast-1.amazonaws.com/fx/ticks.parquet
+https://s3.housemate.click/fx/ticks.parquet
 ```
 
-> **Note — the one partner-named artifact.** The S3 bucket name still references
-> the original event. Everything else is genericized. For a fully partner-neutral
-> lab, re-host `ticks.parquet` to a neutral public bucket and update the two
-> references in the guide (`public/rta-mini/index.html`).
+> **Note.** The dataset is served from a neutral custom domain
+> (`s3.housemate.click`), so the lab is fully partner-neutral. To host your own
+> copy, point a bucket at `fx/ticks.parquet` and update the two references in the
+> guide (`public/rta-mini/index.html`).
 
 ## Prerequisites (participants)
 
