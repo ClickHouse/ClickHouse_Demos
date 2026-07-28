@@ -30,8 +30,8 @@ fail_if_found \
   "${CONTENT}/learner"
 
 if grep -RInE --exclude='06b-ai-sre-librechat.mdx' \
-  '06b|LibreChat' "${CONTENT}"; then
-  echo "ERROR: archived Module 06b must not appear in the active workshop journey" >&2
+  '06a|06b|LibreChat' "${CONTENT}"; then
+  echo "ERROR: active workshop must use Module 06 and exclude archived Module 06b" >&2
   exit 1
 fi
 
@@ -39,6 +39,8 @@ fail_if_found \
   "active workshop summaries and diagrams must not include archived Module 06b" \
   '06b|LibreChat' \
   "${ROOT}/README.md" \
+  "${ROOT}/app/README.md" \
+  "${ROOT}/app/WORKSHOP_CHANGES.md" \
   "${ROOT}/docs/diagrams/gen_diagrams.py" \
   "${ROOT}/docs/diagrams/workshop-module-flow.svg" \
   "${ROOT}/docs/diagrams/workshop-architecture.svg" \
@@ -93,6 +95,11 @@ require_fixed \
 require_fixed \
   "the former instructor Module 06b page must remain clearly archived" \
   'Module 06b is no longer part of the run of show.' \
+  "${CONTENT}/instructor/06b-ai-sre-librechat.mdx"
+
+require_fixed \
+  "the archived instructor page must link to active Module 07" \
+  '[Module 07](/docs/instructor/07-break-and-fix)' \
   "${CONTENT}/instructor/06b-ai-sre-librechat.mdx"
 
 require_count() {

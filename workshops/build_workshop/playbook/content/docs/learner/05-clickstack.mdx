@@ -43,15 +43,6 @@ telemetry and is not a local ClickStack or HyperDX deployment.
 
 ### `.env.workshop` and `docker-compose.otel.yml`
 
-Append the observability variables to your single `.env.workshop`, then bring the stack
-up with the overlay. The overlay sets `OTEL_ENABLED=true` on the back end for you and
-adds the `otel-collector` service (`clickhouse/clickstack-otel-collector`):
-
-```bash
-docker compose --env-file .env.workshop \
-  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d
-```
-
 These live in the ClickStack observability section of `.env.workshop.example`; fill them
 in your `.env.workshop`:
 
@@ -60,6 +51,23 @@ OTLP_AUTH_TOKEN=change-me-workshop-token   # shared secret securing OTLP ingest
 CLICKSTACK_DATABASE=otel                   # ClickStack's own otel_* tables
 OTEL_SERVICE_NAME=nyc-taxi-backend         # the service name shown in HyperDX
 LOG_LEVEL=DEBUG                            # show successful queries in Log source
+```
+
+Source the updated file so later commands can use the same values:
+
+```bash
+set -a
+source .env.workshop
+set +a
+```
+
+Now bring the stack up with the overlay. The overlay sets `OTEL_ENABLED=true` on the
+back end, adds the `otel-collector` service (`clickhouse/clickstack-otel-collector`),
+and rebuilds the front end with the browser telemetry settings:
+
+```bash
+docker compose --env-file .env.workshop \
+  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
 ```
 
 The collector reuses `CLICKHOUSE_HOST` / `CLICKHOUSE_PORT` / `CLICKHOUSE_USER` /
