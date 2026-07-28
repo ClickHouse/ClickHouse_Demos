@@ -2,9 +2,9 @@
 
 The NYC-taxi analytics app participants run locally during the ClickHouse BUILD
 Workshop: a React ops dashboard (with an AI chat panel), a FastAPI analytics backend,
-a local Postgres with a synthetic trip generator, and an optional ClickStack
-OpenTelemetry overlay. ClickHouse itself is your own ClickHouse Cloud service; live
-ingestion is Postgres CDC via ClickPipes.
+a synthetic trip generator connected to ClickHouse-managed Postgres, and an optional
+ClickStack OpenTelemetry forwarding overlay. ClickHouse, Postgres, ClickPipes, and
+ClickStack/HyperDX are hosted; no database server runs on the learner machine.
 
 Follow the playbook (`../playbook`, published at workshop.demohouse.cloud) from
 module 00 — it walks through every step below in order.
@@ -29,7 +29,6 @@ Host ports (override any of these in `.env.workshop` if it is already taken —
 |---|---|---|
 | Frontend (UI) | 8080 | `FRONTEND_HOST_PORT` |
 | Backend API | 8000 | `BACKEND_HOST_PORT` |
-| Postgres (local fallback) | 5432 | `POSTGRES_HOST_PORT` |
 | OTel gRPC (otel overlay) | 4317 | `OTEL_GRPC_HOST_PORT` |
 | OTel HTTP (otel overlay) | 4318 | `OTEL_HTTP_HOST_PORT` |
 
@@ -63,17 +62,15 @@ use those ports instead of 8080 / 8000.
 | `preflight.sh` | Participant readiness check — run before `docker compose up` |
 | `frontend/` | React/Vite SPA: Ops + Historical dashboards, zone map, chat panel |
 | `backend/` | FastAPI analytics API, guardrailed AI chat (`/api/chat`), OTel instrumentation |
-| `loadgen/` | `pg_trip_writer.py` — synthetic trips into Postgres (throttled via env) |
+| `loadgen/` | `pg_trip_writer.py` — synthetic trips into ClickHouse-managed Postgres (throttled via env) |
 | `db/cloud/001_cloud_schema.sql` | Idempotent base schema (tables + views) for your Cloud service; applies cleanly on a fresh service |
 | `db/cloud/002_seed_historical.sql` | Optional runnable historical seed (taxi_zones + a yellow-taxi month) from public object storage; idempotent, run after 001 |
 | `db/cloud/003_cdc_mv.sql` | Maintainer fixture for the CLI ClickPipe CDC materialized view mirrored as a copyable block in Module 03 |
-| `db/postgres/` | Local-fallback Postgres init (CDC source table, publication) |
 | `otel-collector/` | Optional container-log scrape config for the ClickStack overlay |
 | `.env.workshop.example` | The single env template — copy to `.env.workshop` |
 
 Details: `WORKSHOP_CHANGES.md` (stack and Cloud wiring), `CHAT_FEATURE.md` (AI chat +
 Langfuse), `OBSERVABILITY.md` (ClickStack/OTel).
 
-This app is derived from an upstream NYC-taxi demo; the full original stack (local
-ClickHouse, Kafka/Debezium CDC, dataset loaders) lives upstream and is not part of
-the workshop tree.
+This app is derived from an upstream NYC-taxi demo. Its server-side dependencies were
+replaced with managed cloud services for this workshop.

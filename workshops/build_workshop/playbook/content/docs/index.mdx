@@ -15,9 +15,10 @@ The same workshop supports **macOS** and **Windows**. Choose your computer in th
 header once; the playbook keeps the correct setup visible everywhere. Windows runs the
 shared workshop toolchain inside Ubuntu on WSL 2.
 
-You leave with a running prototype and this repo to show your team. Your ClickHouse Cloud
-trial keeps running for 30 days after the session, everything you built keeps running on
-it, and the repository is yours to keep. By the end you can demo five things live:
+You leave with a running prototype and this repo to show your team. Managed ClickHouse,
+Postgres, ClickPipes, Agents, and ClickStack artifacts persist for the trial; Langfuse
+traces persist in Langfuse Cloud. Restart the local app and telemetry forwarder with
+Docker when you return. By the end you can demo five things live:
 
 - a real-time operational dashboard on ClickHouse Cloud,
 - a change-data-capture pipeline streaming from managed Postgres,
@@ -75,29 +76,28 @@ ride-hailing business:
   (live operational metrics) and a Historical dashboard (large-range aggregations and
   drilldowns). It also hosts the in-app AI chat panel you wire up in module 08.
 - **Back end** — a FastAPI service exposing safe, parameterized analytics endpoints.
-- **Source database** — Postgres (with PostGIS) as the operational source of truth,
+- **Source database** — ClickHouse-managed Postgres as the operational source of truth,
   the origin for change data capture into ClickHouse.
 - **Analytics warehouse** — ClickHouse Cloud, which you point the back end at in
   module 01 and which receives CDC, observability data, and BI queries.
 
-You do not build the app from scratch. You start from a working local stack and, module
-by module, move its data plane and its intelligence onto ClickHouse Cloud.
+You do not build the app from scratch. The React/FastAPI app runs locally, while every
+stateful data or product service is cloud-hosted from the start.
 
 ### The platform you build on
 
 ClickHouse Cloud is a single platform that spans the whole stack — from ingesting data at
 the bottom, to storing and analyzing it in ClickHouse, to observing it and layering AI on
 top. This workshop is a guided tour through exactly these pieces: you ingest with
-ClickPipes, analyze in ClickHouse, observe with ClickStack/HyperDX, and add AI with
-Langfuse and your coding agent.
+ClickPipes, analyze in ClickHouse, and observe with Managed ClickStack/HyperDX. Langfuse,
+OpenAI, and optional LibreChat are separate hosted services.
 
 ![The ClickHouse Cloud platform: layered stack from sources and ClickPipes ingestion, through ClickHouse and Postgres, up to HyperDX, Langfuse and agentic AI](/clickhouse-platform.svg)
 
 ### Architecture (target end state)
 
-Here is how those platform pieces come together for the workshop specifically — the app on
-your laptop, everything stateful in your own ClickHouse Cloud trial, and the third-party
-APIs the chat feature calls.
+Here is how those pieces come together: the app edge on your laptop; ClickHouse-managed
+state in your trial; and separate hosted OpenAI, Langfuse, and optional LibreChat services.
 
 ![Workshop architecture: participant laptop, your ClickHouse Cloud trial (service, ClickPipes, managed Postgres), and third-party services](/workshop-architecture.svg)
 
@@ -111,11 +111,11 @@ via CDC, then read by the dashboards, chat, and agents, and observed through Cli
 The diagrams above are generated from `workshops/build_workshop/docs/diagrams/gen_diagrams.py`
 (edit the script and re-run it to regenerate the SVGs) — see the module flow below.
 
-![Module flow: ten modules from setup to wrap-up with per-module time budgets](/workshop-module-flow.svg)
+![Module flow: ten core modules plus optional hosted LibreChat 06b](/workshop-module-flow.svg)
 
 ## Modules
 
-Ten modules, in order. The app is complete on `build-workshop-v1`, so every module except
+Ten core modules plus optional 06b, in order. The app is complete on `build-workshop-v1`, so every module except
 07 needs no per-module checkout — you configure and connect services rather than change
 app code. The only branch switches are the fault branches in module 07.
 
@@ -124,10 +124,11 @@ app code. The only branch switches are the fault branches in module 07.
 | 00 | 25 min | [Setup](/docs/learner/00-setup) | [notes](/docs/instructor/00-setup) | `build-workshop-v1` | Accounts, tools, agent skills, and the app repo, all wired up and verified |
 | 01 | 15 min | [ClickHouse Cloud](/docs/learner/01-clickhouse-cloud) | [notes](/docs/instructor/01-clickhouse-cloud) | `build-workshop-v1` | Create the schema, seed historical data from object storage, and feel the query speed |
 | 02 | 5 min | [Base app](/docs/learner/02-base-app) | [notes](/docs/instructor/02-base-app) | `build-workshop-v1` | Tour the running app now that it has data: Ops and Historical dashboards, the chat panel, the data flow |
-| 03 | 20 min | [Real-time CDC](/docs/learner/03-realtime-cdc) | [notes](/docs/instructor/03-realtime-cdc) | `build-workshop-v1` | Stream live rows from managed Postgres into ClickHouse with a Postgres CDC ClickPipe |
+| 03 | 20 min | [Managed Postgres CDC](/docs/learner/03-realtime-cdc) | [notes](/docs/instructor/03-realtime-cdc) | `build-workshop-v1` | Stream live rows from ClickHouse-managed Postgres into ClickHouse with a Postgres CDC ClickPipe |
 | 04 | 10 min | [ClickHouse Agents](/docs/learner/04-clickhouse-agents) | [notes](/docs/instructor/04-clickhouse-agents) | `build-workshop-v1` | Conversational BI: create an agent over your taxi data and explore it in natural language |
 | 05 | 15 min | [ClickStack](/docs/learner/05-clickstack) | [notes](/docs/instructor/05-clickstack) | `build-workshop-v1` | Enable ClickStack and send app traces and logs to HyperDX |
 | 06 | 15 min | [AI SRE](/docs/learner/06-ai-sre) | [notes](/docs/instructor/06-ai-sre) | `build-workshop-v1` | Use the ClickStack MCP connection to build an SRE dashboard and alert |
+| 06b | Optional, 15 min | [Hosted LibreChat AI SRE](/docs/learner/06b-ai-sre-librechat) | [notes](/docs/instructor/06b-ai-sre-librechat) | `build-workshop-v1` | Use a hosted chat agent with remote ClickStack and GitHub MCP connections |
 | 07 | 20 min | [Test, fail, and fix](/docs/learner/07-break-and-fix) | [notes](/docs/instructor/07-break-and-fix) | `fault/*` | Continue from AI SRE or optional 06b, inject a fault, diagnose it, fix it, and prove recovery |
 | 08 | 15 min | [Chat and Langfuse](/docs/learner/08-chat-langfuse) | [notes](/docs/instructor/08-chat-langfuse) | `build-workshop-v1` | Use the in-app AI chat and follow its traces, generations, and costs in Langfuse |
 | 09 | 10 min | [Wrap-up](/docs/learner/09-wrap-up) | [notes](/docs/instructor/09-wrap-up) | `build-workshop-v1` | Review what you built, take it home, and extend it to your own data |
@@ -145,9 +146,9 @@ application code, so there is nothing to build up branch by branch:
 
 - Clone the app once in module 00, switch to `build-workshop-v1`, and stay there except
   while running the fault scenarios in module 07.
-- Late joiners are never stranded: everything is service-side, so you only need your
-  `.env.workshop` filled in plus the module's console steps. There is no per-module
-  checkout to catch up on.
+- Late joiners are never stranded: managed resources are service-side, and the complete
+  local app restarts from the workshop branch plus `.env.workshop`. There is no
+  per-module checkout to catch up on.
 - The only branch switches are in module 07 (Break and fix), which uses fault branches
   (`fault/01-map-not-loading`, `fault/02-zone-stats-500`, `fault/03-slow-dashboard`). You
   check one out, diagnose the failure, then preserve the fix and return to

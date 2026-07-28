@@ -1,10 +1,10 @@
 ---
-title: 03 Real-time CDC
+title: 03 Managed Postgres CDC
 description: Instructor notes for module 03 — timing, talk track, common failures, and reset steps.
 ---
 
 Facilitator companion to the learner lesson
-[03 Real-time CDC](/docs/learner/03-realtime-cdc).
+[03 Managed Postgres CDC](/docs/learner/03-realtime-cdc).
 
 ## Timing
 
@@ -49,10 +49,10 @@ begin streaming; account for it.
 - **Managed Postgres unavailable in the org** (beta availability varies) — this is the one
   case that falls back to the shared instructor pool; see below.
 
-## Fallback: shared instructor Postgres
+## Fallback: instructor-managed cloud Postgres
 
-If a participant's org cannot create a managed Postgres, hand them a shared-Postgres slip.
-The shared pool (and the slot/sender caveats that come with it at 30+ scale) is
+If a participant's org cannot create managed Postgres, hand them a managed-cloud connection slip.
+The cloud pool (and the slot/sender caveats that come with it at 30+ scale) is
 provisioned and documented in `infra/README.md`. On the shared path the table and
 publication are pre-created, so the generator log shows `publication ... already exists`
 rather than creating one — that is expected, not an error.
@@ -61,7 +61,7 @@ rather than creating one — that is expected, not an error.
 
 - Delete and recreate the ClickPipe with the commands in learner Module 03.
 - Restart the data generator:
-  `docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d pg-trip-writer`
+  `docker compose --profile cdc --env-file .env.workshop -f docker-compose.workshop.yml up -d pg-trip-writer`
   (turn it off with `--scale pg-trip-writer=0`).
 - Reset a lost Postgres password with `clickhousectl cloud postgres reset-password`.
 - After the event, participants delete their ClickPipe (module 09); a participant's

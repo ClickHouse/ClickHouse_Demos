@@ -1,45 +1,67 @@
 ---
-title: 06b AI SRE with LibreChat
-description: Instructor notes for the optional LibreChat agentic-SRE module — setup checklist, talk track, common failures.
+title: 06b AI SRE with hosted LibreChat
+description: Instructor prework and facilitation notes for the optional cloud-hosted LibreChat module.
 ---
 
-Facilitator companion to [06b AI SRE with LibreChat](/docs/learner/06b-ai-sre-librechat).
+Facilitator companion to
+[06b AI SRE with hosted LibreChat](/docs/learner/06b-ai-sre-librechat).
 
 ## Timing
 
-Optional, ~20 minutes, best immediately before module 07 or as a take-home. Skip if the
-room is tight — 06a already covers the MCP-in-editor path.
+Optional, about 15 minutes. Run it immediately before Module 07. Skip it if the room is
+tight; Module 06a already covers the remote ClickStack MCP workflow.
+
+## Required cloud prework
+
+Learners must not deploy LibreChat or MongoDB locally.
+
+1. Deploy one HTTPS LibreChat instance before the event using the official
+   [Railway one-click guide](https://www.librechat.ai/docs/remote/railway), or use an
+   organization-approved hosted instance.
+2. Create learner accounts or configure your identity provider. Never share a default
+   workshop password.
+3. Configure a tool-capable LLM provider and model, store its API key only in the hosted
+   deployment, and apply a workshop spend cap.
+4. Add and share these remote MCP definitions:
+   - `clickstack` → `https://mcp.clickhouse.cloud/clickstack` using per-user
+     `CLICKSTACK_SERVICE_ID` and OAuth.
+   - `github` → `https://api.githubcopilot.com/mcp/` using a per-user fine-grained PAT,
+     read-only headers, and the repository toolset.
+5. Mount or copy `app/librechat/librechat.yaml` if the hosted deployment is managed as
+   code. It contains no shared learner token.
+6. Create the SRE agent from `app/librechat/sre-agent-definition.md` and share it with
+   learners as Viewer, or let learners create it during the exercise.
+7. Test from a non-admin learner account: run one ClickStack MCP query and one GitHub
+   source read with the configured model. Both callbacks must return to the hosted HTTPS
+   domain, not `localhost`.
+
+LibreChat documents remote MCP OAuth, per-user credentials, and agent sharing in its
+[MCP guide](https://www.librechat.ai/docs/features/mcp) and
+[Agents guide](https://www.librechat.ai/docs/features/agents).
 
 ## Talk track
 
-- 06a = agent in your editor; 06b = chat-native agent that reads **telemetry + source** and
-  goes symptom → line of code.
-- The payoff flows directly into module 07: check out a fault, ask the agent, watch it cross the two
-  planes.
-
-## Per-participant setup checklist
-
-- Docker headroom for a second small stack (LibreChat API + MongoDB).
-- The add-on reads the SAME `app/.env.workshop` (no separate env file). They add the
-  "Module 06b" vars from `.env.workshop.example`; `OPENAI_API_KEY` is already present and the
-  LibreChat defaults are pre-filled, so only two values are theirs to supply:
-- `CLICKSTACK_SERVICE_ID` = their ClickHouse Cloud service UUID.
-- `GITHUB_PAT` = a fine-grained, read-only PAT on `ClickHouse/ClickHouse_Demos`.
-- One-time agent import in the Agent Builder (paste prompt, attach + authorize both MCPs).
+- Module 06a is an agent in the editor; 06b is the same evidence chain in a hosted chat UI.
+- LibreChat is a client surface. ClickStack/HyperDX and the telemetry remain managed in
+  ClickHouse Cloud; GitHub remains the source-of-truth service.
+- Each learner owns their ClickHouse OAuth session and GitHub PAT.
 
 ## Common failures
 
-- **Agent queries the wrong data / a "playground" service** → `CLICKSTACK_SERVICE_ID` unset
-  or wrong; the ClickStack MCP defaults to the first service in the account.
-- **GitHub tool errors** → PAT missing/expired or lacks read access to the repo; it must be
-  a fine-grained token with Contents:read on `ClickHouse/ClickHouse_Demos`.
-- **Weak answers / no SQL** → a `-mini`/`-nano` model was picked; switch to `gpt-5.4`.
-- **Port 3090 in use** → set `LIBRECHAT_PORT` in `app/.env.workshop`.
-- **Frontend fault not in telemetry** → the app wasn't opened in a browser after the
-  rebuild, so the browser SDK never recorded it; load the page first.
+- **Hosted URL is unavailable**: skip 06b and continue with Module 06a. Do not improvise a
+  local Docker deployment during the workshop.
+- **OAuth returns to the wrong host**: correct LibreChat's public `DOMAIN_SERVER` and
+  `DOMAIN_CLIENT` to the HTTPS deployment URL, then reconnect.
+- **Wrong ClickStack service**: replace the learner's `CLICKSTACK_SERVICE_ID` with the
+  UUID from their ClickStack connection, then reconnect.
+- **GitHub tool errors**: replace the learner's PAT with a fine-grained token restricted
+  to `ClickHouse/ClickHouse_Demos`, **Contents: read**.
+- **No browser fault telemetry**: open the local app after injecting the fault so the
+  browser SDK records it.
 
 ## Reset steps
 
-- `docker compose -f docker-compose.librechat.yml down` stops the add-on (add `-v`-style
-  cleanup by removing `app/librechat/data-node/` to wipe the seeded user/agent).
-- Main app reset is the module-07 shared stash-and-switch reset followed by a rebuild.
+- Revoke the learner's MCP connections or PAT in hosted LibreChat.
+- Remove temporary learner accounts after the event according to your access policy.
+- Reset the local workshop app with Module 07's stash-and-switch steps.
+- Keep the hosted instance patched or tear down the Railway project after the workshop.
