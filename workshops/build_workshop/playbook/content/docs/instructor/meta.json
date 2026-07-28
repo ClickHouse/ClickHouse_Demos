@@ -12,7 +12,6 @@
     "04-clickhouse-agents",
     "05-clickstack",
     "06-ai-sre",
-    "06b-ai-sre-librechat",
     "07-break-and-fix",
     "08-chat-langfuse",
     "09-wrap-up"

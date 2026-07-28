@@ -15,6 +15,8 @@ collector as early as this module allows and keep it running.
 - Managed ClickStack stores telemetry in ClickHouse Cloud; HyperDX is the hosted UI.
   The local collector only forwards data. Show both an end-to-end request trace and a
   fresh `DEBUG ... ClickHouse query ok` record in the Log source.
+- Have learners start the collector in Step 1 before they launch Managed ClickStack in
+  Step 2. This gives telemetry time to arrive and makes the first hosted-UI view useful.
 - Show one end-to-end request trace on the projector.
 
 ## Common failures

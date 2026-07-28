@@ -106,7 +106,6 @@ def module_flow():
         ("04 ClickHouse Agents", "10 min", "conversational BI", "over your taxi data"),
         ("05 ClickStack", "15 min", "OTel overlay: traces", "+ logs in HyperDX"),
         ("06 AI SRE", "15 min", "agent + ClickStack MCP", "builds dashboard + alert"),
-        ("06b Hosted LibreChat", "optional · 15 min", "remote ClickStack + GitHub MCP", "chat-native SRE workflow"),
         ("07 Test, fail, and fix", "20 min", "inject a fault, diagnose", "with the AI SRE, fix it"),
         ("08 Chat + Langfuse", "15 min", "in-app AI chat,", "every turn traced"),
         ("09 Wrap-up", "10 min", "running prototype,", "take it home"),
@@ -122,7 +121,7 @@ def module_flow():
     s += (f'<text x="{gx}" y="{gy+8}" fill="{INK}" font-size="20" font-weight="700">'
           f'ClickHouse BUILD Workshop · Module flow</text>\n')
     s += (f'<text x="{gx}" y="{gy+30}" fill="{SUBINK}" font-size="13">'
-          f'~2h30 core + optional 06b · only module 07 switches to a fault branch</text>\n')
+          f'~2h30 hands-on · only module 07 switches to a fault branch</text>\n')
 
     top = gy + 52
     pos = {}
@@ -203,7 +202,6 @@ def architecture():
     s += box(1315, 195, 330, 74, "Langfuse Cloud", ["chat traces, sessions, cost"])
     s += box(1315, 300, 330, 74, "OpenAI API", ["chat completions (gpt-5.4-mini)"])
     s += box(1315, 410, 330, 88, "NYC TLC dataset", ["public parquet; read once by the", "module 01 seed. Data source only."])
-    s += box(1315, 530, 330, 74, "Hosted LibreChat", ["optional SRE chat · remote MCP"])
 
     # --- edges (laptop internal) ---
     s += edge(287, 252, 287, 300, "/api proxy", label_dx=42)

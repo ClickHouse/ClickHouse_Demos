@@ -29,6 +29,22 @@ fail_if_found \
   '(comment|uncomment).*(sql|variant)|(run|execute|open).*(db/cloud|\.sql file)' \
   "${CONTENT}/learner"
 
+if grep -RInE --exclude='06b-ai-sre-librechat.mdx' \
+  '06b|LibreChat' "${CONTENT}"; then
+  echo "ERROR: archived Module 06b must not appear in the active workshop journey" >&2
+  exit 1
+fi
+
+fail_if_found \
+  "active workshop summaries and diagrams must not include archived Module 06b" \
+  '06b|LibreChat' \
+  "${ROOT}/README.md" \
+  "${ROOT}/docs/diagrams/gen_diagrams.py" \
+  "${ROOT}/docs/diagrams/workshop-module-flow.svg" \
+  "${ROOT}/docs/diagrams/workshop-architecture.svg" \
+  "${ROOT}/playbook/public/workshop-module-flow.svg" \
+  "${ROOT}/playbook/public/workshop-architecture.svg"
+
 fail_if_found \
   "workshop material must not direct users to local managed-service substitutes" \
   'PGHOST=postgres|localhost:3090|docker-compose\.librechat|local `mcp-clickhouse`|start (a |the )?local (Postgres|ClickHouse|LibreChat|HyperDX)|using (a |the )?local (Postgres|ClickHouse)' \
@@ -68,6 +84,16 @@ require_fixed \
   "learner setup must switch to the production workshop branch" \
   'git switch build-workshop-v1' \
   "${CONTENT}/learner/00-setup.mdx"
+
+require_fixed \
+  "the former learner Module 06b page must remain clearly archived" \
+  'Module 06b is no longer part of the workshop.' \
+  "${CONTENT}/learner/06b-ai-sre-librechat.mdx"
+
+require_fixed \
+  "the former instructor Module 06b page must remain clearly archived" \
+  'Module 06b is no longer part of the run of show.' \
+  "${CONTENT}/instructor/06b-ai-sre-librechat.mdx"
 
 require_count() {
   local description=$1
