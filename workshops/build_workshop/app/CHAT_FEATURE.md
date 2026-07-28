@@ -108,8 +108,8 @@ drop-in wrapper plus `@observe` is sufficient).
 
 ## Environment variables (for the compose owner)
 
-Another teammate owns `docker-compose.yml`. Add the following to the **backend** service's
-`environment:` block. All are optional at the process level — the app boots without them
+`docker-compose.workshop.yml` passes the following to the **backend** service. All are
+optional at the process level — the app boots without them
 (chat just returns 503 until `OPENAI_API_KEY` is set). Values use compose interpolation so
 participants supply their own keys via a root `.env` file or the shell.
 
@@ -127,7 +127,7 @@ participants supply their own keys via a root `.env` file or the shell.
 `LANGFUSE_BASE_URL` is the Langfuse v4 env name. `LANGFUSE_HOST` is also accepted as a
 fallback alias, so an existing `LANGFUSE_HOST` value still works.
 
-Example root `.env` for a participant:
+Example `.env.workshop` values for a participant:
 
 ```bash
 OPENAI_API_KEY=sk-...
@@ -172,7 +172,8 @@ curl -s -X POST localhost:8000/api/chat -H 'content-type: application/json' \
 ```bash
 export OPENAI_API_KEY=sk-...
 # optionally: export LANGFUSE_PUBLIC_KEY=... LANGFUSE_SECRET_KEY=... LANGFUSE_BASE_URL=...
-# start ClickHouse + backend (docker compose up -d clickhouse backend), then:
+# start the backend against CLICKHOUSE_HOST in .env.workshop, then:
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d backend
 curl -s -X POST localhost:8000/api/chat -H 'content-type: application/json' \
   -d '{"message":"top 10 pickup zones by trips in July 2022","conversation_id":"demo-1"}' | jq
 ```

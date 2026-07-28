@@ -7,18 +7,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    clickhouse_host: str = "localhost"
-    clickhouse_port: int = 8123
+    clickhouse_host: str = ""
+    clickhouse_port: int = 8443
     clickhouse_user: str = "default"
     clickhouse_password: str = ""
     clickhouse_database: str = "nyc_tlc_data"
-    # TLS toggle for clickhouse-connect. Leave unset to infer from the port
-    # (8443/443 => secure), so local dev on plain http 8123 and ClickHouse Cloud
-    # on https 8443 both work without extra config. Set CLICKHOUSE_SECURE
-    # explicitly (true/false) to override the inference.
-    clickhouse_secure: bool | None = None
+    # The workshop connects only to ClickHouse Cloud, so TLS is the default.
+    clickhouse_secure: bool = True
     # ClickHouse Cloud services can idle-scale to zero and take a few seconds to
-    # wake, so keep the connect timeout generous. Local connects return instantly.
+    # wake, so keep the connect timeout generous.
     clickhouse_connect_timeout: int = 10
 
     api_cors_origins: str = "http://localhost:5173,http://localhost:8080"
@@ -53,9 +50,7 @@ class Settings(BaseSettings):
 
     @property
     def clickhouse_secure_effective(self) -> bool:
-        if self.clickhouse_secure is not None:
-            return self.clickhouse_secure
-        return self.clickhouse_port in (8443, 443)
+        return self.clickhouse_secure
 
 
 settings = Settings()

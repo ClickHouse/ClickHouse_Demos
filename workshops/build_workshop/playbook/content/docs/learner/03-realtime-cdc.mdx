@@ -1,6 +1,6 @@
 ---
-title: 03 Real-time CDC
-description: Create Postgres and a ClickPipe with clickhousectl, then feed live rows into the taxi table.
+title: 03 Managed Postgres CDC
+description: Create ClickHouse-managed Postgres and a ClickPipe with clickhousectl, then feed live rows into the taxi table.
 ---
 
 ## Outcome
@@ -15,7 +15,7 @@ Postgres managed by ClickHouse → ClickPipe → default.realtime_trips
 Prerequisites: Modules 00–02 are complete, and your terminal is in
 `ClickHouse_Demos/workshops/build_workshop/app`.
 
-## Step 1 — Create Postgres
+## Step 1 — Create managed Postgres in ClickHouse Cloud
 
 Use the same region as your ClickHouse service:
 
@@ -29,12 +29,9 @@ clickhousectl cloud postgres create \
   --ha-type none
 ```
 
-Save the returned **Postgres ID**, **hostname**, and one-time `postgres` password.
-
-```bash
-clickhousectl cloud postgres list
-clickhousectl cloud postgres get <postgres-id>
-```
+Save the returned **Postgres ID**, **hostname**, and one-time `postgres` password. The
+beta `list` and `get` commands may return empty or `FORBIDDEN`; the required readiness
+check is `./preflight.sh --require-postgres` in Step 2.
 
 If the password is lost, create a new one:
 
@@ -44,9 +41,8 @@ clickhousectl cloud postgres reset-password <postgres-id>
 
 ## Step 2 — Start the trip writer
 
-The app starts with the valid local literal `PGHOST=postgres`. In `.env.workshop`,
-replace that value and the local credentials with the values returned by
-`clickhousectl`:
+There is no local Postgres fallback. In `.env.workshop`, fill the blank `PGHOST` and
+`PGPASSWORD` fields with the values returned by `clickhousectl`; keep TLS required:
 
 ```bash
 PGHOST=replace-with-hostname-from-clickhousectl
@@ -58,12 +54,13 @@ PGSSLMODE=require
 PG_PUBLICATION=pub_taxi
 ```
 
-Start the writer and follow its log:
+Validate the managed endpoint, then start the local writer against it and follow its log:
 
 ```bash
 cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
-docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d pg-trip-writer
-docker compose --env-file .env.workshop -f docker-compose.workshop.yml logs -f pg-trip-writer
+./preflight.sh --require-postgres
+docker compose --profile cdc --env-file .env.workshop -f docker-compose.workshop.yml up -d pg-trip-writer
+docker compose --profile cdc --env-file .env.workshop -f docker-compose.workshop.yml logs -f pg-trip-writer
 ```
 
 Provisioning can take a few minutes. Continue when the log repeats:

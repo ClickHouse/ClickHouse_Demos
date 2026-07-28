@@ -29,6 +29,26 @@ fail_if_found \
   '(comment|uncomment).*(sql|variant)|(run|execute|open).*(db/cloud|\.sql file)' \
   "${CONTENT}/learner"
 
+fail_if_found \
+  "workshop material must not direct users to local managed-service substitutes" \
+  'PGHOST=postgres|localhost:3090|docker-compose\.librechat|local `mcp-clickhouse`|start (a |the )?local (Postgres|ClickHouse|LibreChat|HyperDX)|using (a |the )?local (Postgres|ClickHouse)' \
+  "${ROOT}/README.md" "${ROOT}/app/README.md" "${CONTENT}"
+
+fail_if_found \
+  "the workshop environment must not expose local database or LibreChat server settings" \
+  '^(POSTGRES_|POSTGRES_HOST_PORT|LIBRECHAT_PORT|LIBRECHAT_DEFAULT_|JWT_SECRET|JWT_REFRESH_SECRET|CREDS_KEY|CREDS_IV)=' \
+  "${ROOT}/app/.env.workshop.example"
+
+fail_if_found \
+  "the workshop Compose file must not define local database or hosted-product services" \
+  '^[[:space:]]+(postgres|clickhouse|mongodb|librechat|hyperdx):[[:space:]]*$|image:[[:space:]]*(postgres|clickhouse/clickhouse-server|mongo|ghcr\.io/danny-avila/librechat|hyperdx)/?' \
+  "${ROOT}"/app/docker-compose*.yml
+
+if [ -e "${ROOT}/app/librechat/docker-compose.librechat.yml" ]; then
+  echo "ERROR: local LibreChat Compose deployment must not exist in the cloud-only workshop" >&2
+  exit 1
+fi
+
 require_fixed() {
   local description=$1
   local literal=$2
@@ -62,17 +82,51 @@ require_count() {
   fi
 }
 
-require_fixed \
-  "the copied app environment must use the working local Postgres service literal" \
-  'PGHOST=postgres' \
-  "${ROOT}/app/.env.workshop.example"
-
-for literal in 'PGDATABASE=taxi' 'PGUSER=taxi' 'PGPASSWORD=taxi' 'PGSSLMODE=prefer'; do
+for literal in 'PGHOST=' 'PGDATABASE=postgres' 'PGUSER=postgres' 'PGPASSWORD=' 'PGSSLMODE=require'; do
   require_fixed \
-    "the copied app environment must use the complete local Postgres connection tuple" \
+    "the copied app environment must use the managed Postgres connection template" \
     "${literal}" \
     "${ROOT}/app/.env.workshop.example"
 done
+
+require_fixed \
+  "the CDC writer must stay off until managed Postgres is configured" \
+  'profiles: ["cdc"]' \
+  "${ROOT}/app/docker-compose.workshop.yml"
+
+require_fixed \
+  "preflight must reject local Postgres hosts" \
+  'points to a local database, which this workshop does not use' \
+  "${ROOT}/app/preflight.sh"
+
+require_fixed \
+  "preflight must reject local ClickHouse hosts" \
+  'points to a local server, which this workshop does not use' \
+  "${ROOT}/app/preflight.sh"
+
+require_fixed \
+  "backend ClickHouse defaults must use the Cloud TLS port" \
+  'clickhouse_port: int = 8443' \
+  "${ROOT}/app/backend/app/settings.py"
+
+require_fixed \
+  "the trip writer must require a managed Postgres hostname" \
+  'POSTGRES = load_postgres_config()' \
+  "${ROOT}/app/loadgen/pg_trip_writer.py"
+
+if command -v docker >/dev/null 2>&1; then
+  compose_config=$(
+    cd "${ROOT}/app" &&
+      docker compose --profile cdc --profile container-logs \
+        --env-file .env.workshop.example \
+        -f docker-compose.workshop.yml -f docker-compose.otel.yml config
+  )
+  if printf '%s\n' "${compose_config}" | grep -Eiq \
+    'image:[[:space:]]*(postgres|clickhouse/clickhouse-server|mongo|ghcr\.io/danny-avila/librechat|hyperdx)|^[[:space:]]{2}(postgres|clickhouse|mongodb|librechat|hyperdx):'; then
+    echo "ERROR: rendered workshop Compose config contains a local managed-service substitute" >&2
+    exit 1
+  fi
+fi
 
 require_fixed \
   "the app environment must expose successful query logs to ClickStack" \

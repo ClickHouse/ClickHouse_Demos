@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1756" height="402" viewBox="0 0 1756 402" font-family="Inter, -apple-system, Segoe UI, Roboto, sans-serif">
-<rect x="0" y="0" width="1756" height="402" fill="#17171A"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1756" height="568" viewBox="0 0 1756 568" font-family="Inter, -apple-system, Segoe UI, Roboto, sans-serif">
+<rect x="0" y="0" width="1756" height="568" fill="#17171A"/>
 <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L7,3 L0,6 Z" fill="#7E858E"/></marker></defs>
 <text x="40" y="48" fill="#EDEDED" font-size="20" font-weight="700">ClickHouse BUILD Workshop · Module flow</text>
-<text x="40" y="70" fill="#B7BCC2" font-size="13">~2h30 hands-on · only module 07 switches from main to a fault branch</text>
+<text x="40" y="70" fill="#B7BCC2" font-size="13">~2h30 core + optional 06b · only module 07 switches to a fault branch</text>
 <rect x="40" y="92" width="300" height="96" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
 <rect x="40" y="92" width="5" height="96" rx="2.5" fill="#FAFF69"/>
 <text x="58" y="118" fill="#EDEDED" font-size="14.5" font-weight="700">00 Setup</text>
@@ -23,9 +23,9 @@
 <text x="746" y="162" fill="#B7BCC2" font-size="12.5">dashboards, chat, data flow</text>
 <rect x="1072" y="92" width="300" height="96" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
 <rect x="1072" y="92" width="5" height="96" rx="2.5" fill="#FAFF69"/>
-<text x="1090" y="118" fill="#EDEDED" font-size="14.5" font-weight="700">03 Realtime CDC</text>
+<text x="1090" y="118" fill="#EDEDED" font-size="14.5" font-weight="700">03 Managed PG CDC</text>
 <text x="1358" y="118" fill="#FAFF69" font-size="12.5" font-weight="600" text-anchor="end">20 min</text>
-<text x="1090" y="144" fill="#B7BCC2" font-size="12.5">own Postgres + ClickPipe</text>
+<text x="1090" y="144" fill="#B7BCC2" font-size="12.5">managed Postgres + ClickPipe</text>
 <text x="1090" y="162" fill="#B7BCC2" font-size="12.5">Ops dashboard goes live</text>
 <rect x="1416" y="92" width="300" height="96" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
 <rect x="1416" y="92" width="5" height="96" rx="2.5" fill="#FAFF69"/>
@@ -47,22 +47,28 @@
 <text x="1090" y="328" fill="#B7BCC2" font-size="12.5">builds dashboard + alert</text>
 <rect x="728" y="258" width="300" height="96" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
 <rect x="728" y="258" width="5" height="96" rx="2.5" fill="#FAFF69"/>
-<text x="746" y="284" fill="#EDEDED" font-size="14.5" font-weight="700">07 Test, fail, and fix</text>
-<text x="1014" y="284" fill="#FAFF69" font-size="12.5" font-weight="600" text-anchor="end">20 min</text>
-<text x="746" y="310" fill="#B7BCC2" font-size="12.5">inject a fault, diagnose</text>
-<text x="746" y="328" fill="#B7BCC2" font-size="12.5">with the AI SRE, fix it</text>
+<text x="746" y="284" fill="#EDEDED" font-size="14.5" font-weight="700">06b Hosted LibreChat</text>
+<text x="1014" y="284" fill="#FAFF69" font-size="12.5" font-weight="600" text-anchor="end">optional · 15 min</text>
+<text x="746" y="310" fill="#B7BCC2" font-size="12.5">remote ClickStack + GitHub MCP</text>
+<text x="746" y="328" fill="#B7BCC2" font-size="12.5">chat-native SRE workflow</text>
 <rect x="384" y="258" width="300" height="96" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
 <rect x="384" y="258" width="5" height="96" rx="2.5" fill="#FAFF69"/>
-<text x="402" y="284" fill="#EDEDED" font-size="14.5" font-weight="700">08 Chat + Langfuse</text>
-<text x="670" y="284" fill="#FAFF69" font-size="12.5" font-weight="600" text-anchor="end">15 min</text>
-<text x="402" y="310" fill="#B7BCC2" font-size="12.5">in-app AI chat,</text>
-<text x="402" y="328" fill="#B7BCC2" font-size="12.5">every turn traced</text>
+<text x="402" y="284" fill="#EDEDED" font-size="14.5" font-weight="700">07 Test, fail, and fix</text>
+<text x="670" y="284" fill="#FAFF69" font-size="12.5" font-weight="600" text-anchor="end">20 min</text>
+<text x="402" y="310" fill="#B7BCC2" font-size="12.5">inject a fault, diagnose</text>
+<text x="402" y="328" fill="#B7BCC2" font-size="12.5">with the AI SRE, fix it</text>
 <rect x="40" y="258" width="300" height="96" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
 <rect x="40" y="258" width="5" height="96" rx="2.5" fill="#FAFF69"/>
-<text x="58" y="284" fill="#EDEDED" font-size="14.5" font-weight="700">09 Wrap-up</text>
-<text x="326" y="284" fill="#FAFF69" font-size="12.5" font-weight="600" text-anchor="end">10 min</text>
-<text x="58" y="310" fill="#B7BCC2" font-size="12.5">running prototype,</text>
-<text x="58" y="328" fill="#B7BCC2" font-size="12.5">take it home</text>
+<text x="58" y="284" fill="#EDEDED" font-size="14.5" font-weight="700">08 Chat + Langfuse</text>
+<text x="326" y="284" fill="#FAFF69" font-size="12.5" font-weight="600" text-anchor="end">15 min</text>
+<text x="58" y="310" fill="#B7BCC2" font-size="12.5">in-app AI chat,</text>
+<text x="58" y="328" fill="#B7BCC2" font-size="12.5">every turn traced</text>
+<rect x="40" y="424" width="300" height="96" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
+<rect x="40" y="424" width="5" height="96" rx="2.5" fill="#FAFF69"/>
+<text x="58" y="450" fill="#EDEDED" font-size="14.5" font-weight="700">09 Wrap-up</text>
+<text x="326" y="450" fill="#FAFF69" font-size="12.5" font-weight="600" text-anchor="end">10 min</text>
+<text x="58" y="476" fill="#B7BCC2" font-size="12.5">running prototype,</text>
+<text x="58" y="494" fill="#B7BCC2" font-size="12.5">take it home</text>
 <path d="M340,140.0 L378,140.0" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
 <path d="M684,140.0 L722,140.0" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
 <path d="M1028,140.0 L1066,140.0" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
@@ -72,5 +78,6 @@
 <path d="M1072,306.0 L1034,306.0" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
 <path d="M728,306.0 L690,306.0" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
 <path d="M384,306.0 L346,306.0" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
+<path d="M190.0,354 L190.0,418" fill="none" stroke="#7E858E" stroke-width="1.6" marker-end="url(#arrow)"/>
 <text x="40" y="228.0" fill="#B7BCC2" font-size="12" font-style="italic">After module 03: historical + live data both flowing into your Cloud service.</text>
 </svg>
