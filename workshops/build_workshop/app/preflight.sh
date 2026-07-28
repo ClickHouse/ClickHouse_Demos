@@ -10,7 +10,8 @@
 # the stack actually tripped over: the Docker CLI + daemon, that the daemon can
 # really start a container (catches a wedged engine), host-port collisions on the
 # EFFECTIVE ports from .env.workshop, the required .env.workshop values, and
-# network reachability of ClickHouse Cloud (and the shared Postgres, if used).
+# network reachability of ClickHouse Cloud and, when requested, the managed
+# Postgres created in Module 03.
 #
 # Every failure prints a one-line fix hint. The script exits non-zero if any check
 # FAILs (warnings do not affect the exit code), so it composes into scripts and CI.
@@ -25,6 +26,16 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
 ENV_FILE="$SCRIPT_DIR/.env.workshop"
 EXAMPLE_FILE="$SCRIPT_DIR/.env.workshop.example"
 PREFLIGHT_CTR="ch-workshop-preflight"
+REQUIRE_POSTGRES=0
+
+case "${1:-}" in
+  "") ;;
+  --require-postgres) REQUIRE_POSTGRES=1 ;;
+  *)
+    printf 'Usage: %s [--require-postgres]\n' "$0" >&2
+    exit 2
+    ;;
+esac
 
 # Capture the calling shell's values for the vars docker compose interpolates,
 # BEFORE anything else runs, so the shell-vs-.env.workshop override check can tell
@@ -361,7 +372,7 @@ HAVE_ENV=0
 CH_HOST=""
 CH_PORT="8443"
 CH_PW=""
-PGHOST_VAL="postgres"
+PGHOST_VAL=""
 
 if [ "$HAVE_ENV" -eq 1 ]; then
   pass ".env.workshop found"
@@ -369,24 +380,37 @@ if [ "$HAVE_ENV" -eq 1 ]; then
   CH_PORT=$(env_get CLICKHOUSE_PORT); [ -n "$CH_PORT" ] || CH_PORT="8443"
   CH_PW=$(env_get CLICKHOUSE_PASSWORD)
 
-  if [ -n "$CH_HOST" ]; then
-    pass "CLICKHOUSE_HOST is set ($CH_HOST)"
-  else
-    fail "CLICKHOUSE_HOST is empty" \
-         "paste your service host (bare hostname, no https:// and no port) from the Cloud Connect modal into .env.workshop"
-  fi
+  case "$CH_HOST" in
+    localhost|127.0.0.1|0.0.0.0|::1|host.docker.internal|clickhouse)
+      fail "CLICKHOUSE_HOST=$CH_HOST points to a local server, which this workshop does not use" \
+           "paste the bare ClickHouse Cloud hostname from the service Connect dialog"
+      ;;
+    "")
+      fail "CLICKHOUSE_HOST is empty" \
+           "paste your service host (bare hostname, no https:// and no port) from the Cloud Connect modal into .env.workshop"
+      ;;
+    *)
+      pass "CLICKHOUSE_HOST is set ($CH_HOST)"
+      ;;
+  esac
   if [ -n "$CH_PW" ]; then
     pass "CLICKHOUSE_PASSWORD is set"
   else
     fail "CLICKHOUSE_PASSWORD is empty" \
          "paste the default-user password from the Cloud Connect modal into .env.workshop"
   fi
+  if [ "$(env_get CLICKHOUSE_SECURE)" = "true" ]; then
+    pass "CLICKHOUSE_SECURE=true (TLS required for ClickHouse Cloud)"
+  else
+    fail "CLICKHOUSE_SECURE must be true" \
+         "set CLICKHOUSE_SECURE=true; local or plaintext ClickHouse endpoints are not supported"
+  fi
 
   if [ -n "$(env_get OPENAI_API_KEY)" ]; then
     pass "OPENAI_API_KEY is set"
   else
-    warn "OPENAI_API_KEY is empty (needed for optional module 06b and module 08)" \
-         "add it before 06b if using LibreChat, or before module 08 for the AI chat"
+    warn "OPENAI_API_KEY is empty (needed for module 08)" \
+         "add it before module 08 for the AI chat"
   fi
 
   LF_PUB=$(env_get LANGFUSE_PUBLIC_KEY)
@@ -398,17 +422,37 @@ if [ "$HAVE_ENV" -eq 1 ]; then
          "add LANGFUSE_PUBLIC_KEY/SECRET_KEY before module 08 if you want traces; chat works untraced without them"
   fi
 
-  PGHOST_VAL=$(env_get PGHOST); [ -n "$PGHOST_VAL" ] || PGHOST_VAL="postgres"
-  if [ "$PGHOST_VAL" = "postgres" ]; then
-    pass "PGHOST=postgres (using the local fallback Postgres container)"
-  else
-    pass "PGHOST=$PGHOST_VAL (using a shared managed Postgres)"
-  fi
+  PGHOST_VAL=$(env_get PGHOST)
+  case "$PGHOST_VAL" in
+    postgres|localhost|127.0.0.1|0.0.0.0|::1|host.docker.internal)
+      fail "PGHOST=$PGHOST_VAL points to a local database, which this workshop does not use" \
+           "replace PGHOST with the hostname returned by 'clickhousectl cloud postgres create' in Module 03"
+      ;;
+    "")
+      if [ "$REQUIRE_POSTGRES" -eq 1 ]; then
+        fail "PGHOST is empty" \
+             "complete Module 03, then add the managed Postgres hostname to .env.workshop"
+      else
+        pass "managed Postgres is not configured yet (expected before Module 03)"
+      fi
+      ;;
+    *)
+      pass "PGHOST=$PGHOST_VAL (using managed Postgres)"
+      if [ -z "$(env_get PGPASSWORD)" ]; then
+        fail "PGPASSWORD is empty for managed Postgres" \
+             "add the one-time password returned by 'clickhousectl cloud postgres create'"
+      fi
+      if [ "$(env_get PGSSLMODE)" != "require" ]; then
+        fail "PGSSLMODE must be require for managed Postgres" \
+             "set PGSSLMODE=require in .env.workshop"
+      fi
+      ;;
+  esac
 else
   fail ".env.workshop not found in $SCRIPT_DIR" \
        "run: cp .env.workshop.example .env.workshop  then fill in CLICKHOUSE_HOST and CLICKHOUSE_PASSWORD"
   if [ -f "$EXAMPLE_FILE" ]; then
-    warn "port checks below use the example defaults (8080/8000/5432/4317/4318)" \
+    warn "port checks below use the example defaults (8080/8000/4317/4318)" \
          "create .env.workshop so preflight checks your real, effective ports"
   fi
 fi
@@ -428,13 +472,11 @@ fi
 section "Host port availability (effective ports)"
 FRONTEND_PORT=$(resolve_port FRONTEND_HOST_PORT 8080)
 BACKEND_PORT=$(resolve_port BACKEND_HOST_PORT 8000)
-POSTGRES_PORT=$(resolve_port POSTGRES_HOST_PORT 5432)
 OTEL_GRPC_PORT=$(resolve_port OTEL_GRPC_HOST_PORT 4317)
 OTEL_HTTP_PORT=$(resolve_port OTEL_HTTP_HOST_PORT 4318)
 
 check_port FRONTEND_HOST_PORT "$FRONTEND_PORT" core ""
 check_port BACKEND_HOST_PORT "$BACKEND_PORT" core ""
-check_port POSTGRES_HOST_PORT "$POSTGRES_PORT" core ""
 check_port OTEL_GRPC_HOST_PORT "$OTEL_GRPC_PORT" optional " (only with the otel overlay)"
 check_port OTEL_HTTP_HOST_PORT "$OTEL_HTTP_PORT" optional " (only with the otel overlay)"
 
@@ -465,18 +507,21 @@ else
        "set CLICKHOUSE_HOST in .env.workshop first"
 fi
 
-if [ "$PGHOST_VAL" != "postgres" ] && [ -n "$PGHOST_VAL" ]; then
+if [ -n "$PGHOST_VAL" ]; then
   PGPORT_VAL=$(env_get PGPORT); [ -n "$PGPORT_VAL" ] || PGPORT_VAL="5432"
   if tcp_reachable "$PGHOST_VAL" "$PGPORT_VAL" 8; then
-    pass "shared Postgres reachable ($PGHOST_VAL:$PGPORT_VAL, TCP)"
+    pass "managed Postgres reachable ($PGHOST_VAL:$PGPORT_VAL, TCP)"
   else
-    # WARN, not FAIL: the app dashboards run without the loadgen; the shared
-    # Postgres only feeds the live CDC path (module 03).
-    warn "shared Postgres not reachable at $PGHOST_VAL:$PGPORT_VAL (only needed for the live CDC path, module 03)" \
-         "check wifi / VPN / firewall and that the shared Postgres endpoint and its IP allowlist are correct"
+    if [ "$REQUIRE_POSTGRES" -eq 1 ]; then
+      fail "managed Postgres not reachable at $PGHOST_VAL:$PGPORT_VAL" \
+           "check wifi / VPN / firewall and the managed Postgres endpoint or IP allowlist"
+    else
+      warn "managed Postgres not reachable at $PGHOST_VAL:$PGPORT_VAL (needed from Module 03 onward)" \
+           "check wifi / VPN / firewall and the managed Postgres endpoint or IP allowlist"
+    fi
   fi
 else
-  pass "using the local fallback Postgres (no external Postgres reachability check needed)"
+  pass "skipping managed Postgres connectivity until Module 03"
 fi
 
 # --- Summary ---------------------------------------------------------------

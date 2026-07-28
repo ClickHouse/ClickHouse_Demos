@@ -35,9 +35,10 @@ You took the NYC-taxi app and:
 
 ## Step 2 — Take it home
 
-Your ClickHouse Cloud trial lasts 30 days, and everything you built keeps running on it:
-the service, the CDC pipe, the dashboards, the traces. The repository is yours to keep;
-save your `.env.workshop` privately so you can come back to it. That is enough to walk
+Your ClickHouse Cloud resources persist for the trial: the ClickHouse service, managed
+Postgres, ClickPipe, ClickHouse Agent, and ClickStack artifacts. Langfuse traces stay in
+your Langfuse Cloud project. The app, trip writer, and telemetry collector are local, so
+restart Docker when you return. Save `.env.workshop` privately. That is enough to walk
 your team through five things live:
 
 - a real-time operational dashboard on ClickHouse Cloud (modules 01-03),
@@ -60,7 +61,7 @@ your team through five things live:
 The shortest path to value is to repoint the pipeline at your own systems:
 
 ```text
-- Point a Postgres CDC ClickPipe at YOUR operational database instead of the shared one.
+- Point a Postgres CDC ClickPipe at YOUR operational database instead of the workshop's managed instance.
 - Adjust the schema and the back end's queries to your tables.
 - Send YOUR app's OpenTelemetry to ClickStack and rebuild the SRE dashboard on it.
 ```
@@ -78,8 +79,8 @@ repeatable on your own stack.
 
 ## You're done — what next
 
-Everything you built keeps running on your 30-day trial. When you are ready to take it
-further, pick any of these:
+Your managed cloud resources persist for the trial; restart the local app when you want
+to use them. When you are ready to take it further, pick any of these:
 
 - **Bring your own data.** Repoint the Postgres CDC ClickPipe at your operational database
   and adjust the schema and queries to your tables (module 03 shows the shape).

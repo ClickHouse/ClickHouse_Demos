@@ -102,10 +102,11 @@ def module_flow():
         ("00 Setup", "25 min", "accounts, keys, tools,", "MCP, app up"),
         ("01 ClickHouse Cloud", "15 min", "schema + seed 3.2M", "TLC rows; dashboards light up"),
         ("02 Base app", "5 min", "tour the seeded app:", "dashboards, chat, data flow"),
-        ("03 Realtime CDC", "20 min", "own Postgres + ClickPipe", "Ops dashboard goes live"),
+        ("03 Managed PG CDC", "20 min", "managed Postgres + ClickPipe", "Ops dashboard goes live"),
         ("04 ClickHouse Agents", "10 min", "conversational BI", "over your taxi data"),
         ("05 ClickStack", "15 min", "OTel overlay: traces", "+ logs in HyperDX"),
         ("06 AI SRE", "15 min", "agent + ClickStack MCP", "builds dashboard + alert"),
+        ("06b Hosted LibreChat", "optional · 15 min", "remote ClickStack + GitHub MCP", "chat-native SRE workflow"),
         ("07 Test, fail, and fix", "20 min", "inject a fault, diagnose", "with the AI SRE, fix it"),
         ("08 Chat + Langfuse", "15 min", "in-app AI chat,", "every turn traced"),
         ("09 Wrap-up", "10 min", "running prototype,", "take it home"),
@@ -121,7 +122,7 @@ def module_flow():
     s += (f'<text x="{gx}" y="{gy+8}" fill="{INK}" font-size="20" font-weight="700">'
           f'ClickHouse BUILD Workshop · Module flow</text>\n')
     s += (f'<text x="{gx}" y="{gy+30}" fill="{SUBINK}" font-size="13">'
-          f'~2h30 hands-on · only module 07 switches from main to a fault branch</text>\n')
+          f'~2h30 core + optional 06b · only module 07 switches to a fault branch</text>\n')
 
     top = gy + 52
     pos = {}
@@ -174,13 +175,13 @@ def architecture():
     s += (f'<text x="30" y="44" fill="{INK}" font-size="22" font-weight="700">'
           f'ClickHouse BUILD Workshop · Architecture (target end state)</text>\n')
     s += (f'<text x="30" y="70" fill="{SUBINK}" font-size="13.5">'
-          f'Everything runs on the participant laptop and their own ClickHouse Cloud trial. '
+          f'App-side components run locally; stateful data services run in ClickHouse Cloud. '
           f'Dashed lines are control/OAuth; solid lines are data.</text>\n')
 
     # zones
     s += zone(30, 135, 515, 700, "laptop")
     s += zone(590, 135, 650, 760, "cloud")
-    s += zone(1290, 135, 380, 430, "third")
+    s += zone(1290, 135, 380, 560, "third")
 
     # --- laptop boxes ---
     s += box(60, 190, 455, 62, "frontend", ["React SPA · nginx :8080", "Ops + Historical dashboards, chat"])
@@ -192,16 +193,17 @@ def architecture():
     # --- cloud boxes ---
     s += box(620, 185, 590, 96, "ClickHouse service  :8443 TLS", ["nyc_tlc_data (taxi_trips, taxi_zones,", "views, CDC MV)   +   otel db (logs, traces)"], accent=True)
     s += box(620, 330, 280, 88, "ClickPipes", ["Postgres CDC pipe", "snapshot + stream (~60s)"])
-    s += box(930, 330, 280, 88, "ClickStack / HyperDX", ["traces + logs UI", "module 05"])
+    s += box(930, 330, 280, 88, "Managed ClickStack / HyperDX", ["traces + logs UI", "module 05"])
     s += box(620, 500, 590, 82, "Postgres managed by ClickHouse  :5432 TLS", ["you create it with clickhousectl (module 03) · public.realtime_trips + pub_taxi"])
     s += box(620, 628, 280, 74, "Remote MCP", ["/mcp + /clickstack (OAuth)"])
     s += box(930, 628, 280, 74, "ClickHouse Agents", ["ai.clickhouse.cloud (module 04)"])
-    s += box(620, 748, 590, 60, "Instructor fallback only", ["if a trial org cannot create a managed Postgres, use the shared pool"], dashed=True, fill="#1C1B14")
+    s += box(620, 748, 590, 60, "Instructor cloud fallback only", ["managed Postgres pool when a trial org cannot create one"], dashed=True, fill="#1C1B14")
 
     # --- third-party boxes ---
     s += box(1315, 195, 330, 74, "Langfuse Cloud", ["chat traces, sessions, cost"])
     s += box(1315, 300, 330, 74, "OpenAI API", ["chat completions (gpt-5.4-mini)"])
     s += box(1315, 410, 330, 88, "NYC TLC dataset", ["public parquet; read once by the", "module 01 seed. Data source only."])
+    s += box(1315, 530, 330, 74, "Hosted LibreChat", ["optional SRE chat · remote MCP"])
 
     # --- edges (laptop internal) ---
     s += edge(287, 252, 287, 300, "/api proxy", label_dx=42)
@@ -287,9 +289,9 @@ def platform_stack():
     y = 196; h = 104
     s += layer(y, h, "UIs")
     nx, nw, ng = LX+78, 196, 16
-    s += pnode(nx,            y+22, nw, 60, "LibreChat", "agentic AI chat")
-    s += pnode(nx+(nw+ng),   y+22, nw, 60, "HyperDX", "system observability")
-    s += pnode(nx+2*(nw+ng), y+22, nw, 60, "Langfuse", "LLM observability")
+    s += pnode(nx,            y+22, nw, 60, "SQL Console", "query + data explorer")
+    s += pnode(nx+(nw+ng),   y+22, nw, 60, "HyperDX", "managed observability")
+    s += pnode(nx+2*(nw+ng), y+22, nw, 60, "Agents", "conversational BI")
     # LLMs sidebar (dashed)
     lx = nx+3*(nw+ng)
     s += (f'<rect x="{lx}" y="{y+22}" width="{LX+LW-16-lx}" height="60" rx="9" fill="#191920" '
@@ -400,7 +402,7 @@ def data_flow():
     y = 538; s += lane(y, 176, "Observe", "modules 05, 06, 07")
     by = y + 22
     s += fbox(col(0), by, bw, "backend spans", "clickhouse.query + logs")
-    s += fbox(col(1), by, bw, "otel-collector", "OTLP :4318")
+    s += fbox(col(1), by, bw, "stateless OTel forwarder", "local OTLP :4318")
     s += fbox(col(2), by, bw, "otel db", "in your service")
     s += fbox(col(3), by, bw, "HyperDX UI", "search, traces, dashboards")
     s += harrow(col(0)+bw, col(1)-6, by+31, "OTLP")

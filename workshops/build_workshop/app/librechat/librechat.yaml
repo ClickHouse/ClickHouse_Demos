@@ -1,4 +1,6 @@
-# LibreChat config for workshop module 06b.
+# Cloud-hosted LibreChat config reference for workshop module 06b.
+# Mount this in the instructor-managed HTTPS deployment. Learners never run a
+# LibreChat or MongoDB container on their workshop machine.
 version: 1.3.13
 cache: true
 
@@ -10,26 +12,34 @@ interface:
     - 'mcp'
 
 mcpServers:
-  # ClickStack MCP — your ClickHouse Cloud otel_* telemetry. streamable-http + OAuth.
-  # x-service-id pins the MCP to YOUR service (else it defaults to the first in the account).
+  # ClickStack MCP — each learner authorizes with ClickHouse Cloud OAuth and
+  # selects their workshop service.
   clickstack:
     type: streamable-http
     url: https://mcp.clickhouse.cloud/clickstack
     headers:
-      x-service-id: "${CLICKSTACK_SERVICE_ID}"
+      x-service-id: "{{CLICKSTACK_SERVICE_ID}}"
+    customUserVars:
+      CLICKSTACK_SERVICE_ID:
+        title: ClickStack Service ID
+        description: UUID from ClickStack Team Settings > Data > Connections > Default
+    startup: false
     timeout: 120000
     serverInstructions: true
 
-  # GitHub MCP — read the workshop app source (incl. the fault branch you check out).
-  # GitHub's MCP has no dynamic client registration, so LibreChat auto-OAuth loops;
-  # use a static read-only PAT and pin requiresOAuth:false.
+  # GitHub MCP — each learner supplies a fine-grained read-only PAT in LibreChat.
   github:
     type: streamable-http
     url: https://api.githubcopilot.com/mcp/
     requiresOAuth: false
     headers:
-      Authorization: "Bearer ${GITHUB_PAT}"
+      Authorization: "Bearer {{GITHUB_PAT}}"
       X-MCP-Readonly: "true"
       X-MCP-Toolsets: "repos"
+    customUserVars:
+      GITHUB_PAT:
+        title: GitHub read-only PAT
+        description: Fine-grained token with Contents read access to ClickHouse/ClickHouse_Demos
+    startup: false
     timeout: 120000
     serverInstructions: true
