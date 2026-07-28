@@ -48,14 +48,14 @@ LibreChat documents remote MCP OAuth, per-user credentials, and agent sharing in
 
 ## Talk track
 
-- Module 06a is an agent in the editor; 06b is the same evidence chain in a hosted chat UI.
+- Module 06 is an agent in the editor; 06b was the same evidence chain in a hosted chat UI.
 - LibreChat is a client surface. ClickStack/HyperDX and the telemetry remain managed in
   ClickHouse Cloud; GitHub remains the source-of-truth service.
 - Each learner owns their ClickHouse OAuth session and GitHub PAT.
 
 ## Common failures
 
-- **Hosted URL is unavailable**: skip 06b and continue with Module 06a. Do not improvise a
+- **Hosted URL is unavailable**: skip this archived module and continue with Module 06. Do not improvise a
   local Docker deployment during the workshop.
 - **OAuth returns to the wrong host**: correct LibreChat's public `DOMAIN_SERVER` and
   `DOMAIN_CLIENT` to the HTTPS deployment URL, then reconnect.

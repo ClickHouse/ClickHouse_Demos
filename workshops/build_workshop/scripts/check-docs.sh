@@ -102,6 +102,22 @@ require_fixed \
   '[Module 07](/docs/instructor/07-break-and-fix)' \
   "${CONTENT}/instructor/06b-ai-sre-librechat.mdx"
 
+for file in \
+  "${ROOT}/app/README.md" \
+  "${ROOT}/app/OBSERVABILITY.md" \
+  "${CONTENT}/learner/05-clickstack.mdx" \
+  "${CONTENT}/instructor/05-clickstack.mdx"; do
+  require_fixed \
+    "ClickStack overlay startup must rebuild the frontend telemetry bundle" \
+    'docker-compose.otel.yml up -d --build' \
+    "${file}"
+done
+
+require_fixed \
+  "the optional container-log overlay must also rebuild the frontend" \
+  '--profile container-logs up -d --build' \
+  "${ROOT}/app/OBSERVABILITY.md"
+
 require_count() {
   local description=$1
   local expected=$2

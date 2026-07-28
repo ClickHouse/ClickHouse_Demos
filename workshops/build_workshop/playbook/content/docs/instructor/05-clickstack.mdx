@@ -44,6 +44,6 @@ collector as early as this module allows and keep it running.
 ## Reset steps
 
 - Restart with both compose files:
-  `docker compose --env-file .env.workshop -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d`.
+  `docker compose --env-file .env.workshop -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build`.
 - In the Cloud console, open the service, choose **ClickStack**, and relaunch the hosted
   UI if the SSO session expired.
