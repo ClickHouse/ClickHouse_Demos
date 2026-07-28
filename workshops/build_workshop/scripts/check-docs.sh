@@ -29,6 +29,24 @@ fail_if_found \
   '(comment|uncomment).*(sql|variant)|(run|execute|open).*(db/cloud|\.sql file)' \
   "${CONTENT}/learner"
 
+if grep -RInE --exclude='06b-ai-sre-librechat.mdx' \
+  '06a|06b|LibreChat' "${CONTENT}"; then
+  echo "ERROR: active workshop must use Module 06 and exclude archived Module 06b" >&2
+  exit 1
+fi
+
+fail_if_found \
+  "active workshop summaries and diagrams must not include archived Module 06b" \
+  '06b|LibreChat' \
+  "${ROOT}/README.md" \
+  "${ROOT}/app/README.md" \
+  "${ROOT}/app/WORKSHOP_CHANGES.md" \
+  "${ROOT}/docs/diagrams/gen_diagrams.py" \
+  "${ROOT}/docs/diagrams/workshop-module-flow.svg" \
+  "${ROOT}/docs/diagrams/workshop-architecture.svg" \
+  "${ROOT}/playbook/public/workshop-module-flow.svg" \
+  "${ROOT}/playbook/public/workshop-architecture.svg"
+
 fail_if_found \
   "workshop material must not direct users to local managed-service substitutes" \
   'PGHOST=postgres|localhost:3090|docker-compose\.librechat|local `mcp-clickhouse`|start (a |the )?local (Postgres|ClickHouse|LibreChat|HyperDX)|using (a |the )?local (Postgres|ClickHouse)' \
@@ -68,6 +86,37 @@ require_fixed \
   "learner setup must switch to the production workshop branch" \
   'git switch build-workshop-v1' \
   "${CONTENT}/learner/00-setup.mdx"
+
+require_fixed \
+  "the former learner Module 06b page must remain clearly archived" \
+  'Module 06b is no longer part of the workshop.' \
+  "${CONTENT}/learner/06b-ai-sre-librechat.mdx"
+
+require_fixed \
+  "the former instructor Module 06b page must remain clearly archived" \
+  'Module 06b is no longer part of the run of show.' \
+  "${CONTENT}/instructor/06b-ai-sre-librechat.mdx"
+
+require_fixed \
+  "the archived instructor page must link to active Module 07" \
+  '[Module 07](/docs/instructor/07-break-and-fix)' \
+  "${CONTENT}/instructor/06b-ai-sre-librechat.mdx"
+
+for file in \
+  "${ROOT}/app/README.md" \
+  "${ROOT}/app/OBSERVABILITY.md" \
+  "${CONTENT}/learner/05-clickstack.mdx" \
+  "${CONTENT}/instructor/05-clickstack.mdx"; do
+  require_fixed \
+    "ClickStack overlay startup must rebuild the frontend telemetry bundle" \
+    'docker-compose.otel.yml up -d --build' \
+    "${file}"
+done
+
+require_fixed \
+  "the optional container-log overlay must also rebuild the frontend" \
+  '--profile container-logs up -d --build' \
+  "${ROOT}/app/OBSERVABILITY.md"
 
 require_count() {
   local description=$1

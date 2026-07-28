@@ -1,6 +1,6 @@
 ---
 title: 05 ClickStack
-description: Enable Managed ClickStack, forward telemetry with a local stateless collector, and inspect it in cloud-hosted HyperDX.
+description: Forward telemetry with a local stateless collector, enable Managed ClickStack, and inspect it in cloud-hosted HyperDX.
 ---
 
 ## Starting point
@@ -23,35 +23,7 @@ produces telemetry you can query.
 App traces and backend query logs flowing into ClickStack, with at least one end-to-end
 request trace and a visible stream of successful query records.
 
-## Step 1 — Enable Managed ClickStack on your service
-
-The workshop uses **Managed ClickStack (HyperDX)** inside your own ClickHouse Cloud
-service: the collector writes `otel_*` tables to your service and the HyperDX UI renders
-them there. Enable it in the console:
-
-Console - your service -> **ClickStack** -> **Start Ingestion** -> skip the collector
-step (the app ships its own collector in Step 2) -> **Launch ClickStack**
-
-That single-signs you on into HyperDX. (The UI is empty at this point — telemetry starts
-flowing once the collector overlay is running in Step 2.)
-
-<Callout title="Managed ClickStack: what diverges from the classic setup">
-  - The back end uses vanilla OpenTelemetry, not the convenience
-    `hyperdx-opentelemetry` package the ClickStack docs suggest. That package hard-pins
-    `opentelemetry-api==1.30.0`, which conflicts with the Langfuse v4 SDK the chat
-    feature uses (needs `opentelemetry-api>=1.33.1`) — the two cannot share one
-    environment. The ClickStack collector ingests standard OTLP, so the vanilla distro
-    behaves identically; the workshop just sets the exporter env vars itself.
-  - ClickStack's telemetry lives in a separate database on your service
-    (`CLICKSTACK_DATABASE=otel`), distinct from the app's data database
-    (`CLICKHOUSE_DATABASE=nyc_tlc_data`).
-  - Traces and backend Python logs flow over OTLP from the auto-instrumented back end.
-    The optional `--profile container-logs` collector is only for non-instrumented
-    services such as the trip writer; its Linux Docker log path may not be available on
-    Docker Desktop.
-</Callout>
-
-## Step 2 — Run the OpenTelemetry collector overlay
+## Step 1 — Run the OpenTelemetry collector overlay
 
 HyperDX, storage, and query compute stay managed in ClickHouse Cloud. The only local
 component here is a stateless OpenTelemetry collector beside the local app; it forwards
@@ -71,15 +43,6 @@ telemetry and is not a local ClickStack or HyperDX deployment.
 
 ### `.env.workshop` and `docker-compose.otel.yml`
 
-Append the observability variables to your single `.env.workshop`, then bring the stack
-up with the overlay. The overlay sets `OTEL_ENABLED=true` on the back end for you and
-adds the `otel-collector` service (`clickhouse/clickstack-otel-collector`):
-
-```bash
-docker compose --env-file .env.workshop \
-  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d
-```
-
 These live in the ClickStack observability section of `.env.workshop.example`; fill them
 in your `.env.workshop`:
 
@@ -90,10 +53,55 @@ OTEL_SERVICE_NAME=nyc-taxi-backend         # the service name shown in HyperDX
 LOG_LEVEL=DEBUG                            # show successful queries in Log source
 ```
 
+Source the updated file so later commands can use the same values:
+
+```bash
+set -a
+source .env.workshop
+set +a
+```
+
+Now bring the stack up with the overlay. The overlay sets `OTEL_ENABLED=true` on the
+back end, adds the `otel-collector` service (`clickhouse/clickstack-otel-collector`),
+and rebuilds the front end with the browser telemetry settings:
+
+```bash
+docker compose --env-file .env.workshop \
+  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
+```
+
 The collector reuses `CLICKHOUSE_HOST` / `CLICKHOUSE_PORT` / `CLICKHOUSE_USER` /
 `CLICKHOUSE_PASSWORD` from `.env.workshop`; the back end exports OTLP to
 `http://otel-collector:4318` (HTTP/protobuf). To also scrape raw container stdout on a
 Linux host, add `--profile container-logs`.
+
+## Step 2 — Enable Managed ClickStack on your service
+
+The workshop uses **Managed ClickStack (HyperDX)** inside your own ClickHouse Cloud
+service: the collector writes `otel_*` tables to your service and the HyperDX UI renders
+them there. Enable it in the console:
+
+Console - your service -> **ClickStack** -> **Start Ingestion** -> skip the collector
+step (the app collector is already running from Step 1) -> **Launch ClickStack**
+
+That single-signs you on into HyperDX. Telemetry has already started flowing, so the
+hosted UI can populate as soon as it opens.
+
+<Callout title="Managed ClickStack: what diverges from the classic setup">
+  - The back end uses vanilla OpenTelemetry, not the convenience
+    `hyperdx-opentelemetry` package the ClickStack docs suggest. That package hard-pins
+    `opentelemetry-api==1.30.0`, which conflicts with the Langfuse v4 SDK the chat
+    feature uses (needs `opentelemetry-api>=1.33.1`) — the two cannot share one
+    environment. The ClickStack collector ingests standard OTLP, so the vanilla distro
+    behaves identically; the workshop just sets the exporter env vars itself.
+  - ClickStack's telemetry lives in a separate database on your service
+    (`CLICKSTACK_DATABASE=otel`), distinct from the app's data database
+    (`CLICKHOUSE_DATABASE=nyc_tlc_data`).
+  - Traces and backend Python logs flow over OTLP from the auto-instrumented back end.
+    The optional `--profile container-logs` collector is only for non-instrumented
+    services such as the trip writer; its Linux Docker log path may not be available on
+    Docker Desktop.
+</Callout>
 
 ## Step 3 — Generate and find traffic in ClickStack
 

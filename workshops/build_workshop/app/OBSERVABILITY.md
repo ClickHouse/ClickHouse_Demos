@@ -107,12 +107,12 @@ cp .env.workshop.example .env.workshop
 
 # 2) Bring up the stack with the overlay:
 docker compose --env-file .env.workshop \
-  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d
+  -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
 
 # Optional: also scrape raw container stdout (see VERIFY-LIVE):
 docker compose --env-file .env.workshop \
   -f docker-compose.workshop.yml -f docker-compose.otel.yml \
-  --profile container-logs up -d
+  --profile container-logs up -d --build
 ```
 
 ## Environment variables

@@ -15,8 +15,8 @@ feature branch, open a PR to protected `dev-build-workshop-v1`, verify
 ## Architecture
 
 The app edge runs on the participant's laptop. ClickHouse, Postgres, ClickPipes, and
-ClickStack/HyperDX live in ClickHouse Cloud; OpenAI, Langfuse, and optional LibreChat are
-separate hosted services. No database or product UI is deployed locally.
+ClickStack/HyperDX live in ClickHouse Cloud; OpenAI and Langfuse are separate hosted
+services. No database or product UI is deployed locally.
 
 ```mermaid
 flowchart LR
@@ -40,7 +40,6 @@ flowchart LR
   subgraph THIRD["Third-party"]
     OAI["OpenAI API<br/>chat completions"]
     LF["Langfuse Cloud<br/>chat traces"]
-    LC["Hosted LibreChat<br/>optional SRE chat"]
     TLC["NYC TLC public dataset<br/>download source only"]
   end
 
@@ -58,7 +57,6 @@ flowchart LR
   TLC -.->|url seed, module 01| CH
   HDX -->|reads otel db| CH
   AG -->|RBAC-governed SQL| CH
-  LC -.->|remote MCP| MCP
 ```
 
 The published diagrams (the ClickHouse Cloud platform stack, the workshop architecture, the
@@ -100,7 +98,7 @@ sequenceDiagram
   G->>P: INSERT trips (throttled, TLS)
   Note over G,P: first run also creates the table<br/>and publication pub_taxi
   P->>CP: WAL changes via publication + slot
-  CP->>CH: rows land in realtime_trips (_peerdb_* cols), about 60s
+  CP->>CH: rows land in default.realtime_trips, about 60s
   CH->>CH: materialized view fans rows into nyc_tlc_data.taxi_trips
   UI->>CH: parameterized SQL / guarded NL-to-SQL / RBAC-governed BI
   CH-->>UI: live Ops dashboard + 3M-row Historical seed

@@ -19,10 +19,9 @@ The workshop intentionally separates application code from managed services.
 - remote ClickHouse and ClickStack MCP endpoints
 - ClickHouse Agents
 - Langfuse Cloud and OpenAI
-- the optional instructor-provided HTTPS LibreChat instance
 
-No PostgreSQL, ClickHouse, MongoDB, LibreChat, HyperDX, Langfuse, or MCP server is
-started on a learner machine.
+No PostgreSQL, ClickHouse, MongoDB, HyperDX, Langfuse, or MCP server is started on a
+learner machine.
 
 ## Runtime sequence
 
@@ -30,8 +29,8 @@ started on a learner machine.
 2. Module 01 creates and seeds the Cloud schema.
 3. Module 03 creates managed Postgres, validates it with
    `./preflight.sh --require-postgres`, then explicitly enables the `cdc` trip writer.
-4. Module 05 enables Managed ClickStack and starts the stateless collector overlay.
-5. Module 06b uses hosted LibreChat; Module 08 sends chat traces to Langfuse Cloud.
+4. Module 05 starts the stateless collector overlay, then enables Managed ClickStack.
+5. Module 08 sends chat traces to Langfuse Cloud.
 
 `.env.workshop.example` leaves managed Postgres credentials blank until Module 03 and
 requires TLS. `preflight.sh` rejects loopback/local database hosts. CI policy checks in
