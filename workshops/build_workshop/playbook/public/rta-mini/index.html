@@ -351,7 +351,7 @@ ORDER BY (base, quote, datetime);</code></pre>
       </ol>
       <div class="code">
         <div class="bar"><span class="lang">S3 file path</span><button class="copy-btn">Copy</button></div>
-        <pre><code>https://s3.housemate.click/fx/ticks.parquet</code></pre>
+        <pre><code>https://partner-workshop.s3.ap-southeast-1.amazonaws.com/fx/ticks.parquet</code></pre>
       </div>
       <p>Leave <em>Continuous ingestion</em> off (this is a one-time file), then click <strong>Incoming data →</strong>.</p>
       <figure class="shot">
@@ -410,7 +410,7 @@ TRUNCATE TABLE forex;
 
 -- load all ~26.5M ticks from the public S3 file in one line (server-side)
 INSERT INTO forex
-SELECT * FROM s3('https://s3.housemate.click/fx/ticks.parquet', NOSIGN, 'Parquet');
+SELECT * FROM s3('https://partner-workshop.s3.ap-southeast-1.amazonaws.com/fx/ticks.parquet', NOSIGN, 'Parquet');
 
 -- and check again (expect 26,488,218)
 SELECT count() AS ticks, uniqExact(concat(base,'/',quote)) AS pairs FROM forex;</code></pre>
