@@ -15,6 +15,11 @@
   --font-mono: var(--font-inconsolata), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+/* Fumadocs renders fenced code blocks at 0.8125rem. Increase them by exactly 2pt. */
+.shiki > div[role='region'] {
+  font-size: calc(0.8125rem + 2pt);
+}
+
 /* Light (toggle) */
 :root {
   --color-fd-background: #ffffff;
