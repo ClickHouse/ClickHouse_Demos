@@ -34,7 +34,7 @@ export default function WorkshopsHub() {
             <span className="brand-sub">Workshops</span>
           </div>
           <h1>Pick a workshop.<br />Start <span className="ai">building.</span></h1>
-          <p className="lede">Hands-on ClickHouse labs — from a 90-minute analytics sprint to a full afternoon building a real-time, AI-assisted app. Each runs on your own free ClickHouse Cloud trial.</p>
+          <p className="lede">Hands-on ClickHouse labs, from public live-data analytics to an AI-assisted incident workflow. Each runs on your own free ClickHouse Cloud trial.</p>
         </div>
       </header>
 
@@ -42,13 +42,22 @@ export default function WorkshopsHub() {
         <div className="wrap">
           <p className="eyebrow">Available workshops</p>
           <div className="grid">
-            <Link className="card" href="/build-workshop">
+            <Link className="card" href="/docs/ai-sre">
               <div className="card-meta"><span>3 hours</span><span className="dot" aria-hidden="true"></span><span>Intermediate</span></div>
-              <div className="card-title">Build AI with AI</div>
-              <div className="card-tagline">Build it, end to end.</div>
-              <p className="card-blurb">In one three-hour sitting, take a real analytics app live on ClickHouse Cloud with your own AI coding agent — real-time CDC, conversational BI, observability, an AI SRE, and traced AI chat.</p>
+              <div className="card-title">AI SRE with NYC taxi data</div>
+              <div className="card-tagline">Build it, observe it, then repair it.</div>
+              <p className="card-blurb">Take a real analytics app live on ClickHouse Cloud with real-time CDC, conversational BI, observability, an AI SRE, and traced AI chat.</p>
               <div className="tags"><span className="tag">CDC</span><span className="tag">Agents</span><span className="tag">ClickStack</span><span className="tag">Langfuse</span></div>
-              <span className="card-cta">Open workshop <span className="arrow">→</span></span>
+              <span className="card-cta">Open AI SRE track <span className="arrow">→</span></span>
+            </Link>
+
+            <Link className="card" href="/docs/polymarket">
+              <div className="card-meta"><span>2 hours 10 minutes</span><span className="dot" aria-hidden="true"></span><span>Intermediate</span></div>
+              <div className="card-title">Polymarket real-time analytics</div>
+              <div className="card-tagline">Watch a public market move live.</div>
+              <p className="card-blurb">Stream public prediction-market data into ClickHouse Cloud, maintain one-minute aggregates, investigate movement, and publish a market pulse dashboard.</p>
+              <div className="tags"><span className="tag">Streaming</span><span className="tag">Materialized Views</span><span className="tag">Dashboards</span><span className="tag">Public APIs</span></div>
+              <span className="card-cta">Open Polymarket track <span className="arrow">→</span></span>
             </Link>
 
             <a className="card" href={`${basePath}/rta-mini/index.html`}>
