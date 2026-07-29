@@ -1,0 +1,33 @@
+---
+title: 02 Model the data · Instructor
+description: Explain the schema choices and recover partial DDL runs.
+---
+
+## Timing
+
+20 minutes.
+
+## Talk track
+
+- Query patterns come before `ORDER BY`; the key cannot be casually changed later.
+- Exact decimals avoid floating-point money/probability artifacts.
+- Recent-time expressions lead the event keys; token/condition IDs follow for grouping.
+- The incremental MV aggregates only BBO midpoint events. Trades remain separate.
+- No partition is intentional; this track has no demonstrated retention lifecycle.
+
+## Common failures
+
+- Partial run: all statements use `IF NOT EXISTS`; rerun the complete blocks.
+- MV exists but target does not: drop only the MV, rerun Step 2.
+- Learner uses a different database: verify `.env.polymarket` says `polymarket`.
+
+## Reset
+
+For a disposable rehearsal only:
+
+```sql
+DROP DATABASE IF EXISTS polymarket;
+```
+
+Then rerun both learner SQL blocks. Never run this against a learner's service without
+their explicit confirmation.

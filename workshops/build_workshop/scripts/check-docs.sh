@@ -27,7 +27,12 @@ fail_if_found \
 fail_if_found \
   "learners must not be told to edit SQL comments or execute a hidden SQL file" \
   '(comment|uncomment).*(sql|variant)|(run|execute|open).*(db/cloud|\.sql file)' \
-  "${CONTENT}/learner"
+  "${CONTENT}/learner" "${CONTENT}/polymarket/learner"
+
+fail_if_found \
+  "the Polymarket track must not request trading credentials or call order endpoints" \
+  'POLYMARKET_(API_KEY|SECRET|PRIVATE_KEY)|/orders?([/?`[:space:]]|$)|wallet[_ -]?private' \
+  "${CONTENT}/polymarket" "${ROOT}/polymarket"
 
 if grep -RInE --exclude='06b-ai-sre-librechat.mdx' \
   '06a|06b|LibreChat' "${CONTENT}"; then
@@ -86,6 +91,16 @@ require_fixed \
   "learner setup must switch to the production workshop branch" \
   'git switch build-workshop-v1' \
   "${CONTENT}/learner/00-setup.mdx"
+
+require_fixed \
+  "Polymarket learner setup must switch to the production workshop branch" \
+  'git switch build-workshop-v1' \
+  "${CONTENT}/polymarket/learner/00-setup.mdx"
+
+require_fixed \
+  "Polymarket dev rehearsal must use the staging workshop branch" \
+  'git switch dev-build-workshop-v1' \
+  "${CONTENT}/polymarket/rehearsal.mdx"
 
 require_fixed \
   "the former learner Module 06b page must remain clearly archived" \
@@ -163,6 +178,34 @@ require_fixed \
   'POSTGRES = load_postgres_config()' \
   "${ROOT}/app/loadgen/pg_trip_writer.py"
 
+for literal in \
+  'CLICKHOUSE_HOST=' \
+  'CLICKHOUSE_PORT=8443' \
+  'CLICKHOUSE_DATABASE=polymarket' \
+  'POLYMARKET_MODE=live'; do
+  require_fixed \
+    "the Polymarket environment must expose the documented Cloud/collector contract" \
+    "${literal}" \
+    "${ROOT}/polymarket/.env.polymarket.example"
+done
+
+require_fixed \
+  "Polymarket setup must source its environment after editing" \
+  'set -a; source ./.env.polymarket; set +a' \
+  "${CONTENT}/polymarket/learner/00-setup.mdx"
+
+require_fixed \
+  "Polymarket Module 02 must contain the complete copyable database DDL" \
+  'CREATE MATERIALIZED VIEW IF NOT EXISTS polymarket.market_midpoints_1m_mv' \
+  "${CONTENT}/polymarket/learner/02-model-data.mdx"
+
+require_fixed \
+  "Polymarket Module 05 must contain the clean trade-volume query" \
+  'FROM polymarket.trades_clean' \
+  "${CONTENT}/polymarket/learner/05-investigate-movement.mdx"
+
+python3 "${ROOT}/scripts/check-polymarket-sql.py"
+
 if command -v docker >/dev/null 2>&1; then
   compose_config=$(
     cd "${ROOT}/app" &&
@@ -173,6 +216,15 @@ if command -v docker >/dev/null 2>&1; then
   if printf '%s\n' "${compose_config}" | grep -Eiq \
     'image:[[:space:]]*(postgres|clickhouse/clickhouse-server|mongo|ghcr\.io/danny-avila/librechat|hyperdx)|^[[:space:]]{2}(postgres|clickhouse|mongodb|librechat|hyperdx):'; then
     echo "ERROR: rendered workshop Compose config contains a local managed-service substitute" >&2
+    exit 1
+  fi
+
+  polymarket_services=$(
+    cd "${ROOT}/polymarket" &&
+      docker compose --env-file .env.polymarket.example config --services
+  )
+  if [[ "${polymarket_services}" != "collector" ]]; then
+    echo "ERROR: Polymarket Compose must define only the stateless collector" >&2
     exit 1
   fi
 fi

@@ -1,0 +1,34 @@
+---
+title: 00 Setup · Instructor
+description: Timing, talk track, failures, and reset for Polymarket setup.
+---
+
+## Timing
+
+15 minutes. Start service creation first; explain the architecture while Cloud becomes ready.
+
+## Talk track
+
+- Windows means Ubuntu on WSL 2. PowerShell is only for installing or inspecting WSL.
+- `clickhousectl local use stable` installs the client binary, not a local server.
+- `.env.polymarket` contains only ClickHouse Cloud access and collector tuning. There is
+  no Polymarket secret.
+- Learners must source the file after every edit.
+
+## Common failures
+
+- Docker has no Server section: start Docker Desktop and enable WSL integration.
+- Repo is under `/mnt/c`: reclone under `/home` before Docker builds.
+- Cloud password was not saved: reset the default-user password in the Cloud console.
+- Gamma blocked: proceed with Cloud checks and mark the learner for fixture mode.
+
+## Reset
+
+```bash
+cd ~/ClickHouse_Demos/workshops/build_workshop/polymarket
+cp -n .env.polymarket.example .env.polymarket
+set -a; source ./.env.polymarket; set +a
+./preflight.sh
+```
+
+Do not copy one learner's `.env.polymarket` to another machine.

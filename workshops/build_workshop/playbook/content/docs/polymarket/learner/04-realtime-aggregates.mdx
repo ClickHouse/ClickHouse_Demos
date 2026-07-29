@@ -1,0 +1,82 @@
+---
+title: 04 Real-time aggregates
+description: Read one-minute quote-midpoint OHLC maintained by an incremental materialized view.
+---
+
+## Starting point
+
+The collector is healthy and `polymarket.price_ticks` contains rows.
+
+## Why
+
+Dashboard users repeatedly ask for the same one-minute series. Computing it once as new
+blocks arrive shifts work from every dashboard refresh to insert time. The raw table
+remains available for ad-hoc questions.
+
+## Step 1 — Query the aggregate states correctly
+
+```sql
+SELECT
+    minute,
+    token_id,
+    round(argMinMerge(open) * 100, 2) AS open_percent,
+    round(maxMerge(high) * 100, 2) AS high_percent,
+    round(minMerge(low) * 100, 2) AS low_percent,
+    round(argMaxMerge(close) * 100, 2) AS close_percent,
+    countMerge(updates) AS updates
+FROM polymarket.market_midpoints_1m
+WHERE minute >= now() - INTERVAL 30 MINUTE
+GROUP BY minute, token_id
+ORDER BY minute DESC, token_id
+LIMIT 30;
+```
+
+`argMinState`/`argMaxState` were written by the view; the query finalizes them with the
+matching `Merge` functions. Open and close use event time plus deterministic event ID,
+so out-of-order arrivals and same-millisecond ties settle consistently.
+
+## Step 2 — Compare rows read by raw and aggregate queries
+
+Run the raw equivalent:
+
+```sql
+SELECT
+    toStartOfMinute(event_at) AS minute,
+    token_id,
+    round(argMin(midpoint, tuple(event_at, event_id)) * 100, 2) AS open_percent,
+    round(max(midpoint) * 100, 2) AS high_percent,
+    round(min(midpoint) * 100, 2) AS low_percent,
+    round(argMax(midpoint, tuple(event_at, event_id)) * 100, 2) AS close_percent,
+    count() AS updates
+FROM polymarket.price_ticks
+WHERE midpoint > 0
+  AND event_at >= now() - INTERVAL 30 MINUTE
+  AND event_kind IN ('book_snapshot', 'price_change', 'best_bid_ask', 'rest_book')
+GROUP BY minute, token_id
+ORDER BY minute DESC, token_id
+LIMIT 30;
+```
+
+In the SQL console, compare **read rows** for both queries. The aggregate reads block-level
+states that `AggregatingMergeTree` combines in the background, usually far fewer rows
+than scanning every source update.
+
+## Step 3 — Verify the view is insert-driven
+
+```sql
+SELECT
+    max(minute) AS newest_minute,
+    dateDiff('second', newest_minute, now()) AS age_seconds,
+    countMerge(updates) AS source_updates
+FROM polymarket.market_midpoints_1m;
+```
+
+In live or fixture mode, `newest_minute` advances without a scheduled refresh job.
+
+## Done when
+
+- the aggregate query returns OHLC rows;
+- open/high/low/close are probabilities between 0 and 100; and
+- `newest_minute` is current for an active feed.
+
+Next: [investigate a market move](/docs/polymarket/learner/05-investigate-movement).

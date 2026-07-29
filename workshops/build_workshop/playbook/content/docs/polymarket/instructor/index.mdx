@@ -1,0 +1,39 @@
+---
+title: Polymarket instructor track
+description: A 2h10 run of show with a tested fixture fallback and objective completion checks.
+---
+
+## Before learners arrive
+
+- Confirm the workshop site is public and the Polymarket learner pages load without login.
+- Verify Gamma, Data API, CLOB REST, and the WebSocket from the venue network.
+- Prepare fixture mode even when live mode works; quiet markets are normal.
+- Confirm each learner has a Cloud organization, an API key, and permission to create a
+  service, run SQL, save queries, and create dashboards.
+- Do not ask learners to create a Polymarket account or wallet.
+
+<DevOnly>
+  <Callout type="info" title="Dev deployment">
+    Complete the [dev rehearsal](/docs/polymarket/rehearsal) from a fresh checkout before
+    requesting production promotion.
+  </Callout>
+</DevOnly>
+
+## Run of show
+
+| Module | Budget | Hard stop |
+|---|---:|---|
+| 00 Setup | 15 min | Preflight ready; otherwise pair or provide a pre-created Cloud service |
+| 01 Discover | 10 min | One condition and two token IDs understood |
+| 02 Model | 20 min | Six objects returned by `SHOW TABLES` |
+| 03 Stream | 15 min | Health acceptable and Cloud rows visible; switch to fixture at 10 min |
+| 04 Aggregate | 20 min | Aggregate query and freshness check return |
+| 05 Investigate | 20 min | Three immediate queries return; movers may wait |
+| 06 Dashboard | 20 min | Dashboard or five saved-query fallback complete |
+| 07 Wrap-up | 10 min | Final proof captured and local collector stopped |
+
+## Room rule
+
+`live`, `degraded` with fresh REST timestamps, and `fixture` are all valid teaching
+states. `unhealthy` is not. State which one the room is using; never imply fixture data
+is live market data.

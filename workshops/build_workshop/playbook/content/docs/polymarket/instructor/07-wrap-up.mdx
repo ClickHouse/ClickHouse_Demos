@@ -1,0 +1,30 @@
+---
+title: 07 Wrap up · Instructor
+description: Capture proof, stop the room cleanly, and frame the production extension.
+---
+
+## Timing
+
+10 minutes.
+
+## Talk track
+
+- Ask one learner to explain the hybrid ingestion path and one to explain midpoint OHLC.
+- Direct async writes fit this API-shaped workshop source.
+- ClickPipes is the production choice when a durable supported stream already exists.
+- Adding Kafka solely for the workshop would add setup, not learning.
+
+## Completion evidence
+
+Capture the final proof row and, if available, the dashboard. Record whether the room used
+live, degraded-with-REST, or fixture mode.
+
+## Reset
+
+Every learner runs:
+
+```bash
+docker compose --env-file .env.polymarket down
+```
+
+Cloud deletion is optional and belongs to each learner or organization owner.

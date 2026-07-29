@@ -1,0 +1,26 @@
+---
+title: 01 Discover markets · Instructor
+description: Teach the condition/token distinction without drifting into trading.
+---
+
+## Timing
+
+10 minutes.
+
+## Talk track
+
+- Gamma discovers markets and metadata.
+- One condition represents the market; each outcome has a CLOB token ID.
+- WebSocket subscriptions use token IDs. Public trade reconciliation uses condition IDs.
+- Prices between 0 and 1 are interpreted as indicative probabilities in this lesson.
+
+## Common failures
+
+- Empty trade response: the selected market is quiet, not broken. Try another condition.
+- `JSONDecodeError`: venue proxy returned HTML. Confirm with `curl -I`, then use fixture mode.
+- Learner asks about placing an order: out of scope. This track reads public data only.
+
+## Reset
+
+No resources are changed. Re-run the Gamma command or continue; the collector performs
+its own discovery in Module 03.

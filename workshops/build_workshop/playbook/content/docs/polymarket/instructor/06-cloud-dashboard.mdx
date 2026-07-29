@@ -1,0 +1,29 @@
+---
+title: 06 Cloud dashboard · Instructor
+description: Verify the named saved queries, dashboard evidence, and permission fallback.
+---
+
+## Timing
+
+20 minutes.
+
+## Talk track
+
+- Dashboard panels are saved `SELECT` queries, not a second data pipeline.
+- Use the exact five names so a room sweep is fast.
+- The chart shows quote midpoint; the volume panel comes from reconciled trades.
+
+## Common failures
+
+- Learner cannot create dashboards: use the five saved SQL Console visualizations.
+- Chart has no line: choose `minute` as time, probability as value, outcome as series.
+- Stale chart: check the completion SQL and collector health, not browser refresh first.
+
+## Verification
+
+Ask learners to show either `Polymarket market pulse` with five views, or the five named
+saved queries plus `age_seconds < 120` for fixture/active live data.
+
+## Reset
+
+Delete only the incomplete dashboard. Saved queries and Cloud data remain reusable.

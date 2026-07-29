@@ -1,0 +1,78 @@
+---
+title: 01 Discover markets
+description: Inspect public active markets, outcomes, condition IDs, and CLOB token IDs.
+---
+
+## Starting point
+
+You are in `workshops/build_workshop/polymarket`, `.env.polymarket` is sourced, and the
+preflight is ready.
+
+## Why
+
+Polymarket uses a condition ID for a market and a separate token ID for each outcome.
+The WebSocket subscribes by token ID; the public trades API filters by condition ID.
+
+## Step 1 — Ask Gamma for the five busiest active markets
+
+```bash
+curl --fail --silent --show-error --get \
+  'https://gamma-api.polymarket.com/markets' \
+  --data-urlencode 'active=true' \
+  --data-urlencode 'closed=false' \
+  --data-urlencode 'limit=20' \
+  --data-urlencode 'order=volume24hr' \
+  --data-urlencode 'ascending=false' \
+  | python3 -c '
+import json, sys
+selected = 0
+for market in json.load(sys.stdin):
+    if not market.get("acceptingOrders"):
+        continue
+    outcomes = json.loads(market["outcomes"])
+    tokens = json.loads(market["clobTokenIds"])
+    print(market["question"])
+    print("  condition:", market["conditionId"])
+    for outcome, token in zip(outcomes, tokens):
+        print(f"  {outcome}: {token}")
+    selected += 1
+    if selected == 5:
+        break
+'
+```
+
+Expected: five questions. Each prints one 66-character condition hash and one token ID
+per outcome. The exact questions change with the live market.
+
+## Step 2 — Confirm public trades for one condition
+
+Copy one condition ID from the output:
+
+```bash
+export POLYMARKET_CONDITION_ID='0x...'
+curl --fail --silent --show-error --get \
+  'https://data-api.polymarket.com/trades' \
+  --data-urlencode "market=$POLYMARKET_CONDITION_ID" \
+  --data-urlencode 'limit=3' \
+  | python3 -c '
+import json, sys
+for trade in json.load(sys.stdin):
+    print(trade["outcome"], trade["side"], trade["size"], "@", trade["price"])
+'
+```
+
+An empty response is valid for a quiet market. Pick another condition if you want to see
+trade rows immediately. No authentication is used.
+
+## Step 3 — Understand the collector selection
+
+The collector repeats Step 1 at startup, selects five markets, parses the JSON-encoded
+outcome/token arrays, and stores both outcome rows in `polymarket.markets`. You do not
+hard-code today's token IDs into `.env.polymarket`.
+
+## Done when
+
+- you can identify the condition ID and both outcome token IDs for one market; and
+- the public trades command returns JSON, even if the array is empty.
+
+Next: [create the ClickHouse data model](/docs/polymarket/learner/02-model-data).

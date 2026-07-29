@@ -1,0 +1,28 @@
+---
+title: 04 Real-time aggregates · Instructor
+description: Make the incremental MV behavior and midpoint semantics explicit.
+---
+
+## Timing
+
+20 minutes.
+
+## Talk track
+
+- The MV processes inserted blocks; it does not rescan history on every dashboard refresh.
+- `State` functions store partial aggregate states; matching `Merge` functions finalize them.
+- OHLC is quote midpoint only. Mixing order-level change prices and last trades would make
+  the chart meaningless.
+- The collector deduplicates before the MV sees rows; `ReplacingMergeTree` after the fact
+  would not undo aggregate double-counting.
+
+## Common failures
+
+- Aggregate empty: verify raw midpoint rows exist and the MV was created before ingestion.
+- MV created late: restart fixture mode after creating it, or accept only new rows.
+- Old newest minute: check collector health before debugging SQL.
+
+## Reset
+
+For a fresh aggregate without deleting raw data, recreate the target and MV, then allow
+new events to populate it. Do not run `OPTIMIZE TABLE FINAL`.

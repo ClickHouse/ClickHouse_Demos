@@ -1,0 +1,93 @@
+---
+title: 06 Cloud dashboard
+description: Save the investigation queries and assemble the Polymarket market pulse dashboard.
+---
+
+## Starting point
+
+The four Module 05 queries run in the ClickHouse Cloud SQL console. Your Cloud role can
+save queries and create dashboards.
+
+## Goal
+
+One dashboard named **Polymarket market pulse** with four current views and a one-minute
+line chart. No local dashboard product is required.
+
+## Step 1 — Save the four investigation queries
+
+In the SQL console, run each Module 05 block and use **Save** with these exact names:
+
+1. `Current probability`
+2. `Five-minute movers`
+3. `Spread and freshness`
+4. `Volume velocity`
+
+Do not change the SQL while saving; the instructor uses the names to verify the room.
+
+## Step 2 — Save the one-minute chart query
+
+```sql
+SELECT
+    c.minute,
+    m.token_id,
+    m.question,
+    m.outcome,
+    round(argMaxMerge(c.close) * 100, 2) AS probability_percent
+FROM polymarket.market_midpoints_1m AS c
+INNER JOIN
+(
+    SELECT token_id, question, outcome
+    FROM polymarket.markets FINAL
+) AS m ON m.token_id = c.token_id
+WHERE c.minute >= now() - INTERVAL 30 MINUTE
+GROUP BY c.minute, m.token_id, m.question, m.outcome
+ORDER BY c.minute, m.token_id;
+```
+
+Save it as `One-minute probability` and choose a line visualization. Use `minute` as the
+time axis, `probability_percent` as the value, and question/outcome/token ID as the
+series so identically worded markets stay separate.
+
+## Step 3 — Assemble the dashboard
+
+1. Open **Dashboards** in the ClickHouse Cloud console.
+2. Create `Polymarket market pulse`.
+3. Add `Current probability` as a table or number view.
+4. Add `Five-minute movers` as a table sorted by absolute movement.
+5. Add `Spread and freshness` as a table.
+6. Add `Volume velocity` as a table or bar chart.
+7. Add `One-minute probability` as the line chart.
+8. Set the dashboard refresh to the shortest option available in your console.
+
+## Step 4 — Verify objective evidence
+
+The dashboard is complete when:
+
+- at least one watched market appears;
+- probability, bid, and ask values are not null;
+- the freshness age is visible; and
+- the line chart advances after the next live or fixture event.
+
+## If Dashboards is unavailable
+
+Keep the five saved queries and their SQL Console visualizations. Run this completion
+check:
+
+```sql
+SELECT
+    count() AS watched_outcomes,
+    max(event_at) AS newest_tick,
+    dateDiff('second', newest_tick, now()) AS age_seconds
+FROM polymarket.price_ticks
+WHERE midpoint > 0;
+```
+
+Completion fallback: `watched_outcomes > 0` and `age_seconds < 120` in fixture mode or
+an active live feed. This is the only fallback; do not install a local dashboard.
+
+## Done when
+
+The dashboard has five views, or all five saved SQL Console visualizations exist and the
+completion query is fresh.
+
+Next: [wrap up and clean up](/docs/polymarket/learner/07-wrap-up).
