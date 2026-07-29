@@ -1,0 +1,38 @@
+services:
+  collector:
+    build:
+      context: ./collector
+    container_name: polymarket-workshop-collector
+    environment:
+      CLICKHOUSE_HOST: ${CLICKHOUSE_HOST:-}
+      CLICKHOUSE_PORT: ${CLICKHOUSE_PORT:-8443}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
+      CLICKHOUSE_DATABASE: ${CLICKHOUSE_DATABASE:-polymarket}
+      CLICKHOUSE_SECURE: ${CLICKHOUSE_SECURE:-true}
+      POLYMARKET_MODE: ${POLYMARKET_MODE:-live}
+      POLYMARKET_MARKET_COUNT: ${POLYMARKET_MARKET_COUNT:-5}
+      POLYMARKET_RECONCILE_SECONDS: ${POLYMARKET_RECONCILE_SECONDS:-10}
+      POLYMARKET_BOOK_FALLBACK_SECONDS: ${POLYMARKET_BOOK_FALLBACK_SECONDS:-30}
+      POLYMARKET_STALL_SECONDS: ${POLYMARKET_STALL_SECONDS:-30}
+      POLYMARKET_DEDUPE_MINUTES: ${POLYMARKET_DEDUPE_MINUTES:-15}
+      POLYMARKET_INITIAL_LOOKBACK_MINUTES: ${POLYMARKET_INITIAL_LOOKBACK_MINUTES:-10}
+      POLYMARKET_HEALTH_PORT: ${POLYMARKET_HEALTH_PORT:-8090}
+    ports:
+      - "127.0.0.1:${POLYMARKET_HEALTH_PORT:-8090}:${POLYMARKET_HEALTH_PORT:-8090}"
+    restart: unless-stopped
+    stop_grace_period: 60s
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import json, os, urllib.request;
+          port=os.environ.get('POLYMARKET_HEALTH_PORT','8090');
+          data=json.load(urllib.request.urlopen(f'http://127.0.0.1:{port}/health', timeout=3));
+          assert data['status'] in {'live','degraded','fixture'}
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s

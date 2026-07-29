@@ -1,4 +1,4 @@
-import { getPageImage, getPageMarkdownUrl, source } from '@/lib/source';
+import { getPageImage, getPageMarkdownUrl, isHiddenRehearsal, source } from '@/lib/source';
 import {
   DocsBody,
   DocsDescription,
@@ -16,6 +16,7 @@ import { PlatformSelector, PlatformShellNote } from '@/components/platform';
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const params = await props.params;
+  if (isHiddenRehearsal(params.slug)) notFound();
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
@@ -31,7 +32,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
           <MarkdownCopyButton markdownUrl={markdownUrl} />
           <ViewOptionsPopover
             markdownUrl={markdownUrl}
-            githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/content/docs/${page.path}`}
+            githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/workshops/build_workshop/playbook/content/docs/${page.path}`}
           />
         </div>
         <PlatformSelector compact />
@@ -50,11 +51,12 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
 }
 
 export async function generateStaticParams() {
-  return source.generateParams();
+  return source.generateParams().filter((params) => !isHiddenRehearsal(params.slug));
 }
 
 export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): Promise<Metadata> {
   const params = await props.params;
+  if (isHiddenRehearsal(params.slug)) notFound();
   const page = source.getPage(params.slug);
   if (!page) notFound();
 

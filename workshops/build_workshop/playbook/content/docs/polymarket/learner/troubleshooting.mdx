@@ -1,0 +1,81 @@
+---
+title: Polymarket troubleshooting
+description: Exact recovery for setup, source, collector, and ClickHouse failures.
+---
+
+## The classroom network blocks Polymarket
+
+Symptom: preflight cannot reach Gamma, or health stays `degraded` with source errors.
+
+```bash
+sed -i.bak 's/^POLYMARKET_MODE=.*/POLYMARKET_MODE=fixture/' .env.polymarket
+set -a; source ./.env.polymarket; set +a
+docker compose --env-file .env.polymarket up -d --build --force-recreate collector
+curl --fail --silent http://localhost:8090/health | python3 -m json.tool
+```
+
+Expected: `status` is `fixture`; data grows every five seconds.
+
+## Health says `websocket_stale_rest_active`
+
+This is recoverable when `last_trade_reconcile_at` and `last_book_fallback_at` keep
+advancing. The collector reconnects with backoff. Do not restart it repeatedly.
+
+```bash
+docker compose --env-file .env.polymarket logs --tail=50 collector
+sleep 35
+curl --fail --silent http://localhost:8090/health | python3 -m json.tool
+```
+
+Use fixture mode only if both REST timestamps remain null or stale.
+
+## Health says `clickhouse_write_retrying` or `clickhouse_write_stalled`
+
+While the process is running, the exact batch remains in memory and retries with the same
+deduplication token. Fix the Cloud values, source the file, then recreate the collector:
+
+```bash
+${EDITOR:-vi} .env.polymarket
+set -a; source ./.env.polymarket; set +a
+./preflight.sh
+docker compose --env-file .env.polymarket up -d --force-recreate collector
+```
+
+Do not drop the tables; a retry is safe.
+
+A forced recreate discards any quote ticks that were still only in memory. The restarted
+collector repopulates current books through REST and reconciles public trades from the
+last acknowledged checkpoint. The workshop does not claim a durable local queue.
+
+## `missing ClickHouse tables` appears
+
+Module 02 was skipped or ran against another service. Source the current file and check:
+
+```bash
+set -a; source ./.env.polymarket; set +a
+clickhouse client \
+  --host "$CLICKHOUSE_HOST" \
+  --port "$CLICKHOUSE_PORT" \
+  --user "$CLICKHOUSE_USER" \
+  --password "$CLICKHOUSE_PASSWORD" \
+  --secure \
+  --query "SHOW TABLES FROM polymarket"
+```
+
+Return to Module 02 if an object is missing.
+
+## The mover query is empty
+
+It requires observations on both sides of a five-minute boundary. Wait until the
+collector has run for at least six minutes, or use fixture mode for a timed class.
+
+## Port 8090 is already in use
+
+Change `POLYMARKET_HEALTH_PORT` in `.env.polymarket`, source it, and recreate:
+
+```bash
+sed -i.bak 's/^POLYMARKET_HEALTH_PORT=.*/POLYMARKET_HEALTH_PORT=8091/' .env.polymarket
+set -a; source ./.env.polymarket; set +a
+docker compose --env-file .env.polymarket up -d --force-recreate collector
+curl --fail --silent http://localhost:8091/health | python3 -m json.tool
+```

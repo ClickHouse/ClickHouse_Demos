@@ -1,0 +1,182 @@
+---
+title: 00 Setup
+description: Prepare macOS or WSL 2, create the ClickHouse Cloud service, and load one environment file.
+---
+
+Choose **macOS** or **Windows** in the page header. Windows commands run in Ubuntu on
+WSL 2, not PowerShell, unless the page explicitly says PowerShell.
+
+## Outcome
+
+You have Docker, Git, Python, `clickhousectl`, the ClickHouse client, a Cloud service,
+and a sourced `.env.polymarket`. The preflight prints `READY`.
+
+## Step 1 — Verify the laptop
+
+<PlatformOnly platform="macos">
+
+Install Docker Desktop for Mac. In Terminal run:
+
+```bash
+docker version
+docker compose version
+git --version
+python3 --version
+```
+
+</PlatformOnly>
+
+<PlatformOnly platform="windows">
+
+The supported Windows environment is Ubuntu on WSL 2 with Docker Desktop WSL
+integration. In Administrator PowerShell, install or verify it:
+
+```powershell
+wsl --install -d Ubuntu
+wsl --update
+wsl --list --verbose
+```
+
+Restart if Windows asks. Enable **Docker Desktop -> Settings -> Resources -> WSL
+Integration -> Ubuntu**. Then open Ubuntu and run:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl git python3
+git config --global core.autocrlf input
+docker version
+docker compose version
+git --version
+python3 --version
+pwd
+```
+
+Continue only if Ubuntu is WSL version 2, Docker shows Client and Server sections, and
+`pwd` begins with `/home/`. Keep the repo under `/home`, not `/mnt/c`.
+
+</PlatformOnly>
+
+## Step 2 — Clone the production workshop branch
+
+<PlatformOnly platform="windows">
+
+Run this from the Ubuntu terminal:
+
+```bash
+cd ~
+```
+
+</PlatformOnly>
+
+```bash
+git clone https://github.com/ClickHouse/ClickHouse_Demos.git
+cd ClickHouse_Demos
+git switch build-workshop-v1
+cd workshops/build_workshop/polymarket
+cp .env.polymarket.example .env.polymarket
+```
+
+Run later commands from `ClickHouse_Demos/workshops/build_workshop/polymarket`.
+
+## Step 3 — Install `clickhousectl` and the ClickHouse client
+
+```bash
+curl https://clickhouse.com/cli | sh
+export PATH="$HOME/.local/bin:$PATH"
+clickhousectl --version
+clickhousectl local use stable
+clickhouse client --version
+```
+
+`local use` installs the client binary only. It does not launch a database
+server; every query targets ClickHouse Cloud.
+
+## Step 4 — Authenticate and create the Cloud service
+
+**In-person training:** use the learner-specific organization API key provided securely
+by the trainer.
+
+The interactive login keeps the secret out of shell history:
+
+```bash
+clickhousectl cloud auth login --interactive
+clickhousectl cloud auth status
+clickhousectl cloud org list
+```
+
+Trusted automation can use the explicit form:
+
+```bash
+clickhousectl cloud auth login --api-key <key> --api-secret <secret>
+```
+
+Create one service. Change the region only if the trainer specifies another:
+
+```bash
+clickhousectl cloud service create \
+  --name polymarket-workshop \
+  --provider aws \
+  --region ap-southeast-1 \
+  --min-replica-memory-gb 8 \
+  --max-replica-memory-gb 8 \
+  --num-replicas 1 \
+  --idle-scaling true \
+  --idle-timeout-minutes 15
+```
+
+Save the service ID and one-time default-user password. Wait until it is ready:
+
+```bash
+clickhousectl cloud service list
+clickhousectl cloud service get <service-id>
+```
+
+## Step 5 — Fill and source `.env.polymarket`
+
+Open the service **Connect** dialog. Put the bare hostname and password into
+`.env.polymarket`; do not include `https://` or `:8443` in the host.
+
+```bash
+${EDITOR:-vi} .env.polymarket
+set -a; source ./.env.polymarket; set +a
+```
+
+Confirm that the shell loaded the non-secret values:
+
+```bash
+printf 'host=%s database=%s mode=%s\n' \
+  "$CLICKHOUSE_HOST" "$CLICKHOUSE_DATABASE" "$POLYMARKET_MODE"
+```
+
+Expected: the Cloud hostname, `polymarket`, and `live`.
+
+## Step 6 — Run preflight
+
+```bash
+chmod +x ./preflight.sh
+./preflight.sh
+```
+
+Expected:
+
+```text
+READY: Docker, ClickHouse Cloud, Gamma, Data API, and CLOB REST are reachable
+```
+
+In fixture mode on a network that blocks Polymarket, the final line is instead:
+
+```text
+READY: Docker and ClickHouse Cloud are reachable; fixture mode will supply data
+```
+
+If only the Polymarket API check fails, use the fixture fallback in
+[Troubleshooting](/docs/polymarket/learner/troubleshooting#the-classroom-network-blocks-polymarket).
+
+## Done when
+
+- `clickhouse client --version` succeeds;
+- `clickhousectl cloud service get <service-id>` reports the service ready;
+- `printf` shows the expected host/database/mode; and
+- `./preflight.sh` prints `READY`.
+
+Next: [discover the markets you will watch](/docs/polymarket/learner/01-discover-markets).

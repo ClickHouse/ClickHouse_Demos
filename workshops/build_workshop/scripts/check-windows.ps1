@@ -7,6 +7,8 @@ $Setup = Join-Path $ContentRoot 'learner/00-setup.mdx'
 $Troubleshooting = Join-Path $ContentRoot 'learner/troubleshooting.mdx'
 $PlatformComponent = Join-Path $WorkshopRoot 'playbook/src/components/platform.tsx'
 $DocsPage = Join-Path $WorkshopRoot 'playbook/src/app/docs/[[...slug]]/page.tsx'
+$PolymarketSetup = Join-Path $ContentRoot 'polymarket/learner/00-setup.mdx'
+$PolymarketTroubleshooting = Join-Path $ContentRoot 'polymarket/learner/troubleshooting.mdx'
 
 function Assert-Literal {
     param(
@@ -41,6 +43,11 @@ Assert-Literal 'preflight path from repository root' 'workshops/build_workshop/a
 Assert-Literal 'wrong-shell recovery' 'not recognized" in PowerShell' $Troubleshooting
 Assert-Literal 'CRLF recovery' "bash\r" $Troubleshooting
 Assert-Literal 'OAuth browser recovery' 'paste it into the normal Windows' $Troubleshooting
+Assert-Literal 'Polymarket requires Ubuntu WSL 2' 'Ubuntu on WSL 2' $PolymarketSetup
+Assert-Literal 'Polymarket WSL install command' 'wsl --install -d Ubuntu' $PolymarketSetup
+Assert-Literal 'Polymarket Linux-home checkout' 'Keep the repo under `/home`, not `/mnt/c`' $PolymarketSetup
+Assert-Literal 'Polymarket environment reload' 'set -a; source ./.env.polymarket; set +a' $PolymarketSetup
+Assert-Literal 'Polymarket cross-platform sed backup form' "sed -i.bak" $PolymarketTroubleshooting
 
 $shellScripts = @(Get-ChildItem -Path $WorkshopRoot -Recurse -File -Include '*.sh', '*.bash')
 foreach ($script in $shellScripts) {

@@ -1,0 +1,57 @@
+---
+title: 07 Wrap up
+description: Prove the track is complete, stop local work, and understand the production scale-up path.
+---
+
+## Final proof
+
+```sql
+SELECT
+    (SELECT uniqExact(condition_id) FROM polymarket.markets FINAL) AS markets,
+    (SELECT count() FROM polymarket.price_ticks) AS ticks,
+    (SELECT count() FROM polymarket.trades_clean) AS trades,
+    (SELECT count() FROM polymarket.market_midpoints_1m) AS midpoint_minutes,
+    (SELECT max(event_at) FROM polymarket.price_ticks) AS newest_tick;
+```
+
+You are done when `markets`, `ticks`, and `midpoint_minutes` are greater than zero and
+`newest_tick` matches this run. A quiet live feed can legitimately have zero reconciled
+trades; fixture mode always produces trades.
+
+## What you built
+
+- public market discovery with no credentials;
+- a live WebSocket path with heartbeat, stall detection, reconnect, and REST BBO fallback;
+- a reconciled public trade path with overlapping windows and deterministic IDs;
+- typed ClickHouse tables designed around actual filters;
+- an insert-time one-minute quote-midpoint aggregate; and
+- a Cloud dashboard or equivalent saved SQL visualizations.
+
+## Stop the local collector
+
+```bash
+docker compose --env-file .env.polymarket down
+```
+
+This removes the stateless container. Cloud data and saved queries remain.
+
+## Optional Cloud cleanup
+
+Only run this if you no longer want the workshop data:
+
+```sql
+DROP DATABASE polymarket;
+```
+
+Delete or idle the Cloud service through `clickhousectl` or the console according to
+your organization policy.
+
+## How this scales in production
+
+The workshop writes directly because the source is an HTTP/WebSocket API and the volume
+is small. If a production relay already publishes to Kafka, Kinesis, Pub/Sub, or another
+supported stream, use ClickPipes for managed offsets, schema mapping, backpressure, and
+error handling. Do not add a broker only to make the workshop look more distributed.
+
+Return to the [workshop catalog](/docs) or compare this path with the
+[AI SRE track](/docs/ai-sre).

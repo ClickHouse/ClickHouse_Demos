@@ -43,12 +43,24 @@ jobs:
           cache-dependency-path: |
             workshops/build_workshop/app/backend/requirements.txt
             workshops/build_workshop/app/backend/requirements-dev.txt
+            workshops/build_workshop/polymarket/collector/requirements.txt
+            workshops/build_workshop/polymarket/collector/requirements-dev.txt
 
       - name: Run backend tests
         working-directory: workshops/build_workshop/app/backend
         run: |
           python -m pip install -r requirements-dev.txt
           python -m pytest tests/test_chat_guardrails.py tests/test_db_retry.py tests/test_cloud_defaults.py ../loadgen/test_config.py -q
+
+      - name: Run Polymarket collector tests
+        working-directory: workshops/build_workshop/polymarket/collector
+        run: |
+          python -m pip install -r requirements-dev.txt
+          python -m pytest -q
+
+      - name: Run Polymarket ClickHouse integration
+        working-directory: workshops/build_workshop
+        run: ./polymarket/test-clickhouse.sh
 
       - name: Run RTA dashboard tests
         working-directory: workshops/RTA-mini-workshop/dashboard
@@ -73,6 +85,8 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: ""
           NEXT_PUBLIC_SITE_URL: https://workshop.demohouse.cloud
+          NEXT_PUBLIC_WORKSHOP_ENV: dev
+          NEXT_PUBLIC_WORKSHOP_BRANCH: dev-build-workshop-v1
           NEXT_TELEMETRY_DISABLED: "1"
         run: npm run build -- --webpack
 
@@ -102,6 +116,8 @@ jobs:
           cache-dependency-path: |
             workshops/build_workshop/app/backend/requirements.txt
             workshops/build_workshop/app/backend/requirements-dev.txt
+            workshops/build_workshop/polymarket/collector/requirements.txt
+            workshops/build_workshop/polymarket/collector/requirements-dev.txt
 
       - name: Run backend tests on Windows
         working-directory: workshops/build_workshop/app/backend
@@ -109,6 +125,13 @@ jobs:
         run: |
           python -m pip install -r requirements-dev.txt
           python -m pytest tests/test_chat_guardrails.py tests/test_db_retry.py tests/test_cloud_defaults.py ../loadgen/test_config.py -q
+
+      - name: Run Polymarket collector tests on Windows
+        working-directory: workshops/build_workshop/polymarket/collector
+        shell: pwsh
+        run: |
+          python -m pip install -r requirements-dev.txt
+          python -m pytest -q
 
       - name: Run RTA dashboard tests on Windows
         working-directory: workshops/RTA-mini-workshop/dashboard
@@ -163,10 +186,12 @@ jobs:
             echo "instance_id=${PROD_INSTANCE_ID}" >> "${GITHUB_OUTPUT}"
             echo "image_alias=prod" >> "${GITHUB_OUTPUT}"
             echo "url=https://workshop.demohouse.cloud" >> "${GITHUB_OUTPUT}"
+            echo "workshop_env=prod" >> "${GITHUB_OUTPUT}"
           else
             echo "instance_id=${DEV_INSTANCE_ID}" >> "${GITHUB_OUTPUT}"
             echo "image_alias=dev" >> "${GITHUB_OUTPUT}"
             echo "url=https://dev-workshop.demohouse.cloud" >> "${GITHUB_OUTPUT}"
+            echo "workshop_env=dev" >> "${GITHUB_OUTPUT}"
           fi
           test -n "$(sed -n 's/^instance_id=//p' "${GITHUB_OUTPUT}")"
 
@@ -192,11 +217,15 @@ jobs:
           REPOSITORY: posthouse-demo-workshop
           IMAGE_ALIAS: ${{ steps.target.outputs.image_alias }}
           SITE_URL: ${{ steps.target.outputs.url }}
+          WORKSHOP_ENV: ${{ steps.target.outputs.workshop_env }}
+          WORKSHOP_BRANCH: ${{ github.ref_name }}
         run: |
           docker buildx build \
             --platform linux/arm64 \
             --build-arg NEXT_PUBLIC_BASE_PATH= \
             --build-arg NEXT_PUBLIC_SITE_URL="${SITE_URL}" \
+            --build-arg NEXT_PUBLIC_WORKSHOP_ENV="${WORKSHOP_ENV}" \
+            --build-arg NEXT_PUBLIC_WORKSHOP_BRANCH="${WORKSHOP_BRANCH}" \
             --tag "${REGISTRY}/${REPOSITORY}:${GITHUB_SHA}" \
             --tag "${REGISTRY}/${REPOSITORY}:${IMAGE_ALIAS}" \
             --push \
@@ -272,6 +301,7 @@ jobs:
       - name: Verify public routes
         env:
           SITE_URL: ${{ steps.target.outputs.url }}
+          WORKSHOP_ENV: ${{ steps.target.outputs.workshop_env }}
         run: |
           set -euo pipefail
 
@@ -306,9 +336,20 @@ jobs:
             return 1
           }
 
-          for path in / /build-workshop /rta-mini/index.html /docs/learner/00-setup /docs/learner/07-break-and-fix /docs/learner/08-chat-langfuse; do
+          routes=(/ /build-workshop /rta-mini/index.html /docs/ai-sre /docs/polymarket /docs/polymarket/learner/00-setup /docs/polymarket/instructor /docs/learner/00-setup /docs/learner/07-break-and-fix /docs/learner/08-chat-langfuse)
+          if [[ "${WORKSHOP_ENV}" == "dev" ]]; then
+            routes+=(/docs/polymarket/rehearsal)
+          fi
+          for path in "${routes[@]}"; do
             probe_route "${path}"
           done
+
+          if [[ "${WORKSHOP_ENV}" == "prod" ]]; then
+            rehearsal_status=$(curl --show-error --silent \
+              --output /dev/null --write-out '%{http_code}' \
+              "${SITE_URL}/docs/polymarket/rehearsal")
+            test "${rehearsal_status}" = "404"
+          fi
 
       - name: Deployment summary
         env:

@@ -1,0 +1,59 @@
+---
+title: Polymarket real-time analytics
+description: Stream public prediction-market data, model it in ClickHouse Cloud, and publish a market pulse dashboard.
+---
+
+Watch a public market move, see the update land in your own ClickHouse Cloud service,
+and explain whether the move came with a wider spread or faster trading.
+
+This is a **market-data workshop**, not a trading tutorial. It uses only public Gamma,
+CLOB, and Data APIs. You do not create a wallet, deposit funds, place an order, or provide
+a Polymarket secret.
+
+## Choose your role
+
+<Cards>
+  <Card title="Polymarket learner" href="/docs/polymarket/learner" description="Complete the two-hour hands-on path." />
+  <Card title="Polymarket instructor" href="/docs/polymarket/instructor" description="Run the session with timing, fixture fallback, and recovery steps." />
+</Cards>
+
+## What you build
+
+```text
+Gamma market discovery ─┐
+                        ├─ stateless collector ─ ClickHouse Cloud ─ saved queries
+CLOB WebSocket + REST ──┤                         │
+Data API trades ────────┘                         └─ 1-minute midpoint MV ─ dashboard
+```
+
+- `polymarket.markets`: the watched markets and their Yes/No token metadata.
+- `polymarket.price_ticks`: live quote, price-change, and top-of-book observations.
+- `polymarket.trades`: reconciled public trades with deterministic IDs.
+- `polymarket.market_midpoints_1m`: quote-midpoint OHLC maintained on insert.
+- A Cloud dashboard for current probability, movers, spread/freshness, volume velocity,
+  and one-minute midpoint movement.
+
+## Reliability is part of the lesson
+
+The WebSocket is fast but is not treated as a durable log. The collector detects a
+quiet or stalled socket, reconnects, and polls the public CLOB book while degraded. A
+separate Data API loop reconciles trades with a five-second overlap and deterministic
+deduplication. If the classroom network blocks Polymarket, fixture mode produces the
+same schema and dashboard flow without pretending the feed is live.
+
+## Time
+
+About **2 hours 10 minutes** hands-on:
+
+| Module | Outcome | Time |
+|---|---|---:|
+| 00 | Prepare the laptop, Cloud service, and environment | 15 min |
+| 01 | Discover active markets and token IDs | 10 min |
+| 02 | Create query-driven ClickHouse tables and MV | 20 min |
+| 03 | Start and verify the resilient live collector | 15 min |
+| 04 | Understand and query the one-minute aggregate | 20 min |
+| 05 | Investigate probability, spread, freshness, and volume | 20 min |
+| 06 | Publish the Cloud market pulse dashboard | 20 min |
+| 07 | Prove completion, clean up, and map the production path | 10 min |
+
+Start with [Module 00](/docs/polymarket/learner/00-setup).

@@ -9,7 +9,7 @@ export const docsContentRoute = '/llms.mdx/docs';
 export const gitConfig = {
   user: 'ClickHouse',
   repo: 'ClickHouse_Demos',
-  branch: 'build-workshop-v1',
+  branch: process.env.NEXT_PUBLIC_WORKSHOP_BRANCH ?? 'build-workshop-v1',
 };
 
 // The repo participants clone; the app lives at workshops/build_workshop/app.

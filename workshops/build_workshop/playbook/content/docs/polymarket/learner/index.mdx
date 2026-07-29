@@ -1,0 +1,27 @@
+---
+title: Polymarket learner track
+description: A two-hour path from public live data to a ClickHouse Cloud market pulse dashboard.
+---
+
+Work the modules in order. Each page states its input, exact commands, expected result,
+and completion check.
+
+## Progress
+
+0. [Setup](/docs/polymarket/learner/00-setup) — prepare macOS or WSL 2, create the Cloud service, and load the environment.
+1. [Discover markets](/docs/polymarket/learner/01-discover-markets) — inspect active markets, outcomes, condition IDs, and token IDs.
+2. [Model the data](/docs/polymarket/learner/02-model-data) — create typed tables and the one-minute midpoint materialized view.
+3. [Stream live data](/docs/polymarket/learner/03-stream-live-data) — run the collector and verify live or degraded-but-current ingestion.
+4. [Real-time aggregates](/docs/polymarket/learner/04-realtime-aggregates) — read quote-midpoint OHLC from an incremental aggregate.
+5. [Investigate movement](/docs/polymarket/learner/05-investigate-movement) — query movers, spread, freshness, and volume velocity.
+6. [Cloud dashboard](/docs/polymarket/learner/06-cloud-dashboard) — save the queries and publish the market pulse dashboard.
+7. [Wrap up](/docs/polymarket/learner/07-wrap-up) — prove completion, stop the collector, and understand the Kafka/ClickPipes scale-up path.
+
+## Guardrails
+
+- Public market data only. No wallet, trading account, API secret, order, or financial advice.
+- ClickHouse Cloud is the only database. Docker runs one stateless collector.
+- Live mode is preferred. Fixture mode is an explicit fallback for a blocked or quiet feed.
+- Never commit `.env.polymarket`.
+
+Start with [Module 00](/docs/polymarket/learner/00-setup).

@@ -1,0 +1,6 @@
+{
+  "title": "Polymarket track",
+  "description": "Live public prediction-market analytics on ClickHouse Cloud.",
+  "icon": "ChartCandlestick",
+  "pages": ["index", "learner", "instructor"]
+}

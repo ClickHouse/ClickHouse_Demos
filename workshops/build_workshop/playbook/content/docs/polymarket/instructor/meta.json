@@ -1,0 +1,16 @@
+{
+  "title": "Polymarket · Instructor",
+  "description": "Timing, talk track, failure recovery, and reset steps.",
+  "icon": "Presentation",
+  "pages": [
+    "index",
+    "00-setup",
+    "01-discover-markets",
+    "02-model-data",
+    "03-stream-live-data",
+    "04-realtime-aggregates",
+    "05-investigate-movement",
+    "06-cloud-dashboard",
+    "07-wrap-up"
+  ]
+}

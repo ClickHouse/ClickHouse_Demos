@@ -9,17 +9,16 @@ export function baseOptions(): BaseLayoutProps {
     },
     links: [
       {
-        text: 'Overview',
+        text: 'Use cases',
         url: '/docs',
-        active: 'nested-url',
       },
       {
-        text: 'Learner track',
-        url: '/docs/learner',
+        text: 'AI SRE',
+        url: '/docs/ai-sre',
       },
       {
-        text: 'Instructor track',
-        url: '/docs/instructor',
+        text: 'Polymarket',
+        url: '/docs/polymarket',
       },
     ],
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,

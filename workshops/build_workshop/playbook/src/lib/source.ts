@@ -10,6 +10,13 @@ export const source = loader({
   plugins: [lucideIconsPlugin()],
 });
 
+export function isHiddenRehearsal(slugs: string[] | undefined): boolean {
+  return (
+    process.env.NEXT_PUBLIC_WORKSHOP_ENV !== 'dev' &&
+    slugs?.join('/') === 'polymarket/rehearsal'
+  );
+}
+
 export function getPageImage(page: (typeof source)['$inferPage']) {
   const segments = [...page.slugs, 'image.png'];
 

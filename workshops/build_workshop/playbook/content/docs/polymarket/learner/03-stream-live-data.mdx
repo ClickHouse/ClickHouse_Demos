@@ -1,0 +1,109 @@
+---
+title: 03 Stream live data
+description: Run the resilient collector and verify WebSocket, REST reconciliation, and Cloud writes.
+---
+
+## Starting point
+
+The six `polymarket` objects exist and `.env.polymarket` is sourced.
+
+## What starts
+
+One stateless Python container:
+
+- discovers five active markets through Gamma;
+- subscribes to both outcome tokens on the public CLOB WebSocket;
+- reconciles public trades every 10 seconds;
+- polls CLOB books when the WebSocket is stalled; and
+- writes acknowledged async inserts to ClickHouse Cloud.
+
+There is no local database, broker, dashboard server, or Polymarket credential.
+
+## Step 1 — Build and start the collector
+
+```bash
+docker compose --env-file .env.polymarket up -d --build collector
+docker compose --env-file .env.polymarket ps
+```
+
+The status becomes `healthy` after discovery and the first successful Cloud write. A
+`degraded` application status is still Docker-healthy when REST is current and the
+WebSocket is reconnecting.
+
+## Step 2 — Read the health contract
+
+```bash
+curl --fail --silent http://localhost:8090/health \
+  | python3 -m json.tool
+```
+
+Expected fields:
+
+```json
+{
+  "status": "live",
+  "websocket": "connected",
+  "queue_depth": 0,
+  "queue_capacity": 10000,
+  "watched_markets": 5,
+  "watched_tokens": 10,
+  "fresh_tokens": 10
+}
+```
+
+`status: degraded` with `reason: websocket_stale_rest_active` is acceptable if
+`last_trade_reconcile_at` and `last_book_fallback_at` keep advancing. `unhealthy` is not
+acceptable; use Troubleshooting.
+
+## Step 3 — Watch source and write events
+
+```bash
+docker compose --env-file .env.polymarket logs --tail=30 collector
+```
+
+Logs are JSON. Look for `collector_ready`. Source or ClickHouse failures include a
+bounded error preview and retry delay; no password is logged.
+
+## Step 4 — Prove rows are in Cloud
+
+```bash
+clickhouse client \
+  --host "$CLICKHOUSE_HOST" \
+  --port "$CLICKHOUSE_PORT" \
+  --user "$CLICKHOUSE_USER" \
+  --password "$CLICKHOUSE_PASSWORD" \
+  --secure \
+  --query "
+    SELECT 'markets' AS table, count() AS rows FROM polymarket.markets
+    UNION ALL
+    SELECT 'quote_midpoints', countIf(midpoint > 0) FROM polymarket.price_ticks
+    UNION ALL
+    SELECT 'trades', count() FROM polymarket.trades_clean
+    UNION ALL
+    SELECT 'one_minute_states', count() FROM polymarket.market_midpoints_1m
+  "
+```
+
+`markets`, `quote_midpoints`, and `one_minute_states` must be greater than zero before
+Module 04. `trades` normally grows within a minute; a quiet market may delay it.
+
+## Step 5 — Use deterministic fixture mode only when needed
+
+If the room network blocks Polymarket or no selected market moves after 60 seconds:
+
+```bash
+sed -i.bak 's/^POLYMARKET_MODE=.*/POLYMARKET_MODE=fixture/' .env.polymarket
+set -a; source ./.env.polymarket; set +a
+docker compose --env-file .env.polymarket up -d --build --force-recreate collector
+```
+
+Run the health and row-count checks again. Expected status: `fixture`; tick and trade
+counts increase every five seconds. Keep the backup file until the module ends.
+
+## Done when
+
+- health is `live`, `degraded` with fresh REST timestamps, or `fixture`;
+- `watched_markets` is 5; and
+- all four Cloud row counts return, with quote and one-minute rows greater than zero.
+
+Next: [query the incremental aggregate](/docs/polymarket/learner/04-realtime-aggregates).

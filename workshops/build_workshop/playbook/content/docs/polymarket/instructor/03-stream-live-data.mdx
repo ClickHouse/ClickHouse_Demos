@@ -1,0 +1,32 @@
+---
+title: 03 Stream live data · Instructor
+description: Run live, recognize safe degradation, and switch the room to fixture on time.
+---
+
+## Timing
+
+15 minutes. At minute 10, switch any blocked or quiet learner to fixture mode.
+
+## Talk track
+
+- The WebSocket gives immediacy, not durability.
+- Data API trades reconcile with an overlap; deterministic IDs make reruns safe.
+- CLOB REST keeps BBO/spread current while the socket reconnects.
+- `degraded` is honest and useful. `unhealthy` means Cloud writes or all sources are stale.
+
+## Common failures
+
+- WebSocket handshake timeout: wait for `last_book_fallback_at`; do not restart-loop.
+- Health 503: inspect `reason`, `queue_depth`, and `last_clickhouse_write_at`.
+- Zero ticks after 60 seconds: use fixture so later modules are deterministic.
+- Port 8090 occupied: use the troubleshooting port change.
+
+## Reset
+
+```bash
+docker compose --env-file .env.polymarket down
+docker compose --env-file .env.polymarket up -d --build collector
+curl --fail --silent http://localhost:8090/health | python3 -m json.tool
+```
+
+Restarting hydrates recent IDs and trade checkpoints from ClickHouse Cloud.

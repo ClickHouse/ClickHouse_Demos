@@ -1,0 +1,25 @@
+---
+title: Polymarket dev rehearsal
+description: Maintainer-only staging run before production promotion.
+---
+
+<Callout type="warn" title="Dev environment only">
+  This page is for maintainers validating the staging branch. Public learners use
+  `build-workshop-v1` from Module 00 after production promotion.
+</Callout>
+
+Use a fresh checkout so the rehearsal proves distribution, not only a local worktree:
+
+```bash
+git clone https://github.com/ClickHouse/ClickHouse_Demos.git ClickHouse_Demos-polymarket-rehearsal
+cd ClickHouse_Demos-polymarket-rehearsal
+git switch dev-build-workshop-v1
+cd workshops/build_workshop/polymarket
+cp .env.polymarket.example .env.polymarket
+```
+
+Continue Module 00 at **Step 3** using this staging checkout; do not repeat its production
+clone/switch step. Complete the remaining Modules 00–07, including one forced WebSocket
+failure or venue-blocked test, one fixture-mode run, collector restart, and cleanup.
+Record elapsed time and any command that required explanation not present on the learner
+page.
