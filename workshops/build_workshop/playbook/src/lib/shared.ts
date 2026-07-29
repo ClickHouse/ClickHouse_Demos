@@ -1,4 +1,4 @@
-export const appName = 'ClickHouse BUILD Workshop';
+export const appName = 'Build Series: Solutions on ClickHouse Cloud';
 export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';

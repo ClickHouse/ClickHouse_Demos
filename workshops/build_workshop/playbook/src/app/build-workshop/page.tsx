@@ -8,7 +8,7 @@ import '../landing.css';
 // base-path-aware.
 
 export const metadata: Metadata = {
-  title: 'Build it, end to end — ClickHouse BUILD Workshop',
+  title: 'AI SRE with NYC taxi data | ClickHouse Build Series',
   description:
     'A three-hour, hands-on workshop: your own AI coding agent takes a real analytics app end to end on ClickHouse Cloud — real-time CDC, conversational BI, observability, an AI SRE, and traced AI chat.',
 };
@@ -21,7 +21,7 @@ export default function LandingPage() {
         <div className="wrap">
           <div className="hero-grid">
             <div>
-              <p className="eyebrow"><span className="tick">ClickHouse</span>{' '} BUILD Workshop</p>
+              <p className="eyebrow"><span className="tick">ClickHouse</span>{' '} Build Series</p>
               <h1>Build it,<br /><span className="ai">end to end.</span></h1>
               <p className="hero-sub">
                 In one three-hour sitting, you take a real analytics app live on ClickHouse Cloud —
@@ -340,7 +340,7 @@ export default function LandingPage() {
       {/* ===================== FOOTER ===================== */}
       <footer>
         <div className="wrap">
-          <div className="brand">ClickHouse <b>BUILD</b> Workshop — Build AI with AI</div>
+          <div className="brand">ClickHouse <b>Build Series</b> · Solutions on ClickHouse Cloud</div>
           <div className="links">
             <Link href="/docs">Playbook</Link>
             <a href="https://clickhouse.com/cloud">ClickHouse Cloud</a>

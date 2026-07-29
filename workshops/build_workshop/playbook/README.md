@@ -1,4 +1,4 @@
-# ClickHouse Cloud workshop playbook
+# Build Series: Solutions on ClickHouse Cloud
 
 The published playbook offers two dedicated ClickHouse Cloud use cases:
 

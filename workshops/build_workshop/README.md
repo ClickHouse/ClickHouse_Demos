@@ -1,4 +1,4 @@
-# ClickHouse Cloud use-case workshops
+# Build Series: Solutions on ClickHouse Cloud
 
 This site now carries two dedicated use cases:
 
