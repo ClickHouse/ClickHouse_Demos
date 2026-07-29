@@ -1,13 +1,15 @@
-# ClickHouse BUILD Workshop playbook
+# ClickHouse Cloud workshop playbook
 
-The published playbook for the ClickHouse BUILD Workshop ("Build AI with AI"): a
-three-hour, hands-on session where participants use their own agentic coding tool to take
-an NYC-taxi ride-hailing analytics app end to end on ClickHouse Cloud.
+The published playbook offers two dedicated ClickHouse Cloud use cases:
 
-This directory is the documentation site only. The workshop app that participants clone
-and build on lives alongside it at `workshops/build_workshop/app` in this repository, on
-the `build-workshop-v1` branch. The site is built with [Next.js](https://nextjs.org)
-and [Fumadocs](https://fumadocs.dev). Production is
+- **AI SRE:** a three-hour NYC-taxi application, observability, incident, and traced-chat track.
+- **Polymarket:** a two-hour public market-data stream, real-time aggregate, investigation, and Cloud dashboard track.
+
+This directory is the documentation site only. The AI SRE application lives at
+`workshops/build_workshop/app`; the Polymarket collector and SQL assets live at
+`workshops/build_workshop/polymarket`. Learner materials use the `build-workshop-v1`
+branch. The site is built with [Next.js](https://nextjs.org) and
+[Fumadocs](https://fumadocs.dev). Production is
 [workshop.demohouse.cloud](https://workshop.demohouse.cloud); dev is
 [dev-workshop.demohouse.cloud](https://dev-workshop.demohouse.cloud).
 
@@ -62,21 +64,27 @@ the recommended Node deployment redirects those paths to their new module number
 
 ## Content authoring
 
-All content is MDX under `content/docs/`. The site is dual-track: every module has a
-Learner page and an Instructor page.
+All content is MDX under `content/docs/`. Each use case has learner and instructor
+tracks with a shared module sequence.
 
 ```
 content/docs/
-  index.mdx                # the overview (hero, tracks, scope, modules table, ...)
-  meta.json                # top-level ordering: index, learner, instructor
+  index.mdx                # use-case selector and shared platform contract
+  ai-sre.mdx               # AI SRE landing page; legacy module URLs stay valid
+  meta.json                # top-level ordering and navigation groups
   learner/
-    meta.json              # root:true -> Learner track tab; orders the modules
-    index.mdx              # track landing
+    meta.json              # AI SRE learner track; orders the modules
+    index.mdx              # AI SRE learner landing
     00-setup.mdx ... 09-wrap-up.mdx
   instructor/
-    meta.json              # root:true -> Instructor track tab; orders the modules
-    index.mdx              # run of show + shared-resource checklist
+    meta.json              # AI SRE instructor track; orders the modules
+    index.mdx              # AI SRE run of show + shared-resource checklist
     00-setup.mdx ... 09-wrap-up.mdx
+  polymarket/
+    index.mdx              # Polymarket use-case landing
+    rehearsal.mdx          # dev-only maintainer rehearsal
+    learner/               # 00-setup ... 07-wrap-up + troubleshooting
+    instructor/            # matching 00-setup ... 07-wrap-up run of show
 ```
 
 - Ordering is controlled by the `pages` array in each `meta.json` (file basenames,
@@ -104,7 +112,7 @@ Desktop WSL integration; it does not mean translating shared Bash blocks into Po
 - Keep shell scripts LF-only. The Windows CI job enforces the platform contract and builds
   the complete playbook on a Windows runner.
 
-### The per-module learner contract
+### The AI SRE per-module learner contract
 
 Every learner module page follows this skeleton, in order:
 
