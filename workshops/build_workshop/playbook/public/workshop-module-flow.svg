@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1756" height="402" viewBox="0 0 1756 402" font-family="Inter, -apple-system, Segoe UI, Roboto, sans-serif">
 <rect x="0" y="0" width="1756" height="402" fill="#17171A"/>
 <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L7,3 L0,6 Z" fill="#7E858E"/></marker></defs>
-<text x="40" y="48" fill="#EDEDED" font-size="20" font-weight="700">ClickHouse BUILD Workshop · Module flow</text>
+<text x="40" y="48" fill="#EDEDED" font-size="20" font-weight="700">ClickHouse Build Series · Module flow</text>
 <text x="40" y="70" fill="#B7BCC2" font-size="13">~2h30 hands-on · only module 07 switches to a fault branch</text>
 <rect x="40" y="92" width="300" height="96" rx="12" fill="#26262B" stroke="#4C4C55" stroke-width="1.3"/>
 <rect x="40" y="92" width="5" height="96" rx="2.5" fill="#FAFF69"/>

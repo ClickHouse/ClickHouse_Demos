@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" font-family="Inter, -apple-system, Segoe UI, Roboto, sans-serif">
 <rect x="0" y="0" width="1200" height="650" fill="#17171A"/>
 <defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L7,3 L0,6 Z" fill="#7E858E"/></marker></defs>
-<text x="30" y="44" fill="#EDEDED" font-size="22" font-weight="700">ClickHouse BUILD Workshop · Where each component runs</text>
+<text x="30" y="44" fill="#EDEDED" font-size="22" font-weight="700">ClickHouse Build Series · Where each component runs</text>
 <text x="30" y="70" fill="#B7BCC2" font-size="13.5">Grouped by location; no data direction is implied. Follow the next diagram for the trip path.</text>
 <rect x="30" y="110" width="330" height="480" rx="16" fill="#1B2531" stroke="#3E5A78" stroke-width="1.6" opacity="0.96"/>
 <text x="48" y="136" fill="#B7BCC2" font-size="16" font-weight="700" letter-spacing="0.5">PARTICIPANT LAPTOP · local app + tools</text>

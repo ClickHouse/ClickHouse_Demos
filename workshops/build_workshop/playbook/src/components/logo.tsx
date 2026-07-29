@@ -19,7 +19,7 @@ export function Logo() {
         aria-hidden="true"
         style={{ width: 1, height: 18, background: 'var(--color-fd-border)' }}
       />
-      <span className="font-semibold tracking-tight">BUILD Workshop</span>
+      <span className="font-semibold tracking-tight">Build Series</span>
       <span className="sr-only">{appName}</span>
     </span>
   );

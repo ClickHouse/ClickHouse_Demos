@@ -30,7 +30,8 @@
 
 .hub .grid-section { padding-block: clamp(40px, 6vw, 72px); }
 .hub .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); margin: 0 0 22px; }
-.hub .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+.hub .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+@media (max-width: 980px) { .hub .grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 760px) { .hub .grid { grid-template-columns: 1fr; } }
 
 .hub .card { display: flex; flex-direction: column; gap: 14px; background: var(--ink-2); border: 1px solid var(--line-d); border-radius: 16px; padding: 26px 24px 24px; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
