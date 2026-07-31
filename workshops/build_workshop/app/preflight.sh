@@ -2,16 +2,19 @@
 #
 # preflight.sh -- ClickHouse BUILD workshop readiness check.
 #
-# Run this from the app directory BEFORE `docker compose ... up`:
+# Run this from the app directory before the relevant `docker compose ... up`:
 #
-#   ./preflight.sh
+#   ./preflight.sh          # module 00: base app
+#   ./preflight.sh --cdc    # module 03: Postgres CDC
+#   ./preflight.sh --otel   # module 05: OpenTelemetry overlay
 #
 # It verifies, and prints PASS / WARN / FAIL for, everything the live bring-up of
 # the stack actually tripped over: the Docker CLI + daemon, that the daemon can
 # really start a container (catches a wedged engine), host-port collisions on the
-# EFFECTIVE ports from .env.workshop, the required .env.workshop values, and
-# network reachability of ClickHouse Cloud and, when requested, the managed
-# Postgres created in Module 03.
+# EFFECTIVE ports for the requested stage, the required .env.workshop values,
+# and network reachability of ClickHouse Cloud. Managed Postgres and collector
+# checks are opt-in because those services are not configured until modules 03
+# and 05.
 #
 # Every failure prints a one-line fix hint. The script exits non-zero if any check
 # FAILs (warnings do not affect the exit code), so it composes into scripts and CI.
@@ -26,25 +29,35 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
 ENV_FILE="$SCRIPT_DIR/.env.workshop"
 EXAMPLE_FILE="$SCRIPT_DIR/.env.workshop.example"
 PREFLIGHT_CTR="ch-workshop-preflight"
-REQUIRE_POSTGRES=0
 
-case "${1:-}" in
-  "") ;;
-  --require-postgres) REQUIRE_POSTGRES=1 ;;
-  *)
-    printf 'Usage: %s [--require-postgres]\n' "$0" >&2
-    exit 2
-    ;;
-esac
+CHECK_CDC=0
+CHECK_OTEL=0
+RERUN_CMD="./preflight.sh"
 
-# Capture the calling shell's values for the vars docker compose interpolates,
-# BEFORE anything else runs, so the shell-vs-.env.workshop override check can tell
-# whether an exported shell value would silently win over the file (see that
-# section below). Unset -> empty, which the check treats as "not overriding".
-SHELL_OPENAI_API_KEY="${OPENAI_API_KEY:-}"
-SHELL_LANGFUSE_PUBLIC_KEY="${LANGFUSE_PUBLIC_KEY:-}"
-SHELL_LANGFUSE_SECRET_KEY="${LANGFUSE_SECRET_KEY:-}"
-SHELL_CLICKHOUSE_PASSWORD="${CLICKHOUSE_PASSWORD:-}"
+usage() {
+  cat <<'EOF'
+Usage: ./preflight.sh [--cdc] [--otel] [--all]
+
+With no flags, check only the module 00 base app.
+  --cdc   also check module 03 Postgres settings and connectivity
+  --otel  also check module 05 OpenTelemetry collector ports
+  --all   run every stage-specific check
+EOF
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --cdc) CHECK_CDC=1 ;;
+    --otel) CHECK_OTEL=1 ;;
+    --all) CHECK_CDC=1; CHECK_OTEL=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) printf 'Unknown option: %s\n\n' "$1" >&2; usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
+[ "$CHECK_CDC" -eq 1 ] && RERUN_CMD="$RERUN_CMD --cdc"
+[ "$CHECK_OTEL" -eq 1 ] && RERUN_CMD="$RERUN_CMD --otel"
 
 # --- Output helpers --------------------------------------------------------
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -183,6 +196,15 @@ env_get() {
   echo "$val"
 }
 
+# Return success when a required value is blank or still contains the
+# template's angle-bracket placeholder.
+is_unset_or_placeholder() {
+  case "$1" in
+    ''|\<*\>) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 # resolve_port VAR DEFAULT -- effective host port (env value, else default).
 resolve_port() {
   local v
@@ -220,18 +242,19 @@ check_port() {
   fi
 }
 
-# check_shell_override VAR SHELL_VALUE -- warn if an exported shell value would
-# silently win over .env.workshop. docker compose resolves ${VAR} from the shell
-# environment BEFORE the --env-file, so a value exported in the calling shell
-# overrides a blank/different line in .env.workshop -- e.g. an exported
-# OPENAI_API_KEY makes the app do real LLM calls even though the file looks empty.
+# check_shell_override VAR -- fail if an exported shell value would silently win
+# over .env.workshop. This includes exported empty values: Compose resolves ${VAR}
+# from the shell before --env-file, so a stale blank PGHOST can override a newly
+# completed file and send the trip writer the wrong connection tuple.
 check_shell_override() {
-  local var="$1" shell_v="$2" file_v
-  [ -n "$shell_v" ] || return 0
-  file_v=$(env_get "$var")
-  if [ "$shell_v" != "$file_v" ]; then
-    warn "$var is set in your shell and differs from .env.workshop" \
-         "docker compose uses the shell value (it overrides .env.workshop via interpolation), so the file is ignored for $var -- run 'unset $var' or set the same value in .env.workshop"
+  local var="$1" shell_v file_v
+  if env | grep -q "^${var}="; then
+    shell_v=$(printenv "$var")
+    file_v=$(env_get "$var")
+    if [ "$shell_v" != "$file_v" ]; then
+      fail "$var is exported in your shell and differs from .env.workshop" \
+           "re-run: set -a; source ./.env.workshop; set +a  (Compose gives the shell value precedence over --env-file)"
+    fi
   fi
   return 0
 }
@@ -239,6 +262,10 @@ check_shell_override() {
 # ===========================================================================
 printf '%sClickHouse BUILD workshop -- preflight%s\n' "$C_DIM" "$C_RST"
 printf '%sapp dir: %s%s\n' "$C_DIM" "$SCRIPT_DIR" "$C_RST"
+if [ "$CHECK_CDC" -eq 1 ] || [ "$CHECK_OTEL" -eq 1 ]; then
+  printf '%sadditional checks: cdc=%s otel=%s%s\n' \
+    "$C_DIM" "$CHECK_CDC" "$CHECK_OTEL" "$C_RST"
+fi
 
 # --- Docker CLI + daemon ---------------------------------------------------
 section "Docker engine"
@@ -373,6 +400,8 @@ CH_HOST=""
 CH_PORT="8443"
 CH_PW=""
 PGHOST_VAL=""
+PGPORT_VAL="5432"
+PG_CONFIG_OK=1
 
 if [ "$HAVE_ENV" -eq 1 ]; then
   pass ".env.workshop found"
@@ -422,63 +451,112 @@ if [ "$HAVE_ENV" -eq 1 ]; then
          "add LANGFUSE_PUBLIC_KEY/SECRET_KEY before module 08 if you want traces; chat works untraced without them"
   fi
 
-  PGHOST_VAL=$(env_get PGHOST)
-  case "$PGHOST_VAL" in
-    postgres|localhost|127.0.0.1|0.0.0.0|::1|host.docker.internal)
-      fail "PGHOST=$PGHOST_VAL points to a local database, which this workshop does not use" \
-           "replace PGHOST with the hostname returned by 'clickhousectl cloud postgres create' in Module 03"
-      ;;
-    "")
-      if [ "$REQUIRE_POSTGRES" -eq 1 ]; then
-        fail "PGHOST is empty" \
-             "complete Module 03, then add the managed Postgres hostname to .env.workshop"
+  if [ "$CHECK_OTEL" -eq 1 ]; then
+    OTLP_TOKEN=$(env_get OTLP_AUTH_TOKEN)
+    case "$OTLP_TOKEN" in
+      ""|\<*\>|change-me*|changeme*|replace-*)
+        fail "OTLP_AUTH_TOKEN is missing or still a placeholder for module 05" \
+             "generate a random token, save it in .env.workshop, source the file again, then rerun with --otel"
+        ;;
+      *)
+        pass "OTLP_AUTH_TOKEN is configured for module 05"
+        ;;
+    esac
+  fi
+
+  if [ "$CHECK_CDC" -eq 1 ]; then
+    PGHOST_VAL=$(env_get PGHOST)
+    PGPORT_VAL=$(env_get PGPORT); [ -n "$PGPORT_VAL" ] || PGPORT_VAL="5432"
+    PGSSLMODE_VAL=$(env_get PGSSLMODE)
+
+    case "$PGHOST_VAL" in
+      postgres|localhost|127.0.0.1|0.0.0.0|::1|host.docker.internal)
+        fail "PGHOST=$PGHOST_VAL points to a local database, which this workshop does not use" \
+             "replace PGHOST with the hostname returned by 'clickhousectl cloud postgres create' in Module 03"
+        PG_CONFIG_OK=0
+        ;;
+      ""|\<*\>)
+        fail "PGHOST is not configured for module 03" \
+             "create managed Postgres first, paste its hostname into .env.workshop, then rerun with --cdc"
+        PG_CONFIG_OK=0
+        ;;
+      *)
+        pass "PGHOST=$PGHOST_VAL (using managed Postgres)"
+        ;;
+    esac
+
+    for pg_var in PGUSER PGDATABASE PGPASSWORD; do
+      pg_val=$(env_get "$pg_var")
+      if is_unset_or_placeholder "$pg_val"; then
+        fail "$pg_var is not configured for module 03" \
+             "fill $pg_var in .env.workshop, then rerun with --cdc"
+        PG_CONFIG_OK=0
       else
-        pass "managed Postgres is not configured yet (expected before Module 03)"
+        pass "$pg_var is set"
       fi
-      ;;
-    *)
-      pass "PGHOST=$PGHOST_VAL (using managed Postgres)"
-      if [ -z "$(env_get PGPASSWORD)" ]; then
-        fail "PGPASSWORD is empty for managed Postgres" \
-             "add the one-time password returned by 'clickhousectl cloud postgres create'"
-      fi
-      if [ "$(env_get PGSSLMODE)" != "require" ]; then
-        fail "PGSSLMODE must be require for managed Postgres" \
-             "set PGSSLMODE=require in .env.workshop"
-      fi
-      ;;
-  esac
+    done
+
+    if [ "$PGSSLMODE_VAL" = "require" ]; then
+      pass "PGSSLMODE=require (TLS required for managed Postgres)"
+    else
+      fail "PGSSLMODE must be require for managed Postgres (current: ${PGSSLMODE_VAL:-empty})" \
+           "set PGSSLMODE=require in .env.workshop"
+      PG_CONFIG_OK=0
+    fi
+  fi
 else
   fail ".env.workshop not found in $SCRIPT_DIR" \
        "run: cp .env.workshop.example .env.workshop  then fill in CLICKHOUSE_HOST and CLICKHOUSE_PASSWORD"
   if [ -f "$EXAMPLE_FILE" ]; then
-    warn "port checks below use the example defaults (8080/8000/4317/4318)" \
+    warn "port checks below use the built-in defaults for the selected stage" \
          "create .env.workshop so preflight checks your real, effective ports"
   fi
+  [ "$CHECK_CDC" -eq 1 ] && PG_CONFIG_OK=0
 fi
 
 # --- Shell environment vs .env.workshop ------------------------------------
 section "Shell environment vs .env.workshop"
-_warns_before=$WARN_COUNT
-check_shell_override OPENAI_API_KEY "$SHELL_OPENAI_API_KEY"
-check_shell_override LANGFUSE_PUBLIC_KEY "$SHELL_LANGFUSE_PUBLIC_KEY"
-check_shell_override LANGFUSE_SECRET_KEY "$SHELL_LANGFUSE_SECRET_KEY"
-check_shell_override CLICKHOUSE_PASSWORD "$SHELL_CLICKHOUSE_PASSWORD"
-if [ "$WARN_COUNT" -eq "$_warns_before" ]; then
-  pass "no shell variable is shadowing .env.workshop (OPENAI_API_KEY, LANGFUSE_*, CLICKHOUSE_PASSWORD)"
+_fails_before=$FAIL_COUNT
+for shell_var in \
+  CLICKHOUSE_HOST CLICKHOUSE_PORT CLICKHOUSE_USER CLICKHOUSE_PASSWORD \
+  CLICKHOUSE_DATABASE CLICKHOUSE_SECURE CLICKHOUSE_CONNECT_TIMEOUT \
+  API_CORS_ORIGINS QUERY_TIMEOUT_SECONDS MAX_ROWS_TO_READ MAX_BYTES_TO_READ \
+  OPENAI_API_KEY LLM_MODEL LLM_BASE_URL LANGFUSE_PUBLIC_KEY \
+  LANGFUSE_SECRET_KEY LANGFUSE_BASE_URL BACKEND_HOST_PORT FRONTEND_HOST_PORT; do
+  check_shell_override "$shell_var"
+done
+if [ "$CHECK_CDC" -eq 1 ]; then
+  for shell_var in \
+    PGHOST PGPORT PGDATABASE PGUSER PGPASSWORD PGSSLMODE PG_PUBLICATION \
+    RATE_PER_SEC BATCH_SIZE; do
+    check_shell_override "$shell_var"
+  done
+fi
+if [ "$CHECK_OTEL" -eq 1 ]; then
+  for shell_var in \
+    OTLP_AUTH_TOKEN CLICKSTACK_DATABASE OTEL_SERVICE_NAME \
+    OTEL_FRONTEND_SERVICE_NAME OTEL_GRPC_HOST_PORT OTEL_HTTP_HOST_PORT LOG_LEVEL; do
+    check_shell_override "$shell_var"
+  done
+fi
+if [ "$FAIL_COUNT" -eq "$_fails_before" ]; then
+  pass "no exported shell variable is shadowing .env.workshop for this stage"
 fi
 
 # --- Host ports ------------------------------------------------------------
 section "Host port availability (effective ports)"
 FRONTEND_PORT=$(resolve_port FRONTEND_HOST_PORT 8080)
 BACKEND_PORT=$(resolve_port BACKEND_HOST_PORT 8000)
-OTEL_GRPC_PORT=$(resolve_port OTEL_GRPC_HOST_PORT 4317)
-OTEL_HTTP_PORT=$(resolve_port OTEL_HTTP_HOST_PORT 4318)
 
 check_port FRONTEND_HOST_PORT "$FRONTEND_PORT" core ""
 check_port BACKEND_HOST_PORT "$BACKEND_PORT" core ""
-check_port OTEL_GRPC_HOST_PORT "$OTEL_GRPC_PORT" optional " (only with the otel overlay)"
-check_port OTEL_HTTP_HOST_PORT "$OTEL_HTTP_PORT" optional " (only with the otel overlay)"
+
+if [ "$CHECK_OTEL" -eq 1 ]; then
+  OTEL_GRPC_PORT=$(resolve_port OTEL_GRPC_HOST_PORT 4317)
+  OTEL_HTTP_PORT=$(resolve_port OTEL_HTTP_HOST_PORT 4318)
+  check_port OTEL_GRPC_HOST_PORT "$OTEL_GRPC_PORT" core " (OpenTelemetry overlay, module 05)"
+  check_port OTEL_HTTP_HOST_PORT "$OTEL_HTTP_PORT" core " (OpenTelemetry overlay, module 05)"
+fi
 
 # --- Connectivity ----------------------------------------------------------
 section "Connectivity"
@@ -507,21 +585,13 @@ else
        "set CLICKHOUSE_HOST in .env.workshop first"
 fi
 
-if [ -n "$PGHOST_VAL" ]; then
-  PGPORT_VAL=$(env_get PGPORT); [ -n "$PGPORT_VAL" ] || PGPORT_VAL="5432"
+if [ "$CHECK_CDC" -eq 1 ] && [ "$PG_CONFIG_OK" -eq 1 ]; then
   if tcp_reachable "$PGHOST_VAL" "$PGPORT_VAL" 8; then
     pass "managed Postgres reachable ($PGHOST_VAL:$PGPORT_VAL, TCP)"
   else
-    if [ "$REQUIRE_POSTGRES" -eq 1 ]; then
-      fail "managed Postgres not reachable at $PGHOST_VAL:$PGPORT_VAL" \
-           "check wifi / VPN / firewall and the managed Postgres endpoint or IP allowlist"
-    else
-      warn "managed Postgres not reachable at $PGHOST_VAL:$PGPORT_VAL (needed from Module 03 onward)" \
-           "check wifi / VPN / firewall and the managed Postgres endpoint or IP allowlist"
-    fi
+    fail "managed Postgres not reachable at $PGHOST_VAL:$PGPORT_VAL" \
+         "wait for provisioning, then check wifi / VPN / firewall, the hostname, and its IP allowlist before rerunning with --cdc"
   fi
-else
-  pass "skipping managed Postgres connectivity until Module 03"
 fi
 
 # --- Summary ---------------------------------------------------------------
@@ -529,7 +599,7 @@ printf '\n%s==================================================%s\n' "$C_DIM" "$C
 printf 'Preflight summary: %d passed, %d warning(s), %d failure(s)\n' "$PASS_COUNT" "$WARN_COUNT" "$FAIL_COUNT"
 
 if [ "$FAIL_COUNT" -gt 0 ]; then
-  printf '\n%sFailures to fix before `docker compose ... up`:%s\n' "$C_FAIL" "$C_RST"
+  printf '\n%sFailures to fix before the requested docker compose up:%s\n' "$C_FAIL" "$C_RST"
   for line in "${FAIL_LINES[@]}"; do
     printf '  - %s\n' "$line"
   done
@@ -543,11 +613,18 @@ fi
 
 printf '\n'
 if [ "$FAIL_COUNT" -gt 0 ]; then
-  printf '%sOverall: NOT READY -- fix the failures above, then re-run ./preflight.sh%s\n' "$C_FAIL" "$C_RST"
+  printf '%sOverall: NOT READY -- fix the failures above, then rerun %s%s\n' "$C_FAIL" "$RERUN_CMD" "$C_RST"
   printf '%s==================================================%s\n' "$C_DIM" "$C_RST"
   exit 1
 fi
-printf '%sOverall: READY -- start the stack with:%s\n' "$C_PASS" "$C_RST"
-printf '  docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d\n'
+if [ "$CHECK_CDC" -eq 1 ]; then
+  printf '%sOverall: READY -- module 03 Postgres checks passed.%s\n' "$C_PASS" "$C_RST"
+  printf '  docker compose --env-file .env.workshop -f docker-compose.workshop.yml --profile cdc up -d pg-trip-writer\n'
+elif [ "$CHECK_OTEL" -eq 1 ]; then
+  printf '%sOverall: READY -- module 05 OpenTelemetry checks passed.%s\n' "$C_PASS" "$C_RST"
+else
+  printf '%sOverall: READY -- start the base app with:%s\n' "$C_PASS" "$C_RST"
+  printf '  docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d\n'
+fi
 printf '%s==================================================%s\n' "$C_DIM" "$C_RST"
 exit 0

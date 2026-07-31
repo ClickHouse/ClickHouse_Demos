@@ -197,17 +197,20 @@ The secret is displayed once. Store it outside the repository; do not put it in
 ## Step 4 — Install `clickhousectl` and ClickHouse client
 
 ```bash
+# Install clickhousectl, the Cloud resource-management CLI.
 curl https://clickhouse.com/cli | sh
 export PATH="$HOME/.local/bin:$PATH"
 clickhousectl --version
 
-# Installs the stable ClickHouse binary and creates ~/.local/bin/clickhouse.
+# Install the stable ClickHouse binary. It includes the ClickHouse client.
+clickhousectl local install stable
 clickhousectl local use stable
 clickhouse client --version
 ```
 
-Here `local use` selects the local **client binary version**. It does not install or
-start a ClickHouse server; every query in this workshop targets ClickHouse Cloud.
+`clickhousectl local install stable` downloads ClickHouse. `local use stable` selects the
+local **client binary version** and creates `~/.local/bin/clickhouse`; it does not start a
+ClickHouse server. Every query in this workshop targets ClickHouse Cloud.
 
 Add `~/.local/bin` to your shell profile if a new terminal cannot find either command.
 On Windows, both commands are installed inside Ubuntu; do not install or run their Windows
@@ -261,19 +264,33 @@ clickhousectl cloud service list
 clickhousectl cloud service get <service-id>
 ```
 
-From the service **Connect** dialog, copy the hostname and verify the local client. The
-`--password` flag prompts without echoing the password:
+From the service **Connect** dialog, copy its bare hostname. Put that hostname and the
+one-time password into the existing ClickHouse fields in `.env.workshop`, then load the
+file into this terminal:
+
+```bash
+CLICKHOUSE_HOST=<hostname without https:// or port>
+CLICKHOUSE_PASSWORD=<one-time service password>
+```
+
+```bash
+set -a; source ./.env.workshop; set +a
+```
+
+Verify the local client with the loaded values:
 
 ```bash
 clickhouse client \
-  --host <your-service-hostname> \
+  --host "$CLICKHOUSE_HOST" \
+  --port 9440 \
   --secure \
-  --user default \
-  --password \
+  --user "$CLICKHOUSE_USER" \
   --query "SELECT version(), currentUser()"
 ```
 
-Expected: one row containing the ClickHouse version and `default`.
+The client reads `CLICKHOUSE_PASSWORD` from the exported environment, so the secret does
+not appear in process arguments. Expected: one row containing the ClickHouse version and
+`default`.
 
 ## Step 7 — Configure agent skills and both MCP servers once
 
@@ -385,9 +402,10 @@ OPENAI_API_KEY=sk-...
 
 Keep the model and API-base defaults already present in `.env.workshop`.
 
-## Step 9 — Fill `.env.workshop`
+## Step 9 — Finish and reload `.env.workshop`
 
-Copy the service values from Step 6 and the keys from Step 8 into the existing fields:
+The ClickHouse fields are already filled from Step 6. Add the keys from Step 8 to their
+existing fields and confirm the complete file contains these values:
 
 ```bash
 CLICKHOUSE_HOST=<hostname without https:// or port>
@@ -403,7 +421,16 @@ LANGFUSE_BASE_URL=https://us.cloud.langfuse.com
 OPENAI_API_KEY=sk-...
 ```
 
-Do not export these names in the shell: exported values override the env file.
+Load the completed file into the current terminal. `set -a` exports every value so later
+commands can use `$CLICKHOUSE_HOST`, `$CLICKHOUSE_USER`, and `$CLICKHOUSE_PASSWORD`
+directly:
+
+```bash
+set -a; source ./.env.workshop; set +a
+```
+
+Run this command again whenever you change `.env.workshop`. It keeps the current shell and
+Docker Compose on the same values. Do not commit the file.
 
 ## Step 10 — Run preflight and start the app
 
@@ -415,7 +442,9 @@ cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
 ```
 
 Continue only when the last line is `Overall: READY`. Apply any printed fix and rerun the
-script. Then start the stack:
+script. This default preflight checks only the Module 00 base app. It intentionally does
+not validate Postgres or telemetry because those values do not exist until Modules 03
+and 05. Then start the stack:
 
 ```bash
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
@@ -429,9 +458,9 @@ server is started locally. Empty dashboards are correct until Module 01.
 ## Completion check
 
 - `clickhousectl cloud service get <service-id>` reports the service is ready.
-- `clickhouse client ... --query "SELECT version()"` succeeds.
+- `clickhouse client --host "$CLICKHOUSE_HOST" ... --query "SELECT version()"` succeeds.
 - Your agent lists databases through the ClickHouse MCP.
 - `./preflight.sh` ends with `Overall: READY` from the app directory.
-- Docker services are healthy and the local app loads.
+- Only `backend` and `frontend` are running, both are healthy, and the local app loads.
 
 Continue to [01 ClickHouse Cloud](/docs/learner/01-clickhouse-cloud).

@@ -1,7 +1,7 @@
 # ClickStack observability OVERLAY.
 #
 # This file is NOT standalone. It layers on top of docker-compose.workshop.yml
-# (which defines the `backend`, `frontend`, `pg-trip-writer` services) and:
+# (which defines the base app and the profile-gated `pg-trip-writer`) and:
 #   - adds a ClickStack OpenTelemetry collector that forwards traces + logs to
 #     the participant's ClickHouse Cloud service,
 #   - turns on OpenTelemetry in the backend and points it at that collector,
@@ -34,8 +34,9 @@ services:
       - CLICKHOUSE_ENDPOINT=https://${CLICKHOUSE_HOST:-}:${CLICKHOUSE_PORT:-8443}
       - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
       - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
-      # Arbitrary shared secret. Clients must send it back (see backend
-      # OTEL_EXPORTER_OTLP_HEADERS below). Leave empty to disable OTLP auth.
+      # Random shared secret. Clients must send it back (see backend
+      # OTEL_EXPORTER_OTLP_HEADERS below). Module 05 preflight rejects an empty
+      # or placeholder value.
       - OTLP_AUTH_TOKEN=${OTLP_AUTH_TOKEN:-}
       # Target database for ClickStack's own otel_* tables (distinct from the
       # app's data database, CLICKHOUSE_DATABASE=nyc_tlc_data).
@@ -51,8 +52,8 @@ services:
     ports:
       # Host mappings are only needed if you send OTLP from the host; the backend
       # reaches the collector in-network at http://otel-collector:4318.
-      - "${OTEL_GRPC_HOST_PORT:-4317}:4317"
-      - "${OTEL_HTTP_HOST_PORT:-4318}:4318"
+      - "127.0.0.1:${OTEL_GRPC_HOST_PORT:-4317}:4317"
+      - "127.0.0.1:${OTEL_HTTP_HOST_PORT:-4318}:4318"
 
   # Additive overlay onto the workshop `backend`: enable OpenTelemetry and point
   # it at the collector. Only env keys are added here; the service body comes

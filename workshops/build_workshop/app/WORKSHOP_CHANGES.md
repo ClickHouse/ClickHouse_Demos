@@ -28,7 +28,7 @@ learner machine.
 1. Module 00 creates ClickHouse Cloud and starts only the local frontend/backend.
 2. Module 01 creates and seeds the Cloud schema.
 3. Module 03 creates managed Postgres, validates it with
-   `./preflight.sh --require-postgres`, then explicitly enables the `cdc` trip writer.
+   `./preflight.sh --cdc`, then explicitly enables the `cdc` trip writer.
 4. Module 05 starts the stateless collector overlay, then enables Managed ClickStack.
 5. Module 08 sends chat traces to Langfuse Cloud.
 

@@ -141,9 +141,10 @@ has a ready-to-paste prompt that turns it into your instructor.
   base-port + 20000 convention, for example
   `set FRONTEND_HOST_PORT=28080 in .env.workshop`. The override vars are
   `FRONTEND_HOST_PORT`, `BACKEND_HOST_PORT`, and for the observability
-  overlay `OTEL_GRPC_HOST_PORT` / `OTEL_HTTP_HOST_PORT`. Set the suggested value, re-run
-  preflight, then start the stack. Only the host ports move; the in-container ports are
-  unchanged, so this is safe.
+  overlay `OTEL_GRPC_HOST_PORT` / `OTEL_HTTP_HOST_PORT`. For an observability-port clash,
+  rerun the command with `--otel`. Set the suggested value, rerun the same preflight,
+  then start the stack. Only the host ports move; the in-container ports are unchanged,
+  so this is safe.
 
 ### "platform does not match" warning
 

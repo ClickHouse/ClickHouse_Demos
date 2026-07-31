@@ -23,7 +23,7 @@ module 00 — it walks through every step below in order.
   plus `curl` and `git`.
 
 Host ports (override any of these in `.env.workshop` if it is already taken —
-`preflight.sh` tells you which one and suggests a free port):
+`preflight.sh` checks the app ports, and `preflight.sh --otel` adds the collector ports):
 
 | Service | Default host port | Override var |
 |---|---|---|
@@ -47,6 +47,7 @@ cp .env.workshop.example .env.workshop     # fill in your ClickHouse Cloud value
 docker compose --env-file .env.workshop -f docker-compose.workshop.yml up -d
 
 # with the ClickStack observability overlay (module 05 onward):
+./preflight.sh --otel                     # must print "Overall: READY" (exit 0)
 docker compose --env-file .env.workshop \
   -f docker-compose.workshop.yml -f docker-compose.otel.yml up -d --build
 ```

@@ -64,7 +64,9 @@ module 01.
 
 ```text
 React front end  ->  FastAPI back end  ->  ClickHouse Cloud (connected + seeded in module 01)
-                                        ->  ClickHouse-managed Postgres (operational source; created in module 03)
+
+Module 03 adds the live path:
+pg-trip-writer  ->  managed Postgres  ->  ClickPipe  ->  ClickHouse Cloud  ->  dashboard
 ```
 
 Ask your coding agent to summarize the analytics endpoints:
@@ -84,9 +86,9 @@ Read the FastAPI backend and list each analytics endpoint, what it returns, and 
 
 ## Wrap-up
 
-You have a mental model of the app: two dashboards, a FastAPI API, a managed source Postgres,
-and a chat panel waiting to be connected. Every later module changes one part of this
-picture.
+You have a mental model of the app: two dashboards, a FastAPI API querying ClickHouse,
+a Postgres CDC source that is added next, and a chat panel waiting to be connected. Every
+later module changes one part of this picture.
 
 ## End state
 

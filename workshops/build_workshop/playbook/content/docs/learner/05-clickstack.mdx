@@ -31,14 +31,11 @@ telemetry and is not a local ClickStack or HyperDX deployment.
 
 <Callout title="Check the collector ports first">
   The collector publishes OTLP on host ports **4317** and **4318**, which are commonly
-  already in use. If `./preflight.sh` in `ClickHouse_Demos/workshops/build_workshop/app`
-  WARNed on them in module 00, set
-  `OTEL_GRPC_HOST_PORT` and `OTEL_HTTP_HOST_PORT` in `.env.workshop` to the values
-  preflight suggests (for example `24317` / `24318`) before starting the overlay. The
-  back end reaches the collector in-network, so remapping the host ports is safe. From
-  anywhere inside the cloned repository, re-run
-  `cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app" && ./preflight.sh`
-  to confirm the ports are clear.
+  already in use. After you fill and source the observability settings below, the
+  `--otel` preflight checks both ports and requires authenticated ingest. If it reports
+  a conflict, set `OTEL_GRPC_HOST_PORT` and `OTEL_HTTP_HOST_PORT` in `.env.workshop` to
+  the suggested values (for example `24317` / `24318`). The back end reaches the
+  collector in-network, so remapping these host ports is safe.
 </Callout>
 
 ### `.env.workshop` and `docker-compose.otel.yml`
@@ -46,8 +43,16 @@ telemetry and is not a local ClickStack or HyperDX deployment.
 These live in the ClickStack observability section of `.env.workshop.example`; fill them
 in your `.env.workshop`:
 
+Generate a random ingest token:
+
 ```bash
-OTLP_AUTH_TOKEN=change-me-workshop-token   # shared secret securing OTLP ingest
+python3 -c 'import secrets; print(secrets.token_hex(32))'
+```
+
+Copy that output into `OTLP_AUTH_TOKEN`:
+
+```bash
+OTLP_AUTH_TOKEN=<paste-random-output>      # shared secret securing OTLP ingest
 CLICKSTACK_DATABASE=otel                   # ClickStack's own otel_* tables
 OTEL_SERVICE_NAME=nyc-taxi-backend         # the service name shown in HyperDX
 LOG_LEVEL=DEBUG                            # show successful queries in Log source
@@ -61,6 +66,16 @@ source .env.workshop
 set +a
 ```
 
+Run the Module 05 preflight from anywhere inside the cloned repository:
+
+```bash
+cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
+./preflight.sh --otel
+```
+
+Continue only when the last line is `Overall: READY`. Apply any printed fix, source the
+file again if you changed it, and rerun the same check.
+
 Now bring the stack up with the overlay. The overlay sets `OTEL_ENABLED=true` on the
 back end, adds the `otel-collector` service (`clickhouse/clickstack-otel-collector`),
 and rebuilds the front end with the browser telemetry settings:
@@ -73,7 +88,8 @@ docker compose --env-file .env.workshop \
 The collector reuses `CLICKHOUSE_HOST` / `CLICKHOUSE_PORT` / `CLICKHOUSE_USER` /
 `CLICKHOUSE_PASSWORD` from `.env.workshop`; the back end exports OTLP to
 `http://otel-collector:4318` (HTTP/protobuf). To also scrape raw container stdout on a
-Linux host, add `--profile container-logs`.
+Linux host, add `--profile container-logs`. Host OTLP ports bind to `127.0.0.1` so the
+authenticated receiver is not exposed to other machines on the local network.
 
 ## Step 2 — Enable Managed ClickStack on your service
 
