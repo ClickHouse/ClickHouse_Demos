@@ -254,9 +254,10 @@ has a ready-to-paste prompt that turns it into your instructor.
   (often a stale `OPENAI_API_KEY`, a `LANGFUSE_*`, or `CLICKHOUSE_PASSWORD`).
 - **Why** - `docker compose` interpolates `${VAR}` from your shell first, and an exported
   shell variable WINS over the file.
-- **Fix** - in the shell you run compose from,
-  `unset OPENAI_API_KEY LANGFUSE_PUBLIC_KEY LANGFUSE_SECRET_KEY LANGFUSE_BASE_URL CLICKHOUSE_PASSWORD`,
-  then bring the stack up again. Preflight warns when it detects this.
+- **Fix** - reload the current file in the shell you use for preflight and Compose:
+  `set -a; source ./.env.workshop; set +a`. Preflight fails when any value relevant to
+  the selected stage differs, so rerun `./preflight.sh`, `./preflight.sh --cdc`, or
+  `./preflight.sh --otel` and continue only when it reports `Overall: READY`.
 
 ### Duplicate keys in .env.workshop
 
