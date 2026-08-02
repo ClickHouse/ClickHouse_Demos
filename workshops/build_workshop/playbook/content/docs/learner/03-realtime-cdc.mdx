@@ -31,7 +31,7 @@ clickhousectl cloud postgres create \
 
 Save the returned **Postgres ID**, **hostname**, and one-time `postgres` password. The
 beta `list` and `get` commands may return empty or `FORBIDDEN`; the required readiness
-check is `./preflight.sh --require-postgres` in Step 2.
+check is `./preflight.sh --cdc` in Step 2.
 
 If the password is lost, create a new one:
 
@@ -54,16 +54,33 @@ PGSSLMODE=require
 PG_PUBLICATION=pub_taxi
 ```
 
-Validate the managed endpoint, then start the local writer against it and follow its log:
+Reload the file so Docker Compose cannot reuse the blank `PG*` values exported during
+Module 00:
+
+```bash
+set -a; source ./.env.workshop; set +a
+```
+
+Run the CDC-stage preflight. Unlike the Module 00 check, `--cdc` validates the complete
+`PG*` tuple, requires TLS for managed Postgres, and confirms that the new endpoint accepts
+a TCP connection:
 
 ```bash
 cd "$(git rev-parse --show-toplevel)/workshops/build_workshop/app"
-./preflight.sh --require-postgres
-docker compose --profile cdc --env-file .env.workshop -f docker-compose.workshop.yml up -d pg-trip-writer
-docker compose --profile cdc --env-file .env.workshop -f docker-compose.workshop.yml logs -f pg-trip-writer
+./preflight.sh --cdc
 ```
 
-Provisioning can take a few minutes. Continue when the log repeats:
+Provisioning can take a few minutes. Apply any printed fix and rerun the command. Continue
+only when the last line is `Overall: READY`. Then start the writer and follow its log:
+
+```bash
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml \
+  --profile cdc up -d pg-trip-writer
+docker compose --env-file .env.workshop -f docker-compose.workshop.yml logs -f pg-trip-writer
+```
+
+The preflight proves network reachability. The log proves the writer can initialize the
+table and publication. Continue when it repeats:
 
 ```text
 [loadgen] ensured realtime_trips table exists
@@ -164,6 +181,7 @@ Ops dashboard interval to `1m` and auto-refresh to `5s`.
 ## Completion check
 
 - The writer log shows repeated inserts.
+- `./preflight.sh --cdc` ends with `Overall: READY` before the writer starts.
 - `clickhousectl cloud clickpipe get ...` reports a running pipe.
 - `default.realtime_trips` and the dashboard-row count both increase.
 - The Ops dashboard updates without a manual refresh.

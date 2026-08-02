@@ -36,6 +36,9 @@ jobs:
           find . -type f -name '*.sh' -print0 \
             | xargs -0 -n1 bash -n
 
+      - name: Test staged preflight behavior
+        run: ./scripts/test-preflight.sh
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

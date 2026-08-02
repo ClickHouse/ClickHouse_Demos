@@ -72,6 +72,26 @@ if [ -e "${ROOT}/app/librechat/docker-compose.librechat.yml" ]; then
   exit 1
 fi
 
+fail_if_found \
+  "module 01 client commands must consume the loaded environment instead of placeholders" \
+  '<your-service-hostname>|<password>' \
+  "${CONTENT}/learner/01-clickhouse-cloud.mdx"
+
+fail_if_found \
+  "setup client commands must consume the loaded environment instead of a hostname placeholder" \
+  '<your-service-hostname>' \
+  "${CONTENT}/learner/00-setup.mdx"
+
+fail_if_found \
+  "learner client commands must use the environment credential without argv exposure or stdin prompts" \
+  '--ask-password|--password[[:space:]]+"?\$CLICKHOUSE_PASSWORD"?' \
+  "${CONTENT}/learner"
+
+fail_if_found \
+  "active workshop docs must use the staged preflight flags" \
+  '--require-postgres' \
+  "${ROOT}/README.md" "${ROOT}/app" "${CONTENT}"
+
 require_fixed() {
   local description=$1
   local literal=$2
@@ -239,6 +259,38 @@ require_fixed \
   'LOG_LEVEL=${LOG_LEVEL:-DEBUG}' \
   "${ROOT}/app/docker-compose.otel.yml"
 
+require_fixed \
+  "setup must explicitly install the stable ClickHouse binary and client" \
+  'clickhousectl local install stable' \
+  "${CONTENT}/learner/00-setup.mdx"
+
+require_fixed \
+  "setup must verify the standalone ClickHouse client" \
+  'clickhouse client --version' \
+  "${CONTENT}/learner/00-setup.mdx"
+
+require_count \
+  "setup must reload the workshop environment after each credential update" \
+  2 \
+  'set -a; source ./.env.workshop; set +a' \
+  "${CONTENT}/learner/00-setup.mdx"
+
+require_count \
+  "every module 01 client command must use CLICKHOUSE_HOST from the loaded environment" \
+  5 \
+  '--host "$CLICKHOUSE_HOST"' \
+  "${CONTENT}/learner/01-clickhouse-cloud.mdx"
+
+require_fixed \
+  "module 01 must document the ClickHouse environment credential path" \
+  'client reads `CLICKHOUSE_PASSWORD` from the' \
+  "${CONTENT}/learner/01-clickhouse-cloud.mdx"
+
+require_fixed \
+  "module 03 must reload managed Postgres credentials before Compose" \
+  'set -a; source ./.env.workshop; set +a' \
+  "${CONTENT}/learner/03-realtime-cdc.mdx"
+
 require_count \
   "initial and reset Ops dashboard intervals must both be one minute" \
   2 \
@@ -250,6 +302,54 @@ require_count \
   2 \
   'auto_refresh_s: 5' \
   "${ROOT}/app/frontend/src/pages/DashboardPage.tsx"
+
+require_service_set() {
+  local description=$1
+  local expected=$2
+  shift 2
+  local actual
+  actual=$(docker compose "$@" config --services | sort | tr '\n' ' ')
+  if [ "${actual}" != "${expected}" ]; then
+    echo "ERROR: ${description} (expected '${expected}', found '${actual}')" >&2
+    exit 1
+  fi
+}
+
+if command -v docker >/dev/null 2>&1; then
+  require_service_set \
+    "module 00 must start only the base app" \
+    'backend frontend ' \
+    -f "${ROOT}/app/docker-compose.workshop.yml"
+
+  require_service_set \
+    "module 03 cdc profile must add only the trip writer" \
+    'backend frontend pg-trip-writer ' \
+    -f "${ROOT}/app/docker-compose.workshop.yml" --profile cdc
+fi
+
+require_fixed \
+  "preflight must expose the module 03 stage check" \
+  '  --cdc   also check module 03 Postgres settings and connectivity' \
+  "${ROOT}/app/preflight.sh"
+
+require_fixed \
+  "preflight must expose the module 05 stage check" \
+  '  --otel  also check module 05 OpenTelemetry collector ports' \
+  "${ROOT}/app/preflight.sh"
+
+require_fixed \
+  "preflight must require authenticated OTLP ingest for module 05" \
+  'OTLP_AUTH_TOKEN is missing or still a placeholder for module 05' \
+  "${ROOT}/app/preflight.sh"
+
+for literal in \
+  '127.0.0.1:${OTEL_GRPC_HOST_PORT:-4317}:4317' \
+  '127.0.0.1:${OTEL_HTTP_HOST_PORT:-4318}:4318'; do
+  require_fixed \
+    "OTLP host receivers must bind to loopback" \
+    "${literal}" \
+    "${ROOT}/app/docker-compose.otel.yml"
+done
 
 # MCP server definitions belong in setup. Later modules should use or link to
 # that setup instead of asking learners to configure the same endpoint again.

@@ -13,15 +13,18 @@ Prerequisite: Module 00 is complete and your terminal is in
 
 ## Step 1 — Verify the client connection
 
-Replace the two placeholders with the service hostname and password saved in Module 00:
+Module 00 loaded `.env.workshop` into this terminal, so this command uses those values
+directly. If you opened a new terminal, reload them first with
+`set -a; source ./.env.workshop; set +a`. The client reads `CLICKHOUSE_PASSWORD` from the
+exported environment, keeping the secret out of process arguments and leaving standard
+input available for the copyable SQL blocks below.
 
 ```bash
 clickhouse client \
-  --host <your-service-hostname> \
+  --host "$CLICKHOUSE_HOST" \
   --port 9440 \
   --secure \
-  --user default \
-  --password '<password>' \
+  --user "$CLICKHOUSE_USER" \
   --query "SELECT version(), currentUser()"
 ```
 
@@ -33,11 +36,10 @@ This is the complete schema command. Copy it from this page; do not open a local
 
 ```bash
 clickhouse client \
-  --host <your-service-hostname> \
+  --host "$CLICKHOUSE_HOST" \
   --port 9440 \
   --secure \
-  --user default \
-  --password '<password>' \
+  --user "$CLICKHOUSE_USER" \
   --multiquery <<'SQL'
 CREATE DATABASE IF NOT EXISTS nyc_tlc_data;
 
@@ -178,11 +180,10 @@ Verify the objects:
 
 ```bash
 clickhouse client \
-  --host <your-service-hostname> \
+  --host "$CLICKHOUSE_HOST" \
   --port 9440 \
   --secure \
-  --user default \
-  --password '<password>' \
+  --user "$CLICKHOUSE_USER" \
   --query "SHOW TABLES FROM nyc_tlc_data"
 ```
 
@@ -195,11 +196,10 @@ The command is safe to rerun: each insert has a count guard.
 
 ```bash
 clickhouse client \
-  --host <your-service-hostname> \
+  --host "$CLICKHOUSE_HOST" \
   --port 9440 \
   --secure \
-  --user default \
-  --password '<password>' \
+  --user "$CLICKHOUSE_USER" \
   --multiquery <<'SQL'
 INSERT INTO nyc_tlc_data.taxi_zones (location_id, zone, borough, subregion)
 SELECT LocationID, Zone, Borough, service_zone
@@ -272,11 +272,10 @@ Verify the load:
 
 ```bash
 clickhouse client \
-  --host <your-service-hostname> \
+  --host "$CLICKHOUSE_HOST" \
   --port 9440 \
   --secure \
-  --user default \
-  --password '<password>' \
+  --user "$CLICKHOUSE_USER" \
   --query "
     SELECT 'taxi_zones' AS table, count() AS rows FROM nyc_tlc_data.taxi_zones
     UNION ALL

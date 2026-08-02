@@ -124,7 +124,7 @@ docker compose --env-file .env.workshop \
 | `CLICKHOUSE_ENDPOINT` | `https://${CLICKHOUSE_HOST}:${CLICKHOUSE_PORT}` | Full HTTPS endpoint (protocol + `:8443`) of the Cloud service. Assembled from the workshop's `CLICKHOUSE_HOST`/`CLICKHOUSE_PORT`. |
 | `CLICKHOUSE_USER` | `default` | Cloud SQL user. |
 | `CLICKHOUSE_PASSWORD` | (empty) | Cloud SQL password. |
-| `OTLP_AUTH_TOKEN` | (empty) | Shared secret securing the collector's OTLP ingest. Clients send it back. Empty disables auth. |
+| `OTLP_AUTH_TOKEN` | (empty) | Random shared secret securing the collector's OTLP ingest. Clients send it back; Module 05 preflight rejects an empty or placeholder value. |
 | `HYPERDX_OTEL_EXPORTER_CLICKHOUSE_DATABASE` | `otel` (via `CLICKSTACK_DATABASE`) | Database for ClickStack's `otel_*` tables. Separate from the app data DB (`nyc_tlc_data`). |
 | `CUSTOM_OTELCOL_CONFIG_FILE` | `/etc/otelcol-contrib/main.config.yaml` (main) · `.../custom.config.yaml` (container-logs) | Merges an extra config onto the image's baked-in pipelines. The **main** collector uses `main.config.yaml` to redirect the unused `metrics/promql` (Prometheus remote-write) pipeline to a `nop` exporter — see below. The **container-logs** collector uses `custom.config.yaml` for the filelog receiver. |
 
@@ -139,10 +139,11 @@ stops the error without affecting what lands in ClickHouse.
 Collector OTLP ports: `4317` (gRPC), `4318` (HTTP). If either host port is
 already taken, `docker compose ... up` fails to bind the collector; set
 `OTEL_GRPC_HOST_PORT` / `OTEL_HTTP_HOST_PORT` to free ports in `.env.workshop`
-**before** starting the overlay (`preflight.sh` flags the clash and suggests
-values). Those host mappings only matter for host-side OTLP senders — the backend
-reaches the collector in-network at `http://otel-collector:4318`, so overriding
-the host ports does NOT change the backend wiring.
+**before** starting the overlay (`./preflight.sh --otel` flags the clash and suggests
+values). Both mappings bind to `127.0.0.1`, so they are available to host-side senders
+without exposing the authenticated ingest receiver to the LAN. The backend reaches the
+collector in-network at `http://otel-collector:4318`, so overriding the host ports does
+NOT change the backend wiring.
 
 ### Backend
 
