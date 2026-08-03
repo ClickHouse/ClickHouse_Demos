@@ -11,6 +11,7 @@ on:
     branches: [dev-build-workshop-v1, build-workshop-v1]
     paths:
       - "workshops/build_workshop/**"
+      - "workshop_public/polymarket/**"
       - ".github/workflows/workshop.yml"
   workflow_dispatch: {}
 
@@ -46,8 +47,8 @@ jobs:
           cache-dependency-path: |
             workshops/build_workshop/app/backend/requirements.txt
             workshops/build_workshop/app/backend/requirements-dev.txt
-            workshops/build_workshop/polymarket/collector/requirements.txt
-            workshops/build_workshop/polymarket/collector/requirements-dev.txt
+            workshop_public/polymarket/collector/requirements.txt
+            workshop_public/polymarket/collector/requirements-dev.txt
 
       - name: Run backend tests
         working-directory: workshops/build_workshop/app/backend
@@ -56,14 +57,14 @@ jobs:
           python -m pytest tests/test_chat_guardrails.py tests/test_db_retry.py tests/test_cloud_defaults.py ../loadgen/test_config.py -q
 
       - name: Run Polymarket collector tests
-        working-directory: workshops/build_workshop/polymarket/collector
+        working-directory: workshop_public/polymarket/collector
         run: |
           python -m pip install -r requirements-dev.txt
           python -m pytest -q
 
       - name: Run Polymarket ClickHouse integration
-        working-directory: workshops/build_workshop
-        run: ./polymarket/test-clickhouse.sh
+        working-directory: workshop_public/polymarket
+        run: ./test-clickhouse.sh
 
       - name: Run RTA dashboard tests
         working-directory: workshops/RTA-mini-workshop/dashboard
@@ -119,8 +120,8 @@ jobs:
           cache-dependency-path: |
             workshops/build_workshop/app/backend/requirements.txt
             workshops/build_workshop/app/backend/requirements-dev.txt
-            workshops/build_workshop/polymarket/collector/requirements.txt
-            workshops/build_workshop/polymarket/collector/requirements-dev.txt
+            workshop_public/polymarket/collector/requirements.txt
+            workshop_public/polymarket/collector/requirements-dev.txt
 
       - name: Run backend tests on Windows
         working-directory: workshops/build_workshop/app/backend
@@ -130,7 +131,7 @@ jobs:
           python -m pytest tests/test_chat_guardrails.py tests/test_db_retry.py tests/test_cloud_defaults.py ../loadgen/test_config.py -q
 
       - name: Run Polymarket collector tests on Windows
-        working-directory: workshops/build_workshop/polymarket/collector
+        working-directory: workshop_public/polymarket/collector
         shell: pwsh
         run: |
           python -m pip install -r requirements-dev.txt
