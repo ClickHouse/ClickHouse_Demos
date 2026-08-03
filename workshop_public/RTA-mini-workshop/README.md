@@ -12,7 +12,7 @@ there and only the **dashboard** (a separate service) lives here:
 
 | Piece | Location | Served at |
 |---|---|---|
-| Participant guide (MDX docs tree) | `site/content/docs/rta-mini/` | `https://workshop.demohouse.cloud/docs/rta-mini` |
+| Participant guide (MDX docs tree) | `site/content/docs/rta-mini/` | `https://labs.demohouse.cloud/docs/rta-mini` |
 | Optional live dashboard | `dashboard/` (this folder) | run locally with Docker — see `dashboard/README.md` |
 
 The guide is linked from the workshops hub (the app's `/` route).
@@ -32,7 +32,7 @@ https://partner-workshop.s3.ap-southeast-1.amazonaws.com/fx/ticks.parquet
 > `ListBucket`). To host your own copy, upload `fx/ticks.parquet` to a public
 > bucket and update the two references in the guide
 > (`site/content/docs/rta-mini/learner/load-data.mdx`, served at
-> `https://workshop.demohouse.cloud/docs/rta-mini`).
+> `https://labs.demohouse.cloud/docs/rta-mini`).
 
 ## Prerequisites (participants)
 

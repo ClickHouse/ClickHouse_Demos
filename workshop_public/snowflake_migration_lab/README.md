@@ -5,7 +5,7 @@ you run during the ClickHouse Snowflake Migration Lab. It is not the instruction
 
 ## Start here
 
-The playbook lives at **https://workshop.demohouse.cloud/docs/snowflake-migration**.
+The playbook lives at **https://labs.demohouse.cloud/docs/snowflake-migration**.
 
 Begin with module 00, which covers the toolchain, the two cloud trial accounts, and the
 virtualenvs. Each module tells you which files here to run and in what order. Working
@@ -17,12 +17,14 @@ several steps depend on state an earlier module created.
 | Directory | What it is |
 |---|---|
 | `01-setup-snowflake/` | Terraform, SQL, dbt project, trip producer, and Superset stack for the Snowflake source environment |
-| `02-plan-and-design/` | Profiling scripts, five worksheets you fill in, and `migration-plan.md` |
+| `02-plan-and-design/` | Profiling scripts and `migration-plan.md` (the five worksheets are interactive pages in the playbook) |
 | `03-migrate-to-clickhouse/` | ClickHouse Cloud Terraform, the migration script, the ClickHouse dbt project, benchmark and cutover scripts |
 | `04-evaluation/` | `assessment.md`, the blank assessment template |
 
-The worksheets, `migration-plan.md`, and `assessment.md` are yours to edit. Everything
-else you run as-is.
+`migration-plan.md` and `assessment.md` are yours to edit. Everything else you run as-is.
+The five design worksheets are no longer files here — they are interactive pages in the
+playbook that check each answer as you go, and your answers live in your browser. Module
+02 links all five.
 
 ## Credentials
 

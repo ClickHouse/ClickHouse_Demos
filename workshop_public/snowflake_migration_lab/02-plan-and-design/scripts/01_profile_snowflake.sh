@@ -304,7 +304,7 @@ SELECT
     table_schema,
     table_name,
     'Contains QUALIFY clause' AS gap_type,
-    'Rewrite as subquery — see worksheets/03_schema_translation.md' AS remediation
+    'Rewrite as subquery — see https://labs.demohouse.cloud/docs/snowflake-migration/learner/worksheets/03-schema-translation' AS remediation
 FROM NYC_TAXI_DB.INFORMATION_SCHEMA.VIEWS
 WHERE UPPER(view_definition) LIKE '%QUALIFY%'
 ORDER BY table_schema, table_name;
@@ -317,7 +317,7 @@ cat >> "${OUTPUT_FILE}" <<'MD'
 
 > Additionally, Q3 in `01-setup-snowflake/queries/` uses QUALIFY explicitly.
 > ClickHouse has no QUALIFY — rewrite as subquery wrapping ROW_NUMBER().
-> See: https://workshop.demohouse.cloud/docs/snowflake-migration/reference/snowflake-vs-clickhouse Gap 1.
+> See: https://labs.demohouse.cloud/docs/snowflake-migration/reference/snowflake-vs-clickhouse Gap 1.
 
 ### Gap 2: VARIANT Columns
 
@@ -368,7 +368,7 @@ Affected objects (based on known lab setup):
 - `HOURLY_AGG_TASK` — uses MERGE INTO AGG_HOURLY_ZONE_TRIPS → rewrite as dbt incremental model
 - `CDC_CONSUME_TASK` — uses MERGE INTO from stream → retired after producer cutover; live writes go directly to ClickHouse
 
-See: https://workshop.demohouse.cloud/docs/snowflake-migration/reference/snowflake-vs-clickhouse Gap 4.
+See: https://labs.demohouse.cloud/docs/snowflake-migration/reference/snowflake-vs-clickhouse Gap 4.
 
 ### Gap 5: Snowflake Tasks
 
@@ -382,7 +382,7 @@ Replacements:
 ### Gap 6: Date Function Differences
 
 Minor syntax differences — all mechanical substitutions.
-See the full translation table at https://workshop.demohouse.cloud/docs/snowflake-migration/reference/snowflake-vs-clickhouse Section 2, Gap 6.
+See the full translation table at https://labs.demohouse.cloud/docs/snowflake-migration/reference/snowflake-vs-clickhouse Section 2, Gap 6.
 
 Key substitutions needed in this workload:
 - `DATE_TRUNC('hour', pickup_at)` → `toStartOfHour(pickup_at)`
@@ -416,9 +416,10 @@ echo ""
 echo "  Next steps:"
 echo "  1. Review profile_report.md"
 echo "  2. Work through the worksheets:"
-echo "     worksheets/01_mergetree_engine_selection.md"
-echo "     worksheets/02_sort_key_design.md"
-echo "     worksheets/03_schema_translation.md"
-echo "     worksheets/04_migration_wave_plan.md"
+echo "     https://labs.demohouse.cloud/docs/snowflake-migration/learner/worksheets/01-engine-selection"
+echo "     https://labs.demohouse.cloud/docs/snowflake-migration/learner/worksheets/02-sort-key-design"
+echo "     https://labs.demohouse.cloud/docs/snowflake-migration/learner/worksheets/03-schema-translation"
+echo "     https://labs.demohouse.cloud/docs/snowflake-migration/learner/worksheets/04-migration-wave-plan"
+echo "     https://labs.demohouse.cloud/docs/snowflake-migration/learner/worksheets/05-dbt-model-design"
 echo "  3. Fill in migration-plan.md"
 echo -e "${GREEN}${BOLD}════════════════════════════════════════════${RESET}"

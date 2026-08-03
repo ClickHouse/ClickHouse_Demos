@@ -7,7 +7,7 @@
 #
 # Everything else (dbt, migration script, verification, Superset, benchmark)
 # is done manually following the steps in the playbook at
-# https://workshop.demohouse.cloud/docs/snowflake-migration — because those
+# https://labs.demohouse.cloud/docs/snowflake-migration — because those
 # are the migration decisions you should make deliberately, not skip.
 #
 # Prerequisites:
@@ -164,7 +164,7 @@ echo "  Source it in any terminal:   source .clickhouse_state"
 echo ""
 echo -e "${BOLD}  ─── Next steps ───────────────────────────────────────────${RESET}"
 echo "  Follow the playbook to complete the remaining steps:"
-echo "    https://workshop.demohouse.cloud/docs/snowflake-migration"
+echo "    https://labs.demohouse.cloud/docs/snowflake-migration"
 echo ""
 echo "    Module 03 — Provision and migrate"
 echo "      Step 1 ✓  Provision cluster (done)"
