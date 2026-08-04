@@ -1,0 +1,107 @@
+clickhouse:
+  host: ${CLICKHOUSE_CLOUD_HOST}
+  port: 8443
+  secure: true
+  database: ${CLICKHOUSE_CLOUD_DATABASE}
+  admin_user: ${CLICKHOUSE_CLOUD_USER}
+  admin_password: ${CLICKHOUSE_CLOUD_PASSWORD}
+  ro_user: arena_ro
+  ro_password: ${ARENA_RO_PASSWORD}
+  query_limits:
+    max_execution_time: 15
+    max_result_rows: 100000
+    max_memory_usage: 4000000000
+    max_rows_to_read: 200000000
+    max_bytes_to_read: 5000000000
+    result_limit: 200
+
+openrouter:
+  # Single OpenAI-compatible endpoint that fronts every model family below
+  # (Anthropic, OpenAI, Google, DeepSeek, Qwen, Meta) — no per-provider creds.
+  base_url: ${OPENROUTER_BASE_URL}
+  api_key: ${OPENROUTER_API_KEY}
+  inference:
+    temperature: 0.0
+    max_tokens: 2048          # headroom for reasoning models
+
+langfuse:
+  host: ${LANGFUSE_BASE_URL}
+  public_key: ${LANGFUSE_PUBLIC_KEY}
+  secret_key: ${LANGFUSE_SECRET_KEY}
+
+eval:
+  float_dp: 4
+  default_max_retries: 1
+  run_tag: "core"
+
+# Slugs verified against https://openrouter.ai/api/v1/models at authoring time.
+# Prices are seed fallbacks from the OpenRouter catalog; Task 5 refreshes them
+# live against the same endpoint.
+# The AgentArena contest roster (OpenRouter catalog, 2026-07): three proprietary
+# (closed-weight) models against three open-weight models. NL→SQL is a simple task,
+# so the roster is deliberately low-cost — a cheap workshop that still tells the
+# open-vs-proprietary, cost-per-correct story. `id` is the OpenRouter slug; prices
+# are illustrative $/1M-token seed fallbacks — the harness refreshes them from
+# OpenRouter's live /models endpoint at run start (agents/llm.py).
+models:
+  # ---- Proprietary (closed-weight) ----
+  - id: anthropic/claude-sonnet-5
+    name: claude-sonnet-5
+    family: anthropic
+    price_per_1m_in: 2.00
+    price_per_1m_out: 10.00
+  - id: openai/gpt-5.6-luna
+    name: gpt-5.6-luna
+    family: openai
+    price_per_1m_in: 0.50
+    price_per_1m_out: 3.00
+  - id: google/gemini-3.5-flash-lite
+    name: gemini-flash-lite
+    family: google
+    price_per_1m_in: 0.30
+    price_per_1m_out: 2.50
+  # ---- Open-weight ----
+  - id: deepseek/deepseek-v4-flash
+    name: deepseek-v4-flash
+    family: deepseek
+    price_per_1m_in: 0.14
+    price_per_1m_out: 0.28
+  - id: qwen/qwen3.7-flash
+    name: qwen3.7-flash
+    family: qwen
+    price_per_1m_in: 0.03
+    price_per_1m_out: 0.13
+  - id: z-ai/glm-4.7-flash
+    name: glm-4.7-flash
+    family: zai
+    price_per_1m_in: 0.06
+    price_per_1m_out: 0.40
+
+prompts:
+  - name: P1_zeroshot
+    self_correct: false
+    desc: "Zero-shot — just the view schema + the question; return ClickHouse SQL. The baseline."
+  - name: P2_fewshot
+    self_correct: false
+    k: 2
+    desc: "Few-shot — P1 plus a couple of worked NL→SQL examples (held out from the test set)."
+  - name: P3_dialect
+    self_correct: false
+    desc: "Dialect-aware — P1 plus a ClickHouse cheat-sheet (date funcs, uniqExact, argMax, INTERVAL…)."
+
+grid:
+  models: ["*"]
+  prompts: ["*"]
+
+# Preset model selections for the web UI's "Run benchmark" panel. Each profile is
+# a one-click curated comparison; models reference the names above.
+profiles:
+  - name: "Open weight"
+    desc: "Open-weight contenders — DeepSeek, Qwen, GLM."
+    models: [deepseek-v4-flash, qwen3.7-flash, glm-4.7-flash]
+  - name: "Proprietary"
+    desc: "Closed-weight models — Claude, GPT, Gemini."
+    models: [claude-sonnet-5, gpt-5.6-luna, gemini-flash-lite]
+  - name: "Everything"
+    desc: "All six models — the open-vs-proprietary contest."
+    models: [claude-sonnet-5, gpt-5.6-luna, gemini-flash-lite, deepseek-v4-flash, qwen3.7-flash, glm-4.7-flash]

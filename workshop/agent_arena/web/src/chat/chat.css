@@ -1,0 +1,19 @@
+.chat { display: flex; flex-direction: column; height: 100%; gap: 12px; padding: 16px; }
+.chat-head { display: flex; align-items: center; gap: 12px; }
+.chat-head select { padding: 6px 8px; }
+.chat-sub { color: var(--ink-3); font-size: 12px; }
+.chat-err, .turn-err { color: #ff6b6b; font-size: 13px; }
+.chat-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+.turn { border: 1px solid var(--line, #2a2a2a); border-radius: 8px; padding: 12px; }
+.turn .q { font-weight: 600; margin-bottom: 8px; }
+.turn .sql { background: #0d0d0d; padding: 8px; border-radius: 6px; overflow-x: auto; font-size: 12px; }
+.tbl-wrap { overflow-x: auto; margin-top: 8px; }
+.tbl { border-collapse: collapse; font-size: 12px; }
+.tbl th, .tbl td { border: 1px solid var(--line, #2a2a2a); padding: 4px 8px; text-align: left; }
+.turn .meta { margin-top: 8px; color: var(--ink-3); font-size: 12px; display: flex; gap: 12px; align-items: center; }
+.fb button { margin-left: 6px; cursor: pointer; background: none; border: 1px solid var(--line, #2a2a2a); border-radius: 6px; padding: 2px 8px; }
+.fb button[data-on="true"] { border-color: var(--accent, #4ade80); }
+.fb em { margin-left: 8px; color: var(--accent, #4ade80); font-style: normal; font-size: 11px; }
+.chat-input { display: flex; gap: 8px; }
+.chat-input input { flex: 1; padding: 10px; }
+.chat-input button { padding: 10px 18px; }
