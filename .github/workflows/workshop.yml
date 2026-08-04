@@ -1,17 +1,33 @@
 name: Workshop
 
-# dev-build-workshop-v1 deploys dev; build-workshop-v1 deploys production.
+# DISABLED. Workshop hosting moved to labs.demohouse.cloud, which the WorkshopHouse
+# repository builds and deploys from its own ci.yml and release.yml. That pipeline runs
+# the same gates this one did -- check-docs.sh, check-windows.ps1, and the build_workshop
+# backend and loadgen tests -- against its own copy of workshops/, so nothing here needs
+# to fire on a push or a pull request any more.
+#
+# The two hosts this workflow deployed to are gone: workshop.demohouse.cloud and
+# dev-workshop.demohouse.cloud now return 404. The deploy job below is therefore pinned
+# off as well, so that a manual run cannot push an image at a dead target. Re-enabling
+# means restoring the triggers *and* repointing the deploy job at whatever should serve
+# the site -- do not simply flip the `if` back on.
+#
+# Kept rather than deleted so the pipeline's history stays readable next to the
+# replacement. The previous triggers were:
+#
+#   on:
+#     pull_request:
+#       branches: [dev, main, dev-build-workshop-v1, build-workshop-v1]
+#     push:
+#       branches: [dev-build-workshop-v1, build-workshop-v1]
+#       paths:
+#         - "workshops/build_workshop/**"
+#         - ".github/workflows/workshop.yml"
+#     workflow_dispatch: {}
 
 on:
-  pull_request:
-    # Keep the required workshop check available on the existing protected repo
-    # branches, but only the dedicated workshop branches deploy on push.
-    branches: [dev, main, dev-build-workshop-v1, build-workshop-v1]
-  push:
-    branches: [dev-build-workshop-v1, build-workshop-v1]
-    paths:
-      - "workshops/build_workshop/**"
-      - ".github/workflows/workshop.yml"
+  # Manual only. The verify job is still useful for spot-checking this repo's copy of
+  # workshops/ by hand; nothing runs automatically.
   workflow_dispatch: {}
 
 concurrency:
@@ -74,10 +90,16 @@ jobs:
 
   deploy:
     name: Deploy workshop
-    if: >-
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
-      (github.ref_name == 'dev-build-workshop-v1' ||
-       github.ref_name == 'build-workshop-v1')
+    # Pinned off. Both targets return 404 -- the site is served from
+    # labs.demohouse.cloud by the WorkshopHouse pipeline now. Left in place as the record
+    # of how the old host was built and released; see the note at the top of this file
+    # before re-enabling. The original condition was:
+    #
+    #   if: >-
+    #     (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+    #     (github.ref_name == 'dev-build-workshop-v1' ||
+    #      github.ref_name == 'build-workshop-v1')
+    if: false
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 30
