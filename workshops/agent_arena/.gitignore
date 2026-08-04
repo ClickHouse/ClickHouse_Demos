@@ -42,8 +42,12 @@ coverage/
 *.tfvars
 
 # ---- App-generated ----
-schema/schema_context.md   # regenerated from system.columns
-.run/                      # transient harness run/status + temp models-file
+# regenerated from system.columns
+schema/schema_context.md
+# transient harness run/status + temp models-file
+.run/
+# local workshop-review completion marker
+reviewed.json
 
 # ---- MkDocs (workshop guide) ----
 
