@@ -104,7 +104,7 @@ LLM-judge scores there.
 ### 1. Install
 ```bash
 git clone --branch build-workshop-v1 --single-branch https://github.com/ClickHouse/ClickHouse_Demos.git
-cd ClickHouse_Demos/workshop/agent_arena
+cd ClickHouse_Demos/workshops/agent_arena
 ```
 ```bash
 python3.11 -m venv .venv && source .venv/bin/activate
