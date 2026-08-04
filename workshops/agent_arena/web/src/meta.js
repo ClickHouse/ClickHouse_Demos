@@ -16,9 +16,6 @@ export const FAMILIES = {
   other:    { key: 'other',    label: 'Other',    vendor: '',            color: 'var(--ink-3)' },
 }
 
-// Ordered list of fighters for the countdown stage.
-export const FIGHTER_FAMILIES = ['claude', 'openai', 'google', 'xai', 'deepseek', 'qwen', 'kimi', 'meta', 'zai']
-
 export function famKeyOf(name = '') {
   const s = String(name).toLowerCase()
   if (s.includes('claude')) return 'claude'

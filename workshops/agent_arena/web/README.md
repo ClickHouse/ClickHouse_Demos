@@ -1,16 +1,6 @@
 # AgentArena — Web UI
 
-A single [React](https://react.dev) ([Vite](https://vite.dev)) SPA with four tabs:
-
-- **Countdown** — a live-event "stage" screen for demos: a presenter countdown timer,
-  the model families as contenders, and the current best accuracy per family (read live
-  from the latest run).
-- **Architecture** — an animated [React Flow](https://reactflow.dev) (`@xyflow/react`)
-  data-flow diagram of the whole system. Packets travel along each edge to show
-  flow direction; edge colors group flow types, node colors show where each
-  component runs (legend top-right). Edge labels are short so they don't cover the
-  arrows — **hover an edge label** to see the full description. Nodes are
-  draggable; drag the canvas to pan, scroll to zoom.
+A focused [React](https://react.dev) ([Vite](https://vite.dev)) SPA with two tabs:
 - **Leaderboard** — the contest results, read from LangFuse Experiments through its
   Public API:
   run selector, winner cards, sortable leaderboard ranked by
@@ -28,19 +18,15 @@ A single [React](https://react.dev) ([Vite](https://vite.dev)) SPA with four tab
   config, see the generated SQL/results/cost/latency, and rate each answer
   👍/👎 — feedback is written back to the trace as a LangFuse score.
 
-Diagram layout is computed by **dagre** (layered left→right with crossing
-minimization); edges use orthogonal smoothstep routing.
-
 ## Run
 
 ```bash
 cd web
 npm install
-npm run dev            # → http://localhost:5174  (all four tabs)
+npm run dev            # → http://localhost:5174
 ```
 
-The **Leaderboard** and **Chat** tabs need the dashboard/serving APIs running
-(**Countdown** and **Architecture** need nothing):
+The **Leaderboard** and **Chat** tabs need the dashboard/serving APIs running:
 
 ```bash
 # from the repo root, in other shells:
@@ -54,15 +40,10 @@ The UI calls `http://localhost:8000` (dashboard) and `http://localhost:8100`
 CORS enabled for the SPA.
 
 ## Files
-- `src/App.jsx` — tab shell (Countdown / Architecture / Leaderboard / Chat).
+- `src/App.jsx` — tab shell (Leaderboard / Chat).
 - `src/ui.jsx` — shared presentational atoms (brand lock, icons, ClickHouse logomark).
 - `src/api.js` — dashboard/serving API bases + fetch helpers (`VITE_API_BASE`, `VITE_SERVING_BASE`).
-- `src/diagram/graph.js` — architecture model (nodes + edges, env colors). Edit here to change the diagram.
-- `src/diagram/layout.js` — dagre layered LR auto-layout.
-- `src/diagram/FlowDiagram.jsx` — React Flow canvas + legends + minimap.
-- `src/diagram/nodes/CardNode.jsx`, `src/diagram/edges/AnimatedFlowEdge.jsx` — renderers.
 - `src/leaderboard/Leaderboard.jsx` — leaderboard UI (fetches the dashboard API).
-- `src/countdown/Countdown.jsx` — the live-event stage screen.
 - `src/chat/Chat.jsx` — the production chat UI (calls the serving API's `/ask` + `/feedback`).
 
 > The leaderboard data comes from `dashboard/app.py` (a FastAPI adapter over the

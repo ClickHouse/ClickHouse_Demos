@@ -209,6 +209,16 @@ def test_health_endpoint_does_not_load_langfuse(monkeypatch):
     assert dashboard.healthz() == {"status": "ok"}
 
 
+def test_dashboard_api_is_read_only_for_workshop_learners():
+    """The public dashboard must not expose its former demo run-builder API."""
+    paths = {route.path for route in dashboard.app.routes}
+    assert "/api/grid-options" in paths
+    assert "/api/models" not in paths
+    assert "/api/profiles" not in paths
+    assert "/api/run" not in paths
+    assert "/api/run/status" not in paths
+
+
 def test_reused_run_id_keeps_only_the_newest_question_result():
     """A repeated run/config/question must not inflate counts or preserve stale scores."""
     base = {"run_id": "r1", "config_id": "m__p", "model_name": "m",

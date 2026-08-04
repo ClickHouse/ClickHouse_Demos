@@ -31,14 +31,10 @@ export function BrandLock({ compact }) {
 export function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 1.7 }) {
   const p = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' }
   switch (name) {
-    case 'clock': return <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-    case 'flow': return <svg {...p}><rect x="3" y="4" width="6" height="5" rx="1.2"/><rect x="15" y="15" width="6" height="5" rx="1.2"/><path d="M9 6.5h4a2 2 0 0 1 2 2v9"/></svg>
     case 'trophy': return <svg {...p}><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M9 18h6M10 18v-3M14 18v-3M8 21h8"/></svg>
     case 'ext': return <svg {...p}><path d="M14 5h5v5M19 5l-8 8M18 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
     case 'chev': return <svg {...p}><path d="M9 6l6 6-6 6"/></svg>
-    case 'play': return <svg {...p} fill={color} stroke="none"><path d="M7 5v14l12-7z"/></svg>
     case 'bolt': return <svg {...p}><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>
-    case 'x': return <svg {...p}><path d="M6 6l12 12M18 6 6 18"/></svg>
     case 'dollar': return <svg {...p}><path d="M12 3v18M16 7c0-1.7-1.8-3-4-3s-4 1.3-4 3 1.8 3 4 3 4 1.3 4 3-1.8 3-4 3-4-1.3-4-3"/></svg>
     case 'scatter': return <svg {...p}><path d="M4 4v16h16"/><circle cx="9" cy="14" r="1.4"/><circle cx="13" cy="9" r="1.4"/><circle cx="17" cy="11" r="1.4"/><circle cx="8" cy="9" r="1.4"/></svg>
     case 'grid': return <svg {...p}><rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/></svg>

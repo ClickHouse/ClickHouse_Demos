@@ -24,7 +24,7 @@ source of truth for benchmark results.
 
 ## What you get
 
-A single web app (`web/`, http://localhost:5174) with four tabs:
+A focused web app (`web/`, http://localhost:5174) with two tabs:
 
 - **Leaderboard** — the contest results: every model×prompt config ranked by
   accuracy, **cost-per-correct-answer** (the headline), latency, per-tier
@@ -34,14 +34,9 @@ A single web app (`web/`, http://localhost:5174) with four tabs:
   generated SQL → error → tokens → span timings). A **"View conversation"**
   button replays the agent's session **live from the LangFuse API**, and an
   **LLM-judge** column scores SQL quality.
-- **Countdown** — a live-event "stage" screen for demos: a presenter countdown
-  timer, the model families as contenders, and the current best accuracy per
-  family (read live from the latest run).
 - **Chat** — the production chatbot: ask a question against a picked
   model+prompt config and watch the SQL, cost, and latency; rate each answer
   👍/👎, which is written back to the trace as a **LangFuse score**.
-- **Architecture** — an animated React Flow diagram of the whole system.
-
 Plus the serving API (`serving/api.py`): **`POST /ask`** (run the agent live and
 return SQL/results/cost/latency, traced to LangFuse) and **`POST /feedback`**
 (attach a 👍/👎 score to a trace) — the same endpoints the Chat tab calls.
@@ -58,9 +53,6 @@ Golden dataset → benchmark harness → agent → OpenRouter
                                                         ▼
                                                   leaderboard API/UI
 ```
-
-The web app's **Architecture** tab renders the live component graph from
-`web/src/diagram/graph.js`.
 
 **The key idea — one service per job:**
 - **ClickHouse** is the application database: it holds the business data and
@@ -185,7 +177,6 @@ Everything tunable lives in [`config.yaml`](config.yaml):
 - **`models`** — OpenRouter model id, display name, family, and per-1M-token input/output prices (used for cost).
 - **`prompts`** — the strategies `P1_zeroshot` … `P3_dialect`.
 - **`grid`** — which models × prompts to actually run (`["*"]` = all).
-- **`profiles`** — curated presets (Budget tier / Frontier / Everything) for the web UI's "Run benchmark" panel.
 - **`clickhouse.query_limits`** — the server-side caps enforced on agent SQL.
 
 Adding a model or prompt is a config edit, not a code change.
