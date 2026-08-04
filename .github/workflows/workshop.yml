@@ -160,20 +160,24 @@ jobs:
           IMAGE_ALIAS: ${{ steps.target.outputs.image_alias }}
         run: |
           set -euo pipefail
+          # Uses the constrained SSM document demohouse-workshop-deploy rather
+          # than AWS-RunShellScript. This repository is PUBLIC, and the deploy
+          # role can reach both demo instances, so sending an arbitrary command
+          # list here meant anyone able to push to a workshop branch could run
+          # arbitrary commands as root on the live demo hosts. The document
+          # hardcodes the deploy steps and constrains every parameter with an
+          # allowedPattern that SSM enforces server-side, so no shell
+          # metacharacter can reach the host. The deploy role's IAM policy now
+          # permits ssm:SendCommand ONLY on that document.
           parameters=$(jq -n \
             --arg registry "${REGISTRY}" \
             --arg tag "${GITHUB_SHA}" \
             --arg digest "${EXPECTED_DIGEST}" \
             --arg alias "${IMAGE_ALIAS}" \
-            '{commands: [
-              "set -euo pipefail",
-              "cd /opt/demohouse",
-              ("aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin " + $registry),
-              ("ECR_REGISTRY=" + $registry + " ./scripts/deploy-workshop.sh " + $tag + " " + $digest + " " + $alias)
-            ]}')
+            '{Registry: [$registry], Tag: [$tag], Digest: [$digest], Alias: [$alias]}')
           command_id=$(aws ssm send-command \
             --instance-ids "${INSTANCE_ID}" \
-            --document-name AWS-RunShellScript \
+            --document-name demohouse-workshop-deploy \
             --comment "Workshop ${GITHUB_REF_NAME} ${GITHUB_SHA}" \
             --parameters "${parameters}" \
             --query 'Command.CommandId' \
