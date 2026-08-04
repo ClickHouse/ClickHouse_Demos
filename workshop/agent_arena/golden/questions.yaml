@@ -1,0 +1,192 @@
+- id: q001
+  tier: 1
+  question: "How many customers are there in total?"
+  ordered: false
+  golden_sql: "SELECT count() FROM v_customers"
+  tags: [count]
+- id: q002
+  tier: 1
+  question: "How many orders were placed in the last 30 days, excluding cancelled and returned?"
+  ordered: false
+  golden_sql: |
+    SELECT count() FROM v_orders
+    WHERE order_ts >= now() - INTERVAL 30 DAY AND status NOT IN ('cancelled','returned')
+  tags: [count, filter]
+- id: q003
+  tier: 1
+  question: "How many distinct product categories exist?"
+  ordered: false
+  golden_sql: "SELECT uniqExact(category) FROM v_products"
+  tags: [distinct]
+- id: q004
+  tier: 1
+  question: "What is the total number of order line items?"
+  ordered: false
+  golden_sql: "SELECT count() FROM v_order_items"
+  tags: [count]
+- id: q005
+  tier: 2
+  question: "Total revenue in the last 30 days. Revenue = quantity*unit_price - discount, excluding cancelled and returned orders. Return a single number rounded to 2 decimals."
+  ordered: false
+  golden_sql: |
+    SELECT round(sum(oi.quantity * oi.unit_price - oi.discount), 2)
+    FROM v_order_items oi INNER JOIN v_orders o ON oi.order_id = o.order_id
+    WHERE o.order_ts >= now() - INTERVAL 30 DAY AND o.status NOT IN ('cancelled','returned')
+  tags: [revenue, join]
+- id: q006
+  tier: 2
+  question: "Count of orders by status, highest count first. Return status and count."
+  ordered: true
+  golden_sql: "SELECT status, count() AS c FROM v_orders GROUP BY status ORDER BY c DESC"
+  tags: [groupby, orderby]
+- id: q007
+  tier: 2
+  question: "Top 5 product categories by revenue in the last 30 days, highest first. Return category and revenue."
+  ordered: true
+  golden_sql: |
+    SELECT p.category, round(sum(oi.quantity * oi.unit_price - oi.discount), 2) AS revenue
+    FROM v_order_items oi
+    INNER JOIN v_orders o ON oi.order_id = o.order_id
+    INNER JOIN v_products p ON oi.product_id = p.product_id
+    WHERE o.order_ts >= now() - INTERVAL 30 DAY AND o.status NOT IN ('cancelled','returned')
+    GROUP BY p.category ORDER BY revenue DESC LIMIT 5
+  tags: [groupby, topn, join]
+- id: q008
+  tier: 2
+  question: "Number of customers by country, most first. Return country and count."
+  ordered: true
+  golden_sql: "SELECT country, count() AS c FROM v_customers GROUP BY country ORDER BY c DESC"
+  tags: [groupby]
+- id: q009
+  tier: 2
+  question: "Average order line-item discount across all items, rounded to 2 decimals."
+  ordered: false
+  golden_sql: "SELECT round(avg(discount), 2) FROM v_order_items"
+  tags: [avg]
+- id: q010
+  tier: 3
+  question: "Top 10 customers by total spend overall (delivered, paid, shipped, placed only — exclude cancelled and returned). Return name and spend, highest first."
+  ordered: true
+  golden_sql: |
+    SELECT c.full_name, round(sum(oi.quantity * oi.unit_price - oi.discount), 2) AS spend
+    FROM v_order_items oi
+    INNER JOIN v_orders o ON oi.order_id = o.order_id
+    INNER JOIN v_customers c ON o.customer_id = c.customer_id
+    WHERE o.status NOT IN ('cancelled','returned')
+    GROUP BY c.full_name ORDER BY spend DESC LIMIT 10
+  tags: [join, topn]
+- id: q011
+  tier: 3
+  question: "Which customers in Singapore had the highest total spend? Top 10, name and spend, excluding cancelled/returned."
+  ordered: true
+  golden_sql: |
+    SELECT c.full_name, round(sum(oi.quantity * oi.unit_price - oi.discount), 2) AS spend
+    FROM v_order_items oi
+    INNER JOIN v_orders o ON oi.order_id = o.order_id
+    INNER JOIN v_customers c ON o.customer_id = c.customer_id
+    WHERE c.country = 'SG' AND o.status NOT IN ('cancelled','returned')
+    GROUP BY c.full_name ORDER BY spend DESC LIMIT 10
+  tags: [join, filter, topn]
+- id: q012
+  tier: 3
+  question: "Revenue by channel in the last 30 days, highest first. Return channel and revenue, excluding cancelled/returned."
+  ordered: true
+  golden_sql: |
+    SELECT o.channel, round(sum(oi.quantity * oi.unit_price - oi.discount), 2) AS revenue
+    FROM v_order_items oi INNER JOIN v_orders o ON oi.order_id = o.order_id
+    WHERE o.order_ts >= now() - INTERVAL 30 DAY AND o.status NOT IN ('cancelled','returned')
+    GROUP BY o.channel ORDER BY revenue DESC
+  tags: [join, groupby]
+- id: q013
+  tier: 3
+  question: "How many orders were returned, by country? Return country and count, most first."
+  ordered: true
+  golden_sql: |
+    SELECT c.country, count() AS c
+    FROM v_orders o INNER JOIN v_customers c ON o.customer_id = c.customer_id
+    WHERE o.status = 'returned' GROUP BY c.country ORDER BY c DESC
+  tags: [join, filter]
+- id: q014
+  tier: 3
+  question: "Average number of line items per order, rounded to 2 decimals."
+  ordered: false
+  golden_sql: |
+    SELECT round(avg(n), 2) FROM (
+      SELECT order_id, count() AS n FROM v_order_items GROUP BY order_id)
+  tags: [subquery, avg]
+- id: q015
+  tier: 4
+  question: "Daily delivered-order revenue for the last 14 days, oldest first. Return date and revenue."
+  ordered: true
+  golden_sql: |
+    SELECT toDate(o.order_ts) AS d,
+           round(sum(oi.quantity * oi.unit_price - oi.discount), 2) AS revenue
+    FROM v_order_items oi INNER JOIN v_orders o ON oi.order_id = o.order_id
+    WHERE o.status = 'delivered' AND o.order_ts >= now() - INTERVAL 14 DAY
+    GROUP BY d ORDER BY d
+  tags: [timeseries]
+- id: q016
+  tier: 4
+  question: "7-day rolling average of daily delivered-order revenue for the last 30 days, oldest first. Return date and rolling_avg."
+  ordered: true
+  golden_sql: |
+    WITH daily AS (
+      SELECT toDate(o.order_ts) AS d, sum(oi.quantity * oi.unit_price - oi.discount) AS rev
+      FROM v_order_items oi INNER JOIN v_orders o ON oi.order_id = o.order_id
+      WHERE o.status = 'delivered' AND o.order_ts >= now() - INTERVAL 30 DAY
+      GROUP BY d)
+    SELECT d, round(avg(rev) OVER (ORDER BY d ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), 2)
+    FROM daily ORDER BY d
+  tags: [window, timeseries]
+- id: q017
+  tier: 4
+  question: "For each segment, the average revenue per order in the last 30 days (excluding cancelled/returned), highest first. Return segment and avg_order_revenue."
+  ordered: true
+  golden_sql: |
+    WITH ord AS (
+      SELECT o.order_id, c.segment,
+             sum(oi.quantity * oi.unit_price - oi.discount) AS rev
+      FROM v_order_items oi
+      INNER JOIN v_orders o ON oi.order_id = o.order_id
+      INNER JOIN v_customers c ON o.customer_id = c.customer_id
+      WHERE o.order_ts >= now() - INTERVAL 30 DAY AND o.status NOT IN ('cancelled','returned')
+      GROUP BY o.order_id, c.segment)
+    SELECT segment, round(avg(rev), 2) AS avg_order_revenue
+    FROM ord GROUP BY segment ORDER BY avg_order_revenue DESC
+  tags: [cte, join, avg]
+- id: q018
+  tier: 5
+  question: "View-to-purchase conversion rate in the last 7 days: of sessions with a view event, what fraction also had a purchase event? Return a single percentage rounded to 2 decimals."
+  ordered: false
+  golden_sql: |
+    SELECT round(100 * countIf(has_purchase) / count(), 2) FROM (
+      SELECT session_id, max(event_type = 'view') AS has_view,
+             max(event_type = 'purchase') AS has_purchase
+      FROM v_events WHERE event_ts >= now() - INTERVAL 7 DAY
+      GROUP BY session_id HAVING has_view = 1)
+  tags: [funnel, conversion]
+- id: q019
+  tier: 5
+  question: "Top 5 best-selling products by total quantity sold (exclude cancelled/returned orders), highest first. Return product name and total_qty."
+  ordered: true
+  golden_sql: |
+    SELECT p.name, sum(oi.quantity) AS total_qty
+    FROM v_order_items oi
+    INNER JOIN v_orders o ON oi.order_id = o.order_id
+    INNER JOIN v_products p ON oi.product_id = p.product_id
+    WHERE o.status NOT IN ('cancelled','returned')
+    GROUP BY p.name ORDER BY total_qty DESC LIMIT 5
+  tags: [join, topn]
+  fewshot_holdout: true
+- id: q020
+  tier: 5
+  question: "Gross margin in the last 30 days = sum(quantity*(unit_price-unit_cost)) over delivered orders, joining items to products for unit_cost. Return a single number rounded to 2 decimals."
+  ordered: false
+  golden_sql: |
+    SELECT round(sum(oi.quantity * (oi.unit_price - p.unit_cost)), 2)
+    FROM v_order_items oi
+    INNER JOIN v_orders o ON oi.order_id = o.order_id
+    INNER JOIN v_products p ON oi.product_id = p.product_id
+    WHERE o.status = 'delivered' AND o.order_ts >= now() - INTERVAL 30 DAY
+  tags: [margin, join]
+  fewshot_holdout: true

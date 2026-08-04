@@ -1,0 +1,11 @@
+clickhouse-connect==0.8.15
+langfuse==4.7.1  # OTEL-based SDK (v4 API) — pinned; harness/serving trace via eval/langfuse_adapter.emit_agent_trace
+fastapi==0.115.6
+uvicorn==0.34.0
+pyyaml==6.0.2
+pydantic==2.10.4
+python-dotenv==1.0.1
+faker==33.1.0
+opentelemetry-sdk>=1.29.0  # langfuse==4.7.1 resolves a compatible OTEL version
+opentelemetry-exporter-otlp-proto-grpc>=1.29.0
+pytest==8.3.4

@@ -1,0 +1,52 @@
+# ---- Python ----
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# ---- Secrets / local env ----
+.env
+.env.*
+!.env.example
+*.local
+
+# ---- Node / web frontend ----
+node_modules/
+dist/
+web/node_modules/
+web/dist/
+.vite/
+
+# ---- Logs ----
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- Coverage ----
+coverage/
+
+# ---- Editor / OS ----
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# ---- Terraform (infra) ----
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.tfvars
+
+# ---- App-generated ----
+schema/schema_context.md   # regenerated from system.columns
+.run/                      # transient harness run/status + temp models-file
+
+# ---- MkDocs (workshop guide) ----
+
+AGENTS.md
+CLAUDE.md
+docs/superpowers/**

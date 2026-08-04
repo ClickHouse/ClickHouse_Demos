@@ -8,6 +8,7 @@ Collection of ClickHouse demo projects showcasing various features and patterns.
 | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | [Incremental Materialized Views](./incremental_materialized_views/) | Progressive tutorial from basic MVs to full Medallion Architecture                     |
 | [Telco Marketing Analytics](./agent_stack_builds/telco_marketing/)  | AI-powered telco analytics stack with LibreChat, ClickHouse MCP, LiteLLM, and Langfuse |
+| [Agent Arena](./workshop/agent_arena/)                               | Compare text-to-SQL agents on ClickHouse by accuracy, cost, and latency                 |
 
 ## Getting Started
 
