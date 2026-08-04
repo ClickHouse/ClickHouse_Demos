@@ -81,12 +81,6 @@ class GridCfg(BaseModel):
     prompts: list[str]
 
 
-class ProfileCfg(BaseModel):
-    name: str
-    desc: str = ""
-    models: list[str] = []
-
-
 class Config(BaseModel):
     clickhouse: ClickHouseCfg
     openrouter: OpenRouterCfg
@@ -95,7 +89,6 @@ class Config(BaseModel):
     models: list[ModelCfg]
     prompts: list[PromptCfg]
     grid: GridCfg
-    profiles: list[ProfileCfg] = []
 
     def resolved_grid(self) -> tuple[list[str], list[str]]:
         all_models = [m.name for m in self.models]

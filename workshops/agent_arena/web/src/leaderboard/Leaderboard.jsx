@@ -5,20 +5,11 @@ import './leaderboard.css'
 import { api, API_BASE } from '../api.js'
 import { famOf, promptMeta, outcomeMeta } from '../meta.js'
 import { Icon, ConfigName, FamDot, OutcomeTag, WinPill, Bar, heatColor } from '../ui.jsx'
-import GuidedTour from './GuidedTour.jsx'
 
 const pct = (v) => (v == null ? '—' : (Number(v) * 100).toFixed(1) + '%')
 const pct0 = (v) => (v == null ? '—' : (Number(v) * 100).toFixed(0) + '%')
 const money = (v, d = 5) => (v == null ? '—' : '$' + Number(v).toFixed(d))
 
-async function post(path, body) {
-  const r = await fetch(API_BASE + path, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!r.ok) throw new Error(`${path} → HTTP ${r.status}`)
-  return r.json()
-}
 function toggleSet(set, v) { const n = new Set(set); n.has(v) ? n.delete(v) : n.add(v); return n }
 
 const COL_DESC = {
@@ -48,61 +39,42 @@ export default function Leaderboard() {
   const [promptFilter, setPromptFilter] = useState('All')
   const [analysisTab, setAnalysisTab] = useState('tiers')
   const [error, setError] = useState(null)
+  const [runsLoading, setRunsLoading] = useState(true)
+  const [dashboardLoading, setDashboardLoading] = useState(false)
 
   const [expanded, setExpanded] = useState(() => new Set())
   const [details, setDetails] = useState({})
   const [conv, setConv] = useState(null)
   const [turns, setTurns] = useState({})
 
-  // run-from-UI
-  const [showRun, setShowRun] = useState(false)
-  const [catalog, setCatalog] = useState(null)
-  const [famFilter, setFamFilter] = useState('All')
-  const [selModels, setSelModels] = useState({})
-  const [activePreset, setActivePreset] = useState(null)
-  const [profiles, setProfiles] = useState([])
   const [prompts, setPrompts] = useState([])
-  const [selP, setSelP] = useState(new Set())
-  const [runName, setRunName] = useState('')
-  const [runStatus, setRunStatus] = useState(null)
-  const pollRef = useRef(null)
-
-  // guided walkthrough
-  const [tour, setTour] = useState(false)
-  const [tourStep, setTourStep] = useState(0)
-  const boardRef = useRef(board)
-  const expandedRef = useRef(expanded)
   const detailsRef = useRef(details)
-  useEffect(() => { boardRef.current = board }, [board])
-  useEffect(() => { expandedRef.current = expanded }, [expanded])
   useEffect(() => { detailsRef.current = details }, [details])
 
-  function loadRuns(select) {
-    return api('/api/runs').then((r) => {
-      setRuns(r); if (select) setRun(select); else if (r.length && !run) setRun(r[0])
-    })
+  function loadRuns() {
+    setRunsLoading(true)
+    return api('/api/runs')
+      .then((r) => {
+        setRuns(r)
+        if (r.length) setRun((current) => current || r[0])
+      })
+      .finally(() => setRunsLoading(false))
   }
 
   useEffect(() => {
     loadRuns().catch((e) => setError(String(e)))
     api('/api/meta').then(setMeta).catch(() => {})
-    api('/api/grid-options').then((o) => { setPrompts(o.prompts); setSelP(new Set(o.prompts.map((p) => p.name))) }).catch(() => {})
-    api('/api/profiles').then(setProfiles).catch(() => {})
-    api('/api/models').then((c) => {
-      setCatalog(c)
-      const def = {}
-      c.families.forEach((f) => f.models.forEach((m) => { if (m.in_default) def[m.id] = m }))
-      setSelModels(def)
-    }).catch(() => {})
-    return () => clearTimeout(pollRef.current)
+    api('/api/grid-options').then((o) => setPrompts(o.prompts)).catch(() => {})
   }, [])
 
   function loadBoard(rid) {
     if (!rid) return
+    setDashboardLoading(true)
     const q = `?run_id=${encodeURIComponent(rid)}`
     return Promise.all([api('/api/leaderboard' + q), api('/api/tiers' + q), api('/api/outcomes' + q)])
       .then(([b, t, o]) => { setBoard(b); setTiers(t); setOutcomes(o); setError(null) })
       .catch((e) => setError(String(e)))
+      .finally(() => setDashboardLoading(false))
   }
 
   useEffect(() => {
@@ -161,58 +133,6 @@ export default function Leaderboard() {
     } catch { /* ignore */ }
   }
 
-  // composer helpers
-  // manual edits diverge from any preset → clear the active-preset highlight
-  function toggleModel(m) {
-    setActivePreset(null)
-    setSelModels((s) => { const n = { ...s }; if (n[m.id]) delete n[m.id]; else n[m.id] = m; return n })
-  }
-  function applyProfile(p) {
-    const byId = {}
-    ;(catalog?.families || []).forEach((f) => f.models.forEach((m) => { byId[m.id] = m }))
-    const sel = {}
-    p.model_ids.forEach((id) => { if (byId[id]) sel[id] = byId[id] })
-    setSelModels(sel)
-    setActivePreset(p.name)
-  }
-  const families = catalog ? catalog.families : []
-  const shownModels = famFilter === 'All'
-    ? families.flatMap((f) => f.models)
-    : (families.find((f) => f.family === famFilter)?.models || [])
-  const selCount = Object.keys(selModels).length
-
-  function pollStatus() {
-    api('/api/run/status').then((s) => {
-      setRunStatus(s)
-      if (s.running) pollRef.current = setTimeout(pollStatus, 1500)
-      else if (s.run_id) { loadRuns(s.run_id); setTimeout(() => loadBoard(s.run_id), 800) }
-    }).catch(() => { pollRef.current = setTimeout(pollStatus, 2500) })
-  }
-  async function startRun() {
-    try {
-      const r = await post('/api/run', {
-        models: Object.values(selModels), prompts: [...selP], run_id: runName.trim() || undefined,
-      })
-      if (!r.ok) { setRunStatus({ running: false, lines: ['⚠ ' + (r.error || 'failed to start')] }); return }
-      setRunStatus({ running: true, run_id: r.run_id, lines: ['starting…'] })
-      clearTimeout(pollRef.current); pollRef.current = setTimeout(pollStatus, 1200)
-    } catch (e) { setRunStatus({ running: false, lines: ['⚠ ' + String(e)] }) }
-  }
-  const running = runStatus && runStatus.running
-
-  // imperative handle the guided walkthrough drives
-  const tourCtl = {
-    getBoard: () => boardRef.current,
-    isExpanded: (cid) => expandedRef.current.has(cid),
-    selectRun: (r) => { if (r && r !== run && runs.includes(r)) setRun(r) },
-    setSort: (key, dir = -1) => setSort({ key, dir }),
-    setPrompt: (p) => setPromptFilter(p),
-    collapseAll: () => { setExpanded(new Set()); setConv(null) },
-    openOnly: (cid) => { setExpanded(new Set([cid])); loadDetails(cid) },
-    openConv: (cid) => openConversation(cid),
-    sessionUrl: (cid) => sessionUrl(cid),
-  }
-
   if (error) {
     return (
       <div className="lb-error">
@@ -229,24 +149,14 @@ export default function Leaderboard() {
       <div className="lb-wrap">
         {/* ---------- controls ---------- */}
         <div className="lb-controls">
-          <div className="run-select">
+          <div className="run-select" aria-busy={runsLoading}>
             <label>Run</label>
-            <select value={run || ''} onChange={(e) => setRun(e.target.value)}>
+            <select value={run || ''} disabled={runsLoading || dashboardLoading || !runs.length} onChange={(e) => setRun(e.target.value)}>
+              {runsLoading && <option value="">Loading runs…</option>}
+              {!runsLoading && !runs.length && <option value="">No runs found</option>}
               {runs.map((r) => <option key={r}>{r}</option>)}
             </select>
           </div>
-          <button className="btn" data-on={showRun} onClick={() => setShowRun((v) => !v)}>
-            <Icon name="bolt" size={14} color={showRun ? 'var(--accent)' : 'currentColor'} />
-            Build the arena
-            <span className="caret" style={{ display: 'inline-flex', transform: showRun ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }}><Icon name="chev" size={13} /></span>
-          </button>
-          <button className="lb-tourbtn" onClick={() => setTour(true)}
-            title={tourStep > 0 ? 'Resume the guided walkthrough where you paused' : 'Guided walkthrough of the open-vs-proprietary story'}>
-            <Icon name="bolt" size={14} color="var(--accent)" /> {tourStep > 0 ? `Resume walkthrough · step ${tourStep + 1}` : 'Guided walkthrough'}
-          </button>
-          {tourStep > 0 && !tour && (
-            <button className="btn ghost sm" onClick={() => { setTourStep(0); setTour(true) }} title="Restart from the beginning">↺ Restart</button>
-          )}
           <div className="grow" />
           {meta.datasets_url && (
             <a className="trace-link" style={{ fontSize: 13 }} href={meta.datasets_url} target="_blank" rel="noreferrer">
@@ -255,120 +165,18 @@ export default function Leaderboard() {
           )}
         </div>
 
-        {tour && (
-          <GuidedTour
-            ctl={tourCtl}
-            initialStep={tourStep}
-            onStep={setTourStep}
-            onExit={(finished) => { setTour(false); if (finished) setTourStep(0) }}
-          />
-        )}
-
-        {/* ---------- composer ---------- */}
-        {showRun && (
-          <div className="composer rise" style={{ marginBottom: 16 }}>
-            <div className="composer-head">
-              <Icon name="bolt" size={15} color="var(--accent)" />
-              <span className="t">Build the arena — {catalog
-                ? `${catalog.families.reduce((n, f) => n + f.models.length, 0)} models ${catalog.degraded ? 'from config.yaml' : `live in ${catalog.region}`}`
-                : 'loading models…'} · {selCount} selected</span>
-              {catalog?.degraded && (
-                <span className="tag" style={{ background: 'color-mix(in oklab, var(--oc-exec) 20%, transparent)', color: 'var(--oc-exec)', border: '1px solid color-mix(in oklab, var(--oc-exec) 45%, transparent)' }}
-                  data-tooltip-id="tip" data-tooltip-content={`Live OpenRouter catalog unavailable — showing the priced config.yaml models. (${catalog.degraded})`}>
-                  ⚠ live catalog unavailable
-                </span>
-              )}
-              <div style={{ flex: 1 }} />
-              <button className="iconbtn" onClick={() => setShowRun(false)}><Icon name="x" size={15} /></button>
-            </div>
-            <div className="composer-body">
-              {profiles.length > 0 && (
-                <div>
-                  <div className="cmp-grp-label">Presets · one-click selections from config.yaml</div>
-                  <div className="preset-row">
-                    {profiles.map((p) => (
-                      <button key={p.name} className="chip preset" data-on={activePreset === p.name} onClick={() => applyProfile(p)}
-                        data-tooltip-id="tip" data-tooltip-content={p.desc}>
-                        {activePreset === p.name && <Icon name="chev" size={11} color="#0b0612" />}{p.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <div className="cmp-grp-label">Live model catalog{catalog ? ` · ${catalog.region}` : ''} · {selCount} selected</div>
-                <div className="family-row" style={{ marginBottom: 10 }}>
-                  <button className="chip" data-on={famFilter === 'All'} onClick={() => setFamFilter('All')}>All</button>
-                  {families.map((f) => (
-                    <button key={f.family} className="chip" data-on={famFilter === f.family} onClick={() => setFamFilter(f.family)}>{f.family} ({f.models.length})</button>
-                  ))}
-                </div>
-                <div className="modelgrid">
-                  {shownModels.map((m) => {
-                    const on = !!selModels[m.id]
-                    return (
-                      <div key={m.id} className="modelcard" data-on={on} onClick={() => toggleModel(m)}
-                        data-tooltip-id="tip" data-tooltip-content={`${m.id} · ${m.price_in ? `$${m.price_in}/$${m.price_out} per 1M` : 'no price set → cost shown as $0'}`}>
-                        <div className="mc-check">{on && <Icon name="chev" size={11} color="#08090c" />}</div>
-                        <FamDot model={m.id} />
-                        <span className="mc-name">{m.name}</span>
-                        {m.size && <span className="mc-size">{m.size}</span>}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-                <div>
-                  <div className="cmp-grp-label">Prompt strategies</div>
-                  <div className="prompts-col">
-                    {prompts.map((p) => {
-                      const pm = promptMeta(p.name, promptDesc)
-                      return (
-                        <label key={p.name} className="check" data-tooltip-id="tip" data-tooltip-content={`${pm.name}${p.desc ? ' — ' + p.desc : ''}`}>
-                          <input type="checkbox" checked={selP.has(p.name)} onChange={() => setSelP((s) => toggleSet(s, p.name))} />
-                          <span className="mono" style={{ color: 'var(--ink-3)' }}>{pm.short}</span> {pm.name}
-                        </label>
-                      )
-                    })}
-                  </div>
-                </div>
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  <div className="cmp-grp-label">Run name</div>
-                  <input type="text" placeholder="e.g. sonnet-vs-qwen" value={runName}
-                    onChange={(e) => setRunName(e.target.value.replace(/[^A-Za-z0-9._-]/g, '-'))} style={{ width: '100%', marginBottom: 12 }} />
-                  <div className="lf-grading" data-tooltip-id="tip"
-                    data-tooltip-content="Grading runs server-side in LangFuse evaluators: a code evaluator checks execution accuracy (correctness) and an LLM-as-a-judge rates SQL quality. Toggle them in LangFuse, not here.">
-                    <Icon name="bolt" size={13} color="var(--langfuse)" />
-                    <span>Graded by <b>LangFuse evaluators</b> — correctness (code) + LLM judge</span>
-                    {lfBase && <a className="trace-link" href={`${lfBase}/evaluators`} target="_blank" rel="noreferrer">configure <Icon name="ext" size={12} /></a>}
-                  </div>
-                </div>
-              </div>
-
-              <div className="cmp-foot">
-                <span className="estimate">{selCount} × {selP.size} = <b>{selCount * selP.size}</b> configs × 18 Qs = <b>{selCount * selP.size * 18}</b> agent calls</span>
-                <button className="btn primary" disabled={running || !selCount || !selP.size} onClick={startRun}>
-                  <Icon name="play" size={14} color="var(--accent-ink)" /> {running ? 'running…' : 'Run benchmark'}
-                </button>
-              </div>
-
-              {runStatus && (
-                <div>
-                  <div className={`run-status-line${running ? ' running' : runStatus.returncode === 0 ? ' done' : ''}`}>
-                    {running && <span className="pulse" />}
-                    {running ? `running ${runStatus.run_id}…`
-                      : runStatus.returncode === 0 ? `✓ done — run "${runStatus.run_id}" loaded from Langfuse`
-                      : runStatus.returncode != null ? `exited (code ${runStatus.returncode})` : ''}
-                  </div>
-                  <pre className="runlog">{(runStatus.lines || []).slice(-14).join('\n')}</pre>
-                </div>
-              )}
+        {dashboardLoading ? (
+          <div className="dashboard-loading" role="status" aria-live="polite">
+            <span className="loading-spinner" aria-hidden="true" />
+            <div>
+              <b>Loading dashboard data</b>
+              <span>Fetching leaderboard, tiers, and outcomes for <code>{run}</code>.</span>
             </div>
           </div>
-        )}
+        ) : !run && !runsLoading ? (
+          <div className="dashboard-empty">No benchmark runs found.</div>
+        ) : (
+          <>
 
         {/* ---------- KPI strip ---------- */}
         <SummaryCards rows={fboard} winner={winner} best={best} totalGraded={totalGraded} promptDesc={promptDesc} />
@@ -388,7 +196,7 @@ export default function Leaderboard() {
             <span className="lt-title">Leaderboard — click a row to drill into per-question LangFuse traces</span>
           </div>
           {promptsInRun.length > 1 && (
-            <div className="prompt-filter" data-tour="promptfilter">
+            <div className="prompt-filter">
               <span className="lab">Filter by prompt</span>
               <button className="chip" data-on={promptFilter === 'All'} onClick={() => setPromptFilter('All')}>All</button>
               {promptsInRun.map((p) => {
@@ -407,7 +215,7 @@ export default function Leaderboard() {
               <tr>
                 <th className="l" style={{ width: 30 }} />
                 {COLS.map(([k, label]) => (
-                  <th key={k} className={k === 'config_id' ? 'l' : ''} onClick={() => toggleSort(k)} data-tour-col={k}
+                  <th key={k} className={k === 'config_id' ? 'l' : ''} onClick={() => toggleSort(k)}
                     data-tooltip-id="tip" data-tooltip-content={COL_DESC[k]}>
                     <span>{label}{sort.key === k && <span className="arr">{sort.dir < 0 ? '↓' : '↑'}</span>}</span>
                   </th>
@@ -420,7 +228,7 @@ export default function Leaderboard() {
                 const open = expanded.has(r.config_id)
                 return (
                   <FragmentRow key={r.config_id}>
-                    <tr className={`row${open ? ' open' : ''}${isWin ? ' win-row' : ''}`} data-tour-config={r.config_id} onClick={() => toggleExpand(r.config_id)}>
+                    <tr className={`row${open ? ' open' : ''}${isWin ? ' win-row' : ''}`} onClick={() => toggleExpand(r.config_id)}>
                       <td className="l rank">{i + 1}</td>
                       <td className="l">
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -476,6 +284,8 @@ export default function Leaderboard() {
               : <OutcomeBreakdown outcomes={outcomes.filter((o) => matchP(o.config_id))} promptDesc={promptDesc} />}
           </div>
         </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -519,18 +329,18 @@ function DrillDown({ config_id, rows, sessionUrl, onConv, conv, turns, loadTurns
   const err = rows && rows.error
   const list = Array.isArray(rows) ? rows : []
   return (
-    <div className="dd-inner rise" data-tour-dd={config_id}>
+    <div className="dd-inner rise">
       <div className="dd-bar">
         <div className="dd-note">per-question results — <span className="trace-link">trace ↗</span> opens the LangFuse trace</div>
         <div style={{ display: 'flex', gap: 8 }}>
           {sessionUrl && <a className="trace-link" href={sessionUrl} target="_blank" rel="noreferrer">session ↗</a>}
-          <button className="btn sm" data-tour-conv={config_id} style={{ background: 'color-mix(in oklab, var(--langfuse) 22%, var(--bg-3))', borderColor: 'color-mix(in oklab, var(--langfuse) 45%, transparent)' }} onClick={onConv}>
+          <button className="btn sm" style={{ background: 'color-mix(in oklab, var(--langfuse) 22%, var(--bg-3))', borderColor: 'color-mix(in oklab, var(--langfuse) 45%, transparent)' }} onClick={onConv}>
             <Icon name="ext" size={13} /> View conversation (LangFuse)
           </button>
         </div>
       </div>
 
-      {loading && <div style={{ color: 'var(--ink-3)', padding: '14px 0', fontSize: 13 }}>Loading per-question results from ClickHouse…</div>}
+      {loading && <div style={{ color: 'var(--ink-3)', padding: '14px 0', fontSize: 13 }}>Loading per-question results from LangFuse…</div>}
       {err && (
         <div className="lb-hint">Couldn't load per-question results: {rows.error}. Is the dashboard API up to date? Restart it (<code>scripts/arena.sh serve</code>).</div>
       )}
@@ -610,7 +420,7 @@ function CostScatter({ rows, promptDesc }) {
   const seenFam = new Set()
   rows.forEach((r) => { const f = famOf(r.model_name); if (!seenFam.has(f.key)) { seenFam.add(f.key); legend.push(f) } })
   return (
-    <div className="scatter-card" data-tour="scatter">
+    <div className="scatter-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
         <h3 style={{ fontFamily: 'var(--f-display)', fontSize: 17 }}>Cost <span className="hl">×</span> accuracy</h3>
         <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>bubble size = total spend</span>

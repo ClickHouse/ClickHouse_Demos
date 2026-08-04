@@ -92,16 +92,3 @@ prompts:
 grid:
   models: ["*"]
   prompts: ["*"]
-
-# Preset model selections for the web UI's "Run benchmark" panel. Each profile is
-# a one-click curated comparison; models reference the names above.
-profiles:
-  - name: "Open weight"
-    desc: "Open-weight contenders — DeepSeek, Qwen, GLM."
-    models: [deepseek-v4-flash, qwen3.7-flash, glm-4.7-flash]
-  - name: "Proprietary"
-    desc: "Closed-weight models — Claude, GPT, Gemini."
-    models: [claude-sonnet-5, gpt-5.6-luna, gemini-flash-lite]
-  - name: "Everything"
-    desc: "All six models — the open-vs-proprietary contest."
-    models: [claude-sonnet-5, gpt-5.6-luna, gemini-flash-lite, deepseek-v4-flash, qwen3.7-flash, glm-4.7-flash]
