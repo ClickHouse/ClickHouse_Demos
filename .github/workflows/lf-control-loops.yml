@@ -1,0 +1,455 @@
+name: Langfuse control loops
+
+# Builds the demos/lf_control_loops image, pushes it to ECR, and (on the deploy
+# branch) rolls the App Runner service that serves langfuse.demohouse.cloud.
+#
+# Deliberately NOT modelled on the deploy half of workshop.yml. That workflow
+# ships to an EC2 instance over SSM because the workshop lives on the DemoHouse
+# VM behind nginx. This demo runs on App Runner precisely to avoid that path, so
+# there is no instance id, no SSM document, and no nginx server_name to drift.
+# Everything else here follows workshop.yml house conventions: pinned major
+# action versions, OIDC role assumption, ap-southeast-1, ECR login via
+# get-login-password, and buildx --push with an immutable SHA tag.
+#
+# Repo variables this needs (Settings -> Variables):
+#   LF_LOOPS_AWS_ROLE_ARN     OIDC role with ECR push + apprunner deploy rights
+#   LF_LOOPS_SERVICE_ARN      App Runner service ARN, from the runbook step 3c
+#   LF_LOOPS_URL              https://langfuse.demohouse.cloud once DNS is live,
+#                             otherwise the generated *.awsapprunner.com URL
+# One URL, not two, even though dev-langfuse.demohouse.cloud also exists: both
+# custom domains are associated with the SAME App Runner service, so checking one
+# checks the other's origin. If dev-langfuse ever moves to its own service, that
+# service needs its own workflow, not a second variable in this one.
+# No secrets. The app has no server-side credentials to inject; see the README.
+
+on:
+  pull_request:
+    paths:
+      - "demos/lf_control_loops/**"
+      - ".github/workflows/lf-control-loops.yml"
+  push:
+    branches: [main, lf-control-loops-v1]
+    paths:
+      - "demos/lf_control_loops/**"
+      - ".github/workflows/lf-control-loops.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: lf-control-loops-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  AWS_REGION: ap-southeast-1
+  REGISTRY: 959934561610.dkr.ecr.ap-southeast-1.amazonaws.com
+  REPOSITORY: posthouse-demo-langfuse-loops
+  # Must match EXPOSE/CMD in the Dockerfile and "Port" in apprunner-service.json.
+  APP_PORT: "8000"
+
+jobs:
+  verify:
+    name: Build and smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # NOTE: this writes app/__pycache__ into the build context, so it is also an
+      # unintentional canary for the .dockerignore. Before the recursive-pattern
+      # fix, the image this job verified contained ten .pyc files that the image
+      # the push job builds (fresh checkout, no compileall) did not, meaning the
+      # verified artifact was not the published artifact. It now excludes cleanly
+      # either way, and the explicit assertions below keep it that way.
+      - name: Byte-compile the app
+        working-directory: demos/lf_control_loops
+        run: python -m compileall -q app
+
+      # The image is the artifact, so build it on every PR too. Load into the
+      # local daemon rather than pushing: a PR must be able to fail here without
+      # putting anything in ECR.
+      - name: Build image
+        run: |
+          docker build \
+            --tag lf-control-loops:ci \
+            demos/lf_control_loops
+
+      # Guards the .dockerignore, which is the security-critical file in this
+      # directory. An accidental `COPY . .` or a deleted .env line would bake the
+      # live sk-proj- OpenAI key and pk-lf-/sk-lf- Langfuse keys from a developer
+      # working copy into a pushed layer. Asserting on the image contents catches
+      # that no matter which line went missing, so keep this ahead of any push.
+      #
+      # SEEDS ITS OWN CANARIES. A clean CI checkout contains no .env, no
+      # __pycache__ and no local sandbox/, so running these assertions against it
+      # proves nothing at all: the previous version of this step passed happily
+      # while .dockerignore's root-anchored patterns let a nested app/.env through,
+      # because CI simply never had a nested .env to catch. The step now creates
+      # the files first, so a regression in .dockerignore fails here instead of in
+      # ECR. The seeded values are obviously fake and never leave the runner.
+      - name: Seed dockerignore canaries
+        working-directory: demos/lf_control_loops
+        run: |
+          set -euo pipefail
+          printf 'OPENAI_API_KEY=sk-proj-CI-CANARY-ROOT\n'   > .env
+          printf 'OPENAI_API_KEY=sk-proj-CI-CANARY-APP\n'    > app/.env
+          printf 'OPENAI_API_KEY=sk-proj-CI-CANARY-SUFFIX\n' > app/.env.local
+          printf 'OPENAI_API_KEY=sk-proj-CI-CANARY-PREFIX\n' > app/prod.env
+          printf 'OPENAI_API_KEY=sk-proj-CI-CANARY-STATIC\n' > static/.env
+          mkdir -p app/__pycache__ app/sandbox static/.claude
+          printf 'CI-CANARY-PYC\n'     > app/__pycache__/canary.pyc
+          printf '# CI-CANARY\n'       > app/sandbox/pricing.py
+          printf 'CI-CANARY-TOKEN\n'   > static/.claude/session.json
+          printf 'CI-CANARY-PEM\n'     > app/tls.pem
+          echo "seeded"
+
+      # Rebuild with the canaries in the context. This is the build the
+      # assertions below run against; the earlier build only proved it compiles.
+      - name: Rebuild with canaries present
+        run: |
+          docker build \
+            --tag lf-control-loops:ci \
+            demos/lf_control_loops
+
+      - name: Assert no credentials or local state in the image
+        run: |
+          set -euo pipefail
+          found=$(docker run --rm --entrypoint sh lf-control-loops:ci -c \
+            'find / -xdev \( -name ".env" -o -name ".env.*" -o -name "*.env" \) -print 2>/dev/null' \
+            || true)
+          if [ -n "${found}" ]; then
+            echo "ERROR: env files present in the image, .dockerignore is not doing its job:" >&2
+            echo "${found}" >&2
+            exit 1
+          fi
+          echo "ok no .env in the image"
+
+          # Not just .env. The bytecode and sandbox cases are the ones the
+          # .env-only check missed: README.md tells developers to run the app
+          # locally before building, which creates app/__pycache__, and the old
+          # root-anchored `__pycache__/` pattern shipped it. Scoped to /app
+          # because the python base image legitimately carries stdlib .pyc and CA
+          # .pem files, and a `find /` here would fail on those every time.
+          leaked=$(docker run --rm --entrypoint sh lf-control-loops:ci -c \
+            'find /app \( -name "*.pyc" -o -name "__pycache__" -o -name "*.pem" \
+               -o -name "*.key" -o -name ".claude" -o -path "/app/app/sandbox" \) \
+               -print 2>/dev/null' || true)
+          if [ -n "${leaked}" ]; then
+            echo "ERROR: local state present in the image, .dockerignore is not recursive enough:" >&2
+            echo "${leaked}" >&2
+            exit 1
+          fi
+          echo "ok no bytecode, sandbox, key material or agent state under /app"
+
+          # /app/sandbox itself MUST exist and MUST be empty: the Dockerfile
+          # creates it owned by the demo user and app.coding_agent seeds it at
+          # import time. A missing one means loop 3 cannot write; a non-empty one
+          # means a developer's mutated copy came in from the context.
+          docker run --rm --entrypoint sh lf-control-loops:ci -c \
+            '[ -d /app/sandbox ] || { echo "ERROR: /app/sandbox missing" >&2; exit 1; }
+             [ -z "$(ls -A /app/sandbox)" ] || { echo "ERROR: /app/sandbox not empty:" >&2; ls -A /app/sandbox >&2; exit 1; }'
+          echo "ok /app/sandbox exists and is empty"
+
+          # Belt and braces: no canary string anywhere under /app, whatever the
+          # filename. Catches an exclusion that matches the name but not the path.
+          if docker run --rm --entrypoint sh lf-control-loops:ci -c \
+            'grep -rl "CI-CANARY" /app 2>/dev/null'; then
+            echo "ERROR: a seeded canary string reached the image" >&2
+            exit 1
+          fi
+          echo "ok no canary strings under /app"
+
+          # Same question asked of the layer history, which is where a
+          # --build-arg secret would survive even after the file was deleted.
+          if docker history --no-trunc --format '{{.CreatedBy}}' lf-control-loops:ci \
+            | grep -Ei 'sk-proj-|sk-lf-|pk-lf-|OPENAI_API_KEY|LANGFUSE_SECRET'; then
+            echo "ERROR: credential-shaped string in image history" >&2
+            exit 1
+          fi
+          echo "ok no credential-shaped strings in image history"
+
+      # The canaries must not survive into the push job's context. That job runs
+      # on a fresh runner with its own checkout, so this is defence in depth
+      # rather than the only thing standing between a canary and ECR, but a
+      # future refactor that merges the two jobs would make it the only thing.
+      - name: Remove canaries
+        if: always()
+        working-directory: demos/lf_control_loops
+        run: |
+          rm -f .env app/.env app/.env.local app/prod.env static/.env app/tls.pem
+          rm -rf app/__pycache__ app/sandbox static/.claude
+          git status --porcelain
+
+      # These three assertions encode the bring-your-own-key contract. They used
+      # to be expected to fail, because the snapshot this directory started from
+      # predated the BYOK backend. They now pass: verified 2026-08-04 against an
+      # image built from this tree, /api/healthz answers 200 {"ok":true},
+      # /api/status answers 200 with "byok":true, and POST /api/workflow/run with
+      # no credential headers answers 400. Leave them exactly as strict as they
+      # are. A green build against a backend that answers 200 with an error body,
+      # or that could fall back to a server-side key, is what must not be
+      # shippable, and the 400 assertion is the only automated thing standing
+      # between a well-meaning "make the demo smoother" change and a public
+      # endpoint spending our OpenAI quota.
+      #
+      # Proves the container actually serves before anything is pushed, and
+      # proves it on the exact port App Runner will probe. Status is asserted
+      # explicitly: `curl --fail` would accept any 2xx and, worse, pass on a 302,
+      # which is how an earlier workflow in this repo stayed green while serving
+      # a login redirect instead of the app.
+      - name: Smoke test the container
+        run: |
+          set -euo pipefail
+          docker run --detach --name lf-loops-ci -p 8000:"${APP_PORT}" lf-control-loops:ci
+          trap 'docker logs lf-loops-ci || true; docker rm --force lf-loops-ci >/dev/null 2>&1 || true' EXIT
+
+          # Assign the fallback, never `|| echo 000`. On a connection failure curl
+          # already writes 000 from --write-out AND exits non-zero, so an echo on
+          # the failure branch concatenates to "000000", which matches neither the
+          # expected status nor the 000 diagnostic case. Cost an hour to spot once.
+          probe() {
+            code=$(curl --show-error --silent --connect-timeout 5 --max-time 20 \
+              --output /dev/null --write-out '%{http_code}' "$1") || code=000
+            printf '%s' "${code:-000}"
+          }
+
+          code=000
+          for _ in $(seq 1 30); do
+            code=$(probe http://127.0.0.1:8000/api/healthz)
+            [ "${code}" = "200" ] && break
+            sleep 2
+          done
+          if [ "${code}" != "200" ]; then
+            echo "ERROR: /api/healthz answered ${code}, expected 200" >&2
+            exit 1
+          fi
+          echo "ok /api/healthz -> 200"
+
+          # /api/status must answer without credentials; it is what the UI reads
+          # to render the Setup tab.
+          code=$(probe http://127.0.0.1:8000/api/status)
+          if [ "${code}" != "200" ]; then
+            echo "ERROR: /api/status answered ${code}, expected 200" >&2
+            exit 1
+          fi
+          echo "ok /api/status -> 200"
+
+          # A loop endpoint with no credential headers must be refused with 400,
+          # not fall back to server-side keys (there are none) and not 500. This
+          # is the bring-your-own-key contract, asserted.
+          code=$(curl --show-error --silent --connect-timeout 5 --max-time 20 \
+            --output /dev/null --write-out '%{http_code}' \
+            --request POST --header 'Content-Type: application/json' \
+            --data '{"ticket":"ci probe"}' \
+            http://127.0.0.1:8000/api/workflow/run) || code=000
+          if [ "${code}" != "400" ]; then
+            echo "ERROR: /api/workflow/run with no credential headers answered ${code}, expected 400" >&2
+            exit 1
+          fi
+          echo "ok /api/workflow/run without credentials -> 400"
+
+  push:
+    name: Push image to ECR
+    if: github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      digest: ${{ steps.image.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.LF_LOOPS_AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password \
+            | docker login --username AWS --password-stdin "${REGISTRY}"
+
+      # linux/amd64, NOT the linux/arm64 workshop.yml builds. That workflow
+      # targets a Graviton EC2 host; App Runner runs x86_64 only and rejects an
+      # arm64 manifest at deploy time with an unhelpful message. No QEMU setup
+      # needed as a result, since the runner is already amd64.
+      - name: Build and push immutable image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --provenance false \
+            --tag "${REGISTRY}/${REPOSITORY}:${GITHUB_SHA}" \
+            --tag "${REGISTRY}/${REPOSITORY}:prod" \
+            --push \
+            demos/lf_control_loops
+
+      - name: Read image digest
+        id: image
+        run: |
+          set -euo pipefail
+          digest=$(aws ecr describe-images \
+            --repository-name "${REPOSITORY}" \
+            --image-ids imageTag="${GITHUB_SHA}" \
+            --query 'imageDetails[0].imageDigest' \
+            --output text)
+          test "${digest}" != "None"
+          echo "digest=${digest}" >> "${GITHUB_OUTPUT}"
+
+  deploy:
+    name: Deploy to App Runner
+    # Only the dedicated deploy branch ships, matching the workshop convention
+    # that main is not a deploy trigger. AutoDeploymentsEnabled is false on the
+    # service, so without this job an ECR push changes nothing that is serving.
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref_name == 'lf-control-loops-v1'
+    needs: push
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.LF_LOOPS_AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Require deploy target
+        env:
+          SERVICE_ARN: ${{ vars.LF_LOOPS_SERVICE_ARN }}
+          SITE_URL: ${{ vars.LF_LOOPS_URL }}
+        run: |
+          set -euo pipefail
+          test -n "${SERVICE_ARN}" || {
+            echo "ERROR: set the LF_LOOPS_SERVICE_ARN repo variable, see docs/lf-control-loops-deploy.md step 3" >&2
+            exit 1
+          }
+          test -n "${SITE_URL}" || {
+            echo "ERROR: set the LF_LOOPS_URL repo variable, see docs/lf-control-loops-deploy.md step 4" >&2
+            exit 1
+          }
+
+      # Pin the deployment to the digest this run produced. Deploying the :prod
+      # tag would race a concurrent push and ship whatever won.
+      - name: Update service to this revision
+        env:
+          SERVICE_ARN: ${{ vars.LF_LOOPS_SERVICE_ARN }}
+          DIGEST: ${{ needs.push.outputs.digest }}
+        run: |
+          set -euo pipefail
+          aws apprunner update-service \
+            --service-arn "${SERVICE_ARN}" \
+            --source-configuration "$(jq -n \
+              --arg image "${REGISTRY}/${REPOSITORY}@${DIGEST}" \
+              --arg port "${APP_PORT}" \
+              '{ImageRepository: {
+                  ImageIdentifier: $image,
+                  ImageRepositoryType: "ECR",
+                  ImageConfiguration: {Port: $port}
+                }}')" \
+            --query 'OperationId' --output text
+
+      - name: Wait for the service to settle
+        env:
+          SERVICE_ARN: ${{ vars.LF_LOOPS_SERVICE_ARN }}
+        run: |
+          set -euo pipefail
+          status=""
+          for _ in $(seq 1 120); do
+            status=$(aws apprunner describe-service \
+              --service-arn "${SERVICE_ARN}" \
+              --query 'Service.Status' --output text)
+            case "${status}" in
+              RUNNING) break ;;
+              CREATE_FAILED|DELETED|PAUSED) break ;;
+            esac
+            sleep 10
+          done
+          echo "service status: ${status}"
+          test "${status}" = "RUNNING"
+
+      # Edge verification. Every check asserts an EXACT status code, never a
+      # range and never `curl --fail`, and never follows redirects. A prior
+      # workflow here used --fail with no assertion and would have gone green on
+      # a 302 to a login page; a health check that accepts "any non-error" is
+      # not a health check. 200 is required, so a 3xx from a misconfigured
+      # custom domain and a CloudFront error page both fail loudly.
+      - name: Verify the public endpoint
+        env:
+          SITE_URL: ${{ vars.LF_LOOPS_URL }}
+        run: |
+          set -euo pipefail
+          base=${SITE_URL%/}
+
+          check() {
+            url="$1"; expected="$2"
+            code=000
+            body_head=""
+            # Retry in the shell, not with curl --retry: asserting a status code
+            # means curl has to exit 0 on a 502 so the code can be read, which
+            # also stops curl from retrying it, and a cold App Runner instance
+            # is exactly the 502 worth retrying.
+            for _ in $(seq 1 24); do
+              # Assign the fallback rather than `|| echo 000`; curl writes 000
+              # itself on a connection failure and also exits non-zero, so an echo
+              # there yields "000000" and breaks the 000 diagnostic below.
+              code=$(curl --show-error --silent --connect-timeout 10 --max-time 30 \
+                --output /tmp/body --write-out '%{http_code}' "${url}") || code=000
+              [ "${code}" = "${expected}" ] && break
+              sleep 5
+            done
+            if [ "${code}" != "${expected}" ]; then
+              echo "ERROR: ${url} answered ${code}, expected ${expected}" >&2
+              case "${code}" in
+                000) echo "ERROR: no HTTP response at all: DNS, TLS or the service itself is down" >&2 ;;
+                3*)  echo "ERROR: a redirect means something is in front of App Runner that should not be" >&2 ;;
+                404) echo "ERROR: the route is missing from this image, check the pushed digest" >&2 ;;
+                50*) echo "ERROR: the container is failing or still starting" >&2 ;;
+              esac
+              body_head=$(head -c 300 /tmp/body 2>/dev/null || true)
+              echo "ERROR: first 300 bytes of body: ${body_head}" >&2
+              exit 1
+            fi
+            echo "ok ${url} -> ${code}"
+          }
+
+          check "${base}/api/healthz" 200
+          check "${base}/api/status" 200
+          check "${base}/" 200
+
+          # A 200 on an error page is the failure mode a status-only check
+          # cannot see, so assert the payload shape too: /api/status must report
+          # byok true, which only the real app can say.
+          grep -q '"byok"[[:space:]]*:[[:space:]]*true' /tmp/body 2>/dev/null || {
+            curl --silent --max-time 30 "${base}/api/status" > /tmp/status.json
+            grep -q '"byok"[[:space:]]*:[[:space:]]*true' /tmp/status.json || {
+              echo "ERROR: /api/status did not report byok true; body was:" >&2
+              head -c 300 /tmp/status.json >&2
+              exit 1
+            }
+          }
+          echo "ok /api/status reports byok true"
+
+      - name: Deployment summary
+        env:
+          SITE_URL: ${{ vars.LF_LOOPS_URL }}
+          DIGEST: ${{ needs.push.outputs.digest }}
+        run: |
+          {
+            echo "### Langfuse control loops deployment"
+            echo "- Branch: \`${GITHUB_REF_NAME}\`"
+            echo "- Revision: \`${GITHUB_SHA}\`"
+            echo "- Image digest: \`${DIGEST}\`"
+            echo "- URL: ${SITE_URL}"
+            echo "- Credentials shipped: none, the app is bring-your-own-key"
+          } >> "${GITHUB_STEP_SUMMARY}"

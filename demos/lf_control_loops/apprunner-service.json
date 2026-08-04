@@ -1,0 +1,105 @@
+{
+  "_comment": [
+    "STRIP THIS KEY BEFORE USE. The AWS CLI rejects unknown members in",
+    "--cli-input-json, so _comment makes create-service fail with 'Unknown",
+    "parameter in input'. The runbook does it in one line and it is the only",
+    "preprocessing needed:",
+    "  jq 'del(._comment) | .SourceConfiguration.AuthenticationConfiguration.AccessRoleArn = $arn' \\",
+    "     --arg arn \"$ACCESS_ROLE_ARN\" apprunner-service.json > /tmp/apprunner-input.json",
+    "  aws apprunner create-service --cli-input-json file:///tmp/apprunner-input.json",
+    "",
+    "Mirrors the labs service (labs.demohouse.cloud), which is a real running",
+    "App Runner service in this account on an ECR image at 1024/2048.",
+    "",
+    "Replace <ACCESS_ROLE_ARN> with the role App Runner assumes to pull from ECR;",
+    "docs/lf-control-loops-deploy.md step 3 creates it. Everything else is final.",
+    "",
+    "Health check is GET /api/healthz, not /. Confirmed against app/main.py, not",
+    "assumed: `@app.get(\"/api/healthz\")` is declared at main.py:277, returns",
+    "{\"ok\": true}, and is declared BEFORE the `app.mount(\"/\", StaticFiles(...))` at",
+    "main.py:356, which matters because the catch-all static mount would otherwise",
+    "shadow it and answer 404. / serves the SPA through that mount, and a health",
+    "check on a loop endpoint would call OpenAI or Langfuse -- which would take this",
+    "service down every time a third party has a bad day, and, since there are no",
+    "server-side keys, would fail permanently. healthz answers 200 with no",
+    "credentials and touches nothing external.",
+    "",
+    "AutoScalingConfigurationArn caps the bill. READ THIS BEFORE REMOVING IT.",
+    "App Runner's CreateService API takes only an ARN here; there is no inline",
+    "MinSize/MaxSize/MaxConcurrency to put in this file. Omitting the field is not",
+    "neutral: the API then attaches the default configuration, which is MaxSize 25.",
+    "This app is public and unauthenticated, has no rate limit and no concurrency",
+    "cap of its own, and a review demonstrated one unauthenticated caller saturating",
+    "an instance in about two minutes. Bring-your-own-key means such a caller cannot",
+    "spend OUR OpenAI or Langfuse quota -- that half of the argument holds and was",
+    "verified -- but it does nothing about OUR App Runner compute and egress bill,",
+    "which is what a scale-to-25 default turns a flood into. So the ceiling is",
+    "deliberately 2, not 25. See docs/lf-control-loops-deploy.md step 3b for the",
+    "create-auto-scaling-configuration call that must run BEFORE create-service,",
+    "and for the per-number confidence notes. create-service fails loudly if the",
+    "configuration does not exist yet, which is the failure mode we want: a missing",
+    "ceiling should stop the deploy, not silently become 25.",
+    "",
+    "The ARN deliberately carries no trailing revision number, so the service tracks",
+    "the latest revision of that configuration name. Appending /1 would pin it and",
+    "make a later ceiling change a service update instead of a config revision.",
+    "",
+    "Note the absence of a RuntimeEnvironmentVariables or RuntimeEnvironmentSecrets",
+    "block. That is not an omission to fill in later: this app holds no server-side",
+    "credential at all. OpenAI and Langfuse keys arrive per request in X-OpenAI-Key /",
+    "X-Langfuse-* headers from the visitor's own browser session. So there is no",
+    "Secrets Manager entry to provision, no instance role needing secretsmanager or",
+    "ssm permissions, no rotation runbook, and no blast radius if the image leaks.",
+    "The service needs an ACCESS role to pull the image and no INSTANCE role at all.",
+    "",
+    "AutoDeploymentsEnabled is false to match labs: an ECR push must not ship",
+    "itself. The CI workflow builds and pushes; a human runs start-deployment.",
+    "",
+    "Architecture is X86_64. App Runner does not run arm64 images, so do not copy",
+    "the --platform linux/arm64 build from .github/workflows/workshop.yml, which",
+    "targets a Graviton EC2 host instead."
+  ],
+  "ServiceName": "langfuse-control-loops",
+  "SourceConfiguration": {
+    "AuthenticationConfiguration": {
+      "AccessRoleArn": "<ACCESS_ROLE_ARN>"
+    },
+    "AutoDeploymentsEnabled": false,
+    "ImageRepository": {
+      "ImageIdentifier": "959934561610.dkr.ecr.ap-southeast-1.amazonaws.com/posthouse-demo-langfuse-loops:prod",
+      "ImageRepositoryType": "ECR",
+      "ImageConfiguration": {
+        "Port": "8000"
+      }
+    }
+  },
+  "InstanceConfiguration": {
+    "Cpu": "1024",
+    "Memory": "2048"
+  },
+  "AutoScalingConfigurationArn": "arn:aws:apprunner:ap-southeast-1:959934561610:autoscalingconfiguration/langfuse-loops-capped",
+  "HealthCheckConfiguration": {
+    "Protocol": "HTTP",
+    "Path": "/api/healthz",
+    "Interval": 10,
+    "Timeout": 5,
+    "HealthyThreshold": 1,
+    "UnhealthyThreshold": 5
+  },
+  "NetworkConfiguration": {
+    "IngressConfiguration": {
+      "IsPubliclyAccessible": true
+    },
+    "EgressConfiguration": {
+      "EgressType": "DEFAULT"
+    }
+  },
+  "ObservabilityConfiguration": {
+    "ObservabilityEnabled": false
+  },
+  "Tags": [
+    { "Key": "Project", "Value": "demohouse" },
+    { "Key": "Component", "Value": "langfuse-control-loops-demo" },
+    { "Key": "ManagedBy", "Value": "demos/lf_control_loops" }
+  ]
+}

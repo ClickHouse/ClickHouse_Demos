@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Langfuse deep dive - three control loops</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="dot"></span>
+        <span class="eyebrow">LANGFUSE SA DEEP DIVE</span>
+      </div>
+      <!-- Pills report browser-side truth only. There are no server-side keys to
+           report on, so nothing here may imply the server holds credentials. -->
+      <div class="status" id="status">
+        <span class="pill pill-muted" id="status-keys">keys: ...</span>
+        <span class="pill pill-muted" id="status-model">model: ...</span>
+        <span class="pill pill-muted" id="status-session">session: ...</span>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="intro">
+        <div class="eyebrow">NOT EVERY "AGENT" IS THE SAME</div>
+        <h1>Three control loops, three telemetry needs.</h1>
+        <p class="lead">
+          More autonomy means more surface area to evaluate. Run each loop, then open the
+          exact trace in Langfuse to see what was captured. Every loop runs on your own
+          OpenAI and Langfuse keys, which you paste in Setup.
+        </p>
+      </section>
+
+      <nav class="tabs" id="tabs">
+        <button class="tab is-active" data-tab="setup">
+          <span class="num">00</span>
+          <span class="tab-title">Setup</span>
+          <span class="tab-sub">YOUR KEYS</span>
+        </button>
+        <button class="tab" data-tab="workflow">
+          <span class="num">01</span>
+          <span class="tab-title">Workflow</span>
+          <span class="tab-sub">DETERMINISTIC</span>
+          <span class="tab-lock" hidden>LOCKED</span>
+        </button>
+        <button class="tab" data-tab="agent">
+          <span class="num num-yellow">02</span>
+          <span class="tab-title">Agent</span>
+          <span class="tab-sub">MODEL-DIRECTED</span>
+          <span class="tab-lock" hidden>LOCKED</span>
+        </button>
+        <button class="tab" data-tab="coding">
+          <span class="num num-dark">03</span>
+          <span class="tab-title">Coding agent</span>
+          <span class="tab-sub">SIDE-EFFECTING</span>
+          <span class="tab-lock" hidden>LOCKED</span>
+        </button>
+      </nav>
+
+      <!-- ============ SETUP ============ -->
+      <section class="panel is-active" data-panel="setup">
+        <div class="grid">
+          <div class="col-left">
+            <div class="card">
+              <div class="card-head"><span class="num">00</span><span class="eyebrow">BRING YOUR OWN KEYS</span></div>
+              <h2>Setup</h2>
+              <ul class="facts">
+                <li>All three keys are required: OpenAI, Langfuse public, Langfuse secret. Nothing runs until all three are in.</li>
+                <li>The keys stay in this browser tab. They are sent with each request and are not stored on the server.</li>
+                <li>Closing the tab discards them.</li>
+                <li>The Langfuse secret key grants full read and write on that Langfuse project. Know what you are pasting.</li>
+              </ul>
+              <!-- The WHY is visible, not buried in a comment, because a visitor pasting a
+                   Langfuse secret key deserves to know the requirement is not arbitrary.
+                   Keep this in sync with app/creds.py extract(). -->
+              <div class="trace-line">
+                Why all three: tracing <b>is</b> this demo, and your own Langfuse keys are what
+                keep your prompts in your project. The Langfuse SDK patches the OpenAI client for
+                the whole server process, so a run carrying no Langfuse key of its own can be
+                exported into whichever project the server has open, meaning another visitor's.
+                Requiring the pair makes that unreachable.
+              </div>
+            </div>
+          </div>
+          <div class="col-right">
+            <div class="card">
+              <div class="field">
+                <label class="eyebrow" for="su-openai">OPENAI API KEY <span class="req">REQUIRED</span></label>
+                <input id="su-openai" type="password" autocomplete="off" spellcheck="false" placeholder="sk-..." />
+                <p class="hint">Pays for every model call in the three loops.</p>
+              </div>
+
+              <div class="field">
+                <label class="eyebrow" for="su-lf-public">LANGFUSE PUBLIC KEY <span class="req">REQUIRED</span></label>
+                <input id="su-lf-public" type="text" autocomplete="off" spellcheck="false" placeholder="pk-lf-..." />
+                <p class="hint">Pins every model call to your project. Only usable as a pair with the secret key.</p>
+              </div>
+
+              <div class="field">
+                <label class="eyebrow" for="su-lf-secret">LANGFUSE SECRET KEY <span class="req">REQUIRED</span></label>
+                <input id="su-lf-secret" type="password" autocomplete="off" spellcheck="false" placeholder="sk-lf-..." />
+                <p class="hint">Full read and write on that Langfuse project.</p>
+              </div>
+
+              <div class="field">
+                <label class="eyebrow" for="su-lf-host">LANGFUSE HOST</label>
+                <select id="su-lf-host"></select>
+                <p class="hint">The server accepts these hosts only.</p>
+              </div>
+
+              <div class="field">
+                <label class="eyebrow" for="su-model">MODEL</label>
+                <select id="su-model"></select>
+                <label class="eyebrow sublabel" for="su-model-custom">OR TYPE A MODEL ID</label>
+                <!-- maxlength and pattern are convenience only. app.js re-checks both before
+                     the value can reach the X-Openai-Model header; DOM attributes are trivially
+                     edited and this input feeds an outbound header. -->
+                <input id="su-model-custom" type="text" autocomplete="off" spellcheck="false"
+                       maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9._:\-]*" placeholder="gpt-4.1-mini" />
+                <p class="hint">
+                  A listed model may not be enabled on your account. Type one that is, and it wins
+                  over the list. Letters, digits and <code>. _ : -</code> only, up to 64 characters.
+                </p>
+              </div>
+
+              <div class="setup-actions">
+                <button class="run" id="su-save">Save keys</button>
+                <button class="btn-reject" id="su-clear">Clear keys</button>
+              </div>
+              <p class="setup-msg" id="su-msg" role="status" aria-live="polite"></p>
+              <p class="hint" id="su-note" hidden></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ WORKFLOW ============ -->
+      <section class="panel" data-panel="workflow">
+        <div class="gate-notice" data-gate="workflow" hidden>
+          <span class="eyebrow">LOCKED</span>
+          <h3>Add your OpenAI and Langfuse keys</h3>
+          <p>
+            This loop calls a model on your OpenAI key and traces the run into your own Langfuse
+            project. All three keys are required, so nothing runs until you add them in Setup.
+          </p>
+          <button class="run gate-btn" data-goto-setup>Go to Setup</button>
+        </div>
+        <div class="grid">
+          <div class="col-left">
+            <div class="card">
+              <div class="card-head"><span class="num">01</span><span class="eyebrow">DETERMINISTIC</span></div>
+              <h2>Workflow</h2>
+              <ul class="facts">
+                <li>Predefined steps</li>
+                <li>Limited branching</li>
+                <li>Easier to replay and test</li>
+              </ul>
+              <div class="trace-line">Trace <b>key steps + outputs</b></div>
+            </div>
+            <div class="card">
+              <label class="eyebrow" for="wf-input">SUPPORT TICKET</label>
+              <textarea id="wf-input" rows="4">My order A1002 still has not shipped and I paid for express. When will it arrive?</textarea>
+              <div class="examples" id="wf-examples"></div>
+              <button class="run" data-run="workflow">Run workflow</button>
+              <p class="hint">A fixed pipeline: classify - route - draft reply - guardrail. Same steps every run.</p>
+            </div>
+          </div>
+          <div class="col-right">
+            <div class="runbox" data-runbox="workflow">
+              <div class="runbox-empty">Run the workflow to see the control loop and its trace.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ AGENT ============ -->
+      <section class="panel" data-panel="agent">
+        <div class="gate-notice" data-gate="agent" hidden>
+          <span class="eyebrow">LOCKED</span>
+          <h3>Add your OpenAI and Langfuse keys</h3>
+          <p>
+            This loop calls a model on your OpenAI key and traces the run into your own Langfuse
+            project. All three keys are required, so nothing runs until you add them in Setup.
+          </p>
+          <button class="run gate-btn" data-goto-setup>Go to Setup</button>
+        </div>
+        <div class="grid">
+          <div class="col-left">
+            <div class="card">
+              <div class="card-head"><span class="num num-yellow">02</span><span class="eyebrow">MODEL-DIRECTED</span></div>
+              <h2>Agent</h2>
+              <ul class="facts">
+                <li>Model chooses next action</li>
+                <li>Tool calls and state</li>
+                <li>Harder to evaluate</li>
+              </ul>
+              <div class="trace-line">Trace <b>decisions, tools, context, scores</b></div>
+            </div>
+            <div class="card">
+              <label class="eyebrow" for="ag-input">CUSTOMER QUESTION</label>
+              <textarea id="ag-input" rows="4">Where is my order A1001, and can I still return it if it does not fit?</textarea>
+              <div class="examples" id="ag-examples"></div>
+              <button class="run" data-run="agent">Run agent</button>
+              <p class="hint">The model decides which tools to call (orders, knowledge base, refund policy) and when to answer.</p>
+            </div>
+          </div>
+          <div class="col-right">
+            <div class="runbox" data-runbox="agent">
+              <div class="runbox-empty">Run the agent to watch it decide which tools to call.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ CODING AGENT ============ -->
+      <section class="panel" data-panel="coding">
+        <div class="gate-notice" data-gate="coding" hidden>
+          <span class="eyebrow">LOCKED</span>
+          <h3>Add your OpenAI and Langfuse keys</h3>
+          <p>
+            This loop calls a model on your OpenAI key and traces the run into your own Langfuse
+            project. All three keys are required, so nothing runs until you add them in Setup.
+          </p>
+          <button class="run gate-btn" data-goto-setup>Go to Setup</button>
+        </div>
+        <div class="grid">
+          <div class="col-left">
+            <div class="card">
+              <div class="card-head"><span class="num num-dark">03</span><span class="eyebrow">SIDE-EFFECTING</span></div>
+              <h2>Coding agent</h2>
+              <ul class="facts">
+                <li>Files, shell, sandbox</li>
+                <li>Real side effects</li>
+                <li>Approval gates &amp; rollbacks</li>
+              </ul>
+              <div class="trace-line">Trace <b>commands, diffs, approvals, outcomes</b></div>
+            </div>
+            <div class="card">
+              <label class="eyebrow" for="cd-input">TASK FOR THE CODING AGENT</label>
+              <textarea id="cd-input" rows="3">Add input validation to apply_discount: raise ValueError if price is negative or percent is not between 0 and 100.</textarea>
+              <button class="run" data-run="coding">Propose change</button>
+              <p class="hint">
+                Edits <code>sandbox/pricing.py</code>. Proposes a diff, then waits for your approval before writing.
+              </p>
+              <!-- Hidden until the file endpoint answers: a stateless backend may not
+                   expose a sandbox file at all, and an empty black box looks broken. -->
+              <div class="file-view" id="cd-file-view" hidden>
+                <div class="eyebrow">CURRENT FILE <button class="link" id="cd-reset">reset sandbox</button></div>
+                <pre id="cd-file" class="code"></pre>
+              </div>
+            </div>
+          </div>
+          <div class="col-right">
+            <div class="runbox" data-runbox="coding">
+              <div class="runbox-empty">Propose a change to see the diff and the approval gate.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <span class="eyebrow">More autonomy &rarr; more side effects &rarr; more need for step-level telemetry, quality signals, and governance.</span>
+      </footer>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
