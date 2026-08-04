@@ -204,14 +204,99 @@ jobs:
             --query '{Status:Status,Output:StandardOutputContent,Error:StandardErrorContent}'
           test "${terminal_status}" = "Success"
 
+      # Edge verification. This step proves the ROUTING, not the container.
+      # Container liveness is already proven upstream and independently: the
+      # compose healthcheck fetches http://127.0.0.1:3000/ from inside the
+      # workshop container (bypassing nginx and any gate), deploy-workshop.sh
+      # blocks on it in wait_healthy, and the SSM step above fails this job
+      # unless that command reports Success. There is no ungated health route
+      # to probe from here either, the playbook app exposes only /, /docs/*,
+      # /llms*.txt, /api/search and /og/*, so /health returns a Fumadocs 404.
+      #
+      # So the only question left for a public probe is whether the workshop
+      # host is still routed to the workshop origin behind its JWT gate.
+      # "curl --fail" could not answer that: --fail only trips on >= 400, so a
+      # host answering nothing but redirects on every content path kept this
+      # step green. That is the exact signature of the nginx drift problem, the
+      # workshop server_name block lives only as hand-injected drift on the
+      # instance and any posthouse deploy restores a workshop-less nginx.conf,
+      # after which this host falls through to "server_name _" -> web:3000 and
+      # the posthouse Next middleware answers every path with a login redirect.
+      #
+      # Statuses are matched exactly, never as a range:
+      #   302 the nginx access_by_lua_block refused an unauthenticated probe.
+      #       GitHub Actions holds no dh_session cookie, so for a gated host
+      #       302 is the only correct answer and 200 means the gate is not live.
+      #   307 the apex fall-through. NextResponse.redirect emits 307 while the
+      #       lua gate emits 302, and that is what lets the two be told apart.
+      # Set the WORKSHOP_EXPECTED_STATUS repo variable to 200 for the ungated
+      # parity deploy that lands the nginx block before the gate goes on.
+      # No --location on purpose, following the redirect would hide all of this.
       - name: Verify public routes
         env:
           SITE_URL: ${{ steps.target.outputs.url }}
+          EXPECTED_STATUS: ${{ vars.WORKSHOP_EXPECTED_STATUS || '302' }}
         run: |
           set -euo pipefail
+          workshop_host=${SITE_URL#https://}
           for path in / /docs/learner/00-setup /docs/learner/07-break-and-fix /docs/learner/08-chat-langfuse; do
-            curl --fail --show-error --silent --retry 12 --retry-delay 5 \
-              --output /dev/null "${SITE_URL}${path}"
+            url="${SITE_URL}${path}"
+            code=""
+            target=""
+            # Retry in the shell, not with curl --retry. Asserting the status
+            # code means curl must exit 0 on a 502 so we can read it, which
+            # also stops curl retrying it, and a container still warming up is
+            # exactly the 502 case worth retrying. Same 12 attempts, 5s apart.
+            for _ in $(seq 1 12); do
+              response=$(curl --show-error --silent \
+                --connect-timeout 10 --max-time 30 \
+                --output /dev/null \
+                --write-out '%{http_code} %{redirect_url}' \
+                "${url}") || response="000 "
+              code=${response%% *}
+              target=${response#* }
+              if [[ "${code}" == "${EXPECTED_STATUS}" ]]; then
+                break
+              fi
+              sleep 5
+            done
+            if [[ "${code}" != "${EXPECTED_STATUS}" ]]; then
+              echo "ERROR: ${url} answered ${code}, expected ${EXPECTED_STATUS}" >&2
+              case "${code}" in
+                000)
+                  echo "ERROR: no HTTP response at all, DNS, TLS, ALB or nginx is down" >&2
+                  ;;
+                200)
+                  echo "ERROR: an unauthenticated probe got content, the JWT gate is not enforcing on this host" >&2
+                  ;;
+                307)
+                  echo "ERROR: redirect target was ${target:-<none>}" >&2
+                  echo "ERROR: 307 is the posthouse apex fall-through, the workshop server_name block is missing from the live nginx.conf and this host is being served by web:3000" >&2
+                  ;;
+                30*)
+                  echo "ERROR: redirect target was ${target:-<none>}" >&2
+                  ;;
+              esac
+              exit 1
+            fi
+            if [[ "${EXPECTED_STATUS}" == 30* ]]; then
+              case "${target}" in
+                *"://${workshop_host}/login"*)
+                  # The lua gate on a workshop subdomain has to send users to
+                  # the apex because the playbook ships no /login of its own.
+                  # A /login on the workshop host itself means the posthouse web
+                  # app answered for this host instead of the workshop origin.
+                  echo "ERROR: ${url} redirected to /login on ${workshop_host} itself, this host is being served by the posthouse app, not the workshop" >&2
+                  exit 1
+                  ;;
+                */login|*/login"?"*|*/not-authorized|*/not-authorized"?"*) ;;
+                *)
+                  echo "ERROR: ${url} redirected to an unexpected target: ${target:-<none>}" >&2
+                  exit 1
+                  ;;
+              esac
+            fi
+            echo "ok ${url} -> ${code} ${target}"
           done
 
       - name: Deployment summary
