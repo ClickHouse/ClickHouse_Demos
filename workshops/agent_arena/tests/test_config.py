@@ -19,6 +19,11 @@ def test_env_expansion(monkeypatch):
     assert cfg.clickhouse.ro_user == "arena_ro"
     assert cfg.openrouter.base_url == "https://openrouter.ai/api/v1"
     assert cfg.openrouter.api_key == "or-test"
+    assert cfg.openrouter.inference == {
+        "temperature": 0.0,
+        "max_tokens": 2048,
+        "reasoning": {"max_tokens": 512},
+    }
     assert cfg.models, "at least one model configured"
     assert {"anthropic", "openai"} <= {m.family for m in cfg.models}
     assert {"P1_zeroshot", "P3_dialect"} <= {p.name for p in cfg.prompts}

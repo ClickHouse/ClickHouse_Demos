@@ -6,6 +6,7 @@ import json
 import sys
 import time
 import urllib.request
+from collections.abc import Mapping
 from urllib.error import HTTPError
 from dataclasses import dataclass
 
@@ -58,6 +59,24 @@ def _parse_response(resp: dict) -> ConverseResult:
     return ConverseResult(text=text, usage=usage)
 
 
+_REASONING_KEYS = frozenset({"max_tokens", "effort", "exclude", "enabled"})
+
+
+def _validate_reasoning(reasoning: object) -> dict:
+    if not isinstance(reasoning, Mapping):
+        raise TypeError("reasoning must be a mapping")
+    unknown = set(reasoning) - _REASONING_KEYS
+    if unknown:
+        raise ValueError(f"unknown reasoning keys: {', '.join(sorted(unknown))}")
+    max_tokens = reasoning.get("max_tokens")
+    if "max_tokens" in reasoning and (
+            isinstance(max_tokens, bool) or
+            not isinstance(max_tokens, int) or
+            max_tokens <= 0):
+        raise ValueError("reasoning max_tokens must be a positive integer")
+    return dict(reasoning)
+
+
 class OpenRouterClient:
     def __init__(self, base_url: str, api_key: str):
         self._base = base_url.rstrip("/")
@@ -72,6 +91,8 @@ class OpenRouterClient:
         max_tok = inference.get("max_tokens", inference.get("maxTokens"))
         if max_tok is not None:
             body["max_tokens"] = max_tok
+        if "reasoning" in inference:
+            body["reasoning"] = _validate_reasoning(inference["reasoning"])
         req = urllib.request.Request(
             f"{self._base}/chat/completions",
             data=json.dumps(body).encode(),
