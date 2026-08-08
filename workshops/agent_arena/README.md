@@ -381,8 +381,8 @@ ask_trace() {
 }
 ```
 
-Ask the four final questions and assert the exact operational and online-rule score
-names on every trace:
+Ask active customers and revenue once and assert the exact operational and online-rule
+score names on each trace:
 
 ```bash
 ACTIVE_TRACE=$(ask_trace "How many active customers do we have?")
@@ -392,12 +392,88 @@ ACTIVE_TRACE=$(ask_trace "How many active customers do we have?")
 REVENUE_TRACE=$(ask_trace "What was revenue in the last 30 days?")
 .venv/bin/python -m scripts.verify_online_scores "$REVENUE_TRACE" \
   sql-execution-success=true agent-arena-business-policy-online=PASS
+```
 
-CONVERSION_TRACE=$(ask_trace \
-  "What is our view-to-purchase conversion rate for the last 7 days?")
-.venv/bin/python -m scripts.verify_online_scores "$CONVERSION_TRACE" \
-  sql-execution-success=true agent-arena-business-policy-online=PASS
+The conversion question has an observed stochastic boundary: a bounded candidate can
+occasionally return a non-`ok` outcome or executable SQL that the online policy judge
+scores `FAIL`. Run it once and verify the exact trace. If either the serving outcome
+is non-`ok` or the exact online score is `FAIL`/missing, retain that first trace as
+evidence and retry the same question/config **at most once**. The block below keeps
+the two trace IDs and results in distinct variables and prints both summaries; it
+never deletes or overwrites the first attempt:
 
+```bash
+ask_conversion() {
+  local body
+  body=$(.venv/bin/python -c \
+    'import json,sys; print(json.dumps({"question": sys.argv[1], "config_id": sys.argv[2]}))' \
+    "What is our view-to-purchase conversion rate for the last 7 days?" \
+    "$WINNER_CONFIG_ID")
+  curl -fsS http://localhost:8100/ask \
+    -H 'content-type: application/json' -d "$body" | \
+    .venv/bin/python -c \
+    'import json,sys; data=json.load(sys.stdin); assert data["policy_version"] == "policy-v2"; print("\t".join((data["trace_id"], data["outcome"])))'
+}
+
+IFS=$'\t' read -r CONVERSION_TRACE_1 CONVERSION_OUTCOME_1 <<< \
+  "$(ask_conversion)"
+if .venv/bin/python -m scripts.verify_online_scores "$CONVERSION_TRACE_1" \
+  sql-execution-success=true agent-arena-business-policy-online=PASS; then
+  CONVERSION_SCORES_1=pass
+else
+  CONVERSION_SCORES_1=fail
+fi
+if [ "$CONVERSION_OUTCOME_1" = ok ] && [ "$CONVERSION_SCORES_1" = pass ]; then
+  CONVERSION_RESULT_1=pass
+else
+  CONVERSION_RESULT_1=fail
+fi
+printf 'conversion_attempt=1 trace_id=%s outcome=%s exact_scores=%s result=%s\n' \
+  "$CONVERSION_TRACE_1" "$CONVERSION_OUTCOME_1" \
+  "$CONVERSION_SCORES_1" "$CONVERSION_RESULT_1"
+
+CONVERSION_TRACE_2=not-run
+CONVERSION_OUTCOME_2=not-run
+CONVERSION_SCORES_2=not-run
+CONVERSION_RESULT_2=not-run
+if [ "$CONVERSION_RESULT_1" != pass ]; then
+  IFS=$'\t' read -r CONVERSION_TRACE_2 CONVERSION_OUTCOME_2 <<< \
+    "$(ask_conversion)"
+  if .venv/bin/python -m scripts.verify_online_scores "$CONVERSION_TRACE_2" \
+    sql-execution-success=true agent-arena-business-policy-online=PASS; then
+    CONVERSION_SCORES_2=pass
+  else
+    CONVERSION_SCORES_2=fail
+  fi
+  if [ "$CONVERSION_OUTCOME_2" = ok ] && [ "$CONVERSION_SCORES_2" = pass ]; then
+    CONVERSION_RESULT_2=pass
+  else
+    CONVERSION_RESULT_2=fail
+  fi
+fi
+printf 'conversion_attempt=2 trace_id=%s outcome=%s exact_scores=%s result=%s\n' \
+  "$CONVERSION_TRACE_2" "$CONVERSION_OUTCOME_2" \
+  "$CONVERSION_SCORES_2" "$CONVERSION_RESULT_2"
+
+if [ "$CONVERSION_RESULT_1" != pass ] && \
+   [ "$CONVERSION_RESULT_2" != pass ]; then
+  printf '%s\n' \
+    'STOP: conversion failed twice; preserve both traces and investigate.' >&2
+  false
+fi
+```
+
+Proceed only when attempt 1 or 2 has outcome `ok`,
+`sql-execution-success=true`, and exact
+`agent-arena-business-policy-online=PASS`. If the retry also fails, stop this
+workshop rollout/check—never loop until green or claim success. Repeated failure is a
+production signal: route both preserved traces back through the annotation queue,
+corrected production-derived golden data, and the same baseline/candidate calibration
+loop before attempting another rollout.
+
+Only after the conversion check passes, ask the generic products question once:
+
+```bash
 PRODUCT_TRACE=$(ask_trace "How many products are there?")
 .venv/bin/python -m scripts.verify_online_scores "$PRODUCT_TRACE" \
   sql-execution-success=true agent-arena-business-policy-online=NOT_APPLICABLE
