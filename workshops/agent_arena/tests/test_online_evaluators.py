@@ -1,5 +1,6 @@
 import importlib
 from types import SimpleNamespace
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
@@ -200,11 +201,32 @@ def test_business_policy_online_rule_stays_disabled_until_explicit_enable():
     }
 
 
+def _numbered_page(data, page=1, total_pages=1):
+    return {
+        "data": data,
+        "meta": {"page": page, "totalPages": total_pages, "limit": 100},
+    }
+
+
+def _cursor_page(data, cursor=None):
+    return {"data": data, "meta": {"cursor": cursor}}
+
+
 class BusinessPolicyAdmin:
-    def __init__(self, *, datasets=None, scores=None, rules=None):
+    def __init__(
+        self,
+        *,
+        datasets=None,
+        dataset_pages=None,
+        scores=None,
+        rules=None,
+        experiment_pages=None,
+    ):
         self.datasets = datasets or []
+        self.dataset_pages = dataset_pages
         self.scores = scores or []
         self.rules = rules or []
+        self.experiment_pages = experiment_pages or {}
         self.calls = []
 
     def list_named(self, path, name):
@@ -214,7 +236,13 @@ class BusinessPolicyAdmin:
     def call(self, method, path, body=None):
         self.calls.append((method, path, body))
         if method == "GET" and path.startswith("/api/public/v2/datasets"):
-            return {"data": self.datasets}
+            page = int(parse_qs(urlsplit(path).query).get("page", [1])[0])
+            if self.dataset_pages is not None:
+                return self.dataset_pages[page - 1]
+            return _numbered_page(self.datasets)
+        if method == "GET" and path.startswith("/api/public/experiment-items"):
+            cursor = parse_qs(urlsplit(path).query).get("cursor", [None])[0]
+            return self.experiment_pages.get(cursor, _cursor_page([]))
         if method == "GET" and path.startswith("/api/public/v3/scores"):
             return {"data": self.scores}
         return {"id": "created-id", **(body or {})}
@@ -261,8 +289,119 @@ def test_business_policy_experiment_provisioning_creates_disabled_online_rule(
     assert created_rules[1]["enabled"] is False
 
 
+def test_business_policy_provisioning_finds_dataset_on_later_page(monkeypatch):
+    api = BusinessPolicyAdmin(dataset_pages=[
+        _numbered_page([{"id": "other", "name": "other"}], 1, 2),
+        _numbered_page([{"id": "dataset-1", "name": "arena-golden"}], 2, 2),
+    ])
+    monkeypatch.setattr(online, "_admin", api)
+
+    online.provision_business_policy_experiments(
+        openrouter_api_key="provider-secret",
+        openrouter_base_url="https://provider.invalid/v1",
+    )
+
+    dataset_calls = [path for method, path, _ in api.calls
+                     if method == "GET" and path.startswith("/api/public/v2/datasets")]
+    assert dataset_calls == [
+        "/api/public/v2/datasets?page=1&limit=100",
+        "/api/public/v2/datasets?page=2&limit=100",
+    ]
+
+
+def test_business_policy_dataset_paging_stops_on_repeated_page(monkeypatch):
+    api = BusinessPolicyAdmin(dataset_pages=[
+        _numbered_page([{"id": "other-1", "name": "other"}], 1, 3),
+        _numbered_page([{"id": "other-2", "name": "other"}], 1, 3),
+    ])
+    monkeypatch.setattr(online, "_admin", api)
+
+    with pytest.raises(RuntimeError, match="arena-golden"):
+        online.provision_business_policy_experiments(
+            openrouter_api_key="provider-secret",
+            openrouter_base_url="https://provider.invalid/v1",
+        )
+
+    dataset_calls = [path for method, path, _ in api.calls
+                     if method == "GET" and path.startswith("/api/public/v2/datasets")]
+    assert len(dataset_calls) == 2
+
+
+def _experiment_item(*, dataset_id=None, score_name="business-policy-adherence"):
+    item = {
+        "experimentId": "experiment-1",
+        "experimentName": "online-loop-candidate--policy-v2__winner",
+        "traceId": "trace-1",
+        "scores": [{"name": score_name, "value": "PASS"}],
+    }
+    if dataset_id is not None:
+        item["experimentDatasetId"] = dataset_id
+    return item
+
+
+def test_business_policy_enable_rejects_global_or_wrong_source_score(monkeypatch):
+    api = BusinessPolicyAdmin(
+        datasets=[{"id": "dataset-1", "name": "arena-golden"}],
+        scores=[{"name": "business-policy-adherence", "value": "PASS"}],
+        experiment_pages={None: _cursor_page([
+            _experiment_item(dataset_id="different-dataset"),
+        ])},
+    )
+    monkeypatch.setattr(online, "_admin", api)
+
+    assert online._business_policy_experiment_score_exists() is False
+
+
+def test_business_policy_enable_rejects_score_without_experiment_provenance(
+    monkeypatch,
+):
+    api = BusinessPolicyAdmin(
+        datasets=[{"id": "dataset-1", "name": "arena-golden"}],
+        experiment_pages={None: _cursor_page([_experiment_item()])},
+    )
+    monkeypatch.setattr(online, "_admin", api)
+
+    assert online._business_policy_experiment_score_exists() is False
+
+
+def test_business_policy_enable_finds_valid_experiment_score_on_later_page(
+    monkeypatch,
+):
+    api = BusinessPolicyAdmin(
+        datasets=[{"id": "dataset-1", "name": "arena-golden"}],
+        experiment_pages={
+            None: _cursor_page([
+                _experiment_item(
+                    dataset_id="dataset-1",
+                    score_name="business-policy-adherence-extra",
+                ),
+            ], cursor="next page"),
+            "next page": _cursor_page([
+                _experiment_item(dataset_id="dataset-1"),
+            ]),
+        },
+    )
+    monkeypatch.setattr(online, "_admin", api)
+    monkeypatch.setattr(
+        online,
+        "_experiment_items_from_start",
+        lambda: "2026-07-09T00:00:00Z",
+        raising=False,
+    )
+
+    assert online._business_policy_experiment_score_exists() is True
+    experiment_calls = [path for method, path, _ in api.calls
+                        if method == "GET" and path.startswith("/api/public/experiment-items")]
+    assert experiment_calls == [
+        "/api/public/experiment-items?fromStartTime=2026-07-09T00%3A00%3A00Z&fields=core%2Cdataset%2Cio%2Cmetadata%2CitemMetadata%2CexperimentMetadata%2Cscores&limit=100&scoreLimit=50",
+        "/api/public/experiment-items?fromStartTime=2026-07-09T00%3A00%3A00Z&fields=core%2Cdataset%2Cio%2Cmetadata%2CitemMetadata%2CexperimentMetadata%2Cscores&limit=100&scoreLimit=50&cursor=next+page",
+    ]
+
+
 def test_business_policy_online_enable_refuses_without_experiment_score(monkeypatch):
-    api = BusinessPolicyAdmin(scores=[])
+    api = BusinessPolicyAdmin(
+        datasets=[{"id": "dataset-1", "name": "arena-golden"}],
+    )
     monkeypatch.setattr(online, "_admin", api)
 
     with pytest.raises(RuntimeError, match="experiment score"):
@@ -280,10 +419,10 @@ def test_business_policy_online_enable_accepts_exact_named_score(monkeypatch):
         **online.business_policy_online_rule_body(enabled=False),
     }
     api = BusinessPolicyAdmin(
-        scores=[
-            {"name": "business-policy-adherence-extra", "value": "PASS"},
-            {"name": "business-policy-adherence", "value": "PASS"},
-        ],
+        datasets=[{"id": "dataset-1", "name": "arena-golden"}],
+        experiment_pages={None: _cursor_page([
+            _experiment_item(dataset_id="dataset-1"),
+        ])},
         rules=[existing],
     )
     monkeypatch.setattr(online, "_admin", api)
@@ -358,4 +497,75 @@ def test_score_verifier_finds_missing_and_mismatched_names():
     ) == [
         "business-policy-adherence expected PASS got FAIL",
         "correctness missing",
+    ]
+
+
+def test_score_verifier_reads_later_pages_and_filters_trace_exactly():
+    verifier = importlib.import_module("scripts.verify_online_scores")
+
+    class PagedAdmin:
+        def __init__(self):
+            self.calls = []
+
+        def call(self, method, path, body=None):
+            self.calls.append((method, path, body))
+            cursor = parse_qs(urlsplit(path).query).get("cursor", [None])[0]
+            if cursor is None:
+                return _cursor_page([
+                    {"traceId": "other", "name": "correctness", "value": 0},
+                    {"traceId": "trace 1/a", "name": "correctness", "value": 1},
+                ], cursor="next page")
+            return _cursor_page([
+                {"traceId": "trace 1/a", "name": "business-policy-adherence",
+                 "value": "PASS", "dataType": "CATEGORICAL"},
+            ])
+
+    api = PagedAdmin()
+
+    assert [score["name"] for score in verifier._fetch_scores(api, "trace 1/a")] == [
+        "correctness",
+        "business-policy-adherence",
+    ]
+    assert [path for _, path, _ in api.calls] == [
+        "/api/public/v3/scores?traceId=trace+1%2Fa&fields=subject&limit=100",
+        "/api/public/v3/scores?traceId=trace+1%2Fa&fields=subject&limit=100&cursor=next+page",
+    ]
+
+
+def test_score_verifier_stops_when_cursor_repeats():
+    verifier = importlib.import_module("scripts.verify_online_scores")
+
+    class RepeatingAdmin:
+        def __init__(self):
+            self.calls = 0
+
+        def call(self, method, path, body=None):
+            self.calls += 1
+            return _cursor_page([], cursor="same")
+
+    api = RepeatingAdmin()
+
+    assert verifier._fetch_scores(api, "trace-1") == []
+    assert api.calls == 2
+
+
+def test_score_verifier_accepts_live_terminal_metadata_and_subject_trace():
+    verifier = importlib.import_module("scripts.verify_online_scores")
+
+    class LiveShapeAdmin:
+        def call(self, method, path, body=None):
+            return {
+                "data": [{
+                    "subject": {"kind": "trace", "traceId": "trace-1"},
+                    "name": "business-policy-adherence",
+                    "value": "PASS",
+                    "dataType": "CATEGORICAL",
+                }],
+                "meta": {"limit": 100},
+            }
+
+    scores = verifier._fetch_scores(LiveShapeAdmin(), "trace-1")
+
+    assert [score["name"] for score in scores] == [
+        "business-policy-adherence",
     ]

@@ -6,6 +6,77 @@ import urllib.request
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 
+MAX_API_PAGES = 100
+
+
+def iter_numbered_pages(fetch_page, max_pages: int = MAX_API_PAGES):
+    """Yield bounded pages only when page/totalPages metadata is trustworthy."""
+    requested_pages = set()
+    returned_pages = set()
+    page = 1
+    for _ in range(max_pages):
+        if page in requested_pages:
+            return
+        requested_pages.add(page)
+        payload = fetch_page(page)
+        meta = payload.get("meta", {})
+        returned_page = meta.get("page")
+        total_pages = meta.get("totalPages")
+        if (
+            not isinstance(returned_page, int)
+            or not isinstance(total_pages, int)
+            or returned_page in returned_pages
+            or returned_page < 1
+            or total_pages < returned_page
+        ):
+            return
+        returned_pages.add(returned_page)
+        yield payload
+        if returned_page >= total_pages:
+            return
+        page = returned_page + 1
+
+
+def iter_cursor_pages(fetch_page, max_pages: int = MAX_API_PAGES):
+    """Yield bounded cursor pages and stop before a repeated/invalid page."""
+    cursor = None
+    requested_cursors = {None}
+    for _ in range(max_pages):
+        payload = fetch_page(cursor)
+        meta = payload.get("meta")
+        if not isinstance(meta, dict):
+            return
+        if "cursor" not in meta:
+            limit = meta.get("limit")
+            data = payload.get("data")
+            if (
+                isinstance(limit, int)
+                and limit > 0
+                and isinstance(data, list)
+                and len(data) < limit
+            ):
+                yield payload
+            return
+        next_cursor = meta.get("cursor")
+        if next_cursor is not None and not isinstance(next_cursor, str):
+            return
+        if cursor is not None and next_cursor == cursor:
+            return
+        yield payload
+        if not next_cursor or next_cursor in requested_cursors:
+            return
+        requested_cursors.add(next_cursor)
+        cursor = next_cursor
+
+
+def score_trace_id(score: dict) -> str | None:
+    direct = score.get("traceId")
+    if direct:
+        return direct
+    subject = score.get("subject")
+    return subject.get("traceId") if isinstance(subject, dict) else None
+
+
 class LangfuseAdmin:
     def __init__(self, host: str, public_key: str, secret_key: str):
         self.host = host.rstrip("/")

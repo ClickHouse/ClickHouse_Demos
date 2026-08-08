@@ -7,7 +7,11 @@ from urllib.parse import urlencode
 
 from dotenv import load_dotenv
 
-from scripts.langfuse_admin import LangfuseAdmin
+from scripts.langfuse_admin import (
+    LangfuseAdmin,
+    iter_cursor_pages,
+    score_trace_id,
+)
 
 
 def normalized_score_value(score: dict) -> str:
@@ -57,8 +61,18 @@ def _parse_expected(assertions: list[str]) -> dict[str, str]:
 
 
 def _fetch_scores(api: LangfuseAdmin, trace_id: str) -> list[dict]:
-    query = urlencode({"traceId": trace_id, "limit": 100})
-    return api.call("GET", f"/api/public/v3/scores?{query}").get("data", []) or []
+    def fetch(cursor: str | None) -> dict:
+        params = {"traceId": trace_id, "fields": "subject", "limit": 100}
+        if cursor is not None:
+            params["cursor"] = cursor
+        return api.call("GET", f"/api/public/v3/scores?{urlencode(params)}")
+
+    return [
+        score
+        for payload in iter_cursor_pages(fetch)
+        for score in payload.get("data", []) or []
+        if score_trace_id(score) == trace_id
+    ]
 
 
 def verify_scores(

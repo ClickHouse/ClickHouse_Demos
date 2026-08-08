@@ -2,13 +2,18 @@
 
 import argparse
 import os
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlencode
 
 from dotenv import load_dotenv
 
 from agents.policy import load_policy
-from scripts.langfuse_admin import LangfuseAdmin
+from scripts.langfuse_admin import (
+    LangfuseAdmin,
+    iter_cursor_pages,
+    iter_numbered_pages,
+)
 
 EVALUATOR = "sql-execution-success"
 RULE = "agent-arena-sql-execution-online"
@@ -218,6 +223,29 @@ def ensure_rule(name: str, desired_body: dict) -> dict:
     return api.call("PATCH", f"{RULES_PATH}/{rule['id']}", changed)
 
 
+def _find_dataset(name: str) -> dict | None:
+    api = _require_admin()
+
+    def fetch(page: int) -> dict:
+        query = urlencode({"page": page, "limit": 100})
+        return api.call("GET", f"/api/public/v2/datasets?{query}")
+
+    for payload in iter_numbered_pages(fetch):
+        dataset = next(
+            (row for row in payload.get("data", []) or [] if row.get("name") == name),
+            None,
+        )
+        if dataset is not None:
+            return dataset
+    return None
+
+
+def _experiment_items_from_start() -> str:
+    return (
+        datetime.now(timezone.utc) - timedelta(days=30)
+    ).isoformat().replace("+00:00", "Z")
+
+
 def provision_business_policy_experiments(
     *, openrouter_api_key: str, openrouter_base_url: str
 ) -> tuple[dict, dict, dict]:
@@ -232,10 +260,7 @@ def provision_business_policy_experiments(
         "withDefaultModels": False,
     })
 
-    datasets = api.call("GET", "/api/public/v2/datasets?limit=100").get("data", [])
-    dataset = next(
-        (row for row in datasets if row.get("name") == DATASET_NAME), None
-    )
+    dataset = _find_dataset(DATASET_NAME)
     if dataset is None:
         raise RuntimeError(
             f"dataset {DATASET_NAME!r} must exist before policy evaluator provisioning"
@@ -256,12 +281,43 @@ def provision_business_policy_experiments(
 
 
 def _business_policy_experiment_score_exists() -> bool:
-    query = urlencode({"name": BUSINESS_POLICY_EVALUATOR, "limit": 100})
-    payload = _require_admin().call("GET", f"/api/public/v3/scores?{query}")
-    return any(
-        score.get("name") == BUSINESS_POLICY_EVALUATOR
-        for score in payload.get("data", []) or []
-    )
+    api = _require_admin()
+    dataset = _find_dataset(DATASET_NAME)
+    if dataset is None or not dataset.get("id"):
+        return False
+
+    def fetch(cursor: str | None) -> dict:
+        params = {
+            "fromStartTime": _experiment_items_from_start(),
+            "fields": (
+                "core,dataset,io,metadata,itemMetadata,"
+                "experimentMetadata,scores"
+            ),
+            "limit": 100,
+            "scoreLimit": 50,
+        }
+        if cursor is not None:
+            params["cursor"] = cursor
+        return api.call(
+            "GET", f"/api/public/experiment-items?{urlencode(params)}"
+        )
+
+    for payload in iter_cursor_pages(fetch):
+        for item in payload.get("data", []) or []:
+            if (
+                item.get("experimentDatasetId") != dataset["id"]
+                or not item.get("experimentId")
+                or not item.get("experimentName")
+                or not item.get("traceId")
+            ):
+                continue
+            if any(
+                score.get("name") == BUSINESS_POLICY_EVALUATOR
+                and score.get("value") is not None
+                for score in item.get("scores", []) or []
+            ):
+                return True
+    return False
 
 
 def enable_business_policy_online() -> dict:

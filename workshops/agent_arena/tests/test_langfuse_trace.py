@@ -74,9 +74,13 @@ def test_fetch_trace_scores_reads_typed_values_from_scores_v3():
     tracer._auth = "basic-token"
     response = mock.MagicMock()
     response.read.return_value = json.dumps({"data": [
-        {"name": "correctness", "value": 1.0, "dataType": "NUMERIC"},
-        {"name": "outcome", "value": "correct", "dataType": "CATEGORICAL"},
-    ], "meta": {"cursor": None}}).encode()
+        {"subject": {"kind": "trace", "traceId": "trace-1"},
+         "name": "correctness", "value": 1.0,
+         "dataType": "NUMERIC"},
+        {"subject": {"kind": "trace", "traceId": "trace-1"},
+         "name": "outcome", "value": "correct",
+         "dataType": "CATEGORICAL"},
+    ], "meta": {"limit": 100}}).encode()
     response.__enter__.return_value = response
     response.__exit__.return_value = False
 
@@ -85,3 +89,59 @@ def test_fetch_trace_scores_reads_typed_values_from_scores_v3():
             {"name": "correctness", "value": 1.0, "string": None, "dataType": "NUMERIC"},
             {"name": "outcome", "value": None, "string": "correct", "dataType": "CATEGORICAL"},
         ]
+
+
+def _score_response(data, cursor=None):
+    response = mock.MagicMock()
+    response.read.return_value = json.dumps({
+        "data": data,
+        "meta": {"cursor": cursor},
+    }).encode()
+    response.__enter__.return_value = response
+    response.__exit__.return_value = False
+    return response
+
+
+def test_fetch_trace_scores_reads_later_pages_and_filters_trace_exactly():
+    tracer = object.__new__(adapter.LangfuseTracer)
+    tracer._host = "https://lf.example"
+    tracer._auth = "basic-token"
+    responses = [
+        _score_response([
+            {"traceId": "other", "name": "incorrect", "value": 0,
+             "dataType": "NUMERIC"},
+            {"traceId": "trace 1/a", "name": "correctness", "value": 1,
+             "dataType": "NUMERIC"},
+        ], cursor="next page"),
+        _score_response([
+            {"traceId": "trace 1/a", "name": "business-policy-adherence",
+             "value": "PASS", "dataType": "CATEGORICAL"},
+        ]),
+    ]
+
+    with mock.patch.object(adapter.urllib.request, "urlopen", side_effect=responses) as open_:
+        scores = tracer.fetch_trace_scores("trace 1/a")
+
+    assert [score["name"] for score in scores] == [
+        "correctness",
+        "business-policy-adherence",
+    ]
+    assert [call.args[0].full_url for call in open_.call_args_list] == [
+        "https://lf.example/api/public/v3/scores?traceId=trace+1%2Fa&fields=subject&limit=100",
+        "https://lf.example/api/public/v3/scores?traceId=trace+1%2Fa&fields=subject&limit=100&cursor=next+page",
+    ]
+
+
+def test_fetch_trace_scores_stops_when_cursor_repeats():
+    tracer = object.__new__(adapter.LangfuseTracer)
+    tracer._host = "https://lf.example"
+    tracer._auth = "basic-token"
+    responses = [
+        _score_response([], cursor="same"),
+        _score_response([], cursor="same"),
+    ]
+
+    with mock.patch.object(adapter.urllib.request, "urlopen", side_effect=responses) as open_:
+        assert tracer.fetch_trace_scores("trace-1") == []
+
+    assert open_.call_count == 2
