@@ -1,6 +1,6 @@
 """All LangFuse SDK calls live here so a version bump touches one file.
 
-Targets the **OTEL-based Python SDK v4** (langfuse==4.7.1) — required so LangFuse's
+Targets the **OTEL-based Python SDK v4** (langfuse==4.14.3) — required so LangFuse's
 server-side evaluators (the correctness Code Evaluator + the llm_judge
 LLM-as-a-judge) actually run on our data. (SDK v2 used the legacy ingestion path
 and produced no OTEL data, so evaluators saw nothing.)
