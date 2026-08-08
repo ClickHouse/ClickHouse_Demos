@@ -13,7 +13,9 @@
 .turn .meta { margin-top: 8px; color: var(--ink-3); font-size: 12px; display: flex; gap: 12px; align-items: center; }
 .fb button { margin-left: 6px; cursor: pointer; background: none; border: 1px solid var(--line, #2a2a2a); border-radius: 6px; padding: 2px 8px; }
 .fb button[data-on="true"] { border-color: var(--accent, #4ade80); }
+.fb button:disabled { cursor: wait; opacity: 0.55; }
 .fb em { margin-left: 8px; color: var(--accent, #4ade80); font-style: normal; font-size: 11px; }
+.fb em[data-state="pending"] { color: var(--ink-3); }
 .chat-input { display: flex; gap: 8px; }
 .chat-input input { flex: 1; padding: 10px; }
 .chat-input button { padding: 10px 18px; }

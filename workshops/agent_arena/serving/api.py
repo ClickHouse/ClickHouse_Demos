@@ -61,7 +61,7 @@ class AskResponse(BaseModel):
 
 class FeedbackRequest(BaseModel):
     trace_id: str
-    value: float          # 1.0 = 👍, 0.0 = 👎
+    value: bool
     comment: str | None = None
 
 
@@ -123,9 +123,10 @@ def feedback(req: FeedbackRequest):
         raise HTTPException(400, "trace_id required")
     client = get_client()
     try:
-        client.create_score(name="user_feedback", value=req.value,
-                             trace_id=req.trace_id, data_type="NUMERIC",
-                             comment=req.comment)
+        client.create_score(id=f"user-thumbs-{req.trace_id}",
+                            name="user-thumbs", value=req.value,
+                            trace_id=req.trace_id, data_type="BOOLEAN",
+                            comment=req.comment)
         client.flush()
     except Exception as e:  # noqa: BLE001
         raise HTTPException(502, f"failed to record feedback: {e}")

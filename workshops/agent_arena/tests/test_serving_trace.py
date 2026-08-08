@@ -77,19 +77,24 @@ def test_ask_honors_supplied_session_id(api, monkeypatch):
     assert resp.session_id == "conv-1"
 
 
-def test_feedback_records_user_feedback_score(api, monkeypatch):
+def test_feedback_records_idempotent_boolean_user_thumbs(api, monkeypatch):
     client = mock.MagicMock()
     monkeypatch.setattr(api, "get_client", lambda: client)
-    resp = api.feedback(api.FeedbackRequest(trace_id="trace-1", value=1.0, comment="great"))
-    assert resp == {"ok": True}
+    assert api.feedback(api.FeedbackRequest(
+        trace_id="trace-1", value=False, comment="metric mismatch"
+    )) == {"ok": True}
     _, kw = client.create_score.call_args
-    assert kw["name"] == "user_feedback"
-    assert kw["value"] == 1.0
-    assert kw["trace_id"] == "trace-1"
-    assert kw["data_type"] == "NUMERIC"
+    assert kw == {
+        "id": "user-thumbs-trace-1",
+        "name": "user-thumbs",
+        "value": False,
+        "trace_id": "trace-1",
+        "data_type": "BOOLEAN",
+        "comment": "metric mismatch",
+    }
 
 
 def test_feedback_rejects_missing_trace_id(api):
     import fastapi
     with pytest.raises(fastapi.HTTPException):
-        api.feedback(api.FeedbackRequest(trace_id="", value=0.0))
+        api.feedback(api.FeedbackRequest(trace_id="", value=False))
