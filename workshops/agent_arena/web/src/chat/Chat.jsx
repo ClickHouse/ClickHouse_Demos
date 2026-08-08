@@ -50,7 +50,7 @@ export default function Chat() {
         </select>
         <span className="chat-sub mono">production /ask · traced to LangFuse</span>
       </div>
-      {err && <div className="chat-err">{err}</div>}
+      {err && <div className="chat-err" role="alert">{err}</div>}
       <div className="chat-log">
         {turns.map((t, i) => (
           <div className="turn" key={i}>
@@ -77,8 +77,8 @@ export default function Chat() {
                 <button aria-label="Thumbs down" data-on={t.feedback === false}
                         disabled={t.feedbackPending} onClick={() => rate(i, false)}>👎</button>
                 {t.feedbackPending
-                  ? <em data-state="pending">sending…</em>
-                  : t.feedback !== null && <em>feedback sent</em>}
+                  ? <em role="status" data-state="pending">sending…</em>
+                  : t.feedback !== null && <em role="status">feedback sent</em>}
               </span>
             </div>
           </div>
