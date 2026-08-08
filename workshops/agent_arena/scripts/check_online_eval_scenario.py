@@ -406,6 +406,8 @@ def classify_active_customer_sql(sql: str) -> str:
     if semicolons:
         tokens = tokens[:-1]
     values = _values(tokens)
+    if values.count("select") != 1 or "with" in values:
+        return "unknown"
     if any(keyword in values for keyword in ("group", "having", "union", "over")):
         return "unknown"
 

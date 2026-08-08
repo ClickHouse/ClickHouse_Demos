@@ -196,6 +196,49 @@ def test_classifies_schema_alias_and_backtick_status_identifier():
     assert classify_active_customer_sql(sql) == "policy-v2"
 
 
+def test_rejects_cte_wrapping_otherwise_valid_stale_query():
+    sql = """WITH 1 AS marker
+             SELECT count() FROM v_customers AS c
+             WHERE c.signup_date >= today()-INTERVAL 90 DAY"""
+    assert classify_active_customer_sql(sql) == "unknown"
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "SELECT count() FROM v_customers AS c "
+        "WHERE c.signup_date >= today()-INTERVAL 90 DAY "
+        "AND c.customer_id IN (SELECT 1)",
+        "SELECT uniqExact(o.customer_id) FROM v_orders AS o "
+        "WHERE o.order_ts >= now()-INTERVAL 30 DAY "
+        "AND o.status NOT IN ('cancelled','returned') "
+        "AND o.customer_id IN (SELECT 1)",
+    ],
+)
+def test_rejects_fromless_nested_select_predicates(sql):
+    assert classify_active_customer_sql(sql) == "unknown"
+
+
+@pytest.mark.parametrize(
+    ("sql", "expected"),
+    [
+        (
+            "SELECT count() FROM arena.v_customers AS c "
+            "WHERE c.signup_date >= today()-INTERVAL 90 DAY",
+            "policy-v1",
+        ),
+        (
+            "SELECT uniqExact(o.customer_id) FROM arena.v_orders AS o "
+            "WHERE o.order_ts >= now()-INTERVAL 30 DAY "
+            "AND o.`status` NOT IN ('cancelled','returned')",
+            "policy-v2",
+        ),
+    ],
+)
+def test_preserves_one_schema_qualified_aliased_relation(sql, expected):
+    assert classify_active_customer_sql(sql) == expected
+
+
 @pytest.mark.parametrize(
     "sql",
     [
