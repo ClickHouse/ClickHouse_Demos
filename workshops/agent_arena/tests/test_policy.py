@@ -36,3 +36,13 @@ def test_policy_loader_rejects_unknown_or_malformed_versions(tmp_path: Path):
     (tmp_path / "policy-v3.yaml").write_text("version: policy-v3\nmetrics: []\n")
     with pytest.raises(ValueError, match="metrics must be a non-empty mapping"):
         load_policy("policy-v3", root=tmp_path)
+
+
+@pytest.mark.parametrize("document", ["[]\n", "not-a-mapping\n"])
+def test_policy_loader_rejects_non_mapping_documents(
+    tmp_path: Path, document: str
+):
+    (tmp_path / "policy-v3.yaml").write_text(document)
+
+    with pytest.raises(ValueError, match="policy document must be a mapping"):
+        load_policy("policy-v3", root=tmp_path)

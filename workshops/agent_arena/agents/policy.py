@@ -23,7 +23,9 @@ def load_policy(version: str, root: Path = Path("policies")) -> PolicyContext:
     if not path.is_file():
         raise ValueError(f"unknown policy version: {version}")
 
-    raw = yaml.safe_load(path.read_text()) or {}
+    raw = yaml.safe_load(path.read_text())
+    if not isinstance(raw, dict):
+        raise ValueError("policy document must be a mapping")
     metrics = raw.get("metrics")
     if raw.get("version") != version:
         raise ValueError(f"policy version mismatch in {path}")
