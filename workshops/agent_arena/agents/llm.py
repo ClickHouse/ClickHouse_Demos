@@ -60,20 +60,41 @@ def _parse_response(resp: dict) -> ConverseResult:
 
 
 _REASONING_KEYS = frozenset({"max_tokens", "effort", "exclude", "enabled"})
+_REASONING_EFFORTS = frozenset({
+    "max", "xhigh", "high", "medium", "low", "minimal", "none",
+})
+
+_REASONING_MAPPING_ERROR = "reasoning must be a mapping"
+_REASONING_FIELDS_ERROR = "reasoning contains unsupported fields"
+_REASONING_MAX_TOKENS_ERROR = "reasoning max_tokens has an invalid value"
+_REASONING_EFFORT_ERROR = "reasoning effort has an invalid value"
+_REASONING_EXCLUDE_ERROR = "reasoning exclude has an invalid value"
+_REASONING_ENABLED_ERROR = "reasoning enabled has an invalid value"
+_REASONING_MODE_ERROR = "reasoning mode fields are mutually exclusive"
 
 
 def _validate_reasoning(reasoning: object) -> dict:
     if not isinstance(reasoning, Mapping):
-        raise TypeError("reasoning must be a mapping")
-    unknown = set(reasoning) - _REASONING_KEYS
-    if unknown:
-        raise ValueError(f"unknown reasoning keys: {', '.join(sorted(unknown))}")
-    max_tokens = reasoning.get("max_tokens")
-    if "max_tokens" in reasoning and (
-            isinstance(max_tokens, bool) or
-            not isinstance(max_tokens, int) or
-            max_tokens <= 0):
-        raise ValueError("reasoning max_tokens must be a positive integer")
+        raise TypeError(_REASONING_MAPPING_ERROR)
+    if not set(reasoning).issubset(_REASONING_KEYS):
+        raise ValueError(_REASONING_FIELDS_ERROR)
+    if "max_tokens" in reasoning:
+        max_tokens = reasoning["max_tokens"]
+        if (isinstance(max_tokens, bool) or
+                not isinstance(max_tokens, int) or
+                max_tokens <= 0):
+            raise ValueError(_REASONING_MAX_TOKENS_ERROR)
+    if ("effort" in reasoning and
+            (not isinstance(reasoning["effort"], str) or
+             reasoning["effort"] not in _REASONING_EFFORTS)):
+        raise ValueError(_REASONING_EFFORT_ERROR)
+    if "exclude" in reasoning and type(reasoning["exclude"]) is not bool:
+        raise ValueError(_REASONING_EXCLUDE_ERROR)
+    if "enabled" in reasoning and type(reasoning["enabled"]) is not bool:
+        raise ValueError(_REASONING_ENABLED_ERROR)
+    mode_fields = {"max_tokens", "effort", "enabled"}.intersection(reasoning)
+    if len(mode_fields) > 1:
+        raise ValueError(_REASONING_MODE_ERROR)
     return dict(reasoning)
 
 
