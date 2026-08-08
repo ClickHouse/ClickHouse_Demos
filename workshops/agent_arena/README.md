@@ -279,8 +279,10 @@ not be reconfigurable.
 The primary path is a genuine operator export of approved tasks to the ignored
 `reviewed.json`. Each
 record must contain `id`, `question`, `golden_sql`, `tier`, `ordered`, `source`,
-`source_trace_id`, `failure_category`, `source_policy_version`, and `annotation_id`.
-Production records use `source = production-feedback`.
+`source_trace_id`, `failure_category`, and `source_policy_version`. Those first four
+provenance fields are required for production records, which use
+`source = production-feedback`. `annotation_id` is optional; include it when the
+annotation task ID is available.
 
 The repository does not track mutable operator state. Create `reviewed.json` from
 completed annotation tasks, review it, and then promote it with the primary command:
@@ -329,7 +331,9 @@ export WINNER_PROMPT="${WINNER_PROMPT:-P2_fewshot}"
 Both runs must contain the same 22 items and every trace must receive `correctness`,
 `agent-arena-llm-judge`, and `business-policy-adherence`. In the calibrated workshop
 snapshot, `policy-v1` scored 16/22 and `policy-v2` scored 19/22; the candidate fixed
-all three production-derived items without an aggregate regression.
+all three promoted active-customer items without an aggregate regression. They are
+production-derived only when promoted from genuine `reviewed.json`; the tracked
+fixture path remains synthetic.
 
 ### 7. Calibrate the general judge and enable safely
 

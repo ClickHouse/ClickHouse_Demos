@@ -71,8 +71,9 @@ Annotation queue. The queue review is a UI-only human step; provisioning and
 promotion commands do not perform it. The root [README](../../README.md) gives the
 exact queue fields, production-provenance export, and tracked fixture workflow.
 
-After approved production cases are promoted, install the policy judge for
-Experiments. This command deliberately leaves the online policy rule disabled:
+After the reviewed or synthetic active-customer items are promoted, install the
+policy judge for Experiments. This command deliberately leaves the online policy
+rule disabled:
 
 ```bash
 source .env
@@ -96,9 +97,11 @@ export WINNER_PROMPT="${WINNER_PROMPT:-P2_fewshot}"
 ```
 
 Do not enable online evaluation until every trace has the exact required scores, the
-candidate fixes the production-derived slice, relevant revenue and conversion cases
-are `PASS`, a generic count is `NOT_APPLICABLE`, and aggregate correctness does not
-regress. Enablement also fails closed unless it finds an exact
+candidate fixes the promoted active-customer items, relevant revenue and conversion
+cases are `PASS`, a generic count is `NOT_APPLICABLE`, and aggregate correctness does
+not regress. Those items are production-derived only after genuine `reviewed.json`
+promotion; the tracked fixture remains synthetic. Enablement also fails closed unless
+it finds an exact
 `business-policy-adherence` score on an `arena-golden` Experiment Item:
 
 ```bash
