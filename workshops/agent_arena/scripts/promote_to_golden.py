@@ -65,12 +65,13 @@ def main() -> None:
 
     items = []
     for rec in reviewed:
+        provenance = production_provenance(rec)
         qr = ro.query(rec["golden_sql"])   # snapshot the golden result set
         items.append(build_dataset_item(
             qid=rec["id"], question=rec["question"], golden_sql=rec["golden_sql"],
             tier=rec.get("tier", 3), ordered=rec.get("ordered", False),
             rows=qr.rows, cols=qr.cols, float_dp=cfg.eval.float_dp,
-            provenance=production_provenance(rec)))
+            provenance=provenance))
         print(f"  prepared {rec['id']}: {len(qr.rows)} golden row(s)")
 
     tracer.ensure_dataset(items)

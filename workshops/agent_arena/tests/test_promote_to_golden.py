@@ -1,7 +1,12 @@
 from datetime import date
+import json
+from pathlib import Path
+import re
+from types import SimpleNamespace
 
 import pytest
 
+import scripts.promote_to_golden as promotion
 from scripts.promote_to_golden import build_dataset_item, production_provenance
 
 
@@ -73,3 +78,66 @@ def test_provenance_cannot_overwrite_grading_metadata_or_question():
 def test_production_provenance_rejects_missing_trace():
     with pytest.raises(ValueError, match="source_trace_id"):
         production_provenance({"source": "production-feedback"})
+
+
+def test_tracked_production_review_fixture_is_complete_and_safe():
+    fixture = Path(__file__).parent / "fixtures" / "reviewed.production-example.json"
+    records = json.loads(fixture.read_text())
+
+    assert [record["id"] for record in records] == [
+        "prod-active-001", "prod-active-002", "prod-active-003",
+    ]
+    assert [record["question"] for record in records] == [
+        "How many active customers do we have?",
+        "What is our active customer count right now?",
+        "How many customers qualify as active under our business definition?",
+    ]
+    for record in records:
+        assert production_provenance(record) == {
+            "source": "production-feedback",
+            "source_trace_id": "seeded-incident-active-customer-trace",
+            "failure_category": "stale-business-policy",
+            "source_policy_version": "policy-v1",
+            "annotation_id": "seeded-incident-active-customer-annotation",
+        }
+        assert "SELECT uniqExact(customer_id) FROM v_orders" in record["golden_sql"]
+        assert "order_ts >= now() - INTERVAL 30 DAY" in record["golden_sql"]
+        assert "status NOT IN ('cancelled','returned')" in record["golden_sql"]
+        assert not any(re.search(r"key|token|secret|password|url|project", key, re.I)
+                           for key in record)
+        assert "http" not in json.dumps(record).lower()
+        assert "sk-" not in json.dumps(record).lower()
+
+
+def test_invalid_production_provenance_stops_before_query(monkeypatch, tmp_path):
+    reviewed = tmp_path / "invalid-reviewed.json"
+    reviewed.write_text(json.dumps([{
+        "id": "prod-active-001",
+        "question": "How many active customers do we have?",
+        "golden_sql": "SELECT should_not_run()",
+        "source": "production-feedback",
+    }]))
+
+    query_calls = []
+
+    class FakeRO:
+        def __init__(self, _config):
+            pass
+
+        def query(self, sql):
+            query_calls.append(sql)
+
+    class FakeTracer:
+        def __init__(self, _config):
+            pass
+
+    monkeypatch.setattr(promotion, "load_config", lambda: SimpleNamespace(
+        clickhouse=object(), langfuse=object(), eval=SimpleNamespace(float_dp=4)))
+    monkeypatch.setattr(promotion, "ROClickHouseClient", FakeRO)
+    monkeypatch.setattr(promotion, "LangfuseTracer", FakeTracer)
+    monkeypatch.setattr(promotion.sys, "argv", ["promote_to_golden.py", str(reviewed)])
+
+    with pytest.raises(ValueError, match="source_trace_id"):
+        promotion.main()
+
+    assert query_calls == []
