@@ -56,3 +56,28 @@ def test_sql_execution_success_accepts_execution_hints(outcome_hint):
     }
 
     assert evaluate(_context(output)).scores[0].value is True
+
+
+@pytest.mark.parametrize(
+    "ctx",
+    [
+        None,
+        SimpleNamespace(),
+        SimpleNamespace(observation=None),
+        SimpleNamespace(observation=SimpleNamespace()),
+        _context(None),
+        _context("not-an-output-object"),
+        _context([{"sql": "SELECT 1"}]),
+    ],
+)
+def test_sql_execution_success_scores_malformed_context_false(ctx):
+    result = evaluate(ctx)
+
+    assert len(result.scores) == 1
+    score = result.scores[0]
+    assert (score.name, score.value, score.data_type) == (
+        "sql-execution-success",
+        False,
+        "BOOLEAN",
+    )
+    assert "not semantic correctness" in score.comment

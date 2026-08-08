@@ -4,6 +4,7 @@ This deliberately measures only whether the agent produced and executed SQL. A
 valid execution can still answer the user's question incorrectly.
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -22,7 +23,10 @@ class EvaluationResult:
 
 
 def evaluate(ctx) -> EvaluationResult:
-    output = (ctx.observation.output or {}) if ctx.observation else {}
+    observation = getattr(ctx, "observation", None)
+    output = getattr(observation, "output", None)
+    if not isinstance(output, Mapping):
+        output = {}
     sql = output.get("sql")
     successful = (
         isinstance(sql, str)
