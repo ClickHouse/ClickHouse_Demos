@@ -17,6 +17,12 @@ from eval.langfuse_adapter import LangfuseTracer, emit_agent_trace
 from eval.serialize import result_payload, golden_payload
 
 
+DEFAULT_REQUIRED_SCORE_NAMES = (
+    "correctness",
+    "agent-arena-llm-judge",
+)
+
+
 def parse_args(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--run-id", default=None)
@@ -163,7 +169,13 @@ def main(argv=None) -> None:
     tracer.flush()
 
     if pending_trace_ids:
-        _wait_for_scores(tracer, pending_trace_ids, args.eval_timeout, args.eval_poll)
+        _wait_for_scores(
+            tracer,
+            pending_trace_ids,
+            args.eval_timeout,
+            args.eval_poll,
+            args.wait_for_score,
+        )
     print(f"done. run_id={run_id}", flush=True)
 
 
@@ -208,25 +220,39 @@ def _question_for_item(item, qmap) -> GoldenQuestion:
                           golden_sql=str(golden_sql))
 
 
-def _wait_for_scores(tracer, trace_ids, timeout, poll) -> None:
-    """Wait until both required asynchronous Langfuse evaluators have finished."""
+def _wait_for_scores(tracer, trace_ids, timeout, poll, required_names=None) -> None:
+    """Compatibility wrapper for the two default asynchronous evaluators."""
+    _wait_for_required_scores(
+        tracer, trace_ids, timeout, poll, required_names=required_names
+    )
+
+
+def _wait_for_required_scores(
+    tracer, trace_ids, timeout, poll, required_names=None
+) -> None:
+    """Wait for the default scores and every additional exact score name."""
+    required = list(dict.fromkeys([
+        *DEFAULT_REQUIRED_SCORE_NAMES,
+        *(required_names or []),
+    ]))
     remaining = set(trace_ids)
     print(f"grading via LangFuse evaluators — waiting on {len(remaining)} traces "
           f"(timeout {timeout}s)…", flush=True)
     deadline = time.time() + timeout
-    last_missing = {tid: {"correctness", "llm_judge"} for tid in remaining}
+    last_missing = {tid: set(required) for tid in remaining}
     while remaining and time.time() < deadline:
         tids = list(remaining)
         with ThreadPoolExecutor(max_workers=min(8, len(tids))) as pool:
             score_lists = list(pool.map(tracer.fetch_trace_scores, tids))
         done = []
         for tid, scores in zip(tids, score_lists):
-            corr, judge, _outcome = _classify_scores(scores)
-            missing = set()
-            if corr is None:
-                missing.add("correctness")
-            if judge is None:
-                missing.add("llm_judge")
+            available = {
+                score.get("name")
+                for score in scores or []
+                if score.get("name")
+                and (score.get("value") is not None or score.get("string") is not None)
+            }
+            missing = set(required) - available
             last_missing[tid] = missing
             if not missing:
                 done.append(tid)
@@ -239,7 +265,7 @@ def _wait_for_scores(tracer, trace_ids, timeout, poll) -> None:
         missing_names = sorted({name for tid in remaining for name in last_missing[tid]})
         raise RuntimeError(
             f"{len(remaining)} traces are missing {', '.join(missing_names)} after {timeout}s; "
-            "configure both Langfuse evaluators for Experiments on arena-golden. "
+            "configure the required Langfuse evaluators for Experiments on arena-golden. "
             "See eval/langfuse_evaluators/README.md."
         )
     print(f"Langfuse scored all {len(trace_ids)} traces; leaderboard ready", flush=True)

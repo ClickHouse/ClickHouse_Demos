@@ -120,13 +120,80 @@ def test_wait_for_scores_requires_correctness_and_judge(monkeypatch):
     clock = iter([0, 0, 2, 2])
     monkeypatch.setattr(harness.time, "time", lambda: next(clock, 2))
     monkeypatch.setattr(harness.time, "sleep", lambda _: None)
-    with pytest.raises(RuntimeError, match="llm_judge"):
+    with pytest.raises(RuntimeError, match="agent-arena-llm-judge"):
         harness._wait_for_scores(tracer, ["t1"], timeout=1, poll=0)
 
 
 def test_wait_for_scores_accepts_both_required_scores():
     tracer = SimpleNamespace(fetch_trace_scores=lambda tid: [
         {"name": "correctness", "value": 1, "string": None},
-        {"name": "llm_judge", "value": 0.8, "string": None},
+        {"name": "agent-arena-llm-judge", "value": 0.8, "string": None},
     ])
     harness._wait_for_scores(tracer, ["t1"], timeout=1, poll=0)
+
+
+def test_default_score_names_match_live_rule_scores_exactly():
+    assert harness.DEFAULT_REQUIRED_SCORE_NAMES == (
+        "correctness",
+        "agent-arena-llm-judge",
+    )
+
+
+def test_stale_evaluator_name_does_not_satisfy_live_rule_score(monkeypatch):
+    tracer = SimpleNamespace(fetch_trace_scores=lambda tid: [
+        {"name": "correctness", "value": 1, "string": None},
+        {"name": "llm_judge", "value": 0.8, "string": None},
+    ])
+    clock = iter([0, 0, 2, 2])
+    monkeypatch.setattr(harness.time, "time", lambda: next(clock, 2))
+    monkeypatch.setattr(harness.time, "sleep", lambda _: None)
+
+    with pytest.raises(RuntimeError, match="agent-arena-llm-judge"):
+        harness._wait_for_scores(tracer, ["t1"], timeout=1, poll=0)
+
+
+def test_wait_for_scores_requires_each_repeatable_exact_score_name(monkeypatch):
+    tracer = SimpleNamespace(fetch_trace_scores=lambda tid: [
+        {"name": "correctness", "value": 1, "string": None},
+        {"name": "agent-arena-llm-judge", "value": 0.8, "string": None},
+        {"name": "business-policy-adherence-extra", "value": None,
+         "string": "PASS"},
+    ])
+    clock = iter([0, 0, 2, 2])
+    monkeypatch.setattr(harness.time, "time", lambda: next(clock, 2))
+    monkeypatch.setattr(harness.time, "sleep", lambda _: None)
+
+    with pytest.raises(RuntimeError, match="business-policy-adherence"):
+        harness._wait_for_required_scores(
+            tracer,
+            ["t1"],
+            timeout=1,
+            poll=0,
+            required_names=["business-policy-adherence"],
+        )
+
+
+def test_wait_for_scores_accepts_categorical_string_value_by_exact_name():
+    tracer = SimpleNamespace(fetch_trace_scores=lambda tid: [
+        {"name": "correctness", "value": 1, "string": None},
+        {"name": "agent-arena-llm-judge", "value": 0.8, "string": None},
+        {"name": "business-policy-adherence", "value": None,
+         "string": "PASS"},
+    ])
+
+    harness._wait_for_required_scores(
+        tracer,
+        ["t1"],
+        timeout=1,
+        poll=0,
+        required_names=["business-policy-adherence"],
+    )
+
+
+def test_parse_args_collects_repeatable_wait_for_score_names():
+    args = harness.parse_args([
+        "--wait-for-score", "business-policy-adherence",
+        "--wait-for-score", "safety-policy",
+    ])
+
+    assert args.wait_for_score == ["business-policy-adherence", "safety-policy"]
