@@ -38,8 +38,8 @@ def effective_run_id(run_id: str, policy_version: str) -> str:
     return f"{run_id}--{policy_version}"
 
 
-def main() -> None:
-    args = parse_args()
+def main(argv=None) -> None:
+    args = parse_args(argv)
 
     cfg = load_config()
     release = args.run_id or f"run-{uuid.uuid4().hex[:8]}"
