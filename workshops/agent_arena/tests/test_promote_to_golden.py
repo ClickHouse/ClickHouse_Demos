@@ -80,7 +80,7 @@ def test_production_provenance_rejects_missing_trace():
         production_provenance({"source": "production-feedback"})
 
 
-def test_tracked_production_review_fixture_is_complete_and_safe():
+def test_tracked_review_fixture_is_explicitly_synthetic_and_safe():
     fixture = Path(__file__).parent / "fixtures" / "reviewed.production-example.json"
     records = json.loads(fixture.read_text())
 
@@ -94,11 +94,11 @@ def test_tracked_production_review_fixture_is_complete_and_safe():
     ]
     for record in records:
         assert production_provenance(record) == {
-            "source": "production-feedback",
-            "source_trace_id": "seeded-incident-active-customer-trace",
+            "source": "synthetic-reviewed-fixture",
+            "source_trace_id": "synthetic-active-customer-trace",
             "failure_category": "stale-business-policy",
             "source_policy_version": "policy-v1",
-            "annotation_id": "seeded-incident-active-customer-annotation",
+            "annotation_id": "synthetic-active-customer-annotation",
         }
         assert "SELECT uniqExact(customer_id) FROM v_orders" in record["golden_sql"]
         assert "order_ts >= now() - INTERVAL 30 DAY" in record["golden_sql"]
@@ -107,6 +107,87 @@ def test_tracked_production_review_fixture_is_complete_and_safe():
                            for key in record)
         assert "http" not in json.dumps(record).lower()
         assert "sk-" not in json.dumps(record).lower()
+
+
+@pytest.mark.parametrize(
+    "golden_sql",
+    [
+        "SELECT count() FROM raw_orders",
+        "SELECT * FROM url('https://SECRET-MARKER.invalid/data.csv')",
+        "SELECT count() FROM v_orders; SELECT count() FROM v_customers",
+        "DROP TABLE v_orders",
+    ],
+)
+def test_review_validation_rejects_unsafe_sql_with_sanitized_error(golden_sql):
+    with pytest.raises(ValueError) as raised:
+        promotion.validate_reviewed_records([{
+            "id": "safe-record-1",
+            "question": "Reviewed question?",
+            "golden_sql": golden_sql,
+        }])
+
+    message = str(raised.value)
+    assert message == "record safe-record-1: invalid golden_sql"
+    assert golden_sql not in message
+    assert "SECRET-MARKER" not in message
+
+
+@pytest.mark.parametrize(
+    ("key", "value"),
+    [
+        ("source", " "),
+        ("source_trace_id", 123),
+        ("failure_category", "\t"),
+        ("source_policy_version", ["policy-v1"]),
+        ("annotation_id", ""),
+        ("annotation_id", 42),
+    ],
+)
+def test_review_validation_rejects_non_string_or_blank_provenance(key, value):
+    record = {
+        "id": "prod-active-001",
+        "question": "Reviewed question?",
+        "golden_sql": "SELECT count() FROM v_orders",
+        "source": "production-feedback",
+        "source_trace_id": "trace-1",
+        "failure_category": "stale-business-policy",
+        "source_policy_version": "policy-v1",
+    }
+    record[key] = value
+
+    with pytest.raises(ValueError, match=f"record prod-active-001: invalid {key}"):
+        promotion.validate_reviewed_records([record])
+
+
+def test_review_validation_trims_provenance_strings():
+    records = promotion.validate_reviewed_records([{
+        "id": "prod-active-001",
+        "question": "Reviewed question?",
+        "golden_sql": "SELECT count() FROM v_orders",
+        "source": " production-feedback ",
+        "source_trace_id": " trace-1 ",
+        "failure_category": " stale-business-policy ",
+        "source_policy_version": " policy-v1 ",
+        "annotation_id": " annotation-1 ",
+    }])
+
+    assert production_provenance(records[0]) == {
+        "source": "production-feedback",
+        "source_trace_id": "trace-1",
+        "failure_category": "stale-business-policy",
+        "source_policy_version": "policy-v1",
+        "annotation_id": "annotation-1",
+    }
+
+
+def test_synthetic_fixture_flag_cannot_be_combined_with_review_file():
+    with pytest.raises(SystemExit):
+        promotion._review_path(["reviewed.json", "--synthetic-fixture"])
+
+
+def test_tracked_fixture_path_requires_explicit_synthetic_flag():
+    with pytest.raises(SystemExit):
+        promotion._review_path([str(promotion.FIXTURE_PATH)])
 
 
 def test_invalid_production_provenance_stops_before_query(monkeypatch, tmp_path):
@@ -143,6 +224,127 @@ def test_invalid_production_provenance_stops_before_query(monkeypatch, tmp_path)
     assert query_calls == []
 
 
+def test_mixed_batch_validation_stops_before_any_read_query_or_upsert(
+    monkeypatch, tmp_path
+):
+    reviewed = tmp_path / "reviewed.json"
+    reviewed.write_text(json.dumps([
+        {
+            "id": "valid-1",
+            "question": "Valid reviewed question?",
+            "golden_sql": "SELECT count() FROM v_orders",
+        },
+        {
+            "id": "invalid-2",
+            "question": "Unsafe reviewed question?",
+            "golden_sql": "SELECT * FROM raw_orders",
+        },
+    ]))
+    calls = []
+
+    class MustNotConstruct:
+        def __init__(self, *_args, **_kwargs):
+            calls.append("constructed")
+
+    monkeypatch.setattr(promotion, "load_config", lambda: calls.append("config"))
+    monkeypatch.setattr(promotion, "ROClickHouseClient", MustNotConstruct)
+    monkeypatch.setattr(promotion, "LangfuseTracer", MustNotConstruct)
+    monkeypatch.setattr(promotion, "LangfuseAdmin", MustNotConstruct)
+    monkeypatch.setattr(
+        promotion.sys, "argv", ["promote_to_golden.py", str(reviewed)]
+    )
+
+    with pytest.raises(ValueError, match="record invalid-2: invalid golden_sql"):
+        promotion.main()
+
+    assert calls == []
+
+
+def test_fixture_collision_with_live_production_provenance_stops_before_query_upsert(
+    monkeypatch, tmp_path
+):
+    fixture = Path(__file__).parent / "fixtures" / "reviewed.production-example.json"
+    calls = []
+
+    class FakeAdmin:
+        def __init__(self, *_args):
+            pass
+
+        def call(self, method, path, body=None):
+            calls.append((method, path, body))
+            return {
+                "data": [{
+                    "id": "prod-active-001",
+                    "metadata": {
+                        "source": "production-feedback",
+                        "source_trace_id": "real-live-trace",
+                        "failure_category": "stale-business-policy",
+                        "source_policy_version": "policy-v1",
+                        "annotation_id": "real-live-annotation",
+                    },
+                }],
+                "meta": {
+                    "page": 1,
+                    "limit": 100,
+                    "totalItems": 1,
+                    "totalPages": 1,
+                },
+            }
+
+    class MustNotConstruct:
+        def __init__(self, *_args, **_kwargs):
+            calls.append(("forbidden-construction", "", None))
+
+    cfg = SimpleNamespace(
+        clickhouse=object(),
+        langfuse=SimpleNamespace(
+            host="https://langfuse.invalid",
+            public_key="public",
+            secret_key="secret",
+        ),
+        eval=SimpleNamespace(float_dp=4),
+    )
+    monkeypatch.setattr(promotion, "load_config", lambda: cfg)
+    monkeypatch.setattr(promotion, "LangfuseAdmin", FakeAdmin)
+    monkeypatch.setattr(promotion, "ROClickHouseClient", MustNotConstruct)
+    monkeypatch.setattr(promotion, "LangfuseTracer", MustNotConstruct)
+    monkeypatch.setattr(
+        promotion.sys,
+        "argv",
+        ["promote_to_golden.py", "--synthetic-fixture"],
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="record prod-active-001: provenance collision",
+    ):
+        promotion.main()
+
+    assert fixture.exists()
+    assert [call[0] for call in calls] == ["GET"]
+
+
+def test_provenance_preflight_fails_closed_on_malformed_dataset_items():
+    class MalformedAdmin:
+        def call(self, _method, _path, body=None):
+            return {
+                "data": ["not-a-dataset-item"],
+                "meta": {
+                    "page": 1,
+                    "limit": 100,
+                    "totalItems": 1,
+                    "totalPages": 1,
+                },
+            }
+
+    with pytest.raises(RuntimeError, match="dataset provenance preflight failed"):
+        promotion.preflight_provenance(MalformedAdmin(), [{
+            "id": "prod-active-001",
+            "question": "Reviewed question?",
+            "golden_sql": "SELECT count() FROM v_orders",
+        }])
+
+
 def test_promotion_completion_message_uses_venv_module_command(
     monkeypatch, tmp_path, capsys
 ):
@@ -170,10 +372,28 @@ def test_promotion_completion_message_uses_venv_module_command(
         def flush(self):
             pass
 
+    class FakeAdmin:
+        def __init__(self, *_args):
+            pass
+
+        def call(self, _method, _path, body=None):
+            return {
+                "data": [],
+                "meta": {
+                    "page": 1,
+                    "limit": 100,
+                    "totalItems": 0,
+                    "totalPages": 1,
+                },
+            }
+
     monkeypatch.setattr(promotion, "load_config", lambda: SimpleNamespace(
-        clickhouse=object(), langfuse=object(), eval=SimpleNamespace(float_dp=4)))
+        clickhouse=object(),
+        langfuse=SimpleNamespace(host="host", public_key="public", secret_key="secret"),
+        eval=SimpleNamespace(float_dp=4)))
     monkeypatch.setattr(promotion, "ROClickHouseClient", FakeRO)
     monkeypatch.setattr(promotion, "LangfuseTracer", FakeTracer)
+    monkeypatch.setattr(promotion, "LangfuseAdmin", FakeAdmin)
     monkeypatch.setattr(promotion.sys, "argv", ["promote_to_golden.py", str(reviewed)])
 
     promotion.main()

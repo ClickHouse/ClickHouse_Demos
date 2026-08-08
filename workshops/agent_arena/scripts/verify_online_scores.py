@@ -14,14 +14,22 @@ from scripts.langfuse_admin import (
 )
 
 
-def normalized_score_value(score: dict) -> str:
+def normalized_score_value(score: dict) -> str | None:
     value = score.get("value")
     if value is None:
         value = score.get("string")
     if score.get("dataType") == "BOOLEAN":
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if type(value) is int and value in {0, 1}:
+            return "true" if value == 1 else "false"
         if isinstance(value, str):
-            return value.strip().lower()
-        return "true" if bool(value) else "false"
+            canonical = value.strip().lower()
+            if canonical in {"true", "false"}:
+                return canonical
+        return None
+    if value is None:
+        return None
     return str(value)
 
 
@@ -29,24 +37,30 @@ def print_scores(trace_id: str, scores: list[dict]) -> None:
     print(f"trace_id={trace_id}")
     for score in scores:
         name = score.get("name") or ""
-        value = normalized_score_value(score)
+        value = normalized_score_value(score) or "invalid"
         comment = str(score.get("comment") or "").replace("\n", " ")
         suffix = f" comment={comment}" if comment else ""
         print(f"{name}={value}{suffix}")
 
 
 def score_mismatches(scores: list[dict], expected: dict[str, str]) -> list[str]:
-    actual = {
-        score.get("name"): normalized_score_value(score)
-        for score in scores
-        if score.get("name")
-    }
+    by_name: dict[str, list[str | None]] = {}
+    for score in scores:
+        name = score.get("name")
+        if name:
+            by_name.setdefault(name, []).append(normalized_score_value(score))
+
     mismatches = []
     for name, wanted in expected.items():
-        if name not in actual:
+        values = by_name.get(name)
+        if not values:
             mismatches.append(f"{name} missing")
-        elif actual[name] != wanted:
-            mismatches.append(f"{name} expected {wanted} got {actual[name]}")
+        elif any(value is None for value in values):
+            mismatches.append(f"{name} invalid")
+        elif len(set(values)) != 1:
+            mismatches.append(f"{name} conflicting duplicate scores")
+        elif values[0] != wanted:
+            mismatches.append(f"{name} expected {wanted} got {values[0]}")
     return mismatches
 
 

@@ -209,6 +209,8 @@ def ensure_evaluator(name: str, desired_body: dict) -> dict:
 def ensure_rule(name: str, desired_body: dict) -> dict:
     api = _require_admin()
     existing = api.list_named(RULES_PATH, name)
+    if len(existing) > 1:
+        raise RuntimeError("ambiguous Langfuse rule name")
     if not existing:
         return api.call("POST", RULES_PATH, desired_body)
 

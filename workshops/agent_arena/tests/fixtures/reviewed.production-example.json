@@ -5,11 +5,11 @@
     "golden_sql": "SELECT uniqExact(customer_id) FROM v_orders WHERE order_ts >= now() - INTERVAL 30 DAY AND status NOT IN ('cancelled','returned')",
     "tier": 2,
     "ordered": false,
-    "source": "production-feedback",
-    "source_trace_id": "seeded-incident-active-customer-trace",
+    "source": "synthetic-reviewed-fixture",
+    "source_trace_id": "synthetic-active-customer-trace",
     "failure_category": "stale-business-policy",
     "source_policy_version": "policy-v1",
-    "annotation_id": "seeded-incident-active-customer-annotation"
+    "annotation_id": "synthetic-active-customer-annotation"
   },
   {
     "id": "prod-active-002",
@@ -17,11 +17,11 @@
     "golden_sql": "SELECT uniqExact(customer_id) FROM v_orders WHERE order_ts >= now() - INTERVAL 30 DAY AND status NOT IN ('cancelled','returned')",
     "tier": 2,
     "ordered": false,
-    "source": "production-feedback",
-    "source_trace_id": "seeded-incident-active-customer-trace",
+    "source": "synthetic-reviewed-fixture",
+    "source_trace_id": "synthetic-active-customer-trace",
     "failure_category": "stale-business-policy",
     "source_policy_version": "policy-v1",
-    "annotation_id": "seeded-incident-active-customer-annotation"
+    "annotation_id": "synthetic-active-customer-annotation"
   },
   {
     "id": "prod-active-003",
@@ -29,10 +29,10 @@
     "golden_sql": "SELECT uniqExact(customer_id) FROM v_orders WHERE order_ts >= now() - INTERVAL 30 DAY AND status NOT IN ('cancelled','returned')",
     "tier": 2,
     "ordered": false,
-    "source": "production-feedback",
-    "source_trace_id": "seeded-incident-active-customer-trace",
+    "source": "synthetic-reviewed-fixture",
+    "source_trace_id": "synthetic-active-customer-trace",
     "failure_category": "stale-business-policy",
     "source_policy_version": "policy-v1",
-    "annotation_id": "seeded-incident-active-customer-annotation"
+    "annotation_id": "synthetic-active-customer-annotation"
   }
 ]

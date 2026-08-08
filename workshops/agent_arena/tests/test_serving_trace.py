@@ -115,3 +115,50 @@ def test_feedback_rejects_missing_trace_id(api):
     import fastapi
     with pytest.raises(fastapi.HTTPException):
         api.feedback(api.FeedbackRequest(trace_id="", value=False))
+
+
+def test_feedback_failure_redacts_exception_from_response_and_logs(
+    api, monkeypatch, caplog
+):
+    import fastapi
+
+    secret_marker = "SECRET-MARKER-provider-token"
+
+    class FailingScoreClient:
+        def create_score(self, **_kwargs):
+            raise RuntimeError(secret_marker)
+
+    monkeypatch.setattr(api, "get_client", lambda: FailingScoreClient())
+
+    with caplog.at_level("ERROR"), pytest.raises(fastapi.HTTPException) as raised:
+        api.feedback(api.FeedbackRequest(trace_id="trace-1", value=False))
+
+    assert raised.value.status_code == 502
+    assert raised.value.detail == "feedback service unavailable"
+    diagnostics = "\n".join(record.getMessage() for record in caplog.records)
+    assert "feedback phase=create-score exception_type=RuntimeError" in diagnostics
+    assert secret_marker not in diagnostics
+    assert secret_marker not in str(raised.value.detail)
+
+
+def test_feedback_flush_failure_uses_fixed_sanitized_phase(api, monkeypatch, caplog):
+    import fastapi
+
+    secret_marker = "SECRET-MARKER-flush-token"
+
+    class FailingFlushClient:
+        def create_score(self, **_kwargs):
+            pass
+
+        def flush(self):
+            raise OSError(secret_marker)
+
+    monkeypatch.setattr(api, "get_client", lambda: FailingFlushClient())
+
+    with caplog.at_level("ERROR"), pytest.raises(fastapi.HTTPException) as raised:
+        api.feedback(api.FeedbackRequest(trace_id="trace-1", value=True))
+
+    diagnostics = "\n".join(record.getMessage() for record in caplog.records)
+    assert raised.value.detail == "feedback service unavailable"
+    assert "feedback phase=flush exception_type=OSError" in diagnostics
+    assert secret_marker not in diagnostics

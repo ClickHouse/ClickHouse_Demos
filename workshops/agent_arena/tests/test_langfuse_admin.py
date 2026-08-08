@@ -1,3 +1,5 @@
+import pytest
+
 from scripts.langfuse_admin import (
     LangfuseAdmin,
     iter_cursor_pages,
@@ -71,21 +73,74 @@ def test_list_named_preserves_endpoint_and_url_encodes_query_parameters():
     ]
 
 
-def test_list_named_stops_when_server_repeats_page_metadata():
+def test_list_named_fails_closed_when_server_repeats_page_metadata():
     api = StubAdmin([
         _page([{"name": "first"}], page=1, total_pages=3, total_items=3),
         _page([{"name": "second"}], page=1, total_pages=3, total_items=3),
         _page([{"name": "must-not-be-read"}], page=1, total_pages=3, total_items=3),
     ])
 
-    assert api.list_named("/api/public/unstable/evaluators", "target") == []
+    with pytest.raises(RuntimeError, match="pagination response is incomplete"):
+        api.list_named("/api/public/unstable/evaluators", "target")
     assert len(api.calls) == 2
+
+
+def test_list_named_fails_closed_when_total_pages_exceeds_bound():
+    api = StubAdmin([_page([], page=1, total_pages=101, total_items=101)])
+
+    with pytest.raises(RuntimeError, match="pagination response is incomplete"):
+        api.list_named("/api/public/unstable/evaluators", "target")
+
+    assert len(api.calls) == 1
+
+
+def test_list_named_fails_closed_on_page_mismatch():
+    api = StubAdmin([_page([], page=2, total_pages=2)])
+
+    with pytest.raises(RuntimeError, match="pagination response is incomplete"):
+        api.list_named("/api/public/unstable/evaluators", "target")
+
+
+def test_list_named_fails_closed_when_total_pages_changes_mid_traversal():
+    api = StubAdmin([
+        _page([], page=1, total_pages=3, total_items=3),
+        _page([], page=2, total_pages=2, total_items=3),
+    ])
+
+    with pytest.raises(RuntimeError, match="pagination response is incomplete"):
+        api.list_named("/api/public/unstable/evaluators", "target")
+
+
+def test_list_named_fails_closed_when_total_items_are_not_traversed():
+    api = StubAdmin([_page([{"name": "target"}], page=1, total_pages=1,
+                           total_items=2)])
+
+    with pytest.raises(RuntimeError, match="pagination response is incomplete"):
+        api.list_named("/api/public/unstable/evaluators", "target")
+
+
+@pytest.mark.parametrize(
+    "meta",
+    [
+        {"page": 1, "totalPages": 1},
+        {"page": 1, "totalPages": 1, "limit": 0},
+        {"page": 1, "totalPages": 1, "limit": 49},
+        {"page": 1, "totalPages": 0, "limit": 50},
+    ],
+)
+def test_list_named_fails_closed_on_incomplete_or_insane_metadata(meta):
+    api = StubAdmin([{"data": [], "meta": meta}])
+
+    with pytest.raises(RuntimeError, match="pagination response is incomplete"):
+        api.list_named("/api/public/unstable/evaluators", "target")
 
 
 def test_list_named_filters_only_after_collecting_every_page():
     api = StubAdmin([
-        _page([{"name": "target", "id": "first"}], page=1, total_pages=2),
-        _page([{"name": "target", "id": "second"}], page=2, total_pages=2),
+        _page([{"name": "target", "id": "first"}], page=1, total_pages=2,
+              total_items=2),
+        _page([{"name": "target", "id": "second"}], page=2, total_pages=2,
+              total_items=2),
     ])
 
     assert api.list_named("/api/public/unstable/evaluators", "target") == [

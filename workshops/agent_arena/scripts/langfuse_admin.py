@@ -7,6 +7,57 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 
 MAX_API_PAGES = 100
+PAGINATION_ERROR = "Langfuse pagination response is incomplete"
+
+
+def collect_numbered_pages(fetch_page, *, limit: int,
+                           max_pages: int = MAX_API_PAGES) -> list[dict]:
+    """Collect a complete, bounded numbered traversal or fail closed."""
+    rows = []
+    expected_total_pages = None
+    expected_total_items = None
+    for requested_page in range(1, max_pages + 1):
+        payload = fetch_page(requested_page)
+        meta = payload.get("meta")
+        data = payload.get("data")
+        if not isinstance(meta, dict) or not isinstance(data, list):
+            raise RuntimeError(PAGINATION_ERROR)
+
+        returned_page = meta.get("page")
+        total_pages = meta.get("totalPages")
+        returned_limit = meta.get("limit")
+        total_items = meta.get("totalItems")
+        if (
+            type(returned_page) is not int
+            or type(total_pages) is not int
+            or type(returned_limit) is not int
+            or type(total_items) is not int
+            or returned_page != requested_page
+            or total_pages < 1
+            or total_pages > max_pages
+            or returned_limit != limit
+            or total_items < 0
+            or len(data) > limit
+            or (
+                expected_total_pages is not None
+                and total_pages != expected_total_pages
+            )
+            or (
+                expected_total_items is not None
+                and total_items != expected_total_items
+            )
+        ):
+            raise RuntimeError(PAGINATION_ERROR)
+
+        expected_total_pages = total_pages
+        expected_total_items = total_items
+        rows.extend(data)
+        if returned_page == total_pages:
+            if len(rows) != total_items:
+                raise RuntimeError(PAGINATION_ERROR)
+            return rows
+
+    raise RuntimeError(PAGINATION_ERROR)
 
 
 def iter_numbered_pages(fetch_page, max_pages: int = MAX_API_PAGES):
@@ -109,27 +160,11 @@ class LangfuseAdmin:
             return json.load(response)
 
     def list_named(self, path: str, name: str) -> list[dict]:
-        rows = []
-        requested_pages = set()
-        returned_pages = set()
-        page = 1
         limit = 50
-
-        while page not in requested_pages:
-            requested_pages.add(page)
-            payload = self.call("GET", _page_path(path, page, limit))
-            meta = payload.get("meta", {})
-            returned_page = meta.get("page")
-            total_pages = meta.get("totalPages")
-            if not isinstance(returned_page, int) or returned_page in returned_pages:
-                break
-
-            returned_pages.add(returned_page)
-            rows.extend(payload.get("data", []))
-            if not isinstance(total_pages, int) or returned_page >= total_pages:
-                break
-            page = returned_page + 1
-
+        rows = collect_numbered_pages(
+            lambda page: self.call("GET", _page_path(path, page, limit)),
+            limit=limit,
+        )
         return [row for row in rows if row.get("name") == name]
 
 

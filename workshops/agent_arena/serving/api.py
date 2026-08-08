@@ -10,6 +10,7 @@ share one code path. Traced to Langfuse (chat_turn + llm_call).
     -d '{"question":"How many customers are there?","config_id":"claude-sonnet-5__P1_zeroshot"}'
 """
 import os
+import logging
 import time
 import uuid
 from fastapi import FastAPI, HTTPException
@@ -23,6 +24,8 @@ from agents.loop import run_agent
 from agents.policy import load_policy, with_policy
 from agents.sqlguard import validate_select_only  # noqa: F401  (exercised via loop)
 from eval.langfuse_adapter import LangfuseTracer, emit_agent_trace
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Agent Arena — Serving API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
@@ -127,7 +130,18 @@ def feedback(req: FeedbackRequest):
                             name="user-thumbs", value=req.value,
                             trace_id=req.trace_id, data_type="BOOLEAN",
                             comment=req.comment)
+    except Exception as exc:  # noqa: BLE001
+        logger.error(
+            "feedback phase=create-score exception_type=%s",
+            type(exc).__name__,
+        )
+        raise HTTPException(502, "feedback service unavailable") from None
+    try:
         client.flush()
-    except Exception as e:  # noqa: BLE001
-        raise HTTPException(502, f"failed to record feedback: {e}")
+    except Exception as exc:  # noqa: BLE001
+        logger.error(
+            "feedback phase=flush exception_type=%s",
+            type(exc).__name__,
+        )
+        raise HTTPException(502, "feedback service unavailable") from None
     return {"ok": True}

@@ -276,33 +276,36 @@ not be reconfigurable.
 
 ### 5. Promote production-provenance golden cases
 
-An operator normally exports approved tasks to the ignored `reviewed.json`. Each
+The primary path is a genuine operator export of approved tasks to the ignored
+`reviewed.json`. Each
 record must contain `id`, `question`, `golden_sql`, `tier`, `ordered`, `source`,
 `source_trace_id`, `failure_category`, `source_policy_version`, and `annotation_id`.
 Production records use `source = production-feedback`.
 
-The repository does not track mutable operator state. An operator can copy the
-tracked shape to `reviewed.json`, fill it from completed annotation tasks, and review
-the file before promotion. Do not overwrite an existing operator file:
-
-```bash
-test -e reviewed.json || \
-  cp tests/fixtures/reviewed.production-example.json reviewed.json
-```
-
-For a reproducible learner continuation, promote the tracked, already-reviewed
-incident directly. It contains three approved phrasings (`prod-active-001` through
-`prod-active-003`) and leaves any existing `reviewed.json` untouched:
+The repository does not track mutable operator state. Create `reviewed.json` from
+completed annotation tasks, review it, and then promote it with the primary command:
 
 ```bash
 source .env
-.venv/bin/python -m scripts.promote_to_golden \
-  tests/fixtures/reviewed.production-example.json
+.venv/bin/python -m scripts.promote_to_golden reviewed.json
 ```
 
-Copying this fixture does **not** automate or replace the human annotation step. The
-promotion command validates provenance, snapshots each corrected query's result from
-ClickHouse, and idempotently upserts the cases into `arena-golden`.
+If no genuine review is available, a reproducible synthetic fallback contains the
+same three teaching phrasings (`prod-active-001` through `prod-active-003`). It is
+explicitly synthetic, does not represent completed human annotation, and leaves any
+existing `reviewed.json` untouched:
+
+```bash
+source .env
+.venv/bin/python -m scripts.promote_to_golden --synthetic-fixture
+```
+
+These commands are mutually exclusive. **Never run the synthetic fallback after a
+genuine review promotion.** Before any ClickHouse query or dataset upsert, promotion
+validates the complete batch and reads existing `arena-golden` item metadata. It
+refuses an ID collision with different production provenance, so the fixture cannot
+overwrite a real reviewed item's trace or annotation provenance. If the authenticated
+read cannot establish provenance safely, promotion stops without writing.
 
 ### 6. Run baseline and candidate on the same dataset
 
@@ -484,8 +487,9 @@ PRODUCT_TRACE=$(ask_trace "How many products are there?")
 Stop the foreground serving process with Ctrl-C, or stop all workshop services with
 `scripts/arena.sh stop`. `scripts/arena.sh down` additionally drops the workshop
 ClickHouse database and read-only user; it does not delete Langfuse datasets,
-experiments, annotation queues, or scores. Promotion and evaluator provisioning are
-idempotent, while `reviewed.json` remains ignored operator state.
+experiments, annotation queues, or scores. Promotion is idempotent only when colliding
+production provenance is identical; evaluator provisioning is also idempotent, while
+`reviewed.json` remains ignored operator state.
 
 The evaluator rules use 100% sampling so every workshop trace produces visible
 evidence. That is a teaching setting, not a production recommendation: choose a

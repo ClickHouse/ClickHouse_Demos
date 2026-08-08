@@ -436,6 +436,35 @@ def test_business_policy_online_enable_accepts_exact_named_score(monkeypatch):
     )
 
 
+@pytest.mark.parametrize(
+    "rules",
+    [
+        [
+            {"id": "rule-1", **online.operational_rule_body()},
+            {"id": "rule-2", **online.operational_rule_body()},
+        ],
+        [
+            {"id": "rule-1", **online.operational_rule_body()},
+            {
+                "id": "rule-2",
+                **online.operational_rule_body(),
+                "enabled": False,
+            },
+        ],
+    ],
+)
+def test_rule_provisioning_rejects_duplicate_exact_names_before_write(
+    monkeypatch, rules
+):
+    api = BusinessPolicyAdmin(rules=rules)
+    monkeypatch.setattr(online, "_admin", api)
+
+    with pytest.raises(RuntimeError, match="ambiguous Langfuse rule name"):
+        online.ensure_rule(online.RULE, online.operational_rule_body())
+
+    assert not any(method in {"PATCH", "POST"} for method, _path, _body in api.calls)
+
+
 def test_score_verifier_normalizes_boolean_and_categorical_values():
     verifier = importlib.import_module("scripts.verify_online_scores")
 
@@ -451,6 +480,56 @@ def test_score_verifier_normalizes_boolean_and_categorical_values():
     assert verifier.normalized_score_value(
         {"dataType": "CATEGORICAL", "value": None, "string": "NOT_APPLICABLE"}
     ) == "NOT_APPLICABLE"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (True, "true"),
+        (False, "false"),
+        (1, "true"),
+        (0, "false"),
+        ("true", "true"),
+        (" FALSE ", "false"),
+    ],
+)
+def test_score_verifier_accepts_only_canonical_boolean_values(value, expected):
+    verifier = importlib.import_module("scripts.verify_online_scores")
+
+    assert verifier.normalized_score_value(
+        {"dataType": "BOOLEAN", "value": value}
+    ) == expected
+
+
+def test_score_verifier_treats_null_boolean_as_invalid_not_false():
+    verifier = importlib.import_module("scripts.verify_online_scores")
+    scores = [{"name": "ready", "dataType": "BOOLEAN", "value": None}]
+
+    assert verifier.score_mismatches(scores, {"ready": "false"}) == [
+        "ready invalid",
+    ]
+
+
+def test_score_verifier_collapses_identical_exact_name_duplicates():
+    verifier = importlib.import_module("scripts.verify_online_scores")
+    scores = [
+        {"name": "ready", "dataType": "BOOLEAN", "value": True},
+        {"name": "ready", "dataType": "BOOLEAN", "string": "true"},
+    ]
+
+    assert verifier.score_mismatches(scores, {"ready": "true"}) == []
+
+
+def test_score_verifier_rejects_conflicting_exact_name_duplicates():
+    verifier = importlib.import_module("scripts.verify_online_scores")
+    scores = [
+        {"name": "ready", "dataType": "BOOLEAN", "value": True},
+        {"name": "ready", "dataType": "BOOLEAN", "value": False},
+    ]
+
+    assert verifier.score_mismatches(scores, {"ready": "true"}) == [
+        "ready conflicting duplicate scores",
+    ]
 
 
 def test_score_verifier_reports_only_safe_fields(capsys):
