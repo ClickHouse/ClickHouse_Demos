@@ -11,12 +11,13 @@ from arena.config import load_config
 from agents.chclient import ROClickHouseClient
 from agents.llm import OpenRouterClient, cost_usd
 from agents.loop import run_agent
+from agents.policy import load_policy, with_policy
 from eval.golden import GoldenQuestion, load_golden, fewshot_examples
 from eval.langfuse_adapter import LangfuseTracer, emit_agent_trace
 from eval.serialize import result_payload, golden_payload
 
 
-def main() -> None:
+def parse_args(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--run-id", default=None)
     ap.add_argument("--eval-timeout", type=int, default=180,
@@ -28,10 +29,22 @@ def main() -> None:
     ap.add_argument("--models-file", default="",
                     help="JSON file of model specs [{id,name,family,price_per_1m_in,price_per_1m_out}] "
                          "to run instead of config.yaml models (used by the web UI)")
-    args = ap.parse_args()
+    ap.add_argument("--policy-version", default="policy-v2")
+    ap.add_argument("--wait-for-score", action="append", default=[])
+    return ap.parse_args(argv)
+
+
+def effective_run_id(run_id: str, policy_version: str) -> str:
+    return f"{run_id}--{policy_version}"
+
+
+def main() -> None:
+    args = parse_args()
 
     cfg = load_config()
-    run_id = args.run_id or f"run-{uuid.uuid4().hex[:8]}"
+    release = args.run_id or f"run-{uuid.uuid4().hex[:8]}"
+    policy = load_policy(args.policy_version)
+    run_id = effective_run_id(release, policy.version)
 
     # The web UI can hand the harness an arbitrary set of models (from the live
     # OpenRouter catalog) via a JSON file, overriding config.yaml's model list.
@@ -56,7 +69,7 @@ def main() -> None:
     llm = OpenRouterClient(cfg.openrouter.base_url, cfg.openrouter.api_key)
 
     with open("schema/schema_context.md") as f:
-        schema_ctx = f.read()
+        schema_ctx = with_policy(f.read(), policy)
 
     all_questions = load_golden()
     # Hold out the few-shot example questions so P2 is not graded on its own
@@ -126,9 +139,11 @@ def main() -> None:
                     payload, c, latency_ms, ar = run_one(_m, _p, _mc, _pc, _ex, _cid, q)
                     trace_id = emit_agent_trace(
                         trace_name="agent_run", session_id=_sid,
-                        tags=[_cid, f"run:{run_id}", _m, _p],
+                        tags=[_cid, f"run:{run_id}", policy.version, _m, _p],
                         metadata={"config_id": _cid, "question_id": q.id,
-                                  "model": _m, "prompt": _p, "run_id": run_id},
+                                  "model": _m, "prompt": _p, "run_id": run_id,
+                                  "policy_version": policy.version,
+                                  "release": release},
                         question=q.question, model=_m,
                         transcript=ar.transcript, sql=ar.sql,
                         output_payload=payload, usage=ar.usage)

@@ -5,6 +5,16 @@ import pytest
 import eval.harness as harness
 
 
+def test_harness_defaults_to_current_policy():
+    args = harness.parse_args([])
+    assert args.policy_version == "policy-v2"
+
+
+def test_effective_run_id_includes_policy_without_changing_config_id():
+    assert harness.effective_run_id("online-loop-baseline", "policy-v1") == \
+        "online-loop-baseline--policy-v1"
+
+
 def test_question_for_promoted_dataset_item_not_in_yaml():
     item = SimpleNamespace(
         id="q101", input={"question": "Promoted question?"},

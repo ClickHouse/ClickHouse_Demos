@@ -12,6 +12,7 @@ def api(monkeypatch):
     import agents.chclient, eval.langfuse_adapter
     monkeypatch.setattr(agents.chclient, "ROClickHouseClient", lambda cfg: object())
     monkeypatch.setattr(eval.langfuse_adapter, "LangfuseTracer", lambda cfg: object())
+    monkeypatch.setenv("AGENT_ARENA_POLICY_VERSION", "policy-v1")
     # NOTE: deviates from the brief's blanket `mock.mock_open` on builtins.open —
     # that also intercepts load_config()'s real config.yaml/.env reads (called at
     # serving.api import time) and breaks yaml.safe_load with a TypeError. Instead,
@@ -40,7 +41,13 @@ def _fake_ar():
 
 def test_ask_returns_trace_and_session_and_calls_emit(api, monkeypatch):
     calls = {}
-    monkeypatch.setattr(api, "run_agent", lambda *a, **k: _fake_ar())
+    agent_call = {}
+
+    def fake_run_agent(*args, **kwargs):
+        agent_call["context"] = args[3]
+        return _fake_ar()
+
+    monkeypatch.setattr(api, "run_agent", fake_run_agent)
     def fake_emit(**kw):
         calls.update(kw)
         return "trace-xyz"
@@ -51,8 +58,13 @@ def test_ask_returns_trace_and_session_and_calls_emit(api, monkeypatch):
     assert resp.trace_id == "trace-xyz"
     assert resp.session_id.startswith("ask-")
     assert resp.sql == "SELECT 1" and resp.rows == [[1]]
+    assert resp.policy_version == "policy-v1"
     assert calls["question"] == "How many orders?"
     assert "serving" in calls["tags"]
+    assert "policy-v1" in calls["tags"]
+    assert calls["metadata"]["policy_version"] == "policy-v1"
+    assert calls["metadata"]["release"] == "serving"
+    assert "Business metric policy (policy-v1)" in agent_call["context"]
     assert calls["usage"].output_tokens == 3
 
 

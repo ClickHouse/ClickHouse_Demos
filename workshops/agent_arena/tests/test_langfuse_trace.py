@@ -13,6 +13,12 @@ def test_str_meta_coerces_keys_and_truncates_values():
     assert all(isinstance(v, str) and len(v) <= 200 for v in out.values())
 
 
+def test_str_meta_retains_policy_version_value():
+    assert adapter._str_meta({"policy_version": "policy-v1"}) == {
+        "policyversion": "policy-v1",
+    }
+
+
 def test_emit_agent_trace_uses_v4_api_and_returns_trace_id():
     client = mock.MagicMock()
     client.get_current_trace_id.return_value = "trace-123"
@@ -25,7 +31,8 @@ def test_emit_agent_trace_uses_v4_api_and_returns_trace_id():
         tid = adapter.emit_agent_trace(
             trace_name="agent_run", session_id="run__cfg",
             tags=["cfg", "run:r1", "m", "p"],
-            metadata={"config_id": "cfg", "question_id": "q1"},
+            metadata={"config_id": "cfg", "question_id": "q1",
+                      "policy_version": "policy-v1", "release": "run-r1"},
             question="How many orders?", model="m",
             transcript=[{"role": "user", "content": "q"}],
             sql="SELECT 1", output_payload={"sql": "SELECT 1", "rows": []},
@@ -36,7 +43,10 @@ def test_emit_agent_trace_uses_v4_api_and_returns_trace_id():
     assert kw["trace_name"] == "agent_run"
     assert kw["session_id"] == "run__cfg"
     assert kw["tags"] == ["cfg", "run:r1", "m", "p"]
-    assert kw["metadata"] == {"configid": "cfg", "questionid": "q1"}
+    assert kw["metadata"] == {
+        "configid": "cfg", "questionid": "q1",
+        "policyversion": "policy-v1", "release": "run-r1",
+    }
     # a generation child with usage_details was created
     _, gkw = client.start_as_current_observation.call_args
     assert gkw["as_type"] == "generation"
