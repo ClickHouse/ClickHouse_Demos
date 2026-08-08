@@ -141,3 +141,41 @@ def test_invalid_production_provenance_stops_before_query(monkeypatch, tmp_path)
         promotion.main()
 
     assert query_calls == []
+
+
+def test_promotion_completion_message_uses_venv_module_command(
+    monkeypatch, tmp_path, capsys
+):
+    reviewed = tmp_path / "reviewed.json"
+    reviewed.write_text(json.dumps([{
+        "id": "reviewed-1",
+        "question": "Reviewed question?",
+        "golden_sql": "SELECT 1",
+    }]))
+
+    class FakeRO:
+        def __init__(self, _config):
+            pass
+
+        def query(self, _sql):
+            return SimpleNamespace(rows=[[1]], cols=["result"])
+
+    class FakeTracer:
+        def __init__(self, _config):
+            pass
+
+        def ensure_dataset(self, _items):
+            pass
+
+        def flush(self):
+            pass
+
+    monkeypatch.setattr(promotion, "load_config", lambda: SimpleNamespace(
+        clickhouse=object(), langfuse=object(), eval=SimpleNamespace(float_dp=4)))
+    monkeypatch.setattr(promotion, "ROClickHouseClient", FakeRO)
+    monkeypatch.setattr(promotion, "LangfuseTracer", FakeTracer)
+    monkeypatch.setattr(promotion.sys, "argv", ["promote_to_golden.py", str(reviewed)])
+
+    promotion.main()
+
+    assert "re-run `.venv/bin/python -m eval.harness`" in capsys.readouterr().out

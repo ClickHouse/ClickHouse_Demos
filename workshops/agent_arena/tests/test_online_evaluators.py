@@ -573,3 +573,23 @@ def test_score_verifier_accepts_live_terminal_metadata_and_subject_trace():
     assert [score["name"] for score in scores] == [
         "business-policy-adherence",
     ]
+
+
+def test_score_verifier_accepts_manual_trace_subject_id_shape():
+    verifier = importlib.import_module("scripts.verify_online_scores")
+
+    class ManualScoreAdmin:
+        def call(self, method, path, body=None):
+            return {
+                "data": [{
+                    "subject": {"kind": "trace", "id": "trace-1"},
+                    "name": "user-thumbs",
+                    "value": False,
+                    "dataType": "BOOLEAN",
+                }],
+                "meta": {"limit": 100},
+            }
+
+    scores = verifier._fetch_scores(ManualScoreAdmin(), "trace-1")
+
+    assert [score["name"] for score in scores] == ["user-thumbs"]

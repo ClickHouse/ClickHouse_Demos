@@ -77,7 +77,14 @@ def score_trace_id(score: dict) -> str | None:
     if direct:
         return direct
     subject = score.get("subject")
-    return subject.get("traceId") if isinstance(subject, dict) else None
+    if not isinstance(subject, dict):
+        return None
+    linked_trace = subject.get("traceId")
+    if linked_trace:
+        return linked_trace
+    if subject.get("kind") == "trace":
+        return subject.get("id")
+    return None
 
 
 class LangfuseAdmin:

@@ -3,9 +3,9 @@
 POST /ask {question, config_id} -> runs the agent live and returns
 {sql, columns, rows, cost_usd, latency_ms, outcome}. Reuses the same agent core
 and read-only sandbox as the benchmark harness, so the demo and the benchmark
-share one code path. Traced to LangFuse (chat_turn + llm_call).
+share one code path. Traced to Langfuse (chat_turn + llm_call).
 
-  source .env && uvicorn serving.api:app --port 8100
+  source .env && .venv/bin/uvicorn serving.api:app --port 8100
   curl -s localhost:8100/ask -H 'content-type: application/json' \
     -d '{"question":"How many customers are there?","config_id":"claude-sonnet-5__P1_zeroshot"}'
 """
@@ -24,13 +24,13 @@ from agents.policy import load_policy, with_policy
 from agents.sqlguard import validate_select_only  # noqa: F401  (exercised via loop)
 from eval.langfuse_adapter import LangfuseTracer, emit_agent_trace
 
-app = FastAPI(title="AgentArena — Serving API")
+app = FastAPI(title="Agent Arena — Serving API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                     allow_headers=["*"])
 _cfg = load_config()
 _ro = ROClickHouseClient(_cfg.clickhouse)
 _llm = OpenRouterClient(_cfg.openrouter.base_url, _cfg.openrouter.api_key)
-# Configure the global LangFuse client (get_client() uses it inside /ask).
+# Configure the global Langfuse client (get_client() uses it inside /ask).
 _lf = LangfuseTracer(_cfg.langfuse)
 
 with open("schema/schema_context.md") as f:
@@ -55,7 +55,7 @@ class AskResponse(BaseModel):
     latency_ms: int
     outcome: str
     error: str | None
-    trace_id: str          # LangFuse trace id (for attaching user feedback)
+    trace_id: str          # Langfuse trace id (for attaching user feedback)
     session_id: str
 
 
@@ -123,7 +123,7 @@ def feedback(req: FeedbackRequest):
         raise HTTPException(400, "trace_id required")
     client = get_client()
     try:
-        client.create_score(id=f"user-thumbs-{req.trace_id}",
+        client.create_score(score_id=f"user-thumbs-{req.trace_id}",
                             name="user-thumbs", value=req.value,
                             trace_id=req.trace_id, data_type="BOOLEAN",
                             comment=req.comment)

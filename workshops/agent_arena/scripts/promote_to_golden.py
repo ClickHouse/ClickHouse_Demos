@@ -1,12 +1,12 @@
 """Human-in-the-loop: promote human-approved production questions into the
 `arena-golden` dataset so the next benchmark run measures them.
 
-Workflow: a reviewer triages production chat traces in the LangFuse annotation
+Workflow: a reviewer triages production chat traces in the Langfuse annotation
 queue (see the workshop guide), then exports the approved ones as a JSON list of
 {id, question, golden_sql, tier, ordered}. This script snapshots each query's
 golden result set against ClickHouse and adds it as an arena-golden dataset item.
 
-Usage: source .env && python -m scripts.promote_to_golden reviewed.json
+Usage: source .env && .venv/bin/python -m scripts.promote_to_golden reviewed.json
 """
 import json
 import sys
@@ -55,7 +55,7 @@ def build_dataset_item(*, qid, question, golden_sql, tier, ordered, rows, cols,
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("usage: python -m scripts.promote_to_golden reviewed.json")
+        print("usage: .venv/bin/python -m scripts.promote_to_golden reviewed.json")
         raise SystemExit(2)
     cfg = load_config()
     ro = ROClickHouseClient(cfg.clickhouse)
@@ -77,7 +77,7 @@ def main() -> None:
     tracer.ensure_dataset(items)
     tracer.flush()
     print(f"promoted {len(items)} question(s) into the '{tracer and 'arena-golden'}' dataset — "
-          f"re-run `python -m eval.harness` to measure them")
+          f"re-run `.venv/bin/python -m eval.harness` to measure them")
 
 
 if __name__ == "__main__":

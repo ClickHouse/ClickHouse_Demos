@@ -78,20 +78,37 @@ def test_ask_honors_supplied_session_id(api, monkeypatch):
 
 
 def test_feedback_records_idempotent_boolean_user_thumbs(api, monkeypatch):
-    client = mock.MagicMock()
+    class ScoreClient:
+        def __init__(self):
+            self.calls = []
+
+        def create_score(self, *, score_id, name, value, trace_id, data_type,
+                         comment):
+            self.calls.append({
+                "score_id": score_id,
+                "name": name,
+                "value": value,
+                "trace_id": trace_id,
+                "data_type": data_type,
+                "comment": comment,
+            })
+
+        def flush(self):
+            pass
+
+    client = ScoreClient()
     monkeypatch.setattr(api, "get_client", lambda: client)
     assert api.feedback(api.FeedbackRequest(
         trace_id="trace-1", value=False, comment="metric mismatch"
     )) == {"ok": True}
-    _, kw = client.create_score.call_args
-    assert kw == {
-        "id": "user-thumbs-trace-1",
+    assert client.calls == [{
+        "score_id": "user-thumbs-trace-1",
         "name": "user-thumbs",
         "value": False,
         "trace_id": "trace-1",
         "data_type": "BOOLEAN",
         "comment": "metric mismatch",
-    }
+    }]
 
 
 def test_feedback_rejects_missing_trace_id(api):

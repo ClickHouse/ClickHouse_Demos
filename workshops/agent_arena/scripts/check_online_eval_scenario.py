@@ -2,7 +2,7 @@
 
 Usage:
     source .env
-    python -m scripts.check_online_eval_scenario --config-id "$WINNER_CONFIG_ID"
+    .venv/bin/python -m scripts.check_online_eval_scenario --config-id "$WINNER_CONFIG_ID"
 """
 
 import argparse
