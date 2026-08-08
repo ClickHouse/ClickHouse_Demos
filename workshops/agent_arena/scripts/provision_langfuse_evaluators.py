@@ -4,35 +4,18 @@ Requires the normal learner `.env`, including a working OpenRouter inference key
 The operation is idempotent: the LLM connection is upserted, and evaluator/rule
 resources are created only when their AgentArena names do not already exist.
 """
-import base64
-import json
 import os
 import re
-import urllib.request
 
 from dotenv import load_dotenv
+
+from scripts.langfuse_admin import LangfuseAdmin
 
 DATASET_NAME = "arena-golden"
 CONNECTION = "agent-arena-openrouter"
 EVALUATOR = "llm_judge"
 RULE = "agent-arena-llm-judge"
 JUDGE_MODEL = "openai/gpt-5.6-luna"
-
-
-class LangfuseAdmin:
-    def __init__(self, host: str, public_key: str, secret_key: str):
-        self.host = host.rstrip("/")
-        self.auth = base64.b64encode(f"{public_key}:{secret_key}".encode()).decode()
-
-    def call(self, method: str, path: str, body: dict | None = None) -> dict:
-        data = json.dumps(body).encode() if body is not None else None
-        request = urllib.request.Request(
-            self.host + path, data=data, method=method,
-            headers={"Authorization": f"Basic {self.auth}",
-                     "Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(request, timeout=45) as response:
-            return json.load(response)
 
 
 def judge_prompt(path="eval/langfuse_evaluators/llm_judge_prompt.md") -> str:
