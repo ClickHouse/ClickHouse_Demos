@@ -25,6 +25,7 @@ def iter_numbered_pages(fetch_page, max_pages: int = MAX_API_PAGES):
         if (
             not isinstance(returned_page, int)
             or not isinstance(total_pages, int)
+            or returned_page != page
             or returned_page in returned_pages
             or returned_page < 1
             or total_pages < returned_page
@@ -53,17 +54,19 @@ def iter_cursor_pages(fetch_page, max_pages: int = MAX_API_PAGES):
                 isinstance(limit, int)
                 and limit > 0
                 and isinstance(data, list)
-                and len(data) < limit
+                and len(data) <= limit
             ):
                 yield payload
             return
         next_cursor = meta.get("cursor")
         if next_cursor is not None and not isinstance(next_cursor, str):
             return
-        if cursor is not None and next_cursor == cursor:
-            return
         yield payload
-        if not next_cursor or next_cursor in requested_cursors:
+        if (
+            not next_cursor
+            or next_cursor == cursor
+            or next_cursor in requested_cursors
+        ):
             return
         requested_cursors.add(next_cursor)
         cursor = next_cursor

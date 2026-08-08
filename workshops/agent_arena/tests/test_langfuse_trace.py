@@ -91,11 +91,11 @@ def test_fetch_trace_scores_reads_typed_values_from_scores_v3():
         ]
 
 
-def _score_response(data, cursor=None):
+def _score_response(data, cursor=None, meta=None):
     response = mock.MagicMock()
     response.read.return_value = json.dumps({
         "data": data,
-        "meta": {"cursor": cursor},
+        "meta": {"cursor": cursor} if meta is None else meta,
     }).encode()
     response.__enter__.return_value = response
     response.__exit__.return_value = False
@@ -116,7 +116,9 @@ def test_fetch_trace_scores_reads_later_pages_and_filters_trace_exactly():
         _score_response([
             {"traceId": "trace 1/a", "name": "business-policy-adherence",
              "value": "PASS", "dataType": "CATEGORICAL"},
-        ]),
+            {"traceId": "other", "name": "ignored", "value": 1,
+             "dataType": "NUMERIC"},
+        ], meta={"limit": 2}),
     ]
 
     with mock.patch.object(adapter.urllib.request, "urlopen", side_effect=responses) as open_:

@@ -515,10 +515,14 @@ def test_score_verifier_reads_later_pages_and_filters_trace_exactly():
                     {"traceId": "other", "name": "correctness", "value": 0},
                     {"traceId": "trace 1/a", "name": "correctness", "value": 1},
                 ], cursor="next page")
-            return _cursor_page([
-                {"traceId": "trace 1/a", "name": "business-policy-adherence",
-                 "value": "PASS", "dataType": "CATEGORICAL"},
-            ])
+            return {
+                "data": [
+                    {"traceId": "trace 1/a", "name": "business-policy-adherence",
+                     "value": "PASS", "dataType": "CATEGORICAL"},
+                    {"traceId": "other", "name": "ignored", "value": 1},
+                ],
+                "meta": {"limit": 2},
+            }
 
     api = PagedAdmin()
 

@@ -1,4 +1,8 @@
-from scripts.langfuse_admin import LangfuseAdmin
+from scripts.langfuse_admin import (
+    LangfuseAdmin,
+    iter_cursor_pages,
+    iter_numbered_pages,
+)
 
 
 class StubAdmin(LangfuseAdmin):
@@ -88,3 +92,40 @@ def test_list_named_filters_only_after_collecting_every_page():
         {"name": "target", "id": "first"},
         {"name": "target", "id": "second"},
     ]
+
+
+def test_numbered_pages_reject_returned_page_that_was_not_requested():
+    calls = []
+
+    def fetch(page):
+        calls.append(page)
+        return _page([{"id": "ambiguous"}], page=2, total_pages=2)
+
+    assert list(iter_numbered_pages(fetch)) == []
+    assert calls == [1]
+
+
+def test_cursor_pages_retains_full_cursorless_terminal_page():
+    terminal = {"data": ["first", "second"], "meta": {"limit": 2}}
+
+    assert list(iter_cursor_pages(lambda cursor: terminal)) == [terminal]
+
+
+def test_cursor_pages_retains_full_last_page_after_cursor():
+    pages = {
+        None: {"data": ["first"], "meta": {"cursor": "next"}},
+        "next": {"data": ["second", "third"], "meta": {"limit": 2}},
+    }
+
+    assert [item for page in iter_cursor_pages(pages.get)
+            for item in page["data"]] == ["first", "second", "third"]
+
+
+def test_cursor_pages_yields_page_before_stopping_on_repeated_cursor():
+    pages = iter([
+        {"data": ["first"], "meta": {"cursor": "same"}},
+        {"data": ["second"], "meta": {"cursor": "same"}},
+    ])
+
+    assert [item for page in iter_cursor_pages(lambda cursor: next(pages))
+            for item in page["data"]] == ["first", "second"]
