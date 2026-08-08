@@ -118,6 +118,51 @@ def test_rejects_extra_join_that_can_multiply_the_scalar_count():
 @pytest.mark.parametrize(
     "sql",
     [
+        "SELECT count() FROM v_customers AS c1 "
+        "JOIN v_customers AS c2 ON c1.customer_id = c2.customer_id "
+        "WHERE c1.signup_date >= today()-INTERVAL 90 DAY",
+        "SELECT uniqExact(o1.customer_id) FROM v_orders AS o1 "
+        "JOIN v_orders AS o2 ON o1.order_id = o2.order_id "
+        "WHERE o1.order_ts >= now()-INTERVAL 30 DAY "
+        "AND o1.status NOT IN ('cancelled','returned')",
+    ],
+)
+def test_rejects_same_view_self_joins(sql):
+    assert classify_active_customer_sql(sql) == "unknown"
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "SELECT count() FROM v_customers AS c, v_products AS p "
+        "WHERE c.signup_date >= today()-INTERVAL 90 DAY",
+        "SELECT uniqExact(o.customer_id) FROM v_orders AS o, v_products AS p "
+        "WHERE o.order_ts >= now()-INTERVAL 30 DAY "
+        "AND o.status NOT IN ('cancelled','returned')",
+    ],
+)
+def test_rejects_comma_join_relations(sql):
+    assert classify_active_customer_sql(sql) == "unknown"
+
+
+@pytest.mark.parametrize("suffix", ["1=0", "0=1", "false", "0"])
+@pytest.mark.parametrize(
+    "base_sql",
+    [
+        "SELECT count() FROM v_customers "
+        "WHERE signup_date >= today()-INTERVAL 90 DAY AND ",
+        "SELECT uniqExact(customer_id) FROM v_orders "
+        "WHERE order_ts >= now()-INTERVAL 30 DAY "
+        "AND status NOT IN ('cancelled','returned') AND ",
+    ],
+)
+def test_rejects_unconditional_contradictions_for_both_policies(base_sql, suffix):
+    assert classify_active_customer_sql(base_sql + suffix) == "unknown"
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
         "SELECT uniqExact(customer_id) FROM v_orders "
         "WHERE order_ts >= now()-INTERVAL 30 DAY "
         "AND NOT status != 'cancelled' AND status != 'returned'",
@@ -236,8 +281,15 @@ def test_config_resolution_sanitizes_lookup_exceptions():
 
 
 def test_config_resolution_rejects_malformed_id():
-    with pytest.raises(RuntimeError, match="unknown config-id"):
+    with pytest.raises(RuntimeError, match="invalid config-id format"):
         _resolve_config(FakeConfig(), "not-a-pair")
+
+
+def test_config_resolution_rejects_unknown_selection_without_echoing_it():
+    supplied = "SECRET_MARKER__P1_zeroshot"
+    with pytest.raises(RuntimeError, match="unknown selected config") as error:
+        _resolve_config(FakeConfig(), supplied)
+    assert supplied not in str(error.value)
 
 
 def test_reports_model_block_without_leaking_provider_error():
@@ -383,6 +435,36 @@ def test_main_turns_unexpected_exception_into_fixed_blocked_message(monkeypatch,
     captured = capsys.readouterr()
     assert captured.out == ""
     assert captured.err == "BLOCKED: unexpected preflight failure\n"
+    assert "SECRET_MARKER" not in captured.err
+    assert "Traceback" not in captured.err
+
+
+@pytest.mark.parametrize(
+    ("supplied", "expected"),
+    [
+        ("SECRET_MARKER", "BLOCKED: invalid config-id format\n"),
+        ("SECRET_MARKER__P1_zeroshot", "BLOCKED: unknown selected config\n"),
+    ],
+)
+def test_cli_redacts_malformed_and_unknown_config_ids(
+    monkeypatch, capsys, supplied, expected,
+):
+    import arena.config as config
+
+    monkeypatch.setattr(config, "load_config", FakeConfig)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["check_online_eval_scenario", "--config-id", supplied],
+    )
+
+    with pytest.raises(SystemExit) as error:
+        main()
+
+    assert error.value.code == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == expected
     assert "SECRET_MARKER" not in captured.err
     assert "Traceback" not in captured.err
 

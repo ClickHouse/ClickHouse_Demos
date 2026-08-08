@@ -200,8 +200,8 @@ def _scalar_count_kind(tokens):
     return None
 
 
-def _view_references(tokens) -> set[str]:
-    views = set()
+def _relation_references(tokens) -> list[str]:
+    relations = []
     for index, token in enumerate(tokens):
         if token not in {("ident", "from"), ("ident", "join")}:
             continue
@@ -217,8 +217,45 @@ def _view_references(tokens) -> set[str]:
         ):
             parts.append(tokens[cursor + 1][1])
             cursor += 2
-        views.add(parts[-1])
-    return views
+        relations.append(parts[-1])
+    return relations
+
+
+def _single_relation(tokens):
+    from_indexes = [
+        index for index, token in enumerate(tokens)
+        if token == ("ident", "from")
+    ]
+    if len(from_indexes) != 1 or ("ident", "join") in tokens:
+        return None
+    from_index = _find_top_level(tokens, "from", 1)
+    where_index = _find_top_level(tokens, "where", from_index + 1) \
+        if from_index is not None else None
+    if from_index is None or where_index is None:
+        return None
+
+    cursor = from_index + 1
+    if cursor >= where_index or tokens[cursor][0] != "ident":
+        return None
+    parts = [tokens[cursor][1]]
+    cursor += 1
+    while (
+        cursor + 1 < where_index
+        and tokens[cursor][1] == "."
+        and tokens[cursor + 1][0] == "ident"
+    ):
+        parts.append(tokens[cursor + 1][1])
+        cursor += 2
+
+    suffix = tokens[cursor:where_index]
+    has_safe_alias = (
+        not suffix
+        or len(suffix) == 1 and suffix[0][0] == "ident"
+        or len(suffix) == 2
+        and suffix[0] == ("ident", "as")
+        and suffix[1][0] == "ident"
+    )
+    return parts[-1] if has_safe_alias else None
 
 
 def _where_tokens(tokens):
@@ -257,6 +294,41 @@ def _has_day_window(where, column: str, days: int) -> bool:
         rf"interval\s+{days}\s+days?\b",
         shape,
     ))
+
+
+def _has_obvious_contradiction(where) -> bool:
+    if ("ident", "false") in where:
+        return True
+    for kind, value in where:
+        if kind == "number":
+            try:
+                if float(value) == 0:
+                    return True
+            except ValueError:
+                return True
+
+    comparisons = {
+        "=": lambda left, right: left == right,
+        "==": lambda left, right: left == right,
+        "!=": lambda left, right: left != right,
+        "<>": lambda left, right: left != right,
+        ">": lambda left, right: left > right,
+        "<": lambda left, right: left < right,
+        ">=": lambda left, right: left >= right,
+        "<=": lambda left, right: left <= right,
+    }
+    for index in range(len(where) - 2):
+        left, operator, right = where[index:index + 3]
+        if left[0] != "number" or right[0] != "number":
+            continue
+        if operator[1] not in comparisons:
+            continue
+        try:
+            if not comparisons[operator[1]](float(left[1]), float(right[1])):
+                return True
+        except ValueError:
+            return True
+    return False
 
 
 def _status_exclusions_are_conjunctive(where) -> bool:
@@ -338,9 +410,10 @@ def classify_active_customer_sql(sql: str) -> str:
         return "unknown"
 
     count_kind = _scalar_count_kind(tokens)
-    views = _view_references(tokens)
+    relations = _relation_references(tokens)
+    relation = _single_relation(tokens)
     where = _where_tokens(tokens)
-    if count_kind is None or where is None:
+    if count_kind is None or where is None or len(relations) != 1:
         return "unknown"
 
     identifier_values = {value for kind, value in tokens if kind == "ident"}
@@ -358,19 +431,21 @@ def classify_active_customer_sql(sql: str) -> str:
     )
     stale = (
         count_kind == "count"
-        and views == {"v_customers"}
+        and relation == "v_customers"
         and _has_day_window(where, "signup_date", 90)
         and where_values.count("signup_date") == 1
         and "or" not in where_values
         and "not" not in where_values
+        and not _has_obvious_contradiction(where)
         and not current_signals
     )
     current = (
         count_kind == "distinct_customer_count"
-        and views == {"v_orders"}
+        and relation == "v_orders"
         and _has_day_window(where, "order_ts", 30)
         and where_values.count("order_ts") == 1
         and _status_exclusions_are_conjunctive(where)
+        and not _has_obvious_contradiction(where)
         and not stale_signals
     )
     if stale == current:
@@ -414,12 +489,12 @@ def _scalar_count(result, label: str) -> int:
 def _resolve_config(cfg, config_id: str):
     parts = config_id.split("__")
     if len(parts) != 2 or not all(parts):
-        raise PreflightError(f"unknown config-id {config_id!r}")
+        raise PreflightError("invalid config-id format")
     model_name, prompt_name = parts
     try:
         return cfg.model_by_name(model_name), cfg.prompt_by_name(prompt_name)
     except StopIteration:
-        raise PreflightError(f"unknown config-id {config_id!r}") from None
+        raise PreflightError("unknown selected config") from None
     except Exception:
         raise PreflightError("configuration selection failed") from None
 
