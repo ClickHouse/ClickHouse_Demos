@@ -331,12 +331,15 @@ export WINNER_PROMPT="${WINNER_PROMPT:-P2_fewshot}"
   --wait-for-score business-policy-adherence
 ```
 
-Both runs must contain the same 22 items and every trace must receive `correctness`,
-`agent-arena-llm-judge`, and `business-policy-adherence`. In the calibrated workshop
-snapshot, `policy-v1` scored 16/22 and `policy-v2` scored 19/22; the candidate fixed
-all three promoted active-customer items without an aggregate regression. They are
-production-derived only when promoted from genuine `reviewed.json`; the tracked
-fixture path remains synthetic.
+Both runs must contain the same items and every trace must receive `correctness`,
+`agent-arena-llm-judge`, and `business-policy-adherence`. The repository contains 20
+source questions, but `q019` and `q020` are few-shot holdouts, so a clean project has
+18 Experiment items before promotion and 21 after the three reviewed items are added.
+Our reused verification project retained one older approved item, so its fresh paired
+snapshot contained 22 items and moved from 16/22 under `policy-v1` to 19/22 under
+`policy-v2`. The candidate fixed all three promoted active-customer items without an
+aggregate regression. They are production-derived only when promoted from genuine
+`reviewed.json`; the tracked fixture path remains synthetic.
 
 ### 7. Calibrate the general judge and enable safely
 

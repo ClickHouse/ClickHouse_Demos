@@ -361,8 +361,12 @@ def test_rejects_stale_shaped_sql_that_failed_to_execute():
     assert result.error not in str(error.value)
 
 
-def _agent_result(sql=STALE_SQL, *, error=None, outcome_hint="ok"):
-    return SimpleNamespace(sql=sql, error=error, outcome_hint=outcome_hint)
+def _agent_result(
+    sql=STALE_SQL, *, error=None, outcome_hint="ok", rows=((1923,),),
+):
+    return SimpleNamespace(
+        sql=sql, error=error, outcome_hint=outcome_hint, rows=rows,
+    )
 
 
 def _scripted_agent(calls, responses):
@@ -459,6 +463,21 @@ def test_policy_v2_first_result_fails_without_retry(monkeypatch):
     assert calls == SEEDED_QUESTIONS
 
 
+def test_policy_shaped_sql_with_the_wrong_result_does_not_certify_incident(monkeypatch):
+    calls = []
+    narrowed = _agent_result(
+        STALE_SQL + " AND country = 'SG'",
+        rows=((417,),),
+    )
+    responses = {question: [narrowed] for question in SEEDED_QUESTIONS}
+    _install_success_boundaries(monkeypatch, _scripted_agent(calls, responses))
+
+    with pytest.raises(RuntimeError, match="q1=wrong_result/policy-v1"):
+        _run("winner__P1_zeroshot")
+
+    assert calls == SEEDED_QUESTIONS
+
+
 @pytest.mark.parametrize(
     ("final_result", "safe_failure"),
     [
@@ -501,10 +520,13 @@ def test_attempts_all_questions_after_bad_and_thrown_results(monkeypatch):
                 sql=CURRENT_SQL,
                 error=None,
                 outcome_hint="ok",
+                rows=((1564,),),
             )
         if len(calls) == 2:
             raise RuntimeError("SECRET_MARKER provider payload")
-        return SimpleNamespace(sql=STALE_SQL, error=None, outcome_hint="ok")
+        return SimpleNamespace(
+            sql=STALE_SQL, error=None, outcome_hint="ok", rows=((1923,),),
+        )
 
     _install_success_boundaries(monkeypatch, fake_run_agent)
 
@@ -524,7 +546,9 @@ def test_propagates_stale_policy_and_zero_temperature_with_allowlisted_output(
 
     def fake_run_agent(*args, **kwargs):
         calls.append((args, kwargs))
-        return SimpleNamespace(sql=STALE_SQL, error=None, outcome_hint="ok")
+        return SimpleNamespace(
+            sql=STALE_SQL, error=None, outcome_hint="ok", rows=((1923,),),
+        )
 
     _install_success_boundaries(monkeypatch, fake_run_agent)
     _run("winner__P1_zeroshot")

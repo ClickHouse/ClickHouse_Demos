@@ -501,7 +501,7 @@ def _resolve_config(cfg, config_id: str):
         raise PreflightError("configuration selection failed") from None
 
 
-def _safe_result_outcome(result) -> tuple[str, str]:
+def _safe_result_outcome(result, expected_stale_count: int) -> tuple[str, str]:
     try:
         sql = result.sql or ""
         error = result.error
@@ -510,6 +510,21 @@ def _safe_result_outcome(result) -> tuple[str, str]:
     except Exception:
         return "result_error", "unknown"
     if error is None:
+        if classification == "policy-v1":
+            try:
+                rows = result.rows
+                value = rows[0][0]
+                scalar_matches = (
+                    len(rows) == 1
+                    and len(rows[0]) == 1
+                    and not isinstance(value, bool)
+                    and isinstance(value, int)
+                    and value == expected_stale_count
+                )
+            except Exception:
+                scalar_matches = False
+            if not scalar_matches:
+                return "wrong_result", classification
         return "ok", classification
     safe_hints = {"model_error", "sql_policy_rejected", "sql_exec_error"}
     return (hint if hint in safe_hints else "agent_error"), classification
@@ -607,7 +622,7 @@ def _run(config_id: str) -> None:
                     inference,
                     max_retries=cfg.eval.default_max_retries,
                 )
-                outcome, classification = _safe_result_outcome(result)
+                outcome, classification = _safe_result_outcome(result, stale)
             except Exception:
                 outcome, classification = "call_error", "unknown"
             if (outcome, classification) != ("ok", "unknown") or attempt == 1:
