@@ -1,0 +1,20 @@
+# Part 3 — Cutover override for otelcol-demo
+#
+# After Step 10d stops elastic-apm-server, swap the otelcol-demo container
+# to a config that has no APM exporter (so the batch processor doesn't
+# back-pressure on the dead APM backend).
+#
+# Usage (from part3/):
+#   source ../common/env.sh
+#   bash scripts/swap-otelcol-demo-config.sh cutover
+
+services:
+  otelcol-demo:
+    command: ["--config=/etc/otelcol-contrib/cutover.yaml"]
+    # ${PART3_CONFIG_DIR} is set to the absolute path of part3/configs/ by
+    # scripts/swap-otelcol-demo-config.sh.
+    volumes:
+      - ${PART3_CONFIG_DIR}/otelcol-demo-config.cutover.yml:/etc/otelcol-contrib/cutover.yaml:ro
+    environment:
+      - CH_HOST=${CH_HOST}
+      - CH_PASSWORD=${CH_PASSWORD}
