@@ -12,6 +12,7 @@ class GoldenQuestion:
     tags: list = field(default_factory=list)
     notes: str = ""
     fewshot_holdout: bool = False
+    float_dp: int | None = None
 
 
 def load_golden(path: str = "golden/questions.yaml") -> list[GoldenQuestion]:
@@ -22,6 +23,7 @@ def load_golden(path: str = "golden/questions.yaml") -> list[GoldenQuestion]:
         ordered=q.get("ordered", False), golden_sql=q["golden_sql"],
         tags=q.get("tags", []), notes=q.get("notes", ""),
         fewshot_holdout=q.get("fewshot_holdout", False),
+        float_dp=q.get("float_dp"),
     ) for q in raw]
 
 

@@ -44,6 +44,25 @@ def effective_run_id(run_id: str, policy_version: str) -> str:
     return f"{run_id}--{policy_version}"
 
 
+def _dataset_item(q: GoldenQuestion, *, rows, cols, default_float_dp: int) -> dict:
+    float_dp = q.float_dp if q.float_dp is not None else default_float_dp
+    return {
+        "id": q.id,
+        "question": q.question,
+        "expected_output": golden_payload(
+            golden_sql=q.golden_sql,
+            rows=rows,
+            cols=cols,
+            ordered=q.ordered,
+        ),
+        "metadata": {
+            "tier": q.tier,
+            "ordered": q.ordered,
+            "float_dp": float_dp,
+        },
+    }
+
+
 def main(argv=None) -> None:
     args = parse_args(argv)
 
@@ -90,15 +109,15 @@ def main(argv=None) -> None:
         golden_cache[q.id] = (gr.rows, gr.cols)
 
     # Upload the golden set as a Langfuse Dataset (each config becomes a Run).
-    tracer.ensure_dataset([{
-        "id": q.id, "question": q.question,
-        "expected_output": golden_payload(golden_sql=q.golden_sql,
-                                           rows=golden_cache[q.id][0],
-                                           cols=golden_cache[q.id][1],
-                                           ordered=q.ordered),
-        "metadata": {"tier": q.tier, "ordered": q.ordered,
-                     "float_dp": cfg.eval.float_dp},
-    } for q in questions])
+    tracer.ensure_dataset([
+        _dataset_item(
+            q,
+            rows=golden_cache[q.id][0],
+            cols=golden_cache[q.id][1],
+            default_float_dp=cfg.eval.float_dp,
+        )
+        for q in questions
+    ])
 
     model_names, prompt_names = cfg.resolved_grid()
     if args.models:

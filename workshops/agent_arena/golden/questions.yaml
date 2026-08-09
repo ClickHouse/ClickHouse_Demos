@@ -142,6 +142,7 @@
   tier: 4
   question: "For each segment, the average revenue per order in the last 30 days (excluding cancelled/returned), highest first. Return segment and avg_order_revenue."
   ordered: true
+  float_dp: 2
   golden_sql: |
     WITH ord AS (
       SELECT o.order_id, c.segment,

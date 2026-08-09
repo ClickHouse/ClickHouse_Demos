@@ -4,7 +4,7 @@ import pytest
 
 from agents.llm import Usage
 from agents.loop import AgentResult
-from eval.golden import GoldenQuestion
+from eval.golden import GoldenQuestion, load_golden
 import eval.harness as harness
 
 
@@ -16,6 +16,39 @@ def test_harness_defaults_to_current_policy():
 def test_effective_run_id_includes_policy_without_changing_config_id():
     assert harness.effective_run_id("online-loop-baseline", "policy-v1") == \
         "online-loop-baseline--policy-v1"
+
+
+def test_dataset_item_uses_question_specific_numeric_precision():
+    question = GoldenQuestion(
+        id="q-money", tier=2, question="Average revenue?", ordered=True,
+        golden_sql="SELECT round(avg(revenue), 2) FROM v_orders",
+        float_dp=2,
+    )
+
+    item = harness._dataset_item(
+        question, rows=[[3676.18]], cols=["avg_order_revenue"], default_float_dp=4,
+    )
+
+    assert item["metadata"]["float_dp"] == 2
+
+
+def test_dataset_item_falls_back_to_global_numeric_precision():
+    question = GoldenQuestion(
+        id="q-count", tier=1, question="Count orders?", ordered=False,
+        golden_sql="SELECT count() FROM v_orders",
+    )
+
+    item = harness._dataset_item(
+        question, rows=[[10]], cols=["count()"], default_float_dp=4,
+    )
+
+    assert item["metadata"]["float_dp"] == 4
+
+
+def test_q017_declares_two_decimal_monetary_precision():
+    question = next(q for q in load_golden() if q.id == "q017")
+
+    assert question.float_dp == 2
 
 
 def test_main_orchestrates_selected_policy_and_release_provenance(monkeypatch):
