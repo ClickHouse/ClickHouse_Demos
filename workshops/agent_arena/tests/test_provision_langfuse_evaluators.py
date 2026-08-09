@@ -1,6 +1,9 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 import scripts.provision_online_evaluators as online
+import scripts.provision_langfuse_evaluators as experiment
+from eval.golden import GoldenQuestion
 from scripts.provision_langfuse_evaluators import judge_prompt
 
 
@@ -9,6 +12,43 @@ def test_judge_prompt_extracts_runtime_prompt_only():
     assert "You are a senior ClickHouse SQL reviewer" in prompt
     assert "{{question}}" in prompt
     assert "Set this up in" not in prompt
+
+
+def test_dataset_provisioning_preserves_question_specific_numeric_precision(monkeypatch):
+    question = GoldenQuestion(
+        id="q-money", tier=2, question="Average revenue?", ordered=True,
+        golden_sql="SELECT round(avg(revenue), 2) FROM v_orders",
+        float_dp=2,
+    )
+    captured = {}
+
+    class FakeTracer:
+        def __init__(self, _config):
+            pass
+
+        def ensure_dataset(self, items):
+            captured["items"] = items
+
+        def flush(self):
+            pass
+
+    monkeypatch.setattr(
+        "arena.config.load_config",
+        lambda: SimpleNamespace(clickhouse=object(), langfuse=object(),
+                                eval=SimpleNamespace(float_dp=4)),
+    )
+    monkeypatch.setattr(
+        "agents.chclient.ROClickHouseClient",
+        lambda _config: SimpleNamespace(
+            query=lambda _sql: SimpleNamespace(rows=[[3676.18]], cols=["avg"]),
+        ),
+    )
+    monkeypatch.setattr("eval.golden.load_golden", lambda: [question])
+    monkeypatch.setattr("eval.langfuse_adapter.LangfuseTracer", FakeTracer)
+
+    experiment.ensure_golden_dataset()
+
+    assert captured["items"][0]["metadata"]["float_dp"] == 2
 
 
 def test_operational_evaluator_create_body_is_exact():

@@ -46,7 +46,9 @@ def ensure_golden_dataset() -> None:
                 golden_sql=question.golden_sql, rows=result.rows, cols=result.cols,
                 ordered=question.ordered),
             "metadata": {"tier": question.tier, "ordered": question.ordered,
-                         "float_dp": cfg.eval.float_dp},
+                         "float_dp": (question.float_dp
+                                      if question.float_dp is not None
+                                      else cfg.eval.float_dp)},
         })
     tracer = LangfuseTracer(cfg.langfuse)
     tracer.ensure_dataset(items)
