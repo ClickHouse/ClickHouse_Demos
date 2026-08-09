@@ -216,7 +216,10 @@ export WINNER_CONFIG_ID="${WINNER_CONFIG_ID:-qwen3.7-flash__P2_fewshot}"
 .venv/bin/python -m scripts.provision_online_evaluators --operational
 ```
 
-The preflight must report three `policy-v1` classifications and an `OK` line. The
+The preflight must report three `policy-v1` classifications and an `OK` line. If one
+seeded question returns `ok/unknown`, the preflight retries that same question and
+configuration once. It does not retry `policy-v2`, provider/model/agent failures, or
+a second `ok/unknown`; any such final result remains a sanitized failure. The
 provisioner must report the `sql-execution-success` evaluator and one enabled
 `agent-arena-sql-execution-online` rule.
 

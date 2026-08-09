@@ -595,20 +595,23 @@ def _run(config_id: str) -> None:
     classifications = []
     outcomes = []
     for number, question in enumerate(SEEDED_QUESTIONS, start=1):
-        try:
-            result = run_agent(
-                question,
-                model_cfg,
-                prompt_cfg,
-                agent_context,
-                ro,
-                llm,
-                inference,
-                max_retries=cfg.eval.default_max_retries,
-            )
-            outcome, classification = _safe_result_outcome(result)
-        except Exception:
-            outcome, classification = "call_error", "unknown"
+        for attempt in range(2):
+            try:
+                result = run_agent(
+                    question,
+                    model_cfg,
+                    prompt_cfg,
+                    agent_context,
+                    ro,
+                    llm,
+                    inference,
+                    max_retries=cfg.eval.default_max_retries,
+                )
+                outcome, classification = _safe_result_outcome(result)
+            except Exception:
+                outcome, classification = "call_error", "unknown"
+            if (outcome, classification) != ("ok", "unknown") or attempt == 1:
+                break
         outcomes.append((number, outcome, classification))
         classifications.append(classification)
 

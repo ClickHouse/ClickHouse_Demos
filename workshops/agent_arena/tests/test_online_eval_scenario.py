@@ -361,6 +361,136 @@ def test_rejects_stale_shaped_sql_that_failed_to_execute():
     assert result.error not in str(error.value)
 
 
+def _agent_result(sql=STALE_SQL, *, error=None, outcome_hint="ok"):
+    return SimpleNamespace(sql=sql, error=error, outcome_hint=outcome_hint)
+
+
+def _scripted_agent(calls, responses):
+    remaining = {question: list(results) for question, results in responses.items()}
+
+    def run_agent(question, *args, **kwargs):
+        calls.append(question)
+        result = remaining[question].pop(0)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    return run_agent
+
+
+def test_retries_one_ok_unknown_question_once_and_uses_policy_v1_retry(
+    monkeypatch, capsys,
+):
+    calls = []
+    responses = {
+        SEEDED_QUESTIONS[0]: [_agent_result()],
+        SEEDED_QUESTIONS[1]: [_agent_result()],
+        SEEDED_QUESTIONS[2]: [
+            _agent_result("SELECT customer_id FROM v_customers"),
+            _agent_result(),
+        ],
+    }
+    _install_success_boundaries(monkeypatch, _scripted_agent(calls, responses))
+
+    _run("winner__P1_zeroshot")
+
+    assert calls == [*SEEDED_QUESTIONS, SEEDED_QUESTIONS[2]]
+    assert capsys.readouterr().out.splitlines() == [
+        "stale_count=1923",
+        "current_count=1564",
+        "selected_config=winner__P1_zeroshot",
+        "classification_1=policy-v1",
+        "classification_2=policy-v1",
+        "classification_3=policy-v1",
+        "OK: seeded online-evaluation incident is reproducible",
+    ]
+
+
+def test_ok_unknown_retry_stops_after_second_unknown_and_reports_final_result(
+    monkeypatch,
+):
+    calls = []
+    unknown = _agent_result("SELECT customer_id FROM v_customers")
+    responses = {
+        SEEDED_QUESTIONS[0]: [_agent_result()],
+        SEEDED_QUESTIONS[1]: [_agent_result()],
+        SEEDED_QUESTIONS[2]: [unknown, unknown],
+    }
+    _install_success_boundaries(monkeypatch, _scripted_agent(calls, responses))
+
+    with pytest.raises(RuntimeError, match="q3=ok/unknown"):
+        _run("winner__P1_zeroshot")
+
+    assert calls == [*SEEDED_QUESTIONS, SEEDED_QUESTIONS[2]]
+
+
+def test_ok_unknown_retry_to_policy_v2_fails_with_final_safe_classification(
+    monkeypatch,
+):
+    calls = []
+    responses = {
+        SEEDED_QUESTIONS[0]: [_agent_result()],
+        SEEDED_QUESTIONS[1]: [_agent_result()],
+        SEEDED_QUESTIONS[2]: [
+            _agent_result("SELECT customer_id FROM v_customers"),
+            _agent_result(CURRENT_SQL),
+        ],
+    }
+    _install_success_boundaries(monkeypatch, _scripted_agent(calls, responses))
+
+    with pytest.raises(RuntimeError, match="q3=ok/policy-v2"):
+        _run("winner__P1_zeroshot")
+
+    assert calls == [*SEEDED_QUESTIONS, SEEDED_QUESTIONS[2]]
+
+
+def test_policy_v2_first_result_fails_without_retry(monkeypatch):
+    calls = []
+    responses = {
+        SEEDED_QUESTIONS[0]: [_agent_result()],
+        SEEDED_QUESTIONS[1]: [_agent_result()],
+        SEEDED_QUESTIONS[2]: [_agent_result(CURRENT_SQL)],
+    }
+    _install_success_boundaries(monkeypatch, _scripted_agent(calls, responses))
+
+    with pytest.raises(RuntimeError, match="q3=ok/policy-v2"):
+        _run("winner__P1_zeroshot")
+
+    assert calls == SEEDED_QUESTIONS
+
+
+@pytest.mark.parametrize(
+    ("final_result", "safe_failure"),
+    [
+        (RuntimeError("SECRET_MARKER provider payload"), "q3=call_error/unknown"),
+        (
+            _agent_result(
+                None,
+                error="SECRET_MARKER model payload",
+                outcome_hint="model_error",
+            ),
+            "q3=model_error/unknown",
+        ),
+    ],
+)
+def test_call_and_model_errors_are_not_retried(
+    monkeypatch, final_result, safe_failure,
+):
+    calls = []
+    responses = {
+        SEEDED_QUESTIONS[0]: [_agent_result()],
+        SEEDED_QUESTIONS[1]: [_agent_result()],
+        SEEDED_QUESTIONS[2]: [final_result],
+    }
+    _install_success_boundaries(monkeypatch, _scripted_agent(calls, responses))
+
+    with pytest.raises(RuntimeError, match=safe_failure) as error:
+        _run("winner__P1_zeroshot")
+
+    assert calls == SEEDED_QUESTIONS
+    assert "SECRET_MARKER" not in str(error.value)
+
+
 def test_attempts_all_questions_after_bad_and_thrown_results(monkeypatch):
     calls = []
 
@@ -368,7 +498,7 @@ def test_attempts_all_questions_after_bad_and_thrown_results(monkeypatch):
         calls.append(question)
         if len(calls) == 1:
             return SimpleNamespace(
-                sql="SELECT customer_id FROM v_customers",
+                sql=CURRENT_SQL,
                 error=None,
                 outcome_hint="ok",
             )
@@ -382,7 +512,7 @@ def test_attempts_all_questions_after_bad_and_thrown_results(monkeypatch):
         _run("winner__P1_zeroshot")
 
     assert calls == SEEDED_QUESTIONS
-    assert "q1=ok/unknown" in str(error.value)
+    assert "q1=ok/policy-v2" in str(error.value)
     assert "q2=call_error/unknown" in str(error.value)
     assert "SECRET_MARKER" not in str(error.value)
 
