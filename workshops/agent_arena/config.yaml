@@ -23,6 +23,8 @@ openrouter:
   inference:
     temperature: 0.0
     max_tokens: 2048          # headroom for reasoning models
+    reasoning:
+      max_tokens: 512         # leave output budget for the final SQL answer
 
 langfuse:
   host: ${LANGFUSE_BASE_URL}

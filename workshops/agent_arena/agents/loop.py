@@ -61,12 +61,15 @@ def run_agent(question: str, model_cfg: ModelCfg, prompt_cfg: PromptCfg,
                                    attempt + 1, usage_total, "ok", transcript)
             except Exception as e:  # noqa: BLE001
                 last_err, hint = str(e), "sql_exec_error"
-        if attempt < max_retries and prompt_cfg.self_correct:
-            transcript.append({"role": "user",
-                               "content": f"That query failed: {last_err}. "
-                                          "Return a corrected ClickHouse SQL query."})
-            messages = messages + correction_turn(last_sql or "", last_err or "")
-            continue
+        if attempt < max_retries:
+            if not resp.text.strip():
+                continue
+            if prompt_cfg.self_correct:
+                transcript.append({"role": "user",
+                                   "content": f"That query failed: {last_err}. "
+                                              "Return a corrected ClickHouse SQL query."})
+                messages = messages + correction_turn(last_sql or "", last_err or "")
+                continue
         break
 
     return AgentResult(last_sql, None, None, last_err,

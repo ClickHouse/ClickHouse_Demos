@@ -13,6 +13,12 @@ def test_str_meta_coerces_keys_and_truncates_values():
     assert all(isinstance(v, str) and len(v) <= 200 for v in out.values())
 
 
+def test_str_meta_retains_policy_version_value():
+    assert adapter._str_meta({"policy_version": "policy-v1"}) == {
+        "policyversion": "policy-v1",
+    }
+
+
 def test_emit_agent_trace_uses_v4_api_and_returns_trace_id():
     client = mock.MagicMock()
     client.get_current_trace_id.return_value = "trace-123"
@@ -25,7 +31,8 @@ def test_emit_agent_trace_uses_v4_api_and_returns_trace_id():
         tid = adapter.emit_agent_trace(
             trace_name="agent_run", session_id="run__cfg",
             tags=["cfg", "run:r1", "m", "p"],
-            metadata={"config_id": "cfg", "question_id": "q1"},
+            metadata={"config_id": "cfg", "question_id": "q1",
+                      "policy_version": "policy-v1", "release": "run-r1"},
             question="How many orders?", model="m",
             transcript=[{"role": "user", "content": "q"}],
             sql="SELECT 1", output_payload={"sql": "SELECT 1", "rows": []},
@@ -36,7 +43,10 @@ def test_emit_agent_trace_uses_v4_api_and_returns_trace_id():
     assert kw["trace_name"] == "agent_run"
     assert kw["session_id"] == "run__cfg"
     assert kw["tags"] == ["cfg", "run:r1", "m", "p"]
-    assert kw["metadata"] == {"configid": "cfg", "questionid": "q1"}
+    assert kw["metadata"] == {
+        "configid": "cfg", "questionid": "q1",
+        "policyversion": "policy-v1", "release": "run-r1",
+    }
     # a generation child with usage_details was created
     _, gkw = client.start_as_current_observation.call_args
     assert gkw["as_type"] == "generation"
@@ -64,9 +74,13 @@ def test_fetch_trace_scores_reads_typed_values_from_scores_v3():
     tracer._auth = "basic-token"
     response = mock.MagicMock()
     response.read.return_value = json.dumps({"data": [
-        {"name": "correctness", "value": 1.0, "dataType": "NUMERIC"},
-        {"name": "outcome", "value": "correct", "dataType": "CATEGORICAL"},
-    ], "meta": {"cursor": None}}).encode()
+        {"subject": {"kind": "trace", "traceId": "trace-1"},
+         "name": "correctness", "value": 1.0,
+         "dataType": "NUMERIC"},
+        {"subject": {"kind": "trace", "traceId": "trace-1"},
+         "name": "outcome", "value": "correct",
+         "dataType": "CATEGORICAL"},
+    ], "meta": {"limit": 100}}).encode()
     response.__enter__.return_value = response
     response.__exit__.return_value = False
 
@@ -75,3 +89,61 @@ def test_fetch_trace_scores_reads_typed_values_from_scores_v3():
             {"name": "correctness", "value": 1.0, "string": None, "dataType": "NUMERIC"},
             {"name": "outcome", "value": None, "string": "correct", "dataType": "CATEGORICAL"},
         ]
+
+
+def _score_response(data, cursor=None, meta=None):
+    response = mock.MagicMock()
+    response.read.return_value = json.dumps({
+        "data": data,
+        "meta": {"cursor": cursor} if meta is None else meta,
+    }).encode()
+    response.__enter__.return_value = response
+    response.__exit__.return_value = False
+    return response
+
+
+def test_fetch_trace_scores_reads_later_pages_and_filters_trace_exactly():
+    tracer = object.__new__(adapter.LangfuseTracer)
+    tracer._host = "https://lf.example"
+    tracer._auth = "basic-token"
+    responses = [
+        _score_response([
+            {"traceId": "other", "name": "incorrect", "value": 0,
+             "dataType": "NUMERIC"},
+            {"traceId": "trace 1/a", "name": "correctness", "value": 1,
+             "dataType": "NUMERIC"},
+        ], cursor="next page"),
+        _score_response([
+            {"traceId": "trace 1/a", "name": "business-policy-adherence",
+             "value": "PASS", "dataType": "CATEGORICAL"},
+            {"traceId": "other", "name": "ignored", "value": 1,
+             "dataType": "NUMERIC"},
+        ], meta={"limit": 2}),
+    ]
+
+    with mock.patch.object(adapter.urllib.request, "urlopen", side_effect=responses) as open_:
+        scores = tracer.fetch_trace_scores("trace 1/a")
+
+    assert [score["name"] for score in scores] == [
+        "correctness",
+        "business-policy-adherence",
+    ]
+    assert [call.args[0].full_url for call in open_.call_args_list] == [
+        "https://lf.example/api/public/v3/scores?traceId=trace+1%2Fa&fields=subject&limit=100",
+        "https://lf.example/api/public/v3/scores?traceId=trace+1%2Fa&fields=subject&limit=100&cursor=next+page",
+    ]
+
+
+def test_fetch_trace_scores_stops_when_cursor_repeats():
+    tracer = object.__new__(adapter.LangfuseTracer)
+    tracer._host = "https://lf.example"
+    tracer._auth = "basic-token"
+    responses = [
+        _score_response([], cursor="same"),
+        _score_response([], cursor="same"),
+    ]
+
+    with mock.patch.object(adapter.urllib.request, "urlopen", side_effect=responses) as open_:
+        assert tracer.fetch_trace_scores("trace-1") == []
+
+    assert open_.call_count == 2

@@ -12,6 +12,7 @@ def api(monkeypatch):
     import agents.chclient, eval.langfuse_adapter
     monkeypatch.setattr(agents.chclient, "ROClickHouseClient", lambda cfg: object())
     monkeypatch.setattr(eval.langfuse_adapter, "LangfuseTracer", lambda cfg: object())
+    monkeypatch.setenv("AGENT_ARENA_POLICY_VERSION", "policy-v1")
     # NOTE: deviates from the brief's blanket `mock.mock_open` on builtins.open —
     # that also intercepts load_config()'s real config.yaml/.env reads (called at
     # serving.api import time) and breaks yaml.safe_load with a TypeError. Instead,
@@ -40,7 +41,13 @@ def _fake_ar():
 
 def test_ask_returns_trace_and_session_and_calls_emit(api, monkeypatch):
     calls = {}
-    monkeypatch.setattr(api, "run_agent", lambda *a, **k: _fake_ar())
+    agent_call = {}
+
+    def fake_run_agent(*args, **kwargs):
+        agent_call["context"] = args[3]
+        return _fake_ar()
+
+    monkeypatch.setattr(api, "run_agent", fake_run_agent)
     def fake_emit(**kw):
         calls.update(kw)
         return "trace-xyz"
@@ -51,8 +58,13 @@ def test_ask_returns_trace_and_session_and_calls_emit(api, monkeypatch):
     assert resp.trace_id == "trace-xyz"
     assert resp.session_id.startswith("ask-")
     assert resp.sql == "SELECT 1" and resp.rows == [[1]]
+    assert resp.policy_version == "policy-v1"
     assert calls["question"] == "How many orders?"
     assert "serving" in calls["tags"]
+    assert "policy-v1" in calls["tags"]
+    assert calls["metadata"]["policy_version"] == "policy-v1"
+    assert calls["metadata"]["release"] == "serving"
+    assert "Business metric policy (policy-v1)" in agent_call["context"]
     assert calls["usage"].output_tokens == 3
 
 
@@ -65,19 +77,88 @@ def test_ask_honors_supplied_session_id(api, monkeypatch):
     assert resp.session_id == "conv-1"
 
 
-def test_feedback_records_user_feedback_score(api, monkeypatch):
-    client = mock.MagicMock()
+def test_feedback_records_idempotent_boolean_user_thumbs(api, monkeypatch):
+    class ScoreClient:
+        def __init__(self):
+            self.calls = []
+
+        def create_score(self, *, score_id, name, value, trace_id, data_type,
+                         comment):
+            self.calls.append({
+                "score_id": score_id,
+                "name": name,
+                "value": value,
+                "trace_id": trace_id,
+                "data_type": data_type,
+                "comment": comment,
+            })
+
+        def flush(self):
+            pass
+
+    client = ScoreClient()
     monkeypatch.setattr(api, "get_client", lambda: client)
-    resp = api.feedback(api.FeedbackRequest(trace_id="trace-1", value=1.0, comment="great"))
-    assert resp == {"ok": True}
-    _, kw = client.create_score.call_args
-    assert kw["name"] == "user_feedback"
-    assert kw["value"] == 1.0
-    assert kw["trace_id"] == "trace-1"
-    assert kw["data_type"] == "NUMERIC"
+    assert api.feedback(api.FeedbackRequest(
+        trace_id="trace-1", value=False, comment="metric mismatch"
+    )) == {"ok": True}
+    assert client.calls == [{
+        "score_id": "user-thumbs-trace-1",
+        "name": "user-thumbs",
+        "value": False,
+        "trace_id": "trace-1",
+        "data_type": "BOOLEAN",
+        "comment": "metric mismatch",
+    }]
 
 
 def test_feedback_rejects_missing_trace_id(api):
     import fastapi
     with pytest.raises(fastapi.HTTPException):
-        api.feedback(api.FeedbackRequest(trace_id="", value=0.0))
+        api.feedback(api.FeedbackRequest(trace_id="", value=False))
+
+
+def test_feedback_failure_redacts_exception_from_response_and_logs(
+    api, monkeypatch, caplog
+):
+    import fastapi
+
+    secret_marker = "SECRET-MARKER-provider-token"
+
+    class FailingScoreClient:
+        def create_score(self, **_kwargs):
+            raise RuntimeError(secret_marker)
+
+    monkeypatch.setattr(api, "get_client", lambda: FailingScoreClient())
+
+    with caplog.at_level("ERROR"), pytest.raises(fastapi.HTTPException) as raised:
+        api.feedback(api.FeedbackRequest(trace_id="trace-1", value=False))
+
+    assert raised.value.status_code == 502
+    assert raised.value.detail == "feedback service unavailable"
+    diagnostics = "\n".join(record.getMessage() for record in caplog.records)
+    assert "feedback phase=create-score exception_type=RuntimeError" in diagnostics
+    assert secret_marker not in diagnostics
+    assert secret_marker not in str(raised.value.detail)
+
+
+def test_feedback_flush_failure_uses_fixed_sanitized_phase(api, monkeypatch, caplog):
+    import fastapi
+
+    secret_marker = "SECRET-MARKER-flush-token"
+
+    class FailingFlushClient:
+        def create_score(self, **_kwargs):
+            pass
+
+        def flush(self):
+            raise OSError(secret_marker)
+
+    monkeypatch.setattr(api, "get_client", lambda: FailingFlushClient())
+
+    with caplog.at_level("ERROR"), pytest.raises(fastapi.HTTPException) as raised:
+        api.feedback(api.FeedbackRequest(trace_id="trace-1", value=True))
+
+    diagnostics = "\n".join(record.getMessage() for record in caplog.records)
+    assert raised.value.detail == "feedback service unavailable"
+    assert "feedback phase=flush exception_type=OSError" in diagnostics
+    assert secret_marker not in diagnostics

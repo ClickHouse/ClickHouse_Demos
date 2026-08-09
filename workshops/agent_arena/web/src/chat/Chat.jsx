@@ -9,7 +9,7 @@ export default function Chat() {
   const [configs, setConfigs] = useState([])
   const [config, setConfig] = useState('')
   const [question, setQuestion] = useState('')
-  const [turns, setTurns] = useState([])      // {question, resp, feedback}
+  const [turns, setTurns] = useState([])      // {question, resp, feedback, feedbackPending}
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
 
@@ -24,7 +24,7 @@ export default function Chat() {
     setLoading(true); setErr('')
     try {
       const resp = await postServing('/ask', { question, config_id: config, session_id: SESSION_ID })
-      setTurns((t) => [...t, { question, resp, feedback: null }])
+      setTurns((t) => [...t, { question, resp, feedback: null, feedbackPending: false }])
       setQuestion('')
     } catch (e) { setErr(String(e)) } finally { setLoading(false) }
   }
@@ -32,10 +32,14 @@ export default function Chat() {
   async function rate(i, value) {
     const t = turns[i]
     if (!t.resp.trace_id) return
+    setErr('')
+    setTurns((ts) => ts.map((x, j) => (j === i ? { ...x, feedbackPending: true } : x)))
     try {
       await postServing('/feedback', { trace_id: t.resp.trace_id, value })
       setTurns((ts) => ts.map((x, j) => (j === i ? { ...x, feedback: value } : x)))
-    } catch (e) { setErr(String(e)) }
+    } catch (e) { setErr(String(e)) } finally {
+      setTurns((ts) => ts.map((x, j) => (j === i ? { ...x, feedbackPending: false } : x)))
+    }
   }
 
   return (
@@ -46,7 +50,7 @@ export default function Chat() {
         </select>
         <span className="chat-sub mono">production /ask · traced to LangFuse</span>
       </div>
-      {err && <div className="chat-err">{err}</div>}
+      {err && <div className="chat-err" role="alert">{err}</div>}
       <div className="chat-log">
         {turns.map((t, i) => (
           <div className="turn" key={i}>
@@ -68,9 +72,13 @@ export default function Chat() {
             <div className="meta mono">
               ${Number(t.resp.cost_usd).toFixed(5)} · {t.resp.latency_ms}ms · {t.resp.outcome}
               <span className="fb">
-                <button data-on={t.feedback === 1} onClick={() => rate(i, 1)}>👍</button>
-                <button data-on={t.feedback === 0} onClick={() => rate(i, 0)}>👎</button>
-                {t.feedback !== null && <em>feedback sent</em>}
+                <button aria-label="Thumbs up" data-on={t.feedback === true}
+                        disabled={t.feedbackPending} onClick={() => rate(i, true)}>👍</button>
+                <button aria-label="Thumbs down" data-on={t.feedback === false}
+                        disabled={t.feedbackPending} onClick={() => rate(i, false)}>👎</button>
+                {t.feedbackPending
+                  ? <em role="status" data-state="pending">sending…</em>
+                  : t.feedback !== null && <em role="status">feedback sent</em>}
               </span>
             </div>
           </div>

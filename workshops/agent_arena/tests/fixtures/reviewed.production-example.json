@@ -1,0 +1,38 @@
+[
+  {
+    "id": "prod-active-001",
+    "question": "How many active customers do we have?",
+    "golden_sql": "SELECT uniqExact(customer_id) FROM v_orders WHERE order_ts >= now() - INTERVAL 30 DAY AND status NOT IN ('cancelled','returned')",
+    "tier": 2,
+    "ordered": false,
+    "source": "synthetic-reviewed-fixture",
+    "source_trace_id": "synthetic-active-customer-trace",
+    "failure_category": "stale-business-policy",
+    "source_policy_version": "policy-v1",
+    "annotation_id": "synthetic-active-customer-annotation"
+  },
+  {
+    "id": "prod-active-002",
+    "question": "What is our active customer count right now?",
+    "golden_sql": "SELECT uniqExact(customer_id) FROM v_orders WHERE order_ts >= now() - INTERVAL 30 DAY AND status NOT IN ('cancelled','returned')",
+    "tier": 2,
+    "ordered": false,
+    "source": "synthetic-reviewed-fixture",
+    "source_trace_id": "synthetic-active-customer-trace",
+    "failure_category": "stale-business-policy",
+    "source_policy_version": "policy-v1",
+    "annotation_id": "synthetic-active-customer-annotation"
+  },
+  {
+    "id": "prod-active-003",
+    "question": "How many customers qualify as active under our business definition?",
+    "golden_sql": "SELECT uniqExact(customer_id) FROM v_orders WHERE order_ts >= now() - INTERVAL 30 DAY AND status NOT IN ('cancelled','returned')",
+    "tier": 2,
+    "ordered": false,
+    "source": "synthetic-reviewed-fixture",
+    "source_trace_id": "synthetic-active-customer-trace",
+    "failure_category": "stale-business-policy",
+    "source_policy_version": "policy-v1",
+    "annotation_id": "synthetic-active-customer-annotation"
+  }
+]

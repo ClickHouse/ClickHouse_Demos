@@ -11,12 +11,19 @@ from arena.config import load_config
 from agents.chclient import ROClickHouseClient
 from agents.llm import OpenRouterClient, cost_usd
 from agents.loop import run_agent
+from agents.policy import load_policy, with_policy
 from eval.golden import GoldenQuestion, load_golden, fewshot_examples
 from eval.langfuse_adapter import LangfuseTracer, emit_agent_trace
 from eval.serialize import result_payload, golden_payload
 
 
-def main() -> None:
+DEFAULT_REQUIRED_SCORE_NAMES = (
+    "correctness",
+    "agent-arena-llm-judge",
+)
+
+
+def parse_args(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--run-id", default=None)
     ap.add_argument("--eval-timeout", type=int, default=180,
@@ -28,10 +35,41 @@ def main() -> None:
     ap.add_argument("--models-file", default="",
                     help="JSON file of model specs [{id,name,family,price_per_1m_in,price_per_1m_out}] "
                          "to run instead of config.yaml models (used by the web UI)")
-    args = ap.parse_args()
+    ap.add_argument("--policy-version", default="policy-v2")
+    ap.add_argument("--wait-for-score", action="append", default=[])
+    return ap.parse_args(argv)
+
+
+def effective_run_id(run_id: str, policy_version: str) -> str:
+    return f"{run_id}--{policy_version}"
+
+
+def _dataset_item(q: GoldenQuestion, *, rows, cols, default_float_dp: int) -> dict:
+    float_dp = q.float_dp if q.float_dp is not None else default_float_dp
+    return {
+        "id": q.id,
+        "question": q.question,
+        "expected_output": golden_payload(
+            golden_sql=q.golden_sql,
+            rows=rows,
+            cols=cols,
+            ordered=q.ordered,
+        ),
+        "metadata": {
+            "tier": q.tier,
+            "ordered": q.ordered,
+            "float_dp": float_dp,
+        },
+    }
+
+
+def main(argv=None) -> None:
+    args = parse_args(argv)
 
     cfg = load_config()
-    run_id = args.run_id or f"run-{uuid.uuid4().hex[:8]}"
+    release = args.run_id or f"run-{uuid.uuid4().hex[:8]}"
+    policy = load_policy(args.policy_version)
+    run_id = effective_run_id(release, policy.version)
 
     # The web UI can hand the harness an arbitrary set of models (from the live
     # OpenRouter catalog) via a JSON file, overriding config.yaml's model list.
@@ -56,7 +94,7 @@ def main() -> None:
     llm = OpenRouterClient(cfg.openrouter.base_url, cfg.openrouter.api_key)
 
     with open("schema/schema_context.md") as f:
-        schema_ctx = f.read()
+        schema_ctx = with_policy(f.read(), policy)
 
     all_questions = load_golden()
     # Hold out the few-shot example questions so P2 is not graded on its own
@@ -71,15 +109,15 @@ def main() -> None:
         golden_cache[q.id] = (gr.rows, gr.cols)
 
     # Upload the golden set as a Langfuse Dataset (each config becomes a Run).
-    tracer.ensure_dataset([{
-        "id": q.id, "question": q.question,
-        "expected_output": golden_payload(golden_sql=q.golden_sql,
-                                           rows=golden_cache[q.id][0],
-                                           cols=golden_cache[q.id][1],
-                                           ordered=q.ordered),
-        "metadata": {"tier": q.tier, "ordered": q.ordered,
-                     "float_dp": cfg.eval.float_dp},
-    } for q in questions])
+    tracer.ensure_dataset([
+        _dataset_item(
+            q,
+            rows=golden_cache[q.id][0],
+            cols=golden_cache[q.id][1],
+            default_float_dp=cfg.eval.float_dp,
+        )
+        for q in questions
+    ])
 
     model_names, prompt_names = cfg.resolved_grid()
     if args.models:
@@ -126,9 +164,11 @@ def main() -> None:
                     payload, c, latency_ms, ar = run_one(_m, _p, _mc, _pc, _ex, _cid, q)
                     trace_id = emit_agent_trace(
                         trace_name="agent_run", session_id=_sid,
-                        tags=[_cid, f"run:{run_id}", _m, _p],
+                        tags=[_cid, f"run:{run_id}", policy.version, _m, _p],
                         metadata={"config_id": _cid, "question_id": q.id,
-                                  "model": _m, "prompt": _p, "run_id": run_id},
+                                  "model": _m, "prompt": _p, "run_id": run_id,
+                                  "policy_version": policy.version,
+                                  "release": release},
                         question=q.question, model=_m,
                         transcript=ar.transcript, sql=ar.sql,
                         output_payload=payload, usage=ar.usage)
@@ -148,7 +188,13 @@ def main() -> None:
     tracer.flush()
 
     if pending_trace_ids:
-        _wait_for_scores(tracer, pending_trace_ids, args.eval_timeout, args.eval_poll)
+        _wait_for_scores(
+            tracer,
+            pending_trace_ids,
+            args.eval_timeout,
+            args.eval_poll,
+            args.wait_for_score,
+        )
     print(f"done. run_id={run_id}", flush=True)
 
 
@@ -193,25 +239,39 @@ def _question_for_item(item, qmap) -> GoldenQuestion:
                           golden_sql=str(golden_sql))
 
 
-def _wait_for_scores(tracer, trace_ids, timeout, poll) -> None:
-    """Wait until both required asynchronous Langfuse evaluators have finished."""
+def _wait_for_scores(tracer, trace_ids, timeout, poll, required_names=None) -> None:
+    """Compatibility wrapper for the two default asynchronous evaluators."""
+    _wait_for_required_scores(
+        tracer, trace_ids, timeout, poll, required_names=required_names
+    )
+
+
+def _wait_for_required_scores(
+    tracer, trace_ids, timeout, poll, required_names=None
+) -> None:
+    """Wait for the default scores and every additional exact score name."""
+    required = list(dict.fromkeys([
+        *DEFAULT_REQUIRED_SCORE_NAMES,
+        *(required_names or []),
+    ]))
     remaining = set(trace_ids)
     print(f"grading via LangFuse evaluators — waiting on {len(remaining)} traces "
           f"(timeout {timeout}s)…", flush=True)
     deadline = time.time() + timeout
-    last_missing = {tid: {"correctness", "llm_judge"} for tid in remaining}
+    last_missing = {tid: set(required) for tid in remaining}
     while remaining and time.time() < deadline:
         tids = list(remaining)
         with ThreadPoolExecutor(max_workers=min(8, len(tids))) as pool:
             score_lists = list(pool.map(tracer.fetch_trace_scores, tids))
         done = []
         for tid, scores in zip(tids, score_lists):
-            corr, judge, _outcome = _classify_scores(scores)
-            missing = set()
-            if corr is None:
-                missing.add("correctness")
-            if judge is None:
-                missing.add("llm_judge")
+            available = {
+                score.get("name")
+                for score in scores or []
+                if score.get("name")
+                and (score.get("value") is not None or score.get("string") is not None)
+            }
+            missing = set(required) - available
             last_missing[tid] = missing
             if not missing:
                 done.append(tid)
@@ -224,7 +284,7 @@ def _wait_for_scores(tracer, trace_ids, timeout, poll) -> None:
         missing_names = sorted({name for tid in remaining for name in last_missing[tid]})
         raise RuntimeError(
             f"{len(remaining)} traces are missing {', '.join(missing_names)} after {timeout}s; "
-            "configure both Langfuse evaluators for Experiments on arena-golden. "
+            "configure the required Langfuse evaluators for Experiments on arena-golden. "
             "See eval/langfuse_evaluators/README.md."
         )
     print(f"Langfuse scored all {len(trace_ids)} traces; leaderboard ready", flush=True)

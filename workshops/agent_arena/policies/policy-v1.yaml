@@ -1,0 +1,10 @@
+version: policy-v1
+metrics:
+  active_customers: >-
+    Count customers from v_customers whose signup_date is within the last 90 days.
+  revenue: >-
+    Sum quantity * unit_price - discount, excluding cancelled and returned orders.
+  view_to_purchase_conversion: >-
+    Percentage of sessions with a view event that also contain a purchase event.
+  gross_margin: >-
+    Sum quantity * (unit_price - unit_cost) over delivered orders.

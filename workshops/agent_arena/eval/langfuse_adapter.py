@@ -1,6 +1,6 @@
 """All LangFuse SDK calls live here so a version bump touches one file.
 
-Targets the **OTEL-based Python SDK v4** (langfuse==4.7.1) — required so LangFuse's
+Targets the **OTEL-based Python SDK v4** (langfuse==4.14.3) — required so LangFuse's
 server-side evaluators (the correctness Code Evaluator + the llm_judge
 LLM-as-a-judge) actually run on our data. (SDK v2 used the legacy ingestion path
 and produced no OTEL data, so evaluators saw nothing.)
@@ -22,6 +22,7 @@ import urllib.request
 from urllib.parse import quote, urlencode
 from langfuse import Langfuse, get_client, propagate_attributes
 from arena.config import LangfuseCfg
+from scripts.langfuse_admin import iter_cursor_pages, score_trace_id
 
 DATASET_NAME = "arena-golden"
 
@@ -128,17 +129,27 @@ class LangfuseTracer:
         """Read evaluator scores with the current public Scores API v3.
         Returns a list of {name, value, string, dataType} — the caller classifies
         by name/type, since evaluator score names are user-defined."""
-        try:
-            query = urlencode({"traceId": trace_id, "fields": "subject", "limit": 100})
+        def fetch(cursor: str | None) -> dict:
+            params = {"traceId": trace_id, "fields": "subject", "limit": 100}
+            if cursor is not None:
+                params["cursor"] = cursor
             req = urllib.request.Request(
-                f"{self._host}/api/public/v3/scores?{query}",
+                f"{self._host}/api/public/v3/scores?{urlencode(params)}",
                 headers={"Authorization": f"Basic {self._auth}"})
-            with urllib.request.urlopen(req, timeout=15) as r:
-                data = json.loads(r.read())
+            with urllib.request.urlopen(req, timeout=15) as response:
+                return json.loads(response.read())
+
+        try:
+            raw_scores = [
+                score
+                for payload in iter_cursor_pages(fetch)
+                for score in payload.get("data", []) or []
+                if score_trace_id(score) == trace_id
+            ]
         except Exception:  # noqa: BLE001
             return []
         scores = []
-        for score in data.get("data", []) or []:
+        for score in raw_scores:
             value = score.get("value")
             categorical = score.get("dataType") in {"CATEGORICAL", "TEXT", "CORRECTION"}
             scores.append({
