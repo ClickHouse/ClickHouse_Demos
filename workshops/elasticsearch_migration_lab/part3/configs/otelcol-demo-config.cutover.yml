@@ -1,0 +1,51 @@
+# Part 3 — Cutover config for otelcol-demo
+#
+# After Step 10d stops elastic-apm-server, the OTel Demo collector forwards
+# all traces/metrics/logs to ClickHouse Cloud only. The APM exporter is
+# removed so the batch processor doesn't block on a dead backend (which
+# would back-pressure the ClickHouse pipeline too).
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+      http:
+        endpoint: "0.0.0.0:4318"
+
+exporters:
+  clickhouse:
+    endpoint: tcp://${CH_HOST}:9440?dial_timeout=60s&compress=lz4&secure=true
+    database: otel
+    username: default
+    password: ${CH_PASSWORD}
+    traces_table_name: otel_traces
+    logs_table_name: otel_logs
+    metrics_table_name: otel_metrics
+    create_schema: false
+    timeout: 30s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 500
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [clickhouse]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [clickhouse]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [clickhouse]
