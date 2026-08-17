@@ -39,11 +39,12 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Environment files
-.env
-.env.test
-.env.local
-.env.hybrid
+# Environment files. Broad on purpose: this covers .env, .env.test, .env.local and
+# .env.hybrid, and also the .env.cloud / .env.rehearsal / .env.bak filenames the
+# schema change management demo's cloud-and-local workflow invites. None of them
+# should ever be committed; the .example files must stay tracked.
+.env*
+!*.example
 
 # Generated LibreChat config (built from templates by make start)
 agent_stack_builds/telco_marketing/librechat.yaml
