@@ -39,10 +39,13 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Environment files
-.env
-.env.test
-.env.local
+# Environment files. Broad on purpose: the schema change management demo has a
+# cloud target and a local target, so .env.cloud / .env.rehearsal / .env.bak are
+# all realistic filenames and none of them should ever be committed.
+.env*
+!.env.example
+!.env.hybrid.example
+!.env.local.example
 
 # Generated LibreChat config (built from templates by make start)
 agent_stack_builds/telco_marketing/librechat.yaml

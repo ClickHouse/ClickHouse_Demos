@@ -1,0 +1,182 @@
+# =============================================================================
+# EXAMPLE - NOT WIRED UP IN THIS REPOSITORY.
+#
+# GitHub only executes workflows in the REPO ROOT .github/workflows/. This file
+# lives inside the project directory on purpose, so that it is documentation
+# rather than a job that silently never fires.
+#
+# To actually run it in your own repo:
+#   1. Copy to .github/workflows/schema-ci.yml at the repository root.
+#   2. Re-prefix the `paths:` filter and the file:// URLs with this project's
+#      directory, or add `working-directory: schema_change_management` to each
+#      step. As written the paths are relative to the project root.
+#   3. Set the two secrets named below.
+#   4. Decide about the `schedule:` trigger. On a fork with no secrets it fails
+#      every morning and mails the repo admins. Drop it or gate it.
+#
+# Note also that `pull_request` runs from a fork get no access to secrets, so the
+# lint job cannot work for outside contributors. That is a GitHub constraint, not
+# a bug here.
+# =============================================================================
+# =============================================================================
+# The gate. This is the part of the demo that turns "a tool we ran once" into
+# "a process the team cannot bypass".
+#
+# Two jobs, deliberately separated:
+#
+#   lint    runs on every pull request. Never touches production. Fails the
+#           build on destructive changes. This is where a bad idea should die.
+#
+#   drift   runs on a schedule against production, read-only. Answers the
+#           question "does the repo still describe reality?" every morning,
+#           instead of at the worst possible moment during a deploy.
+#
+# REQUIREMENTS, both mandatory:
+#
+#   ATLAS_TOKEN               repository secret. The ClickHouse driver and
+#                             `migrate lint` are Atlas Pro features, so without a
+#                             token carrying a Pro entitlement every job here
+#                             fails. See SETUP.md step 2.
+#
+#   CH_CLOUD_URL_READONLY     repository secret. Use the `atlas_drift` user from
+#                             setup/01-users-and-grants.sql, NOT atlas_admin and
+#                             definitely not `default`. It is read-only by grant,
+#                             so if someone later wires it into an apply job by
+#                             mistake, the job fails instead of mutating prod.
+#
+# Also: the GitHub-hosted runner's egress IP must be allowed by your ClickHouse
+# Cloud IP access list, or the drift job cannot connect. GitHub's ranges are wide
+# and change; for production use PrivateLink or a self-hosted runner with a fixed
+# IP rather than opening the list up. See SETUP.md step 4.
+# =============================================================================
+
+name: Schema CI
+
+on:
+  pull_request:
+    paths:
+      - "schema/**"
+      - "migrations/**"
+      - "atlas.hcl"
+  schedule:
+    # 06:00 UTC daily drift check.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint migrations
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # migrate lint compares against the base branch, so it needs history.
+          fetch-depth: 0
+
+      - uses: ariga/setup-atlas@v0
+        with:
+          cloud-token: ${{ secrets.ATLAS_TOKEN }}
+
+      # Pin the dev image version. An unpinned dev database means your CI result
+      # silently changes the day upstream ships a new tag, which is the same
+      # class of problem as an unpinned dependency.
+      - name: Verify the plan is safe
+        run: |
+          atlas migrate lint \
+            --env ci \
+            --dev-url "docker://clickhouse/26.6/dev" \
+            --git-base "origin/${{ github.base_ref }}" \
+            --format '{{ json .Files }}'
+        env:
+          ATLAS_TOKEN: ${{ secrets.ATLAS_TOKEN }}
+
+      # Catches the case where someone edited schema.sql but forgot to run
+      # `atlas migrate diff`, so the migration directory and the desired state
+      # have quietly diverged. Cheap check, prevents a confusing deploy.
+      #
+      # --dev-url has to be passed here as well as on the lint step above. env
+      # "ci" takes it from getenv("CH_DEV_URL") (atlas.hcl), which is unset on the
+      # runner, so without the flag this step fails with 'required flag(s)
+      # "dev-url" not set' on every pull request.
+      #
+      # --dry-run previews the plan instead of writing a migration file, and exits
+      # 0 either way, so this step has to assert on the output itself.
+      #
+      # Assert on the sentence, NOT on whether the file is empty: when there is
+      # nothing to do, Atlas prints "The migration directory is synced with the
+      # desired state, no changes to be made" to stdout. An `[ -s file ]` test
+      # would therefore fail every pull request, including the clean ones.
+      # (Verified against atlas v1.3.1.)
+      - name: Confirm migrations match the desired state
+        run: |
+          set -o pipefail
+          atlas migrate diff --env ci \
+            --dev-url "docker://clickhouse/26.6/dev" \
+            --dry-run | tee pending.txt
+          if grep -q 'no changes to be made' pending.txt; then
+            echo "Migration directory matches the desired state."
+            exit 0
+          fi
+          echo "::error::schema/sql/schema.sql has changes with no migration file."
+          echo "Run: atlas migrate diff <name> --env cloud"
+          exit 1
+        env:
+          ATLAS_TOKEN: ${{ secrets.ATLAS_TOKEN }}
+
+  drift:
+    name: Detect drift in production
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ariga/setup-atlas@v0
+        with:
+          cloud-token: ${{ secrets.ATLAS_TOKEN }}
+
+      # Read-only by grant, not by convention. This is the `atlas_drift` user
+      # from setup/01-users-and-grants.sql: SHOW + SELECT on adtech.* and
+      # SELECT on system.*, nothing else. Verified to be refused on ALTER,
+      # INSERT and DROP.
+      # --exclude atlas_schema_revisions: `atlas migrate apply` keeps its revision
+      # history in a table inside the managed database, and schema/sql/schema.sql
+      # does not describe it. Without the exclude, this job proposes dropping
+      # Atlas's own bookkeeping table and reports drift every single morning.
+      #
+      # Same rule as the lint job: assert on the sentence, not on emptiness.
+      # `atlas schema diff` prints "Schemas are synced, no changes to be made."
+      # to stdout when there is no drift, so a size test would report drift every
+      # morning and train everyone to ignore this job.
+      - name: Compare production against the repository
+        run: |
+          set -o pipefail
+          atlas schema diff \
+            --from "${{ secrets.CH_CLOUD_URL_READONLY }}" \
+            --to "file://schema/sql/schema.sql" \
+            --dev-url "docker://clickhouse/26.6/dev" \
+            --exclude atlas_schema_revisions \
+            | tee drift.txt
+          if grep -q 'no changes to be made' drift.txt; then
+            echo "No drift. Repository matches production."
+            exit 0
+          fi
+          echo "::warning::Schema drift detected between production and main"
+          echo '### Drift detected' >> "$GITHUB_STEP_SUMMARY"
+          echo '```sql' >> "$GITHUB_STEP_SUMMARY"
+          cat drift.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+        env:
+          ATLAS_TOKEN: ${{ secrets.ATLAS_TOKEN }}
+
+# =============================================================================
+# WHAT IS DELIBERATELY NOT HERE: a job that applies migrations to production on
+# merge.
+#
+# For ClickHouse, fully automated apply is the wrong default. Sort-key changes,
+# type narrowing and mutations are expensive, asynchronous and often
+# irreversible. The right shape is: CI proves the plan is safe and reviewed,
+# then a human triggers the apply with the plan in front of them and monitoring
+# open. Automate the judgement, not the button.
+# =============================================================================

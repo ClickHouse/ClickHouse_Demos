@@ -1,0 +1,52 @@
+# =============================================================================
+# This is what ./scripts/local-up.sh (and scripts\win\local-up.ps1) drives. You
+# can also run it directly with `docker compose up -d`; the scripts only add a
+# readiness wait and print the matching .env values.
+#
+# It is deliberately NOT `atlas tool docker`. That publishes only the native port,
+# on a random host port, with a generated password — fine for Atlas's own dev
+# database (CH_DEV_URL), useless for a target the helper scripts drive over HTTP.
+# See the header of scripts/local-up.sh for the measured detail.
+# =============================================================================
+# Local ClickHouse OSS, used for two purposes:
+#
+#   1. A rehearsal target. Run the whole demo against this first so nothing
+#      surprises you live against Cloud.
+#   2. Somewhere to prove the "OSS engines only" rule from schema.sql. Try
+#      applying a schema that says SharedMergeTree here and watch it fail.
+#
+# Optional. Atlas can manage its own throwaway dev container via
+# CH_DEV_URL=docker://clickhouse/26.6/dev without any of this.
+#
+#   docker compose up -d
+#   docker compose down -v      # -v also wipes the data
+#
+# Keep this image version aligned with CH_DEV_URL and as close to your
+# ClickHouse Cloud version as you reasonably can.
+# =============================================================================
+
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:${LOCAL_CH_VERSION:-26.6}
+    container_name: ${LOCAL_CH_NAME:-atlas-demo-ch}
+    environment:
+      CLICKHOUSE_DB: adtech
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: localpass
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports:
+      # Overridable, because 9000 and 8123 are the ClickHouse defaults and the
+      # incremental_materialized_views demo in this repo also defaults a local
+      # server to 8123. Set LOCAL_CH_NATIVE_PORT / LOCAL_CH_HTTP_PORT in .env if
+      # you already have something on them.
+      - "${LOCAL_CH_NATIVE_PORT:-9000}:9000" # native protocol - Atlas connects here
+      - "${LOCAL_CH_HTTP_PORT:-8123}:8123"   # HTTP - helper scripts and curl
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--password", "localpass", "--query", "SELECT 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
