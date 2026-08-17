@@ -1,0 +1,42 @@
+model_list:
+  # Google Gemini
+  - model_name: gemini-2.5-pro
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      api_key: os.environ/GOOGLE_KEY
+
+  - model_name: gemini-2.5-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GOOGLE_KEY
+
+  - model_name: gemini-flash-latest
+    litellm_params:
+      model: gemini/gemini-flash-latest
+      api_key: os.environ/GOOGLE_KEY
+
+  # Anthropic Models
+  - model_name: claude-sonnet-4-6
+    litellm_params:
+      model: anthropic/claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_KEY
+
+  - model_name: claude-haiku-4-5
+    litellm_params:
+      model: anthropic/claude-haiku-4-5-20251001
+      api_key: os.environ/ANTHROPIC_KEY
+
+litellm_settings:
+  success_callback: ["langfuse"]
+  failure_callback: ["langfuse"]
+  drop_params: true
+  callbacks: scorer.auto_scorer
+  # Forward LibreChat user identity to Langfuse for per-user trace filtering
+  default_team_settings:
+    - team_id: workshop
+      metadata:
+        generation_name: "observability-workshop"
+  langfuse_default_tags: ["workshop"]
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

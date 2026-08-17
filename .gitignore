@@ -39,13 +39,12 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Environment files. Broad on purpose: the schema change management demo has a
-# cloud target and a local target, so .env.cloud / .env.rehearsal / .env.bak are
-# all realistic filenames and none of them should ever be committed.
+# Environment files. Broad on purpose: this covers .env, .env.test, .env.local and
+# .env.hybrid, and also the .env.cloud / .env.rehearsal / .env.bak filenames the
+# schema change management demo's cloud-and-local workflow invites. None of them
+# should ever be committed; the .example files must stay tracked.
 .env*
-!.env.example
-!.env.hybrid.example
-!.env.local.example
+!*.example
 
 # Generated LibreChat config (built from templates by make start)
 agent_stack_builds/telco_marketing/librechat.yaml
@@ -57,3 +56,7 @@ scratchpad/
 
 # ClickHouse data
 clickhouse-data/
+.gstack/
+.clickhouse/
+
+workshops/build_workshop/playbook/docs/superpowers

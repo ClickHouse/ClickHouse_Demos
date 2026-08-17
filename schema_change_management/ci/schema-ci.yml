@@ -5,7 +5,12 @@
 # lives inside the project directory on purpose, so that it is documentation
 # rather than a job that silently never fires.
 #
-# To actually run it in your own repo:
+# This repo does have root CI (.github/workflows/workshop.yml), so adding another
+# root workflow is possible - but this one needs two secrets and would run a cron
+# against a live ClickHouse Cloud service, which is a decision for the repo owners
+# rather than something a demo should switch on for them.
+#
+# To actually run it:
 #   1. Copy to .github/workflows/schema-ci.yml at the repository root.
 #   2. Re-prefix the `paths:` filter and the file:// URLs with this project's
 #      directory, or add `working-directory: schema_change_management` to each

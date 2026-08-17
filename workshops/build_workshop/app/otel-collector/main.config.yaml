@@ -1,0 +1,34 @@
+# Custom ClickStack collector config for the MAIN `otel-collector` service.
+#
+# Purpose: silence the repeating, non-fatal error the stock ClickStack image logs
+# every ~60s:
+#
+#   error  Exporting failed. Dropping data.
+#     otelcol.component.id: prometheusremotewrite
+#     otelcol.signal: metrics
+#     error: "Permanent error: context deadline exceeded"
+#
+# Why it happens: the image's baked-in standalone-config.yaml runs a SECOND metrics
+# pipeline, `metrics/promql`, that remote-writes metrics to a Prometheus endpoint at
+# http://${CLICKHOUSE_PROMETHEUS_METRICS_ENDPOINT}/write. This workshop never runs a
+# Prometheus remote-write target and never sets that env var, so the endpoint resolves
+# to an empty host and every push times out. The metrics themselves still reach
+# ClickHouse via the primary `metrics` pipeline (exporter: clickhouse), so this pipeline
+# is pure redundancy here — it only feeds ClickStack's PromQL/metrics-explorer feature,
+# which the workshop does not use.
+#
+# A custom config is MERGED on top of the image config (the entrypoint appends it as an
+# extra --config). Config merge cannot delete a pipeline or an exporter, so instead we
+# override the `metrics/promql` pipeline's exporter list to a no-op `nop` exporter. The
+# unused `prometheusremotewrite` exporter is then never instantiated and stops erroring.
+# The `memory_limiter` and `batch` processors already exist in the base config.yaml and
+# are referenced here by name.
+exporters:
+  nop: {}
+
+service:
+  pipelines:
+    metrics/promql:
+      receivers: [otlp/hyperdx]
+      processors: [memory_limiter, batch]
+      exporters: [nop]

@@ -53,17 +53,20 @@ setup-local:
 	@# Generate security keys
 	@LANGFUSE_SECRET=$$(openssl rand -hex 32) && \
 	 LANGFUSE_SALT=$$(openssl rand -hex 32) && \
+	 LANGFUSE_ENCRYPTION_KEY=$$(openssl rand -hex 32) && \
 	 CREDS_KEY=$$(openssl rand -hex 32) && \
 	 CREDS_IV=$$(openssl rand -hex 16) && \
 	 JWT_SECRET=$$(openssl rand -hex 32) && \
 	 JWT_REFRESH_SECRET=$$(openssl rand -hex 32) && \
 	 MEILI_MASTER_KEY=$$(openssl rand -hex 16) && \
-	 LITELLM_MK=$$(openssl rand -hex 32) && \
 	 sed -i.bak \
 	   -e "s|<generate-with-openssl-rand-hex-32>|$$LANGFUSE_SECRET|" \
 	   .env && \
 	 sed -i.bak \
 	   -e "0,/<generate-with-openssl-rand-hex-32>/s||$$LANGFUSE_SALT|" \
+	   .env && \
+	 sed -i.bak \
+	   -e "0,/<generate-with-openssl-rand-hex-32>/s||$$LANGFUSE_ENCRYPTION_KEY|" \
 	   .env && \
 	 sed -i.bak \
 	   -e "0,/<generate-with-openssl-rand-hex-32>/s||$$CREDS_KEY|" \
@@ -80,9 +83,6 @@ setup-local:
 	 sed -i.bak \
 	   -e "0,/<generate-with-openssl-rand-hex-16>/s||$$MEILI_MASTER_KEY|" \
 	   .env && \
-	 sed -i.bak \
-	   -e "0,/<generate-with-openssl-rand-hex-32>/s||$$LITELLM_MK|" \
-	   .env && \
 	 rm -f .env.bak
 	@echo "[OK] Generated security keys"
 	@# Generate Langfuse API keys (same value written to both LANGFUSE_INIT_PROJECT_* and LANGFUSE_*)
@@ -96,12 +96,13 @@ setup-local:
 	@echo "[OK] Generated Langfuse API keys (tracing auto-configured)"
 	@echo ""
 	@echo "Next steps:"
-	@echo "  1. Edit .env to set your GOOGLE_KEY (required for Gemini models)"
-	@echo "  2. make start"
+	@echo "  1. Install Ollama (https://ollama.com or 'brew install ollama')"
+	@echo "  2. ollama pull qwen3.5:2b   # local-mode default model"
 	@echo "  3. make generate-data"
-	@echo "  4. Open http://localhost:3080 (LibreChat)"
+	@echo "  4. make start"
+	@echo "  5. Open http://localhost:3080 (LibreChat)"
 	@echo ""
-	@echo "Langfuse tracing is auto-configured. ALL LLM calls are traced via LiteLLM."
+	@echo "Langfuse tracing is auto-configured. LibreChat sends traces directly to Langfuse."
 	@echo "Log in at http://localhost:3000 with admin@telco.local / admin123 after running 'make start'."
 
 setup-hybrid:
@@ -118,7 +119,6 @@ setup-hybrid:
 	 JWT_SECRET=$$(openssl rand -hex 32) && \
 	 JWT_REFRESH_SECRET=$$(openssl rand -hex 32) && \
 	 MEILI_MASTER_KEY=$$(openssl rand -hex 16) && \
-	 LITELLM_MK=$$(openssl rand -hex 32) && \
 	 sed -i.bak \
 	   -e "s|<generate-with-openssl-rand-hex-32>|$$CREDS_KEY|" \
 	   .env && \
@@ -134,9 +134,6 @@ setup-hybrid:
 	 sed -i.bak \
 	   -e "0,/<generate-with-openssl-rand-hex-16>/s||$$MEILI_MASTER_KEY|" \
 	   .env && \
-	 sed -i.bak \
-	   -e "0,/<generate-with-openssl-rand-hex-32>/s||$$LITELLM_MK|" \
-	   .env && \
 	 rm -f .env.bak
 	@echo "[OK] Generated LibreChat security keys"
 	@echo ""
@@ -146,8 +143,8 @@ setup-hybrid:
 	@echo "  3. Edit .env and fill in your Langfuse Cloud credentials (optional)"
 	@echo "  4. Edit .env and set your GOOGLE_KEY (required for Gemini models)"
 	@echo "  5. make init-schema"
-	@echo "  6. make start"
-	@echo "  7. make generate-data"
+	@echo "  6. make generate-data"
+	@echo "  7. make start"
 	@echo "  8. Open http://localhost:3080 (LibreChat)"
 
 # ---------------------------------------------------------------------------
@@ -155,20 +152,20 @@ setup-hybrid:
 # ---------------------------------------------------------------------------
 start:
 	@echo "Starting workshop services (mode: $(DEPLOY_MODE))..."
-	@cp librechat.$(DEPLOY_MODE).yaml librechat.yaml
-	@echo "[OK] Generated librechat.yaml from librechat.$(DEPLOY_MODE).yaml"
 	$(COMPOSE_CMD) up -d
 	@echo "[OK] Services started"
 	$(SERVICE_TABLE)
-	@echo "Waiting for services to be ready..."
-	@sleep 15
+	@echo "Waiting for LibreChat to be ready..."
+	@until docker inspect --format='{{.State.Health.Status}}' telco-librechat 2>/dev/null | grep -q healthy; do \
+		printf "."; sleep 3; \
+	done && echo " ready"
 	@# Create default workshop user (idempotent -- fails silently if user exists)
 	@LC_EMAIL=$$(grep -s '^LIBRECHAT_USER_EMAIL=' .env 2>/dev/null | cut -d= -f2) && \
 	 LC_NAME=$$(grep -s '^LIBRECHAT_USER_NAME=' .env 2>/dev/null | cut -d= -f2) && \
 	 LC_PASS=$$(grep -s '^LIBRECHAT_USER_PASSWORD=' .env 2>/dev/null | cut -d= -f2) && \
 	 LC_USER=$$(echo "$$LC_EMAIL" | cut -d@ -f1) && \
-	 echo "y" | docker exec -i telco-librechat sh -c \
-		"cd /app && node config/create-user.js $$LC_EMAIL $$LC_NAME $$LC_USER $$LC_PASS" \
+	 docker exec telco-librechat sh -c \
+		"cd /app && node config/create-user.js $$LC_EMAIL $$LC_NAME $$LC_USER $$LC_PASS --email-verified=true" \
 		>/dev/null 2>&1 && \
 		echo "[OK] Default user created: $$LC_EMAIL / $$LC_PASS" || \
 		echo "[OK] Default user already exists: $$LC_EMAIL / $$LC_PASS"
@@ -291,5 +288,5 @@ clean:
 		$(COMPOSE_CMD) down -v --remove-orphans; \
 		rm -f librechat.yaml; \
 		echo "[OK] All services stopped, volumes removed, and generated files deleted."; \
-		echo "     To start fresh: make start && make generate-data"; \
+		echo "     To start fresh: make generate-data && make start"; \
 	fi

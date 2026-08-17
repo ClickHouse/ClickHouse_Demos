@@ -1,0 +1,197 @@
+# LibreChat Configuration for Observability Workshop
+version: 1.3.4
+
+# Cache settings
+cache: true
+
+# Interface settings
+interface:
+  # React/Sandpack artifacts disabled — bundler missing @swc/helpers in self-hosted context.
+  # Models are instructed to use Mermaid artifacts instead (renders natively, no bundler needed).
+  codeArtifacts: false
+
+  # Privacy settings
+  privacyPolicy:
+    externalUrl: ""
+    openNewTab: true
+
+  # Terms of service
+  termsOfService:
+    externalUrl: ""
+    openNewTab: true
+
+# Registration settings
+registration:
+  socialLogins: []
+  allowedDomains: []
+
+# Rate limiting (adjust for workshop size)
+rateLimits:
+  fileUploads:
+    ipMax: 100
+    ipWindowInMinutes: 60
+    userMax: 50
+    userWindowInMinutes: 60
+
+  conversationsImport:
+    ipMax: 100
+    ipWindowInMinutes: 60
+    userMax: 50
+    userWindowInMinutes: 60
+
+# File upload settings (disabled for workshop)
+fileStrategy: "local"
+fileConfig:
+  endpoints:
+    assistants:
+      disabled: true
+    openAI:
+      disabled: true
+    default:
+      disabled: true
+
+# MCP Settings
+mcpSettings:
+  allowedDomains:
+    - "mcp-clickhouse"
+    - "host.docker.internal"
+    - "localhost"
+
+# MCP Servers
+mcpServers:
+  clickhouse-otel:
+    type: sse
+    url: http://mcp-clickhouse:8000/sse
+    timeout: 30000
+    initTimeout: 15000
+    title: "ClickHouse OTel Database"
+    description: "Query OpenTelemetry data (traces, metrics, logs) from ClickHouse at sql.clickhouse.com"
+    chatMenu: true
+    startup: true
+    serverInstructions: |
+      You have access to ClickHouse at sql.clickhouse.com, database: otel_v2.
+      Key tables: otel_traces, otel_metrics_sum, otel_metrics_gauge, otel_metrics_histogram, otel_logs.
+      Duration fields are in nanoseconds — divide by 1e6 for milliseconds.
+      Always filter by Timestamp for performance. Use SpanKind = 'SERVER' for entry-point spans.
+
+# Model configuration
+endpoints:
+  # Use LiteLLM proxy for all LLM requests
+  custom:
+    - name: "Observability AI"
+      apiKey: "${LITELLM_MASTER_KEY}"
+      baseURL: "http://litellm:4000/v1"
+      models:
+        default:
+          - "gemini-2.5-pro"
+          - "gemini-2.5-flash"
+          - "gemini-flash-latest"
+          - "claude-sonnet-4-6"
+          - "claude-haiku-4-5"
+        fetch: false
+      titleConvo: true
+      titleModel: "gemini-2.5-flash"
+      summarize: false
+      summaryModel: "gemini-2.5-flash"
+      forcePrompt: false
+      modelDisplayLabel: "Observability AI"
+      addParams:
+        max_tokens: 4096
+        temperature: 0.1
+
+      # Custom system message for observability
+      systemMessage: |
+        ## ARTIFACT OUTPUT RULE — NON-NEGOTIABLE
+
+        You MUST use artifact type `application/vnd.ant.mermaid` for every chart, graph, dashboard, or diagram.
+        You MUST NEVER use `application/vnd.ant.react` or any React artifact. The React/sandpack bundler is completely broken in this environment — it will always fail with a module error regardless of what code you write. There is no fix. Do not attempt it.
+
+        When asked for a "dashboard": create multiple mermaid artifacts (xychart-beta for bar/line charts, pie for distributions, flowchart for service maps).
+
+        Mermaid chart types:
+        - Bar or line chart → xychart-beta
+        - Pie / distribution → pie
+        - Service dependencies / architecture → flowchart LR
+        - Any other diagram → flowchart TD
+
+        ---
+
+        You are an expert observability analyst and SQL specialist helping engineers analyze OpenTelemetry data stored in ClickHouse.
+
+        Your role is to convert natural language questions about system performance, errors, latency, and service health into precise ClickHouse SQL queries.
+
+        Key reminders:
+        - Duration is stored in nanoseconds - always divide by 1,000,000 for milliseconds
+        - Use SpanKind = 'SERVER' for entry-point requests
+        - Always include Timestamp filters for performance
+        - Prefer materialized views when available
+
+        Available tables: otel_traces, otel_metrics, otel_logs, otel_services
+
+        Provide clear SQL queries, execute them, format results as tables, and give actionable insights.
+
+# Model specifications
+modelSpecs:
+  enforce: true
+  list:
+    - name: "gemini-2.5-pro"
+      label: "Gemini 2.5 Pro (Recommended)"
+      default: true
+      description: "Google's most capable model"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
+      mcpServers:
+        - "clickhouse-otel"
+      preset:
+        endpoint: "Observability AI"
+        model: "gemini-2.5-pro"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "gemini-2.5-flash"
+      label: "Gemini 2.5 Flash"
+      description: "Fast and capable for most queries"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
+      mcpServers:
+        - "clickhouse-otel"
+      preset:
+        endpoint: "Observability AI"
+        model: "gemini-2.5-flash"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "gemini-flash-latest"
+      label: "Gemini Flash Latest"
+      description: "Latest Gemini Flash model"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
+      mcpServers:
+        - "clickhouse-otel"
+      preset:
+        endpoint: "Observability AI"
+        model: "gemini-flash-latest"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "claude-sonnet-4-6"
+      label: "Claude Sonnet 4.6"
+      description: "Anthropic's latest and most capable model"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/anthropic.svg"
+      mcpServers:
+        - "clickhouse-otel"
+      preset:
+        endpoint: "Observability AI"
+        model: "claude-sonnet-4-6"
+        max_tokens: 4096
+        temperature: 0.1
+
+    - name: "claude-haiku-4-5"
+      label: "Claude Haiku 4.5"
+      description: "Fast and lightweight for simple queries"
+      iconURL: "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/anthropic.svg"
+      mcpServers:
+        - "clickhouse-otel"
+      preset:
+        endpoint: "Observability AI"
+        model: "claude-haiku-4-5"
+        max_tokens: 4096
+        temperature: 0.1
+

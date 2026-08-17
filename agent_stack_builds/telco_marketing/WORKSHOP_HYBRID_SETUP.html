@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Telco Marketing — Hybrid Setup Workshop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/atom-one-dark.css">
+<style>
+/* ---------- ClickHouse design tokens ---------- */
+:root {
+  /* Surface */
+  --canvas: #0a0a0a;
+  --surface-soft: #121212;
+  --surface-card: #1a1a1a;
+  --surface-elevated: #242424;
+  --hairline: #2a2a2a;
+  --hairline-strong: #3a3a3a;
+  /* Primary (electric yellow) */
+  --primary: #faff69;
+  --primary-active: #e6eb52;
+  --on-primary: #0a0a0a;
+  /* Text */
+  --on-dark: #ffffff;
+  --body: #cccccc;
+  --body-strong: #e6e6e6;
+  --muted: #888888;
+  --muted-soft: #5a5a5a;
+  /* Semantic */
+  --accent-emerald: #22c55e;
+  --accent-rose: #ef4444;
+  --accent-blue: #3b82f6;
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-pill: 9999px;
+}
+
+/* ---------- Base canvas ---------- */
+html, body { background: var(--canvas); }
+.reveal-viewport { background: var(--canvas) !important; }
+.reveal {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-weight: 400;
+  font-size: 40px;
+  color: var(--body);
+}
+.reveal .slides { text-align: left; }
+.reveal .slides > section,
+.reveal .slides > section > section { padding: 0; }
+
+/* ---------- Headings ---------- */
+.reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  text-transform: none;
+  color: var(--on-dark);
+  margin: 0 0 0.4em 0;
+  line-height: 1.1;
+}
+.reveal h1 { font-size: 2.2em; letter-spacing: -2.5px; line-height: 1.05; }
+.reveal h2 { font-size: 1.4em; letter-spacing: -1.5px; line-height: 1.15; }
+.reveal h3 {
+  font-size: 0.42em;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 1.1em;
+  margin-bottom: 0.6em;
+}
+.reveal h4 { font-size: 0.55em; font-weight: 600; letter-spacing: -0.2px; }
+
+/* ---------- Body text ---------- */
+.reveal p { font-size: 0.55em; line-height: 1.55; color: var(--body); margin: 0.5em 0; }
+.reveal ul, .reveal ol {
+  font-size: 0.55em;
+  line-height: 1.65;
+  color: var(--body);
+  padding-left: 1.2em;
+  margin: 0.4em 0;
+}
+.reveal ul li, .reveal ol li { margin: 0.2em 0; }
+.reveal a { color: var(--primary); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.reveal a:hover { color: var(--primary-active); }
+.reveal strong { color: var(--on-dark); font-weight: 600; }
+.reveal em { font-style: italic; color: var(--body-strong); }
+
+/* ---------- Code (code-window-card) ---------- */
+.reveal pre {
+  width: 100%;
+  margin: 0.6em 0;
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: none;
+  font-size: 0.45em;
+  overflow: hidden;
+}
+.reveal pre code {
+  font-family: 'JetBrains Mono', ui-monospace, "SF Mono", Menlo, monospace;
+  background: transparent !important;
+  padding: 1.2em 1.5em;
+  font-weight: 400;
+  line-height: 1.55;
+  max-height: 60vh;
+  color: var(--body-strong);
+}
+.reveal :not(pre) > code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  color: var(--primary);
+  background: var(--surface-elevated);
+  padding: 0.1em 0.4em;
+  border-radius: var(--r-sm);
+  font-size: 0.92em;
+  border: 1px solid var(--hairline);
+}
+/* Syntax highlighting → mute to ClickHouse palette */
+.reveal pre code.hljs { background: transparent !important; color: var(--body-strong); }
+.reveal .hljs-keyword,
+.reveal .hljs-built_in,
+.reveal .hljs-meta { color: var(--primary); }
+.reveal .hljs-string,
+.reveal .hljs-attr { color: var(--accent-emerald); }
+.reveal .hljs-comment,
+.reveal .hljs-quote { color: var(--muted-soft); font-style: italic; }
+.reveal .hljs-number,
+.reveal .hljs-literal { color: var(--accent-blue); }
+
+/* ---------- Tables ---------- */
+.reveal table {
+  font-size: 0.5em;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin: 0.6em 0;
+  width: 100%;
+}
+.reveal table th {
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.85em;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 0.85em 1em;
+  border-bottom: 1px solid var(--hairline);
+}
+.reveal table td {
+  padding: 0.85em 1em;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--body);
+  vertical-align: top;
+}
+.reveal table tr:last-child td { border-bottom: none; }
+.reveal table td code { font-size: 0.9em; }
+
+/* ---------- Step badge (badge-yellow) ---------- */
+.reveal .step-tag {
+  display: inline-block;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.3em;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 0.55em 1em;
+  border-radius: var(--r-pill);
+  vertical-align: middle;
+  margin-right: 0.7em;
+  line-height: 1;
+  position: relative;
+  top: -0.25em;
+}
+
+/* ---------- Meta / small text ---------- */
+.reveal .meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.36em;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 1.2em;
+}
+.reveal .tiny {
+  font-size: 0.32em;
+  color: var(--muted-soft);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.5px;
+}
+.reveal .small { font-size: 0.48em; color: var(--body); margin: 0.4em 0; }
+
+/* Section label (caption-uppercase) */
+.reveal .label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.32em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 0.6em;
+}
+
+/* ---------- Callouts (no fill, hairline border) ---------- */
+.reveal .callout {
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--primary);
+  background: var(--surface-soft);
+  padding: 0.9em 1.3em;
+  margin: 1em 0;
+  font-size: 0.5em;
+  line-height: 1.55;
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  color: var(--body);
+}
+.reveal .callout.danger { border-left-color: var(--accent-rose); }
+.reveal .callout.ok { border-left-color: var(--accent-emerald); }
+.reveal .callout strong { color: var(--on-dark); }
+.reveal .callout code { font-size: 0.95em; }
+
+/* ---------- Architecture (feature-card-dark) ---------- */
+.reveal .arch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 0.6em 0;
+  font-size: 0.5em;
+}
+.reveal .arch .panel {
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 1.6em 1.4em;
+}
+.reveal .arch .panel h4 {
+  margin: 0 0 1em 0;
+  color: var(--muted);
+  font-size: 0.65em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.reveal .arch .node {
+  display: inline-block;
+  padding: 0.4em 0.8em;
+  margin: 0.3em 0.3em 0.3em 0;
+  border-radius: var(--r-md);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+  background: var(--surface-elevated);
+  border: 1px solid var(--hairline-strong);
+  color: var(--body-strong);
+}
+.reveal .arch .node.brand {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-color: var(--primary);
+  font-weight: 500;
+}
+.reveal .arch .panel .note {
+  display: block;
+  color: var(--muted);
+  font-size: 0.7em;
+  margin-top: 0.8em;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ---------- Credentials grid (3 dark cards) ---------- */
+.reveal .cred-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin: 0.6em 0;
+  font-size: 0.48em;
+}
+.reveal .cred-grid .card {
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 1.5em 1.4em;
+}
+.reveal .cred-grid .card h4 {
+  margin: 0 0 1em 0;
+  font-size: 0.95em;
+  font-weight: 700;
+  color: var(--on-dark);
+  letter-spacing: -0.2px;
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 0.6em;
+}
+.reveal .cred-grid .card ul {
+  font-size: 1em;
+  padding-left: 0;
+  list-style: none;
+  margin: 0;
+  line-height: 1.6;
+}
+.reveal .cred-grid .card li { padding: 0.15em 0; }
+.reveal .cred-grid .card code {
+  color: var(--primary);
+  background: transparent;
+  padding: 0;
+  border: none;
+  font-size: 0.95em;
+}
+
+/* ---------- Agenda list ---------- */
+.reveal .agenda {
+  list-style: none;
+  padding: 0;
+  font-size: 0.55em;
+  margin: 0.6em 0;
+}
+.reveal .agenda li {
+  padding: 0.6em 0;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--body-strong);
+}
+.reveal .agenda li:last-child { border-bottom: none; }
+.reveal .num {
+  display: inline-block;
+  color: var(--primary);
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  width: 1.8em;
+  font-size: 0.9em;
+}
+
+/* ---------- Stat callout (yellow huge number) ---------- */
+.reveal .stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin: 0.5em 0;
+}
+.reveal .stat {
+  text-align: left;
+}
+.reveal .stat .num-big {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 1.4em;
+  color: var(--primary);
+  letter-spacing: -1.5px;
+  line-height: 1;
+  display: block;
+}
+.reveal .stat .num-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.32em;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-top: 0.4em;
+  display: block;
+}
+
+/* ---------- kbd ---------- */
+.reveal kbd {
+  background: var(--surface-elevated);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  padding: 0.15em 0.5em;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9em;
+  color: var(--on-dark);
+}
+
+/* ---------- Slide chrome ---------- */
+.reveal .slide-number {
+  color: var(--muted-soft);
+  font-family: 'JetBrains Mono', monospace;
+  background: transparent;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+.reveal .controls { color: var(--muted) !important; }
+.reveal .progress { background: rgba(255,255,255,0.05); }
+.reveal .progress span { background: var(--primary) !important; }
+
+/* ---------- CTA-band yellow slides ---------- */
+.reveal section[data-state="cta-band"] {
+  color: var(--on-primary);
+}
+.reveal section[data-state="cta-band"] h1,
+.reveal section[data-state="cta-band"] h2,
+.reveal section[data-state="cta-band"] h3,
+.reveal section[data-state="cta-band"] h4,
+.reveal section[data-state="cta-band"] p,
+.reveal section[data-state="cta-band"] li,
+.reveal section[data-state="cta-band"] strong { color: var(--on-primary) !important; }
+.reveal section[data-state="cta-band"] .meta,
+.reveal section[data-state="cta-band"] .tiny,
+.reveal section[data-state="cta-band"] .label,
+.reveal section[data-state="cta-band"] h3 { color: rgba(10,10,10,0.65) !important; }
+.reveal section[data-state="cta-band"] a { color: var(--on-primary); text-decoration-thickness: 2px; }
+.reveal section[data-state="cta-band"] code,
+.reveal section[data-state="cta-band"] :not(pre) > code {
+  color: var(--on-primary);
+  background: rgba(10,10,10,0.08);
+  border-color: rgba(10,10,10,0.2);
+}
+.reveal section[data-state="cta-band"] kbd {
+  background: var(--on-primary);
+  color: var(--primary);
+  border-color: var(--on-primary);
+}
+.reveal section[data-state="cta-band"] pre {
+  background: rgba(10,10,10,0.92);
+  border-color: rgba(10,10,10,0.92);
+}
+.reveal section[data-state="cta-band"] pre code { color: var(--on-dark); }
+.reveal section[data-state="cta-band"] table th,
+.reveal section[data-state="cta-band"] table td {
+  color: var(--on-primary);
+  border-color: rgba(10,10,10,0.2);
+}
+.reveal section[data-state="cta-band"] table th { background: rgba(10,10,10,0.08); }
+.reveal section[data-state="cta-band"] .step-tag {
+  background: var(--on-primary);
+  color: var(--primary);
+}
+.reveal section[data-state="cta-band"] .callout {
+  background: rgba(10,10,10,0.08);
+  border-color: rgba(10,10,10,0.2);
+  border-left-color: var(--on-primary);
+  color: var(--on-primary);
+}
+</style>
+</head>
+<body>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- =========================================================== -->
+<!-- Slide 1: Title (CTA-band yellow)                            -->
+<!-- =========================================================== -->
+<section data-state="cta-band" data-background-color="#faff69">
+  <span class="label">ClickHouse · Workshop</span>
+  <h1>Telco Marketing<br/>Hybrid Setup</h1>
+  <p class="meta">~25 min · Intermediate · Cloud + Claude</p>
+  <p class="tiny" style="margin-top: 3em;">
+    <kbd>→</kbd> next &nbsp;·&nbsp; <kbd>S</kbd> speaker notes &nbsp;·&nbsp; <kbd>F</kbd> fullscreen
+  </p>
+  <aside class="notes">
+    Welcome. By the end of 25 minutes you'll have a local LibreChat instance
+    talking to your own ClickHouse Cloud service via the remote MCP server,
+    traced into Langfuse, with telco data ready to query through Claude.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 2: Agenda                                             -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <span class="label">Agenda</span>
+  <h2>What we'll do</h2>
+  <ul class="agenda">
+    <li><span class="num">01</span> Collect three sets of cloud credentials</li>
+    <li><span class="num">02</span> Clone the repo, <code>make setup-hybrid</code></li>
+    <li><span class="num">03</span> Fill <code>.env</code> and enable Remote MCP</li>
+    <li><span class="num">04</span> Pin org/service in <code>librechat.hybrid.yaml</code></li>
+    <li><span class="num">05</span> <code>init-schema</code> → <code>generate-data</code> → <code>start</code></li>
+    <li><span class="num">06</span> Chat with telco data through Claude</li>
+    <li><span class="num">07</span> Inspect traces in Langfuse</li>
+  </ul>
+  <p class="meta">~20 min to first reply · 5 min for demos</p>
+  <aside class="notes">
+    The slowest step is sign-ups (Step 1). If attendees came with credentials in hand,
+    everything else moves fast.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 3: Architecture                                       -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <span class="label">Architecture</span>
+  <h2>What you'll build</h2>
+  <div class="arch">
+    <div class="panel">
+      <h4>Local · Docker</h4>
+      <div><span class="node">LibreChat :3080</span></div>
+      <div><span class="node">MongoDB</span><span class="node">Meilisearch</span></div>
+      <span class="note">chat UI · convo store · search index</span>
+    </div>
+    <div class="panel">
+      <h4>Cloud</h4>
+      <div><span class="node brand">ClickHouse Cloud</span></div>
+      <div><span class="node">Remote MCP</span></div>
+      <div><span class="node">Langfuse Cloud</span></div>
+      <div><span class="node">Anthropic API</span></div>
+    </div>
+  </div>
+  <div class="callout">
+    LibreChat is the only thing running locally. Database, MCP server, observability, and LLM all live in the cloud.
+  </div>
+  <aside class="notes">
+    Highlight the inversion: traditional setups put the DB in Docker; here only the
+    chat UI is local. The MCP server is the bridge — it speaks SQL to ClickHouse on
+    Claude's behalf.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 4: Prerequisites                                      -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <span class="label">Before we start</span>
+  <h2>Prerequisites</h2>
+  <h3>On your machine</h3>
+  <ul>
+    <li>Docker Desktop 4.x+ — WSL2 backend on Windows</li>
+    <li><code>git</code>, <code>make</code>, <code>openssl</code> on PATH</li>
+    <li>A terminal</li>
+  </ul>
+  <h3>Open these tabs now</h3>
+  <ul>
+    <li><a href="https://clickhouse.cloud">clickhouse.cloud</a> — free Development tier</li>
+    <li><a href="https://cloud.langfuse.com">cloud.langfuse.com</a> — free tier</li>
+    <li><a href="https://console.anthropic.com">console.anthropic.com</a> — needs ~$5 of credit</li>
+  </ul>
+  <aside class="notes">
+    Verify each prerequisite by show of hands. If anyone doesn't have an account,
+    point them to a buddy — sign-ups take a few minutes.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 5: Step 1 — credentials overview                      -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 01</span>Collect eight credentials</h2>
+  <div class="cred-grid">
+    <div class="card">
+      <h4>ClickHouse Cloud</h4>
+      <ul>
+        <li><code>CLICKHOUSE_HOST</code></li>
+        <li><code>CLICKHOUSE_PASSWORD</code></li>
+        <li>organization UUID <span style="color: var(--muted-soft);">→ YAML</span></li>
+        <li>service UUID <span style="color: var(--muted-soft);">→ YAML</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Langfuse</h4>
+      <ul>
+        <li><code>LANGFUSE_PUBLIC_KEY</code></li>
+        <li><code>LANGFUSE_SECRET_KEY</code></li>
+        <li><code>LANGFUSE_BASE_URL</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Anthropic</h4>
+      <ul>
+        <li><code>ANTHROPIC_API_KEY</code></li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    Capture them all into a scratch buffer first. You'll paste them into <code>.env</code> in Step 04.
+  </div>
+  <aside class="notes">
+    8 values. The next 3 slides walk through where each one comes from.
+    Encourage a temporary text file rather than the password manager.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 6: Step 1a — ClickHouse Cloud                         -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 01a</span>ClickHouse Cloud</h2>
+  <ol>
+    <li>Log in to <a href="https://console.clickhouse.cloud">console.clickhouse.cloud</a></li>
+    <li>Create or pick a service — free <strong>Development</strong> tier works</li>
+    <li><strong>Connect</strong> → <strong>HTTPS</strong> → grab host and password</li>
+    <li><strong>Service UUID</strong> — from the service-page URL: <code>console.clickhouse.cloud/services/&lt;SERVICE_UUID&gt;</code></li>
+    <li><strong>Organization UUID</strong> — open <strong>Organization → Settings</strong> in the console. The URL becomes <code>console.clickhouse.cloud/organizations/&lt;ORG_UUID&gt;</code>.</li>
+  </ol>
+  <div class="callout">
+    Save both UUIDs — they go directly into <code>librechat.hybrid.yaml</code> in Step 06, <strong>not into <code>.env</code></strong> (LibreChat doesn't substitute env vars in <code>serverInstructions</code>).
+  </div>
+  <aside class="notes">
+    Service UUID is in the service-page URL. Org UUID is NOT in the service URL —
+    grab it from Organization → Settings.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 7: Step 1b — Langfuse                                 -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 01b</span>Langfuse Cloud</h2>
+  <ol>
+    <li>Log in to <a href="https://cloud.langfuse.com">cloud.langfuse.com</a> (or <code>us.cloud.langfuse.com</code>)</li>
+    <li>Create a project — e.g. <code>telco-workshop</code></li>
+    <li>Settings → <strong>API Keys</strong> → <strong>Create new API keys</strong></li>
+    <li>Save the public key (<code>pk-lf-…</code>) and secret key (<code>sk-lf-…</code>)</li>
+    <li>Note the region's base URL</li>
+  </ol>
+  <pre><code class="language-bash">LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_BASE_URL=https://cloud.langfuse.com    # or us.cloud.langfuse.com</code></pre>
+  <aside class="notes">
+    Langfuse free tier covers ~50k observations/month — more than enough for a workshop.
+    EU vs US region: pick whichever is closer.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 8: Step 1c — Anthropic                                -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 01c</span>Anthropic API key</h2>
+  <ol>
+    <li>Log in to <a href="https://console.anthropic.com">console.anthropic.com</a></li>
+    <li>Add ~$5 of credit (Settings → Billing) if new</li>
+    <li><strong>API Keys</strong> → <strong>Create Key</strong></li>
+    <li>Copy <code>sk-ant-api03-…</code> immediately — shown <em>once</em></li>
+  </ol>
+  <div class="callout danger">
+    The key won't be visible again after you close the dialog. Save it before clicking away.
+  </div>
+  <div class="callout ok">
+    Checkpoint — 8 values captured. Move to Step 02.
+  </div>
+  <aside class="notes">
+    Default presets use Claude Opus 4.6, Sonnet 4.6, and Haiku 3.5.
+    A workshop session typically uses under $1 of credit per attendee.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 9: Step 2 — clone                                     -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 02</span>Clone the repo</h2>
+  <pre><code class="language-bash">git clone https://github.com/ClickHouse/ClickHouse_Demos.git
+cd ClickHouse_Demos/agent_stack_builds/telco_marketing</code></pre>
+  <div class="callout">
+    Run all the remaining commands from this directory.
+  </div>
+  <aside class="notes">
+    Public repo. On Windows, do this inside WSL2 — the Makefile assumes POSIX shell.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 10: Step 3 — setup-hybrid                             -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 03</span><code>make setup-hybrid</code></h2>
+  <pre><code class="language-bash">make setup-hybrid</code></pre>
+  <h3>What this does</h3>
+  <ul>
+    <li>Copies <code>.env.hybrid.example</code> → <code>.env</code></li>
+    <li>Generates random <code>CREDS_KEY</code>, <code>JWT_SECRET</code>, <code>MEILI_MASTER_KEY</code> via <code>openssl</code></li>
+    <li>Prints "Next steps"</li>
+  </ul>
+  <div class="callout">
+    Does <strong>not</strong> touch your cloud credentials — those go in next.
+  </div>
+  <aside class="notes">
+    Show the printed "Next steps" output. It mirrors the rest of this deck.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 11: Step 4 — fill in .env                             -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 04</span>Fill in <code>.env</code></h2>
+  <pre><code class="language-bash"># ClickHouse Cloud
+CLICKHOUSE_HOST=&lt;your-instance&gt;.region.aws.clickhouse.cloud
+CLICKHOUSE_PASSWORD=&lt;your-password&gt;
+
+# Langfuse Cloud
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+
+# Anthropic
+ANTHROPIC_API_KEY=sk-ant-api03-...</code></pre>
+  <div class="callout">
+    Your org/service UUIDs do <strong>not</strong> go here. They're pasted directly into the YAML in Step 06.
+  </div>
+  <aside class="notes">
+    These are the only lines they need to edit. Everything else has working defaults.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 12: Step 5 — Enable Remote MCP                        -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 05</span>Enable Remote MCP</h2>
+  <ol>
+    <li>ClickHouse Cloud console → your service</li>
+    <li><strong>Connect</strong> in the left sidebar</li>
+    <li>Toggle on <strong>Remote MCP Server</strong></li>
+  </ol>
+  <pre><code class="language-text">https://mcp.clickhouse.cloud/mcp</code></pre>
+  <div class="callout">
+    Endpoint is already wired into <code>librechat.hybrid.yaml</code>. OAuth gates access — LibreChat prompts you in the browser on first tool call.
+  </div>
+  <aside class="notes">
+    The Remote MCP toggle is on the Connect page next to the HTTPS/Native tabs.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 13: Step 6 — pin UUIDs in YAML                        -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 06</span>Pin UUIDs in YAML</h2>
+  <p>LibreChat doesn't substitute <code>${VAR}</code> inside <code>serverInstructions</code>, so the IDs go in the YAML directly.</p>
+  <p>Open <code>librechat.hybrid.yaml</code> (line ~54) and replace both UUIDs with <strong>your own</strong>:</p>
+  <pre><code class="language-yaml">serverInstructions: |
+  TARGET (skip discovery; pass these IDs directly to every tool call):
+  - organization_id: &lt;YOUR-ORG-UUID&gt;
+  - service_id:      &lt;YOUR-SERVICE-UUID&gt;
+  Do NOT call get_organizations or get_services_list ...</code></pre>
+  <div class="callout danger">
+    Without this, Claude burns 1–2 turns enumerating every org/service before each query.
+  </div>
+  <aside class="notes">
+    Only manual file edit in the entire flow. LibreChat env-var substitution is only
+    supported on apiKey/url/headers fields. Future iteration could templatize via sed.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 14: Step 7 — init-schema                              -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 07</span>Initialize schema</h2>
+  <pre><code class="language-bash">make init-schema</code></pre>
+  <p>Spins up an ephemeral <code>clickhouse-client</code> container, connects to your Cloud service over HTTPS, and applies <code>clickhouse/init.sql</code>:</p>
+  <ul>
+    <li>4 tables: <code>customers</code>, <code>call_detail_records</code>, <code>network_events</code>, <code>marketing_campaigns</code></li>
+    <li>3 materialized views: <code>customer_usage_summary</code>, <code>network_health_summary</code>, <code>campaign_performance</code></li>
+  </ul>
+  <div class="callout ok">Expected: <code>[OK] Schema initialized</code></div>
+  <aside class="notes">
+    If you see an SSL or auth error, double-check CLICKHOUSE_HOST and PASSWORD.
+    The native TCP port 9440 is used; some corporate firewalls block it.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 15: Step 8 — generate-data (stat callouts)            -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 08</span>Generate data</h2>
+  <pre><code class="language-bash">make generate-data</code></pre>
+  <span class="label">Medium preset · default</span>
+  <div class="stat-row">
+    <div class="stat">
+      <span class="num-big">10K</span>
+      <span class="num-label">Customers</span>
+    </div>
+    <div class="stat">
+      <span class="num-big">7.8M</span>
+      <span class="num-label">Call records</span>
+    </div>
+    <div class="stat">
+      <span class="num-big">300K</span>
+      <span class="num-label">Network events</span>
+    </div>
+    <div class="stat">
+      <span class="num-big">100</span>
+      <span class="num-label">Campaigns</span>
+    </div>
+  </div>
+  <p class="small">Generation ~20 s · insert to Cloud ~30–60 s. Total under 2 minutes.</p>
+  <div class="callout">
+    Smaller dataset? Set <code>DATA_SIZE=small</code> in <code>.env</code> (1K customers, finishes in seconds).
+  </div>
+  <aside class="notes">
+    The data generator is vectorized numpy + column-oriented inserts.
+    Memory peaks under 200 MB for medium. For 2xl (234M CDRs), 5-10 min total.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 16: Step 9 — make start                               -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 09</span><code>make start</code></h2>
+  <pre><code class="language-bash">make start</code></pre>
+  <p>Brings up <strong>LibreChat</strong>, <strong>MongoDB</strong>, <strong>Meilisearch</strong>. Blocks until LibreChat's health check passes (~30 s first run), then auto-creates the workshop user.</p>
+  <pre><code class="language-text">[OK] Default user created: admin@telco.local / workshop123</code></pre>
+  <div class="callout ok">
+    Run <code>docker ps</code> — <code>telco-librechat</code> should show <code>(healthy)</code>.
+  </div>
+  <aside class="notes">
+    Order: generate-data is Step 08, start is Step 09. The data-gen container is
+    a one-shot and stays exited after step 08 — that's fine.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 17: Step 10 — verify                                  -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 10</span>Verify</h2>
+  <pre><code class="language-bash">make check-db</code></pre>
+  <p>Expected row counts:</p>
+  <pre><code class="language-text">customers              10000
+call_detail_records    ~7800000
+network_events         300000
+marketing_campaigns    100</code></pre>
+  <div class="callout ok">
+    All four tables populated — ready to chat.
+  </div>
+  <aside class="notes">
+    Zero counts → data-generator didn't connect; re-check credentials.
+    Dramatically wrong → ran generate-data twice without truncating;
+    use `make clean-data` to truncate and re-run.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 18: Step 11 — Chat                                    -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 11</span>Open LibreChat &amp; chat</h2>
+  <ol>
+    <li>Browse to <a href="http://localhost:3080">localhost:3080</a></li>
+    <li>Log in: <code>admin@telco.local</code> / <code>workshop123</code></li>
+    <li>Default preset = <strong>Claude Opus 4.6</strong>, ClickHouse MCP tool already attached</li>
+    <li>First message — try:</li>
+  </ol>
+  <pre><code class="language-text">Show me the top 10 customers with the highest churn probability.</code></pre>
+  <div class="callout">
+    First tool call → OAuth prompt for ClickHouse Cloud. Approve once; token is cached for the session.
+  </div>
+  <aside class="notes">
+    Watch the tool-call panel: Claude passes the pinned organization_id and
+    service_id directly to run_select_query, skipping discovery.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 19: Demo prompts (CTA-band yellow)                    -->
+<!-- =========================================================== -->
+<section data-state="cta-band" data-background-color="#faff69">
+  <span class="label">Demo</span>
+  <h2>Try these prompts</h2>
+  <table>
+    <tr>
+      <th>Prompt</th>
+      <th>What it shows</th>
+    </tr>
+    <tr>
+      <td>Which region has the most network anomalies?</td>
+      <td>Single aggregation, bar chart</td>
+    </tr>
+    <tr>
+      <td>What is the ROI of our marketing campaigns?</td>
+      <td>Joins + computed columns</td>
+    </tr>
+    <tr>
+      <td>Build me a dashboard of customer segments and ARPU</td>
+      <td>Multi-query infographic — KPIs + charts + findings</td>
+    </tr>
+    <tr>
+      <td>Find customers likely to churn and recommend retention</td>
+      <td>Multi-step reasoning across tables</td>
+    </tr>
+  </table>
+  <p class="meta" style="margin-top: 1em;">↑ Save the dashboard prompt for the close — that's the wow moment.</p>
+  <aside class="notes">
+    The infographic renders inline in LibreChat as one HTML artifact.
+    Three-layer storytelling: KPIs (what), Charts (detail), Findings (so-what).
+    Drop this at minute ~25 once everyone's basic chats are working.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 20: Step 12 — Langfuse                                -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <h2><span class="step-tag">Step 12</span>Inspect traces in Langfuse</h2>
+  <ol>
+    <li>Open <a href="https://cloud.langfuse.com">cloud.langfuse.com</a> → your project</li>
+    <li><strong>Traces</strong> sidebar — one trace per chat message</li>
+    <li>Click any trace → drill into generations + tool calls</li>
+  </ol>
+  <h3>Per trace</h3>
+  <ul>
+    <li>Full system + user messages</li>
+    <li>Claude's tool calls and the SQL produced</li>
+    <li>MCP responses (raw row data)</li>
+    <li>Token counts &amp; latency at every step</li>
+  </ul>
+  <div class="callout">
+    This is the LLMOps view your team would use in production — debugging, cost tracking, prompt iteration.
+  </div>
+  <aside class="notes">
+    Traces appear within 5-10 seconds of the response. Show the cost-per-trace
+    breakdown — Opus 4.6 is the most expensive; Sonnet 4.6 cuts cost ~5x.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 22: Tear-down & next                                  -->
+<!-- =========================================================== -->
+<section data-background-color="#0a0a0a">
+  <span class="label">Wrap-up</span>
+  <h2>Tear-down &amp; what's next</h2>
+  <h3>Stop / clean</h3>
+  <pre><code class="language-bash">make stop      # stop containers, keep volumes + .env
+make clean     # also remove volumes (asks first)</code></pre>
+  <h3>What's next</h3>
+  <ul>
+    <li>Customize <code>promptPrefix</code> in <code>librechat.hybrid.yaml</code> for your domain</li>
+    <li>Add tables / distributions in <code>data-generator/generator.py</code></li>
+    <li>Air-gapped variant: <code>make setup-local</code> with Ollama + Qwen3.5 2B</li>
+  </ul>
+  <aside class="notes">
+    Local mode runs Langfuse and ClickHouse in Docker too — fully offline,
+    no API costs. Useful for air-gapped environments.
+  </aside>
+</section>
+
+<!-- =========================================================== -->
+<!-- Slide 23: End (CTA-band yellow)                             -->
+<!-- =========================================================== -->
+<section data-state="cta-band" data-background-color="#faff69">
+  <span class="label">Thanks</span>
+  <h1>Questions?</h1>
+  <p class="meta" style="margin-top: 1.5em;">
+    <a href="https://github.com/ClickHouse/ClickHouse_Demos/tree/main/agent_stack_builds/telco_marketing">github.com/ClickHouse/ClickHouse_Demos</a>
+  </p>
+  <p class="tiny" style="margin-top: 3em;">
+    Handout · <code>WORKSHOP_HYBRID_SETUP.md</code> &nbsp;·&nbsp; Slides · <code>WORKSHOP_HYBRID_SETUP.html</code>
+  </p>
+  <aside class="notes">
+    Thank attendees. Offer to stick around 10 minutes for one-on-one debugging.
+  </aside>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'none',
+    backgroundTransition: 'none',
+    plugins: [RevealHighlight, RevealNotes]
+  });
+</script>
+
+</body>
+</html>

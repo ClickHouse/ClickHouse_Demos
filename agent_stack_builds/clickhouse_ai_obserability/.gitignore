@@ -1,0 +1,72 @@
+# Environment variables (contains secrets!)
+.env
+workshop_files/.env
+
+# Docker volumes
+**/data/
+**/volumes/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+workshop_files/logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Backup files
+*.bak
+backups/
+
+# Node modules (if running locally)
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Analysis/reference files (keep in repo but ignore local modifications)
+TELCO_WORKSHOP_ANALYSIS.md
+README_ANALYSIS_SUMMARY.md
+INDEX.md
+OBSERVABILITY_WORKSHOP_GUIDE.md
+ClickHouse_Demos/

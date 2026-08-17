@@ -18,7 +18,6 @@ define SERVICE_TABLE
 	 LC_PASS=$$(grep -s '^LIBRECHAT_USER_PASSWORD=' .env 2>/dev/null | cut -d= -f2) && \
 	 echo "  LibreChat    http://localhost:3080        $$LC_EMAIL / $$LC_PASS"
 	@echo "  Langfuse     http://localhost:3000        admin@telco.local / admin123"
-	@echo "  LiteLLM      http://localhost:4000"
 	@echo "  ClickHouse   http://localhost:8124        default / clickhouse"
 	@echo ""
 endef
