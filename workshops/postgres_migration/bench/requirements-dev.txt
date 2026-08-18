@@ -1,0 +1,8 @@
+# Test-only dependencies for the offline unit tests in tests/.
+#
+# Deliberately does NOT include `-r requirements.txt`. run.py imports asyncpg lazily
+# inside run_benchmark(), so percentile, WriterMonitor, DashboardStats, build_result,
+# render_markdown and parse_args all import and run with no database driver installed --
+# which is also why `python3 run.py --help` works on a bare machine. Adding the driver
+# here would make the unit-test job depend on a wheel it never loads.
+pytest==9.0.3

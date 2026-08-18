@@ -1,0 +1,366 @@
+{
+  "uid": "shop-ops",
+  "title": "Shop operations",
+  "description": "Eight hand-written SQL panels against the shop database. Every panel's SQL is byte-identical to the matching file in bench/queries/, which scripts/preflight.sh enforces: the point of the workshop is that this SQL does not change when the database underneath it does.",
+  "tags": [
+    "postgres-migration",
+    "shop"
+  ],
+  "timezone": "utc",
+  "editable": true,
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Revenue by hour (7 days)",
+      "description": "bench/queries/q1_revenue_by_hour.sql",
+      "datasource": {
+        "type": "postgres",
+        "uid": "shop"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "shop"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('hour', placed_at) AS hour, sum(line_total) AS revenue\nFROM order_items\nWHERE placed_at >= now() - interval '7 days'\nGROUP BY 1\nORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Orders by status per day (30 days)",
+      "description": "bench/queries/q2_orders_by_status.sql",
+      "datasource": {
+        "type": "postgres",
+        "uid": "shop"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "shop"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', placed_at) AS day, status, count(*) AS orders\nFROM orders\nWHERE placed_at >= now() - interval '30 days'\nGROUP BY 1, 2\nORDER BY 1, 2"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "partitionByValues",
+          "options": {
+            "fields": [
+              "status"
+            ],
+            "keepFields": false
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "barchart",
+      "title": "Revenue by region (30 days)",
+      "description": "bench/queries/q3_revenue_by_region.sql",
+      "datasource": {
+        "type": "postgres",
+        "uid": "shop"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "shop"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT c.region, sum(i.quantity) AS units, sum(i.line_total) AS revenue\nFROM order_items i\nJOIN orders o ON o.order_id = i.order_id\nJOIN customers c ON c.customer_id = o.customer_id\nWHERE i.placed_at >= now() - interval '30 days'\nGROUP BY 1\nORDER BY revenue DESC"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Average order value by day (30 days)",
+      "description": "bench/queries/q4_avg_order_value.sql",
+      "datasource": {
+        "type": "postgres",
+        "uid": "shop"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "shop"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', placed_at) AS day, round(avg(order_total), 2) AS avg_order_value\nFROM (\n  SELECT order_id, placed_at, sum(line_total) AS order_total\n  FROM order_items\n  WHERE placed_at >= now() - interval '30 days'\n  GROUP BY 1, 2\n) per_order\nGROUP BY 1\nORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Top 20 SKUs by revenue (30 days)",
+      "description": "bench/queries/q5_top_skus.sql",
+      "datasource": {
+        "type": "postgres",
+        "uid": "shop"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "shop"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT p.sku, p.category, sum(i.quantity) AS units, sum(i.line_total) AS revenue\nFROM order_items i\nJOIN products p ON p.product_id = i.product_id\nWHERE i.placed_at >= now() - interval '30 days'\nGROUP BY 1, 2\nORDER BY revenue DESC\nLIMIT 20"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "piechart",
+      "title": "Category mix (90 days)",
+      "description": "bench/queries/q6_category_mix.sql",
+      "datasource": {
+        "type": "postgres",
+        "uid": "shop"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "shop"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT p.category,\n       sum(i.line_total) AS revenue,\n       round(100 * sum(i.line_total) / (SELECT sum(line_total) FROM order_items WHERE placed_at >= now() - interval '90 days'), 2) AS pct_of_revenue\nFROM order_items i\nJOIN products p ON p.product_id = i.product_id\nWHERE i.placed_at >= now() - interval '90 days'\nGROUP BY 1\nORDER BY revenue DESC"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Revenue run rate, rolling 7 day (90 days)",
+      "description": "bench/queries/q7_revenue_run_rate.sql",
+      "datasource": {
+        "type": "postgres",
+        "uid": "shop"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "shop"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT day, revenue, avg(revenue) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS rolling_7d\nFROM (\n  SELECT date_trunc('day', placed_at) AS day, sum(line_total) AS revenue\n  FROM order_items\n  WHERE placed_at >= now() - interval '90 days'\n  GROUP BY 1\n) daily\nORDER BY day"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Refund rate by region (90 days)",
+      "description": "bench/queries/q8_refund_rate.sql",
+      "datasource": {
+        "type": "postgres",
+        "uid": "shop"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "shop"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT c.region,\n       count(*) AS orders,\n       sum(CASE WHEN o.status = 'refunded' THEN 1 ELSE 0 END) AS refunded,\n       round(100.0 * sum(CASE WHEN o.status = 'refunded' THEN 1 ELSE 0 END) / count(*), 2) AS refund_pct\nFROM orders o\nJOIN customers c ON c.customer_id = o.customer_id\nWHERE o.placed_at >= now() - interval '90 days'\nGROUP BY 1\nORDER BY refund_pct DESC"
+        }
+      ]
+    }
+  ]
+}

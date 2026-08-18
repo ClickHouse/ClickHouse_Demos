@@ -1,0 +1,23 @@
+apiVersion: 1
+
+# One datasource, on purpose. The whole workshop turns on the fact that a participant
+# changes `url` exactly once, at cutover, and nothing else -- not the database name, not
+# the role, and above all not a single panel's SQL.
+datasources:
+  - name: shop
+    # The dashboard JSON references this datasource by uid, so it is pinned here rather
+    # than left to Grafana to generate. Change it in both places or neither.
+    uid: shop
+    type: postgres
+    access: proxy
+    # The single line a participant edits, once, at cutover. Everything else -- and every
+    # panel's SQL -- is identical before and after the migration.
+    url: ${SHOP_DB_HOST}
+    database: shop
+    user: shop_analytics
+    secureJsonData:
+      password: ${SHOP_ANALYTICS_PASSWORD}
+    jsonData:
+      sslmode: require
+      postgresVersion: 1700
+    isDefault: true

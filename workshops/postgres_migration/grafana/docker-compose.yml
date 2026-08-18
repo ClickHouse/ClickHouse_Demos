@@ -1,0 +1,17 @@
+# The operations dashboard. Started once in module 01 and never restarted for the
+# migration: at cutover the participant changes SHOP_DB_HOST and recreates the container,
+# which is the only application-side change the whole workshop asks for.
+services:
+  grafana:
+    image: grafana/grafana:11.6.0
+    ports:
+      - "3000:3000"
+    environment:
+      SHOP_DB_HOST: ${SHOP_DB_HOST:?set SHOP_DB_HOST to host:port}
+      SHOP_ANALYTICS_PASSWORD: ${SHOP_ANALYTICS_PASSWORD:?set SHOP_ANALYTICS_PASSWORD}
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro

@@ -1,0 +1,21 @@
+# Everything below is produced by running this lab and must never be committed.
+#
+# This file is deliberately local to the workshop rather than relying on a repository-root
+# ignore: you will run `terraform init` in terraform/, which downloads provider binaries
+# measured in hundreds of megabytes, and `pytest`, which leaves bytecode caches. A copy of
+# this directory taken into another repository loses any root-level rule but keeps this one.
+#
+# .terraform.lock.hcl is NOT ignored on purpose: it pins provider versions so every
+# participant resolves the same ones.
+.terraform/
+terraform.tfstate
+terraform.tfstate.*
+terraform.tfvars
+*.tfplan
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Benchmark output: your own measurements, not repository content.
+bench/results/
