@@ -1,0 +1,7 @@
+# Test-only dependencies for the offline unit tests in tests/.
+#
+# Deliberately does NOT include `-r requirements.txt`. writer.py imports asyncpg
+# lazily inside run(), so every function the tests exercise -- percentile, Pacer,
+# Stats and report() -- imports and runs with no database driver installed. Adding
+# the driver here would make the unit-test job depend on a wheel it never loads.
+pytest==9.0.3
