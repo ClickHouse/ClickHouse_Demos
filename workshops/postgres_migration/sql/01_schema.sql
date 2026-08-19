@@ -3,7 +3,7 @@
 --
 -- Invoke with the two role passwords supplied as psql variables:
 --
---   psql -h "$PGHOST" -U postgres -d shop \
+--   psql -h "$RDS_HOST" -U shopadmin -d shop \
 --        -v writer_password="..." -v analytics_password="..." -f 01_schema.sql
 
 CREATE TABLE customers (

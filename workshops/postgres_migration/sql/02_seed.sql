@@ -9,7 +9,7 @@
 -- set only if it was not already supplied on the command line, so an override needs no
 -- edit to this file:
 --
---   psql -h "$PGHOST" -U postgres -d shop -v orders=2000000 -f 02_seed.sql
+--   psql -h "$RDS_HOST" -U shopadmin -d shop -v orders=2000000 -f 02_seed.sql
 --
 -- The defaults are sized for the RDS instance created by ../terraform. They are far too
 -- large to run against a laptop container -- pass smaller values if you are testing.
