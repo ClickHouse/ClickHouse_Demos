@@ -22,11 +22,13 @@ variable "allocated_storage_gb" {
   default     = 200
 }
 
-# ClickHouse Managed Postgres creates the SUBSCRIPTION, so it dials OUT to this instance.
-# Narrow this to ClickHouse Cloud's documented egress addresses once confirmed (open item 1
-# in the design doc). Until then it is participant-supplied and deliberately explicit.
+# ClickPipes reads FROM this instance, so it dials IN from its own documented static egress
+# addresses -- not from the Managed Postgres instance, which is a common wrong guess because the
+# hand-rolled logical-replication version of this leg did work that way. Set this to the
+# ClickPipes addresses for your region plus your own /32. Participant-supplied and deliberately
+# explicit; there is no default that would be both correct and safe.
 variable "subscriber_cidrs" {
-  description = "CIDRs allowed to reach Postgres on 5432. Set this to the ClickHouse Cloud egress range for your region, plus your own /32."
+  description = "CIDRs allowed to reach Postgres on 5432. Set this to the ClickPipes static egress addresses for your region, plus your own /32."
   type        = list(string)
 }
 
