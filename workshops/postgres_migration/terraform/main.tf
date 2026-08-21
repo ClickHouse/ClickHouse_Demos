@@ -19,7 +19,7 @@ resource "aws_db_parameter_group" "shop" {
   family      = "postgres17"
   description = "Logical replication enabled so this instance can be a publication source."
 
-  # Static parameter: RDS requires an instance reboot before it takes effect. Module 03
+  # Static parameter: RDS requires an instance reboot before it takes effect. Module 01
   # verifies with `SHOW wal_level` returning `logical`.
   parameter {
     name         = "rds.logical_replication"
