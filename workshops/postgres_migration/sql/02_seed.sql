@@ -13,6 +13,17 @@
 --
 -- The defaults are sized for the RDS instance created by ../terraform. They are far too
 -- large to run against a laptop container -- pass smaller values if you are testing.
+--
+-- Re-runnable. Each INSERT is guarded by a count against its own target, so a seed that died
+-- partway -- or was killed -- can simply be run again and only the unfinished tables reload.
+-- Without the guards a second run aborts on products.sku's unique constraint and leaves the
+-- reload impossible without manual cleanup. Each table is loaded by ONE statement, so a table is
+-- either empty of seed rows or complete; there is no partially-seeded state for the guard to
+-- misjudge. The orders and order_items guards compare against the target rather than testing for
+-- emptiness, because app/writer.py inserts into both and would otherwise make them look done.
+--
+-- To reseed at a different size, truncate first:
+--   TRUNCATE order_items, orders, products, customers RESTART IDENTITY;
 \if :{?customers}
 \else
   \set customers 500000
@@ -36,20 +47,23 @@ INSERT INTO customers (email, region, created_at)
 SELECT 'c' || g || '@example.test',
        (ARRAY['us-east','us-west','eu-west','apac'])[1 + (g % 4)],
        now() - (random() * interval '365 days')
-FROM generate_series(1, :customers) g;
+FROM generate_series(1, :customers) g
+WHERE (SELECT count(*) FROM customers) < :customers;
 
 INSERT INTO products (sku, category, unit_price)
 SELECT 'SKU-' || lpad(g::text, 7, '0'),
        (ARRAY['audio','video','home','outdoor','kitchen'])[1 + (g % 5)],
        round((random() * 400 + 5)::numeric, 2)
-FROM generate_series(1, :products) g;
+FROM generate_series(1, :products) g
+WHERE (SELECT count(*) FROM products) < :products;
 
 INSERT INTO orders (customer_id, status, placed_at, updated_at)
 SELECT 1 + (random() * (:customers - 1))::bigint,
        (ARRAY['placed','paid','shipped','refunded'])[1 + (g % 4)],
        now() - (random() * interval '90 days'),
        now()
-FROM generate_series(1, :orders) g;
+FROM generate_series(1, :orders) g
+WHERE (SELECT count(*) FROM orders) < :orders;
 
 -- One row per (order, item slot). order_items.placed_at is copied from the order so the
 -- benchmark queries in ../bench can filter either table on the same time window.
@@ -59,6 +73,7 @@ SELECT o.order_id,
        1 + (random() * 4)::int,
        round((random() * 500 + 1)::numeric, 2),
        o.placed_at
-FROM orders o, generate_series(1, :items_per_order);
+FROM orders o, generate_series(1, :items_per_order)
+WHERE (SELECT count(*) FROM order_items) < :orders * :items_per_order;
 
 ANALYZE;
