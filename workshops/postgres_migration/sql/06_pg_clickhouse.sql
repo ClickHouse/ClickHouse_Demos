@@ -102,7 +102,17 @@ GRANT USAGE ON SCHEMA ch TO shop_analytics;
 -- This creates foreign tables named after the ClickHouse tables the ClickPipe created:
 -- customers, products, orders, order_items. Nothing in `public` is touched. Add
 -- `LIMIT TO (...)` if the ClickHouse database holds more than the four.
+-- The IMPORT runs as whichever role executes this file, and Postgres requires THAT role to
+-- have its own user mapping -- the one created in step 3 is for shop_analytics and does not
+-- satisfy it. Create one for the duration of the import and drop it immediately after, so the
+-- only mapping that outlives this file is still shop_analytics's.
+CREATE USER MAPPING FOR CURRENT_USER
+  SERVER ch_srv
+  OPTIONS (user :'ch_user', password :'ch_password');
+
 IMPORT FOREIGN SCHEMA :"ch_database" FROM SERVER ch_srv INTO ch;
+
+DROP USER MAPPING FOR CURRENT_USER SERVER ch_srv;
 
 -- Grant AFTER the import, because the foreign tables did not exist until the line above
 -- ran, and IMPORT FOREIGN SCHEMA leaves them owned by the master user. Without this the
@@ -143,7 +153,7 @@ ALTER ROLE shop_analytics SET search_path = ch, public;
 -- ---------------------------------------------------------------------------
 -- Prove the routing per role, before trusting a dashboard panel.
 -- ---------------------------------------------------------------------------
--- Module 05 runs exactly these two. Both use the q1_revenue_by_hour.sql text verbatim, and
+-- Module 06 runs exactly these two. Both use the q1_revenue_by_hour.sql text verbatim, and
 -- the reconnect matters: `\c` starts a new session, which is when the role's search_path
 -- from step 6 is applied.
 --
