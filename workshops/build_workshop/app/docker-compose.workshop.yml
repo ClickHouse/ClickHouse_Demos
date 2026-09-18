@@ -89,6 +89,9 @@ services:
     build:
       context: ./loadgen
     container_name: nyc-taxi-workshop-pg-trip-writer
+    # Resolve the managed Postgres endpoint independently of host/VPN DNS caches.
+    dns:
+      - ${PG_DNS_SERVER:-1.1.1.1}
     environment:
       - PGHOST=${PGHOST:-}
       - PGPORT=${PGPORT:-5432}
