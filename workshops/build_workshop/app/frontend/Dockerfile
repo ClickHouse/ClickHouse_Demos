@@ -28,7 +28,12 @@ FROM nginx:1.27-alpine
 
 WORKDIR /usr/share/nginx/html
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Use the runtime's DNS servers (Docker or Podman) when rendering the template.
+# Limit substitution so Nginx variables such as $host and $request_uri survive.
+ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 \
+    NGINX_ENVSUBST_FILTER="^NGINX_LOCAL_RESOLVERS$"
+
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 8080

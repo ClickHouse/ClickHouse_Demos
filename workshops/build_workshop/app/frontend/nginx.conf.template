@@ -1,0 +1,28 @@
+server {
+  listen 8080;
+  server_name _;
+
+  root /usr/share/nginx/html;
+  index index.html;
+
+  # Proxy API to the backend service on the shared container network.
+  # The official Nginx entrypoint fills NGINX_LOCAL_RESOLVERS from /etc/resolv.conf,
+  # using Docker's embedded DNS or Podman's network DNS without hardcoded IPs.
+  # Keep a variable in proxy_pass so backend IP changes are picked up after the
+  # 10-second DNS cache expires. ipv6=off disables AAAA lookups for the backend.
+  location /api/ {
+    resolver ${NGINX_LOCAL_RESOLVERS} valid=10s ipv6=off;
+    set $backend_upstream backend;
+    proxy_pass http://$backend_upstream:8000$request_uri;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  # SPA: serve index.html for unknown routes
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+}
