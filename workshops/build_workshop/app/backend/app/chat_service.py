@@ -361,8 +361,52 @@ def _parse_plan_json(content: str) -> dict[str, Any]:
     raise HTTPException(status_code=502, detail="LLM returned invalid JSON.")
 
 
+def _plan_from_dict(data: dict[str, Any]) -> ChatPlan:
+    chart = data.get("chart")
+    if not isinstance(chart, dict):
+        chart = None
+    return ChatPlan(answer=str(data.get("answer", "")), sql=data.get("sql"), chart=chart)
+
+
+def _generate_plan_bedrock(message: str, schema_text: str, conversation_id: str | None) -> ChatPlan:
+    from botocore.exceptions import NoCredentialsError
+
+    from app import llm_bedrock
+
+    session_ctx: Any = nullcontext()
+    if _langfuse_active and conversation_id:
+        try:
+            from langfuse import propagate_attributes
+
+            session_ctx = propagate_attributes(session_id=conversation_id)
+        except Exception:  # noqa: BLE001
+            session_ctx = nullcontext()
+    try:
+        with session_ctx:
+            data = llm_bedrock.generate_sql_plan(message, schema_text)
+    except llm_bedrock.LlmOutputError as e:
+        raise HTTPException(status_code=502, detail=f"LLM returned invalid JSON ({e}).") from e
+    except NoCredentialsError as e:
+        # The Bedrock twin of the missing-OPENAI_API_KEY 503. It is raised at call time, not
+        # gated up front, because an instance-role host has credentials and no key to check.
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "AI chat is not configured. Set AWS_BEARER_TOKEN_BEDROCK (your Bedrock API key) "
+                "on the backend to enable POST /api/chat with LLM_PROVIDER=bedrock."
+            ),
+        ) from e
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001 - surface provider/network errors as 502
+        raise HTTPException(status_code=502, detail=f"LLM request failed: {e}") from e
+    return _plan_from_dict(data)
+
+
 def generate_plan(message: str, schema_text: str, conversation_id: str | None) -> ChatPlan:
     """Call the model to turn a question into an answer + SELECT + chart spec."""
+    if settings.llm_provider == "bedrock":
+        return _generate_plan_bedrock(message, schema_text, conversation_id)
     client = _get_openai_client()
 
     messages: list[dict[str, str]] = [
@@ -399,12 +443,7 @@ def generate_plan(message: str, schema_text: str, conversation_id: str | None) -
         raise HTTPException(status_code=502, detail=f"LLM request failed: {e}") from e
 
     content = completion.choices[0].message.content or "{}"
-    data = _parse_plan_json(content)
-
-    chart = data.get("chart")
-    if not isinstance(chart, dict):
-        chart = None
-    return ChatPlan(answer=str(data.get("answer", "")), sql=data.get("sql"), chart=chart)
+    return _plan_from_dict(_parse_plan_json(content))
 
 
 # --- Read-only query execution -------------------------------------------

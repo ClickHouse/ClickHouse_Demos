@@ -12,7 +12,9 @@ router = APIRouter()
 
 @router.post("/api/chat", response_model=ChatResponse)
 def chat(req: ChatRequest) -> ChatResponse:
-    if not settings.openai_api_key:
+    # The 503 gate is provider-aware: Bedrock authenticates with its own API key (checked when
+    # the call is made), so only the OpenAI provider needs OPENAI_API_KEY.
+    if settings.llm_provider != "bedrock" and not settings.openai_api_key:
         raise HTTPException(
             status_code=503,
             detail=(

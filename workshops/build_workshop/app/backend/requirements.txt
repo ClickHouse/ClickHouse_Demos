@@ -7,6 +7,9 @@ pydantic-settings==2.7.0
 # Langfuse v4 SDK (requires Python >=3.10 and Pydantic v2, both satisfied here).
 openai==2.45.0
 langfuse>=4.14,<5
+# Amazon Bedrock provider (LLM_PROVIDER=bedrock). Converse structured output needs a
+# release with outputConfig; 1.43.x has it, and reads AWS_BEARER_TOKEN_BEDROCK.
+boto3==1.43.90
 
 # OpenTelemetry instrumentation for ClickStack. We use the VANILLA OTel distro
 # rather than the ClickStack docs' hyperdx-opentelemetry package: that package
