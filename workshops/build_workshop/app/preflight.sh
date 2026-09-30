@@ -42,6 +42,8 @@ esac
 # whether an exported shell value would silently win over the file (see that
 # section below). Unset -> empty, which the check treats as "not overriding".
 SHELL_OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+SHELL_LLM_PROVIDER="${LLM_PROVIDER:-}"
+SHELL_AWS_BEARER_TOKEN_BEDROCK="${AWS_BEARER_TOKEN_BEDROCK:-}"
 SHELL_LANGFUSE_PUBLIC_KEY="${LANGFUSE_PUBLIC_KEY:-}"
 SHELL_LANGFUSE_SECRET_KEY="${LANGFUSE_SECRET_KEY:-}"
 SHELL_CLICKHOUSE_PASSWORD="${CLICKHOUSE_PASSWORD:-}"
@@ -406,12 +408,30 @@ if [ "$HAVE_ENV" -eq 1 ]; then
          "set CLICKHOUSE_SECURE=true; local or plaintext ClickHouse endpoints are not supported"
   fi
 
-  if [ -n "$(env_get OPENAI_API_KEY)" ]; then
-    pass "OPENAI_API_KEY is set"
-  else
-    warn "OPENAI_API_KEY is empty (needed for module 08)" \
-         "add it before module 08 for the AI chat"
-  fi
+  LLM_PROVIDER_V=$(env_get LLM_PROVIDER)
+  BEDROCK_REGION_V=$(env_get BEDROCK_REGION)
+  case "${LLM_PROVIDER_V:-openai}" in
+    openai)
+      if [ -n "$(env_get OPENAI_API_KEY)" ]; then
+        pass "OPENAI_API_KEY is set (LLM_PROVIDER=openai)"
+      else
+        warn "OPENAI_API_KEY is empty (needed for module 08)" \
+             "add it before module 08 for the AI chat, or set LLM_PROVIDER=bedrock and AWS_BEARER_TOKEN_BEDROCK"
+      fi
+      ;;
+    bedrock)
+      if [ -n "$(env_get AWS_BEARER_TOKEN_BEDROCK)" ]; then
+        pass "AWS_BEARER_TOKEN_BEDROCK is set (LLM_PROVIDER=bedrock, region ${BEDROCK_REGION_V:-ap-southeast-1})"
+      else
+        warn "AWS_BEARER_TOKEN_BEDROCK is empty (needed for module 08 with LLM_PROVIDER=bedrock)" \
+             "paste the Bedrock API key from your instructor before module 08"
+      fi
+      ;;
+    *)
+      fail "LLM_PROVIDER must be openai or bedrock (found '$LLM_PROVIDER_V')" \
+           "set LLM_PROVIDER=openai or LLM_PROVIDER=bedrock in .env.workshop"
+      ;;
+  esac
 
   LF_PUB=$(env_get LANGFUSE_PUBLIC_KEY)
   LF_SEC=$(env_get LANGFUSE_SECRET_KEY)
@@ -461,11 +481,13 @@ fi
 section "Shell environment vs .env.workshop"
 _warns_before=$WARN_COUNT
 check_shell_override OPENAI_API_KEY "$SHELL_OPENAI_API_KEY"
+check_shell_override LLM_PROVIDER "$SHELL_LLM_PROVIDER"
+check_shell_override AWS_BEARER_TOKEN_BEDROCK "$SHELL_AWS_BEARER_TOKEN_BEDROCK"
 check_shell_override LANGFUSE_PUBLIC_KEY "$SHELL_LANGFUSE_PUBLIC_KEY"
 check_shell_override LANGFUSE_SECRET_KEY "$SHELL_LANGFUSE_SECRET_KEY"
 check_shell_override CLICKHOUSE_PASSWORD "$SHELL_CLICKHOUSE_PASSWORD"
 if [ "$WARN_COUNT" -eq "$_warns_before" ]; then
-  pass "no shell variable is shadowing .env.workshop (OPENAI_API_KEY, LANGFUSE_*, CLICKHOUSE_PASSWORD)"
+  pass "no shell variable is shadowing .env.workshop (OPENAI_API_KEY, LLM_PROVIDER, AWS_BEARER_TOKEN_BEDROCK, LANGFUSE_*, CLICKHOUSE_PASSWORD)"
 fi
 
 # --- Host ports ------------------------------------------------------------

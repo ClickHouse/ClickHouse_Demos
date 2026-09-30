@@ -20,6 +20,13 @@ from typing import Any, Iterator
 # (and the ClickStack filelog receiver) expects.
 _UVICORN_LOGGERS = ("uvicorn", "uvicorn.error", "uvicorn.access")
 
+# These SDKs log request options and bodies at DEBUG. The workshop deliberately
+# enables DEBUG for its own successful-query records, but that must not copy AI
+# prompts or user questions into container logs and ClickStack. botocore is on the list for
+# Bedrock: its DEBUG request log also carries the Authorization header, which with a Bedrock
+# API key is the learner's bearer token.
+_QUIET_THIRD_PARTY_LOGGERS = ("openai", "httpx", "httpcore", "botocore", "boto3", "urllib3")
+
 _LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s %(message)s"
 _LOG_DATEFMT = "%Y-%m-%dT%H:%M:%S%z"
 
@@ -56,6 +63,8 @@ def configure_logging() -> None:
         lg.handlers = [handler]
         lg.setLevel(level)
         lg.propagate = False
+    for name in _QUIET_THIRD_PARTY_LOGGERS:
+        logging.getLogger(name).setLevel(logging.WARNING)
 
 
 try:  # OpenTelemetry is optional (disabled locally, or not installed at all).

@@ -40,6 +40,12 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - LLM_MODEL=${LLM_MODEL:-gpt-5.4-mini}
       - LLM_BASE_URL=${LLM_BASE_URL:-https://api.openai.com/v1}
+      # Amazon Bedrock instead of OpenAI: LLM_PROVIDER=bedrock plus a Bedrock API key,
+      # which boto3 reads from AWS_BEARER_TOKEN_BEDROCK. OPENAI_API_KEY is then unused.
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - AWS_BEARER_TOKEN_BEDROCK=${AWS_BEARER_TOKEN_BEDROCK:-}
+      - BEDROCK_REGION=${BEDROCK_REGION:-ap-southeast-1}
+      - BEDROCK_MODEL_ID=${BEDROCK_MODEL_ID:-global.anthropic.claude-haiku-4-5-20251001-v1:0}
       # Langfuse tracing of the chat flow (optional; SDK v4 uses LANGFUSE_BASE_URL).
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}

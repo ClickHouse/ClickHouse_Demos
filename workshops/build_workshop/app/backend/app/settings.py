@@ -32,6 +32,15 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     llm_model: str = "gpt-5.4-mini"
     llm_base_url: str = "https://api.openai.com/v1"
+    # LLM_PROVIDER=bedrock routes the chat through Amazon Bedrock's Converse API instead.
+    # boto3 authenticates with the Bedrock API key in AWS_BEARER_TOKEN_BEDROCK, so no OpenAI
+    # key is needed then. Default stays openai so the bring-your-own-key flow is unchanged.
+    llm_provider: str = "openai"
+    bedrock_model_id: str = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+    bedrock_region: str = "ap-southeast-1"
+    # Few-shot date windows: "fixed" keeps the 2022 literals the workshop dataset has;
+    # "relative" rewrites them as now() - INTERVAL n DAY for a trailing-window dataset.
+    chat_fewshot_window: str = "fixed"
 
     # Guardrails applied to every model-generated query.
     chat_row_limit: int = 100  # appended as LIMIT when the model omits one
