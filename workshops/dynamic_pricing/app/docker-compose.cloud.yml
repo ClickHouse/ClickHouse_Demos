@@ -1,0 +1,18 @@
+# Add to the primary Compose file for learner-owned managed Postgres TLS.
+services:
+  backend:
+    volumes:
+      - type: bind
+        source: ${PRICING_PG_CA_PATH:-../.run/managed-postgres-ca.pem}
+        target: /opt/pricing/.run/managed-postgres-ca.pem
+        read_only: true
+        bind:
+          create_host_path: false
+  writer:
+    volumes:
+      - type: bind
+        source: ${PRICING_PG_CA_PATH:-../.run/managed-postgres-ca.pem}
+        target: /opt/pricing/.run/managed-postgres-ca.pem
+        read_only: true
+        bind:
+          create_host_path: false

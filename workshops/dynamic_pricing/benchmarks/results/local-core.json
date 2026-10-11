@@ -1,0 +1,349 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-10-10T08:40:11.525716+00:00",
+  "facts": {
+    "canonical_rows": 248408,
+    "net_units": 248408,
+    "receipts_minor": 198141600,
+    "sold_cost_minor": 99363200
+  },
+  "facts_fingerprint": "07a4fd7ff357789bbe29451d21a4c6fb0abc96e72d0fd49c030a955304d74bac",
+  "fixed_parameters": {
+    "sandbox": "rehearsal-local/grocery",
+    "sku": 101,
+    "store": 1,
+    "cutoff": "2026-01-30 12:00:00+00:00"
+  },
+  "queries": {
+    "raw": "SELECT count() AS canonical_rows,sum(quantity) AS net_units,sum(receipts_minor) AS receipts_minor,sum(sold_cost_minor) AS sold_cost_minor FROM pricing.hist_raw_c84a27aae2b54e1d961b68e5b3b4f31e WHERE sandbox_id={sandbox:String} AND store_id={store:Int32} AND sku={sku:Int32} AND event_time<{cutoff:DateTime64(3,'UTC')}",
+    "rollup": "SELECT sum(row_count) AS canonical_rows,sum(net_units) AS net_units,sum(receipts_minor) AS receipts_minor,sum(sold_cost_minor) AS sold_cost_minor FROM pricing.hist_hour_c84a27aae2b54e1d961b68e5b3b4f31e WHERE sandbox_id={sandbox:String} AND store_id={store:Int32} AND sku={sku:Int32} AND hour<{cutoff:DateTime64(3,'UTC')}"
+  },
+  "raw": {
+    "samples": [
+      {
+        "query_id": "5650d46e-0da6-44c3-8e8f-2ed66e296346",
+        "client_seconds": 0.006971249997150153,
+        "read_rows": 270336,
+        "read_bytes": 16409656
+      },
+      {
+        "query_id": "812e6558-96b0-481a-b7b4-03bed293f4b2",
+        "client_seconds": 0.00667787498969119,
+        "read_rows": 270336,
+        "read_bytes": 16409656
+      },
+      {
+        "query_id": "438fb37d-7d60-4a2a-b710-9d93dd861cac",
+        "client_seconds": 0.006930875009857118,
+        "read_rows": 270336,
+        "read_bytes": 16409656
+      },
+      {
+        "query_id": "860b7206-f144-48a1-b16c-30336b7c89bc",
+        "client_seconds": 0.006230707993381657,
+        "read_rows": 270336,
+        "read_bytes": 16409656
+      },
+      {
+        "query_id": "310c7077-c105-43fa-b3a1-b9d41123af5b",
+        "client_seconds": 0.006502667005406693,
+        "read_rows": 270336,
+        "read_bytes": 16409656
+      },
+      {
+        "query_id": "364f8c75-7545-4b47-be39-0e6b36f24a03",
+        "client_seconds": 0.0058884589961962774,
+        "read_rows": 270336,
+        "read_bytes": 16409656
+      },
+      {
+        "query_id": "595f5b1e-4144-4894-9685-a8611adbbb73",
+        "client_seconds": 0.006443666992709041,
+        "read_rows": 270336,
+        "read_bytes": 16409656
+      },
+      {
+        "query_id": "71eb292a-5cdf-4861-8670-ef566872dce5",
+        "client_seconds": 0.008224916004110128,
+        "read_rows": 270336,
+        "read_bytes": 16409656
+      },
+      {
+        "query_id": "bd5eb7a0-4143-4280-abe6-65c36fec9fcb",
+        "client_seconds": 0.005930250001256354,
+        "read_rows": 270336,
+        "read_bytes": 16409656
+      },
+      {
+        "query_id": "371a9501-9e60-489d-98e8-2320fd605339",
+        "client_seconds": 0.00674462498864159,
+        "read_rows": 270336,
+        "read_bytes": 16409656
+      }
+    ],
+    "summary": {
+      "samples": 10,
+      "median_seconds": 0.0065902709975489415,
+      "minimum_seconds": 0.0058884589961962774,
+      "maximum_seconds": 0.008224916004110128,
+      "p95_seconds": null,
+      "tail_label": "insufficient_samples"
+    }
+  },
+  "rollup": {
+    "samples": [
+      {
+        "query_id": "938d0e14-4573-48ca-8676-db80d8ea7cf6",
+        "client_seconds": 0.0035098749940516427,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "d5a2be83-784f-46db-9bee-6215ab84b787",
+        "client_seconds": 0.010593416998744942,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "b0a9aafc-1e0e-451d-9e8f-24acefbb05ad",
+        "client_seconds": 0.003646292010671459,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "b0832e9f-0368-494f-9dbd-4ec962b950b8",
+        "client_seconds": 0.003122916998108849,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "d95ac0e1-af35-4ef7-af2c-b676d761ae9e",
+        "client_seconds": 0.00291987499804236,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "510bdd53-5d8b-4955-81bc-1683b9898266",
+        "client_seconds": 0.002706333005335182,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "dffe5520-3199-4ae8-acee-c1ca20b5d548",
+        "client_seconds": 0.00345054198987782,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "6a9c8295-5e0d-4caf-9c1b-207297fbc951",
+        "client_seconds": 0.0030435410008067265,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "6dfdde40-9b7a-43fd-a408-50353aef9b1f",
+        "client_seconds": 0.0032366250088671222,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "79606d1b-a087-4c0b-a655-ca320e457404",
+        "client_seconds": 0.0030120830051600933,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      }
+    ],
+    "summary": {
+      "samples": 10,
+      "median_seconds": 0.0031797710034879856,
+      "minimum_seconds": 0.002706333005335182,
+      "maximum_seconds": 0.010593416998744942,
+      "p95_seconds": null,
+      "tail_label": "insufficient_samples"
+    }
+  },
+  "cache": {
+    "use_query_cache": 0,
+    "warmups_per_query": 2,
+    "storage_caches": "not_flushed",
+    "query_condition_cache": "server_default"
+  },
+  "concurrency": 1,
+  "environment": {
+    "hardware": null,
+    "cloud_sizing": null,
+    "sizing_verified": false,
+    "configured_ingestion_mode": "local_replay",
+    "cloud_rehearsal_verified": false,
+    "clickhouse_version": "25.8.33.6",
+    "python_version": "3.12.13",
+    "host_platform": "macOS-26.7.1-arm64-arm-64bit",
+    "dependency_lock_sha256": "5a0366eb737990c35959393ff83ce4c701f674cda5cb50bde3c5df538f8f86d0"
+  },
+  "import": {
+    "rows": 1000000,
+    "clock": "monotonic",
+    "load_seconds": 8.955769124993822,
+    "verification_seconds": 0.022329208004521206,
+    "rows_per_second": 111659.86818588179
+  },
+  "freshness": null,
+  "barrier": {
+    "import_run_id": "c84a27aa-e2b5-4e1d-961b-68e5b3b4f31e",
+    "scope": {
+      "owner_id": "rehearsal-local",
+      "scenario_id": "grocery",
+      "generation": 1
+    },
+    "scenario_cutoff": "2026-01-30T12:00:00+00:00",
+    "manifest_sha256": "b32cd1d6a4381c32e0bbd9c57dd18842543da90fe807b71dca42c594e36bd56d",
+    "dataset_rows": 1000000,
+    "tier": "core"
+  },
+  "query_log": {
+    "status": "available",
+    "rows": [
+      {
+        "query_id": "5650d46e-0da6-44c3-8e8f-2ed66e296346",
+        "query_duration_ms": 5,
+        "read_rows": 270336,
+        "read_bytes": 16409656,
+        "memory_usage": 8005549
+      },
+      {
+        "query_id": "938d0e14-4573-48ca-8676-db80d8ea7cf6",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5089780
+      },
+      {
+        "query_id": "d5a2be83-784f-46db-9bee-6215ab84b787",
+        "query_duration_ms": 9,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5111452
+      },
+      {
+        "query_id": "812e6558-96b0-481a-b7b4-03bed293f4b2",
+        "query_duration_ms": 5,
+        "read_rows": 270336,
+        "read_bytes": 16409656,
+        "memory_usage": 8005981
+      },
+      {
+        "query_id": "438fb37d-7d60-4a2a-b710-9d93dd861cac",
+        "query_duration_ms": 5,
+        "read_rows": 270336,
+        "read_bytes": 16409656,
+        "memory_usage": 8005981
+      },
+      {
+        "query_id": "b0a9aafc-1e0e-451d-9e8f-24acefbb05ad",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5089780
+      },
+      {
+        "query_id": "b0832e9f-0368-494f-9dbd-4ec962b950b8",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5089780
+      },
+      {
+        "query_id": "860b7206-f144-48a1-b16c-30336b7c89bc",
+        "query_duration_ms": 5,
+        "read_rows": 270336,
+        "read_bytes": 16409656,
+        "memory_usage": 8005981
+      },
+      {
+        "query_id": "310c7077-c105-43fa-b3a1-b9d41123af5b",
+        "query_duration_ms": 5,
+        "read_rows": 270336,
+        "read_bytes": 16409656,
+        "memory_usage": 8005549
+      },
+      {
+        "query_id": "d95ac0e1-af35-4ef7-af2c-b676d761ae9e",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5089780
+      },
+      {
+        "query_id": "510bdd53-5d8b-4955-81bc-1683b9898266",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5089780
+      },
+      {
+        "query_id": "364f8c75-7545-4b47-be39-0e6b36f24a03",
+        "query_duration_ms": 5,
+        "read_rows": 270336,
+        "read_bytes": 16409656,
+        "memory_usage": 8005981
+      },
+      {
+        "query_id": "595f5b1e-4144-4894-9685-a8611adbbb73",
+        "query_duration_ms": 5,
+        "read_rows": 270336,
+        "read_bytes": 16409656,
+        "memory_usage": 8005549
+      },
+      {
+        "query_id": "dffe5520-3199-4ae8-acee-c1ca20b5d548",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5089780
+      },
+      {
+        "query_id": "6a9c8295-5e0d-4caf-9c1b-207297fbc951",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5089780
+      },
+      {
+        "query_id": "71eb292a-5cdf-4861-8670-ef566872dce5",
+        "query_duration_ms": 7,
+        "read_rows": 270336,
+        "read_bytes": 16409656,
+        "memory_usage": 8005549
+      },
+      {
+        "query_id": "bd5eb7a0-4143-4280-abe6-65c36fec9fcb",
+        "query_duration_ms": 5,
+        "read_rows": 270336,
+        "read_bytes": 16409656,
+        "memory_usage": 8005549
+      },
+      {
+        "query_id": "6dfdde40-9b7a-43fd-a408-50353aef9b1f",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5089780
+      },
+      {
+        "query_id": "79606d1b-a087-4c0b-a655-ca320e457404",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5089780
+      },
+      {
+        "query_id": "371a9501-9e60-489d-98e8-2320fd605339",
+        "query_duration_ms": 5,
+        "read_rows": 270336,
+        "read_bytes": 16409656,
+        "memory_usage": 8005981
+      }
+    ],
+    "table": "system.query_log"
+  }
+}

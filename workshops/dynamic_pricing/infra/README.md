@@ -1,0 +1,125 @@
+# Learner-owned Cloud setup
+
+Each learner owns one ClickHouse Cloud service, one managed Postgres instance, one Postgres ClickPipe, and ClickStack access. The local Docker application uses those services. Shared materials are read-only datasets and model artifacts.
+
+These commands target `clickhousectl 0.4.2`. Help and the tagged [CLI source](https://github.com/ClickHouse/clickhousectl/tree/v0.4.2) were inspected on Oct 10, 2026. Region availability, sizing, and actual Cloud delivery remain release rehearsal checks. `ap-southeast-1` and `c6gd.large` are configurable starting values, not measured workshop guarantees.
+
+## Prepare configuration
+
+1. Sign in to your ClickHouse Cloud account. Confirm your organization and service quota.
+2. Authenticate the CLI with your own Cloud API key through its supported credential configuration. OAuth access is read-only. Keep credentials in the CLI credential store or environment; do not put secrets in command arguments or commit them.
+3. Check `clickhousectl cloud auth status` and `clickhousectl cloud org list`. Set an explicit organization ID.
+4. Copy `app/.env.workshop.example` to `app/.env.workshop`. Set `PRICING_CLOUD_ORG_ID`, `PRICING_LEARNER_CIDR`, `PRICING_REGION`, and `PRICING_POSTGRES_SIZE`. Use your current public IPv4 address with `/32`. The source's ClickPipes egress access is a separate requirement.
+5. Protect the file with `chmod 600 app/.env.workshop`.
+
+Run from the lab directory in macOS Terminal or Ubuntu under Windows WSL2:
+
+```bash
+.venv/bin/python -m infra.provision --module setup
+```
+
+The wrapper uses the documented `cloud service create` and `cloud postgres create` commands. It supplies explicit owner tags, organization, region, and the ClickHouse IP access list. It captures their output privately, records each ID before polling, and saves one-time credentials only to `app/.env.workshop`. Managed Postgres remains a separately owned resource; the primary Compose file does not start a local database.
+
+Creation is asynchronous. The wrapper polls the saved IDs and requires `state=running`. A retry reuses those resources. If a creation response was interrupted, the inventory records an unresolved creation. Inspect the console, record the actual owned ID, clear `pending_creation`, and recover its password if necessary. The wrapper refuses to blindly create another resource.
+
+## Initialize source data
+
+```bash
+.venv/bin/workshop initialize
+.venv/bin/python scripts/check-resources.py
+bash app/preflight.sh setup
+```
+
+Initialization creates the schema and first baseline checkpoint. Repeating it preserves the existing generation, sales, and ledger. It does not reset scenario state or reload history.
+
+Create separate `pricing_app` and `pricing_cdc` login roles in your own managed Postgres instance. Keep their generated passwords private. With `PRICING_POSTGRES_ADMIN_DSN` configured, apply the grants and limited publication:
+
+```bash
+.venv/bin/python -m infra.configure_cdc
+```
+
+The replication role needs `REPLICATION`, schema access, and `SELECT` on the four source tables. The application role receives the source and ledger privileges required by the workshop. Provisioning saves the administrator URI in `PRICING_POSTGRES_ADMIN_DSN` and initially in `PRICING_POSTGRES_DSN`. Keep the administrator setting for initialization and grants. Change only the username and URL-encoded password in `PRICING_POSTGRES_DSN` to the `pricing_app` credentials afterward. Retain `sslmode=verify-full` and the downloaded instance CA path. Use the `pricing_cdc` credentials only for the connector. Check logical replication through managed Postgres settings before creating it.
+
+Provisioning rewrites the private environment file as quoted key/value assignments and removes template comments. Keep `app/.env.workshop.example` for setting descriptions.
+
+## Create the owned ClickPipe
+
+Use the managed Postgres console's **Sync to ClickHouse** flow or the ClickPipes console. This follows the [managed Postgres replication guide](https://clickhouse.com/docs/cloud/managed-postgres/clickhouse-integration).
+
+The pinned clickhousectl 0.4.2 Postgres command has no destination-database option and takes the source password in process arguments. The workshop uses the console so it can target `pricing` and keep source credentials out of CLI arguments. Do not put a database qualifier into a `--table-mapping` target; it can become a literal table name.
+
+Set the integration name to `pricing-<owner>-cdc`, select your own ClickHouse service, and choose **Initial load + CDC**. Choose destination database `pricing`. Map only these tables:
+
+| Postgres source | ClickHouse destination |
+| --- | --- |
+| `pricing.sales_transactions` | `sales_transactions_cdc` |
+| `pricing.inventory_history` | `inventory_history_cdc` |
+| `pricing.price_history` | `price_history_cdc` |
+| `pricing.cost_history` | `cost_history_cdc` |
+
+Use publication `pricing_workshop` where the connector asks for an existing publication. Preserve nullable source columns. Verify TLS with the instance CA. Allow the documented [regional ClickPipes egress IPs](https://clickhouse.com/docs/integrations/clickpipes/networking/static-ips) if source access is restricted. This differs from your learner `/32` access list.
+
+Set the sync interval to at most 20 seconds, or set `PRICING_CONVERGENCE_TIMEOUT_SECONDS` to cover it (maximum 120). CDC readiness rejects longer or missing intervals. Confirm each destination uses ReplacingMergeTree and includes `_peerdb_version`, `_peerdb_is_deleted`, and `_peerdb_synced_at`. CDC provisioning validates the owned pipe name and database plus this schema contract before reporting ready. The kit also validates the schema before enabling canonical views. Record the owned ClickPipe ID in `infra/resources.json`, then check it:
+
+```bash
+.venv/bin/python -m infra.provision --module cdc
+bash app/preflight.sh cdc
+```
+
+A **Running** connector does not prove convergence for a particular sale and inventory revision. The learner checks those IDs and selected values in the **Freshness** view.
+
+## Start and restart the local edge
+
+The certificate command writes `.run/managed-postgres-ca.pem`. The Cloud Compose overlay mounts it into the backend and writer. The runtime adapts the host connection's certificate path to that container mount while retaining certificate verification.
+
+```bash
+docker compose --env-file app/.env.workshop \
+  -f app/docker-compose.workshop.yml -f app/docker-compose.cloud.yml \
+  up --build --detach --wait
+```
+
+Open `http://localhost:8080`. Use **Start learner session**. Local services restart without recreating Cloud resources. Scenario resets create a new generation and retain earlier evidence and historical imports.
+
+```bash
+docker compose --env-file app/.env.workshop \
+  -f app/docker-compose.workshop.yml -f app/docker-compose.cloud.yml --profile telemetry up --detach --wait
+```
+
+## Connect diagnostics and agents
+
+Enable managed ClickStack against the owned service's telemetry database. Configure its source and owned gateway receiver as required by your Cloud deployment. Follow [obs/README.md](../obs/README.md), set the verified receiver URL and ingestion key privately, and start the telemetry profile. Verify a real snapshot ID in ClickStack. The installed CLI has no `cloud clickstack` command.
+
+Connect ClickHouse Agents or your coding agent's MCP connection with a read-only ClickHouse user scoped to the named evidence views. Run one question from [agent/bi-prompts.md](../agent/bi-prompts.md), inspect its SQL, and compare IDs with the ledger. Optional live exception-provider and Langfuse access do not block earlier modules. Use the recorded episode when those optional services are unavailable.
+
+## Recover a lost creation password
+
+`get` does not recover a creation password. With the saved inventory and matching owner, explicitly request recovery:
+
+```bash
+.venv/bin/python -m infra.provision --recover-password service
+.venv/bin/python -m infra.provision --recover-password postgres
+```
+
+These commands reset the owned service credential and save the result privately. Update any connector or application that uses the changed credential. They do not create replacement services. For a dedicated application role, recover that role's password in the Postgres console instead of replacing it with the administrator credential.
+
+## Clean up owned resources
+
+Stop the local edge, then preview the saved Cloud inventory:
+
+```bash
+docker compose --env-file app/.env.workshop \
+  -f app/docker-compose.workshop.yml -f app/docker-compose.cloud.yml --profile telemetry --profile writer down
+.venv/bin/python -m infra.cleanup
+```
+
+Inspect the IDs. To delete those owned Cloud resources and their data, run:
+
+```bash
+.venv/bin/python -m infra.cleanup --execute
+```
+
+The wrapper verifies the configured organization, owner tags, and exact ClickPipe membership before any deletion. It removes the pipe before managed Postgres and ClickHouse. It does not delete shared S3 objects or model artifacts. Keep the inventory for the cleanup audit; remove it only when starting a separate new installation.
+
+Cleanup records each confirmed deletion in `deleted_resources` in `infra/resources.json`, retaining the original IDs. A retry skips journaled deletions. If a previous deletion lost its acknowledgement, cleanup requires a successful Cloud list response proving absence before recording it; authentication and network errors do not prove absence. Forced ClickHouse service deletion has a 15-minute timeout for stop polling. Retry a timed-out cleanup using the same inventory.
+
+For existing checkouts created before the administrator setting was added, copy the retained administrator URI into `PRICING_POSTGRES_ADMIN_DSN`. Do not copy the application-role URI there. Postgres password recovery updates only the administrator setting; if initial provisioning lost its credentials before an app role exists, explicitly copy the recovered administrator URI into `PRICING_POSTGRES_DSN` to complete setup, then switch to the app role in Module 02.

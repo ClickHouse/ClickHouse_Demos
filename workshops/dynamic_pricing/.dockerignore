@@ -1,0 +1,10 @@
+.venv
+.run
+**/.env*
+**/node_modules
+**/dist
+**/__pycache__
+**/.pytest_cache
+**/test-results
+**/playwright-report
+reports/exports

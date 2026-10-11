@@ -1,0 +1,15 @@
+fastapi==0.115.6
+uvicorn==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.0
+psycopg[binary]==3.2.9
+clickhouse-connect==0.8.15
+numpy==2.2.6
+scipy==1.15.3
+statsmodels==0.14.4
+pandas==2.2.3
+pyarrow==20.0.0
+boto3==1.38.27
+opentelemetry-api==1.39.1
+opentelemetry-sdk==1.39.1
+opentelemetry-exporter-otlp-proto-http==1.39.1

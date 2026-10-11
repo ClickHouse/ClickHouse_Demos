@@ -1,0 +1,869 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-10-10T08:59:36.596979+00:00",
+  "facts": {
+    "canonical_rows": 24998408,
+    "net_units": 24998408,
+    "receipts_minor": 19998141600,
+    "sold_cost_minor": 9999363200
+  },
+  "facts_fingerprint": "5f1c2a0d17ea2651984ffe770f5e4f0e12ac7ad1981eb73a563071c98d614d51",
+  "fixed_parameters": {
+    "sandbox": "rehearsal-local/grocery",
+    "sku": 101,
+    "store": 1,
+    "cutoff": "2026-01-30 12:00:00+00:00"
+  },
+  "queries": {
+    "raw": "SELECT count() AS canonical_rows,sum(quantity) AS net_units,sum(receipts_minor) AS receipts_minor,sum(sold_cost_minor) AS sold_cost_minor FROM pricing.hist_raw_b6ed5106dd184b5dba192730fe00a4b2 WHERE sandbox_id={sandbox:String} AND store_id={store:Int32} AND sku={sku:Int32} AND event_time<{cutoff:DateTime64(3,'UTC')}",
+    "rollup": "SELECT sum(row_count) AS canonical_rows,sum(net_units) AS net_units,sum(receipts_minor) AS receipts_minor,sum(sold_cost_minor) AS sold_cost_minor FROM pricing.hist_hour_b6ed5106dd184b5dba192730fe00a4b2 WHERE sandbox_id={sandbox:String} AND store_id={store:Int32} AND sku={sku:Int32} AND hour<{cutoff:DateTime64(3,'UTC')}"
+  },
+  "raw": {
+    "samples": [
+      {
+        "query_id": "dcb7f7f9-74d9-4dbf-b030-1e14f87cb0b0",
+        "client_seconds": 0.06052037500194274,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "7df84b46-f80e-48d2-9335-d5c858a4811e",
+        "client_seconds": 0.06119804199261125,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "058cea5c-32c0-4d4f-9846-73b819d09497",
+        "client_seconds": 0.059678624995285645,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "95491bce-df15-488c-bb72-09e11aa57e83",
+        "client_seconds": 0.05960129101003986,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "47e16e7e-4e4a-4542-8e84-aa3588e4ed34",
+        "client_seconds": 0.059907792005105875,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "41ec66ce-e6c7-4ebf-aa6a-1e22645091e0",
+        "client_seconds": 0.06289354199543595,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "ea25fc84-f822-4d4a-a280-c6f7ee92b5bc",
+        "client_seconds": 0.0702252920018509,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "8e43441c-877f-47fb-81d8-5d9a102a4519",
+        "client_seconds": 0.06673891699756496,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "4ef0e736-d438-41b6-b623-89259e6fd79c",
+        "client_seconds": 0.06693000000086613,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "cfc185cc-905a-43e0-8e44-bb15909e518b",
+        "client_seconds": 0.06604775000596419,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "c055422d-0880-4012-9d75-0b4de54f7246",
+        "client_seconds": 0.06334729200170841,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "5f1c9853-9970-4f6c-a8fe-93c7f118199e",
+        "client_seconds": 0.06406112499826122,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "bd16d538-fa8d-4fe3-aa67-3ba9d003ab84",
+        "client_seconds": 0.06805954099399969,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "4a206f31-14a2-4bed-b668-26732f6e3634",
+        "client_seconds": 0.06576141600089613,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "88671d7a-e82f-4992-988d-102448723969",
+        "client_seconds": 0.06441920799261425,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "0524fc6d-c3e2-4e55-8a03-122a1d0a9eda",
+        "client_seconds": 0.06311141699552536,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "a0afa468-318f-4ee2-b206-16ea9b0b3c6f",
+        "client_seconds": 0.06675674999132752,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "f92db3d3-4046-47eb-8f69-767a2cca1994",
+        "client_seconds": 0.0656865830096649,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "caf6730a-23b7-46ca-85a7-dda628668577",
+        "client_seconds": 0.06753408400982153,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "2ea45533-2839-4629-9021-1e13eebc0a69",
+        "client_seconds": 0.06725037499563769,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "f90315c5-44fd-47ec-b977-7f34b0d0dab0",
+        "client_seconds": 0.07254741700307932,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "b29b62ae-3868-4fe0-ae7d-d3768e04f805",
+        "client_seconds": 0.09261045898892917,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "b13ac89a-c6f0-45a3-9d8a-f073b40678f7",
+        "client_seconds": 0.07807137499912642,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "ace7d148-da1b-4ddc-a2fe-77239fe447d9",
+        "client_seconds": 0.07908554199093487,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "1f5315e1-81ee-4f58-93f9-aa36260f853e",
+        "client_seconds": 0.07012316599139012,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "bddb5fcf-eb38-4d48-a30f-db8e95aee35e",
+        "client_seconds": 0.08431479099090211,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "27e2534c-cbb4-411b-b1e9-f584390db22b",
+        "client_seconds": 0.07049933300004341,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "f0b0e9e0-edb5-41b3-abac-e213452ccb02",
+        "client_seconds": 0.0701739169890061,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "dd1302c0-3583-48b1-a419-3bc7cfcf1063",
+        "client_seconds": 0.07927220901183318,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      },
+      {
+        "query_id": "46ef84b6-2782-4970-a15b-1ca8e333e2f2",
+        "client_seconds": 0.07766716700280085,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620
+      }
+    ],
+    "summary": {
+      "samples": 30,
+      "median_seconds": 0.06684337499609683,
+      "minimum_seconds": 0.05960129101003986,
+      "maximum_seconds": 0.09261045898892917,
+      "p95_seconds": 0.08431479099090211,
+      "tail_label": "observed_nearest_rank"
+    }
+  },
+  "rollup": {
+    "samples": [
+      {
+        "query_id": "f72b7bb2-cbea-4967-a321-1a18d0aa1fe9",
+        "client_seconds": 0.00387708299967926,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "c84ad08f-84ac-402d-a59c-891a6a6fd355",
+        "client_seconds": 0.00908745800552424,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "14f71947-613b-48ca-9f6d-5803ba6ff441",
+        "client_seconds": 0.003350083003169857,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "aaa32148-9f28-48a2-84f1-6ce8b2dbf72a",
+        "client_seconds": 0.0031418750004377216,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "02217724-bcf8-4340-8932-e1c03a945b6a",
+        "client_seconds": 0.003266500003519468,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "1d4cae64-039f-43ed-9d7c-79ab5ba8623a",
+        "client_seconds": 0.002591582990135066,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "4c5badf3-b050-4866-b3e9-c08519f81cdf",
+        "client_seconds": 0.003417375002754852,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "cda02ac8-44d5-44a8-961d-a740050333e8",
+        "client_seconds": 0.003205000000889413,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "9800186e-c368-45fd-b899-3ffc0be6b142",
+        "client_seconds": 0.0033938749984372407,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "c2e0eae0-83e5-4f01-b8ff-721457b18381",
+        "client_seconds": 0.0032354169961763546,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "7f266101-f60c-4ea9-a81e-b31579742b7e",
+        "client_seconds": 0.003854000009596348,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "ddefa162-30fa-46e4-b402-1ebbf0ced81e",
+        "client_seconds": 0.0030709999991813675,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "f9e9d998-25b9-4205-8e0c-4860367c9973",
+        "client_seconds": 0.003795249998802319,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "588015f4-6ecf-4f62-82f7-179cc468869f",
+        "client_seconds": 0.0030768750002607703,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "d668a3c7-483f-4d8a-8f42-ce3f2ec8eff7",
+        "client_seconds": 0.0033265840029343963,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "6ee37e65-2dae-4afc-a694-76aee0c3f4c7",
+        "client_seconds": 0.002826374999131076,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "def4a2fc-d859-4d5d-8324-e4f191e63f3a",
+        "client_seconds": 0.003309458988951519,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "aa8ac369-1b42-4254-ae78-12bc7901edf3",
+        "client_seconds": 0.0031382500019390136,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "7d043594-f043-435e-afe2-4b2aedff1b5b",
+        "client_seconds": 0.003327667000121437,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "d1c5fb0f-335a-4be7-b1b5-e9e04a07de22",
+        "client_seconds": 0.002997165996930562,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "b1430240-abab-499d-ae95-1bcc6ecdacec",
+        "client_seconds": 0.0034913749987026677,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "2714bfd0-0224-4c8e-83c0-de19f565a5de",
+        "client_seconds": 0.0047362089972011745,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "9bd67017-a7b2-4428-ab9a-90c47f6e8e4d",
+        "client_seconds": 0.0037735840014647692,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "f1bad4b8-e45e-4edd-b346-f9e2ebf51c76",
+        "client_seconds": 0.003996915998868644,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "0a732f19-c6f0-4a0d-bc37-f6a257e30f04",
+        "client_seconds": 0.004022708992124535,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "edc5b569-55a2-46b9-9454-5f88f7a8dd7a",
+        "client_seconds": 0.003472167009022087,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "2a94dc58-fcba-4153-b601-e304caf9827c",
+        "client_seconds": 0.003599375006160699,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "f96a4d12-b910-401c-a798-9e9e7d9e6b16",
+        "client_seconds": 0.003482790998532437,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "cfe3c7e9-8014-45fc-b383-bc0dd786392f",
+        "client_seconds": 0.003608999992138706,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      },
+      {
+        "query_id": "58f2968c-dad3-46ff-bff3-01866443907e",
+        "client_seconds": 0.0031761249992996454,
+        "read_rows": 8192,
+        "read_bytes": 598016
+      }
+    ],
+    "summary": {
+      "samples": 30,
+      "median_seconds": 0.003371979000803549,
+      "minimum_seconds": 0.002591582990135066,
+      "maximum_seconds": 0.00908745800552424,
+      "p95_seconds": 0.0047362089972011745,
+      "tail_label": "observed_nearest_rank"
+    }
+  },
+  "cache": {
+    "use_query_cache": 0,
+    "warmups_per_query": 2,
+    "storage_caches": "not_flushed",
+    "query_condition_cache": "server_default"
+  },
+  "concurrency": 1,
+  "environment": {
+    "hardware": null,
+    "cloud_sizing": null,
+    "sizing_verified": false,
+    "configured_ingestion_mode": "local_replay",
+    "cloud_rehearsal_verified": false,
+    "clickhouse_version": "25.8.33.6",
+    "python_version": "3.12.13",
+    "host_platform": "macOS-26.7.1-arm64-arm-64bit",
+    "dependency_lock_sha256": "5a0366eb737990c35959393ff83ce4c701f674cda5cb50bde3c5df538f8f86d0"
+  },
+  "import": {
+    "rows": 100000000,
+    "clock": "monotonic",
+    "load_seconds": 880.1782361669902,
+    "verification_seconds": 0.16301041599945165,
+    "rows_per_second": 113613.35226315193
+  },
+  "freshness": null,
+  "barrier": {
+    "import_run_id": "b6ed5106-dd18-4b5d-ba19-2730fe00a4b2",
+    "scope": {
+      "owner_id": "rehearsal-local",
+      "scenario_id": "grocery",
+      "generation": 1
+    },
+    "scenario_cutoff": "2026-01-30T12:00:00+00:00",
+    "manifest_sha256": "525e3813469529ea6e797e6aa6d6f456d03a90bf4ae0dff0c957a8d6d2dbc74c",
+    "dataset_rows": 100000000,
+    "tier": "showcase"
+  },
+  "query_log": {
+    "status": "available",
+    "rows": [
+      {
+        "query_id": "dcb7f7f9-74d9-4dbf-b030-1e14f87cb0b0",
+        "query_duration_ms": 59,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21515625
+      },
+      {
+        "query_id": "f72b7bb2-cbea-4967-a321-1a18d0aa1fe9",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "c84ad08f-84ac-402d-a59c-891a6a6fd355",
+        "query_duration_ms": 8,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5138822
+      },
+      {
+        "query_id": "7df84b46-f80e-48d2-9335-d5c858a4811e",
+        "query_duration_ms": 60,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21516249
+      },
+      {
+        "query_id": "058cea5c-32c0-4d4f-9846-73b819d09497",
+        "query_duration_ms": 58,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21516745
+      },
+      {
+        "query_id": "14f71947-613b-48ca-9f6d-5803ba6ff441",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "aaa32148-9f28-48a2-84f1-6ce8b2dbf72a",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "95491bce-df15-488c-bb72-09e11aa57e83",
+        "query_duration_ms": 58,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21516313
+      },
+      {
+        "query_id": "47e16e7e-4e4a-4542-8e84-aa3588e4ed34",
+        "query_duration_ms": 58,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21517609
+      },
+      {
+        "query_id": "02217724-bcf8-4340-8932-e1c03a945b6a",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "1d4cae64-039f-43ed-9d7c-79ab5ba8623a",
+        "query_duration_ms": 1,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "41ec66ce-e6c7-4ebf-aa6a-1e22645091e0",
+        "query_duration_ms": 62,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21515689
+      },
+      {
+        "query_id": "ea25fc84-f822-4d4a-a280-c6f7ee92b5bc",
+        "query_duration_ms": 69,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21516185
+      },
+      {
+        "query_id": "4c5badf3-b050-4866-b3e9-c08519f81cdf",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "cda02ac8-44d5-44a8-961d-a740050333e8",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "8e43441c-877f-47fb-81d8-5d9a102a4519",
+        "query_duration_ms": 66,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21516121
+      },
+      {
+        "query_id": "4ef0e736-d438-41b6-b623-89259e6fd79c",
+        "query_duration_ms": 66,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21515689
+      },
+      {
+        "query_id": "9800186e-c368-45fd-b899-3ffc0be6b142",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "c2e0eae0-83e5-4f01-b8ff-721457b18381",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "cfc185cc-905a-43e0-8e44-bb15909e518b",
+        "query_duration_ms": 65,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21515785
+      },
+      {
+        "query_id": "c055422d-0880-4012-9d75-0b4de54f7246",
+        "query_duration_ms": 62,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21516185
+      },
+      {
+        "query_id": "7f266101-f60c-4ea9-a81e-b31579742b7e",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "ddefa162-30fa-46e4-b402-1ebbf0ced81e",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "5f1c9853-9970-4f6c-a8fe-93c7f118199e",
+        "query_duration_ms": 63,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21515193
+      },
+      {
+        "query_id": "bd16d538-fa8d-4fe3-aa67-3ba9d003ab84",
+        "query_duration_ms": 67,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21517609
+      },
+      {
+        "query_id": "f9e9d998-25b9-4205-8e0c-4860367c9973",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "588015f4-6ecf-4f62-82f7-179cc468869f",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "4a206f31-14a2-4bed-b668-26732f6e3634",
+        "query_duration_ms": 65,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21515625
+      },
+      {
+        "query_id": "88671d7a-e82f-4992-988d-102448723969",
+        "query_duration_ms": 63,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21517177
+      },
+      {
+        "query_id": "d668a3c7-483f-4d8a-8f42-ce3f2ec8eff7",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "6ee37e65-2dae-4afc-a694-76aee0c3f4c7",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "0524fc6d-c3e2-4e55-8a03-122a1d0a9eda",
+        "query_duration_ms": 62,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21516313
+      },
+      {
+        "query_id": "a0afa468-318f-4ee2-b206-16ea9b0b3c6f",
+        "query_duration_ms": 65,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21515881
+      },
+      {
+        "query_id": "def4a2fc-d859-4d5d-8324-e4f191e63f3a",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "aa8ac369-1b42-4254-ae78-12bc7901edf3",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "f92db3d3-4046-47eb-8f69-767a2cca1994",
+        "query_duration_ms": 64,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21516745
+      },
+      {
+        "query_id": "caf6730a-23b7-46ca-85a7-dda628668577",
+        "query_duration_ms": 66,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21516681
+      },
+      {
+        "query_id": "7d043594-f043-435e-afe2-4b2aedff1b5b",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "d1c5fb0f-335a-4be7-b1b5-e9e04a07de22",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "2ea45533-2839-4629-9021-1e13eebc0a69",
+        "query_duration_ms": 66,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21516041
+      },
+      {
+        "query_id": "f90315c5-44fd-47ec-b977-7f34b0d0dab0",
+        "query_duration_ms": 71,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21517177
+      },
+      {
+        "query_id": "b1430240-abab-499d-ae95-1bcc6ecdacec",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "2714bfd0-0224-4c8e-83c0-de19f565a5de",
+        "query_duration_ms": 3,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "b29b62ae-3868-4fe0-ae7d-d3768e04f805",
+        "query_duration_ms": 91,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21515193
+      },
+      {
+        "query_id": "b13ac89a-c6f0-45a3-9d8a-f073b40678f7",
+        "query_duration_ms": 77,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21791544
+      },
+      {
+        "query_id": "9bd67017-a7b2-4428-ab9a-90c47f6e8e4d",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117310
+      },
+      {
+        "query_id": "f1bad4b8-e45e-4edd-b346-f9e2ebf51c76",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "ace7d148-da1b-4ddc-a2fe-77239fe447d9",
+        "query_duration_ms": 78,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21515257
+      },
+      {
+        "query_id": "1f5315e1-81ee-4f58-93f9-aa36260f853e",
+        "query_duration_ms": 69,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21788888
+      },
+      {
+        "query_id": "0a732f19-c6f0-4a0d-bc37-f6a257e30f04",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "edc5b569-55a2-46b9-9454-5f88f7a8dd7a",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "bddb5fcf-eb38-4d48-a30f-db8e95aee35e",
+        "query_duration_ms": 83,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21515449
+      },
+      {
+        "query_id": "27e2534c-cbb4-411b-b1e9-f584390db22b",
+        "query_duration_ms": 69,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21515449
+      },
+      {
+        "query_id": "2a94dc58-fcba-4153-b601-e304caf9827c",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "f96a4d12-b910-401c-a798-9e9e7d9e6b16",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "f0b0e9e0-edb5-41b3-abac-e213452ccb02",
+        "query_duration_ms": 69,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21516249
+      },
+      {
+        "query_id": "dd1302c0-3583-48b1-a419-3bc7cfcf1063",
+        "query_duration_ms": 78,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21514585
+      },
+      {
+        "query_id": "cfe3c7e9-8014-45fc-b383-bc0dd786392f",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "58f2968c-dad3-46ff-bff3-01866443907e",
+        "query_duration_ms": 2,
+        "read_rows": 8192,
+        "read_bytes": 598016,
+        "memory_usage": 5117150
+      },
+      {
+        "query_id": "46ef84b6-2782-4970-a15b-1ca8e333e2f2",
+        "query_duration_ms": 76,
+        "read_rows": 25041793,
+        "read_bytes": 1626008620,
+        "memory_usage": 21516121
+      }
+    ],
+    "table": "system.query_log"
+  }
+}

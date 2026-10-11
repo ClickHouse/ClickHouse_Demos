@@ -1,0 +1,102 @@
+{
+  "calibration_ratio": 0.9954499246039303,
+  "decision_cases": [
+    {
+      "name": "keep-price",
+      "oracle_price_minor": 800,
+      "oracle_recovery_minor": 779.76,
+      "proposed_price_minor": 800,
+      "regret_ratio": 0.0,
+      "second_window_price_minor": 800,
+      "selected_recovery_minor": 779.76
+    },
+    {
+      "name": "markdown",
+      "oracle_price_minor": 550,
+      "oracle_recovery_minor": 15494.9335,
+      "proposed_price_minor": 550,
+      "regret_ratio": 0.0,
+      "second_window_price_minor": 550,
+      "selected_recovery_minor": 15494.9335
+    },
+    {
+      "name": "low-stock",
+      "oracle_price_minor": 800,
+      "oracle_recovery_minor": 2339.984,
+      "proposed_price_minor": 800,
+      "regret_ratio": 0.0,
+      "second_window_price_minor": 800,
+      "selected_recovery_minor": 2339.984
+    },
+    {
+      "name": "near-expiry",
+      "oracle_price_minor": 550,
+      "oracle_recovery_minor": 1505.6915,
+      "proposed_price_minor": 550,
+      "regret_ratio": 0.0,
+      "second_window_price_minor": 550,
+      "selected_recovery_minor": 1505.6915
+    },
+    {
+      "name": "overnight",
+      "oracle_price_minor": 800,
+      "oracle_recovery_minor": 22412.12,
+      "proposed_price_minor": 800,
+      "regret_ratio": 0.0,
+      "second_window_price_minor": 800,
+      "selected_recovery_minor": 22412.12
+    }
+  ],
+  "decision_passed": true,
+  "decision_validation": "passed",
+  "demand_passed": true,
+  "groups": [
+    {
+      "adequately_populated": true,
+      "calibration_ratio": 0.9589391995190218,
+      "observed_units": 722.0,
+      "rows": 120,
+      "sku": 101,
+      "store_id": 1
+    },
+    {
+      "adequately_populated": true,
+      "calibration_ratio": 1.060940043500199,
+      "observed_units": 739.0,
+      "rows": 120,
+      "sku": 101,
+      "store_id": 2
+    },
+    {
+      "adequately_populated": true,
+      "calibration_ratio": 0.9773138852103106,
+      "observed_units": 1169.0,
+      "rows": 120,
+      "sku": 102,
+      "store_id": 1
+    },
+    {
+      "adequately_populated": true,
+      "calibration_ratio": 0.9947905526213753,
+      "observed_units": 1267.0,
+      "rows": 120,
+      "sku": 102,
+      "store_id": 2
+    }
+  ],
+  "held_out_grid_covered": true,
+  "insufficient_evidence_held": true,
+  "mae": 2.097155153798964,
+  "minimum_group_observed_units": 500,
+  "monotonic_passed": true,
+  "no_price_test_deviance": 695.3859388220278,
+  "oracle_seed": 997,
+  "oracle_trials": 100000,
+  "policy_trials": 4096,
+  "support_passed": true,
+  "synthetic": true,
+  "test_deviance": 455.46103836170846,
+  "test_observed_units": 3897.0,
+  "test_predicted_units": 3879.2683561815165,
+  "test_rows": 480
+}

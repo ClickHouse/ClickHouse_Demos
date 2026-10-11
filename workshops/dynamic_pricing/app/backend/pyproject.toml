@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools==75.8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pricing-lab"
+version = "0.1.0"
+description = "ClickHouse dynamic pricing workshop application"
+requires-python = ">=3.12,<3.13"
+dynamic = ["dependencies"]
+
+[project.scripts]
+workshop = "pricing_lab.cli:main"
+
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements.txt"}
+
+[tool.setuptools]
+packages = ["pricing_lab", "generator", "pricing", "infra"]
+package-dir = {pricing_lab = "pricing_lab", generator = "../../generator", pricing = "../../pricing", infra = "../../infra"}
+
+[tool.pytest.ini_options]
+markers = ["integration: requires real local databases", "cloud: requires learner-owned cloud services"]

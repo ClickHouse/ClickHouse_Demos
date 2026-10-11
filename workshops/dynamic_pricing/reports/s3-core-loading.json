@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "captured_at": "2026-10-11T01:45:36.418962+00:00",
+  "manifest_uri": "https://s3.ap-southeast-1.amazonaws.com/partner-workshop/dynamic-pricing/2026-10-10/core/manifest.json",
+  "ingestion": "ClickHouse server-side INSERT SELECT FROM s3(..., NOSIGN, 'Parquet'), anonymous HTTPS",
+  "environment": "local Docker ClickHouse 25.8.33.6; not managed Cloud",
+  "cloud_verified": false,
+  "elapsed_seconds_including_manifest_checks": 126.36676149998675,
+  "load": {
+    "canonical_rows": 1000000,
+    "net_units": 902296,
+    "receipts_minor": 808468100,
+    "sold_cost_minor": 406296000,
+    "run_id": "0c3a8bc6-4b31-4f2c-8320-717710cc0349",
+    "raw_table": "hist_raw_0c3a8bc64b314f2c8320717710cc0349",
+    "rollup_table": "hist_hour_0c3a8bc64b314f2c8320717710cc0349",
+    "rollup": {
+      "net_units": 902296,
+      "receipts_minor": 808468100,
+      "sold_cost_minor": 406296000
+    },
+    "measurement": {
+      "rows": 1000000,
+      "load_seconds": 84.08428549999371,
+      "verification_seconds": 0.04052737500751391,
+      "clock": "monotonic"
+    }
+  }
+}

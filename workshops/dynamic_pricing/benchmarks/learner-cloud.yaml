@@ -1,0 +1,12 @@
+workload: same-fact-history-comparison
+subject: {sku: 101, store_id: 1}
+warmups_per_query: 2
+repetitions: 10
+concurrency: 1
+query_cache: disabled
+storage_caches: not_flushed
+cutoff: complete_hour_at_scenario_cutoff
+comparison: raw_and_rollup_fingerprint_must_match_every_sample
+service_sizing: unrecorded
+cloud_rehearsal_verified: false
+note: Record actual service sizing and cadence during rehearsal; these are test conditions, not performance claims.

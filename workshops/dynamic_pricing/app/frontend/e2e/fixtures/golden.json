@@ -1,0 +1,220 @@
+{
+  "provenance": "Fixed synthetic browser response fixtures. Clock frozen at 2030-01-30 12:00 UTC. Not Cloud execution evidence.",
+  "session": {
+    "scope": null,
+    "mode": "recorded",
+    "data": {
+      "owner_id": "learner-1",
+      "scenario_id": "grocery",
+      "model_distribution": "development",
+      "ingestion_mode": "recorded"
+    }
+  },
+  "baseline": {
+    "scope": {
+      "owner_id": "learner-1",
+      "scenario_id": "grocery",
+      "generation": 1
+    },
+    "mode": "recorded",
+    "data": {
+      "reconciliation": {
+        "raw": {
+          "net_units": 4,
+          "receipts_minor": 2900,
+          "sold_cost_minor": 1600
+        },
+        "rollup": {
+          "net_units": 4,
+          "receipts_minor": 2900,
+          "sold_cost_minor": 1600
+        },
+        "history_run_id": "recorded-golden",
+        "complete_hour_cutoff": "2026-01-30T12:00:00+00:00"
+      }
+    }
+  },
+  "freshness": {
+    "scope": {
+      "owner_id": "learner-1",
+      "scenario_id": "grocery",
+      "generation": 1
+    },
+    "mode": "recorded",
+    "data": {
+      "stock_units": 30,
+      "inventory_expires_at": "2026-01-31T12:00:00Z",
+      "current_price_minor": 800,
+      "applied_price_version": 1,
+      "source_versions": {
+        "inventory": "00000000-0000-0000-0000-000000000002",
+        "price": "1",
+        "cost": "1"
+      },
+      "scenario_cutoff": "2026-01-30T12:00:00Z",
+      "source_ages_seconds": {
+        "inventory": 0.0,
+        "price": 0.0,
+        "cost": 0.0
+      }
+    }
+  },
+  "candidates": {
+    "scope": {
+      "owner_id": "learner-1",
+      "scenario_id": "grocery",
+      "generation": 1
+    },
+    "mode": "recorded",
+    "snapshot": {
+      "snapshot_id": "00000000-0000-0000-0000-000000000001",
+      "scope": {
+        "owner_id": "learner-1",
+        "scenario_id": "grocery",
+        "generation": 1
+      },
+      "subject": {
+        "sku": 101,
+        "store_id": 1,
+        "channel": "store"
+      },
+      "scenario_cutoff": "2026-01-30T12:00:00Z",
+      "captured_at": "2030-01-30T12:00:00Z",
+      "source_versions": {
+        "inventory": "00000000-0000-0000-0000-000000000002",
+        "price": "1",
+        "cost": "1"
+      },
+      "source_ages_seconds": {
+        "inventory": 0.0,
+        "price": 0.0,
+        "cost": 0.0
+      },
+      "stock_units": 30,
+      "inventory_expires_at": "2026-01-31T12:00:00Z",
+      "expires_at": "2030-01-30T13:00:00Z",
+      "current_price_minor": 800,
+      "reference_price_minor": 800,
+      "unit_cost_minor": 400,
+      "selling_cost_minor": 20,
+      "disposal_cost_minor": 20,
+      "rule_version": 1,
+      "applied_price_version": 1
+    },
+    "candidates": [
+      {
+        "candidate": {
+          "candidate_id": "00000000-0000-0000-0000-000000000003",
+          "snapshot": {
+            "snapshot_id": "00000000-0000-0000-0000-000000000001",
+            "scope": {
+              "owner_id": "learner-1",
+              "scenario_id": "grocery",
+              "generation": 1
+            },
+            "subject": {
+              "sku": 101,
+              "store_id": 1,
+              "channel": "store"
+            },
+            "scenario_cutoff": "2026-01-30T12:00:00Z",
+            "captured_at": "2030-01-30T12:00:00Z",
+            "source_versions": {
+              "inventory": "00000000-0000-0000-0000-000000000002",
+              "price": "1",
+              "cost": "1"
+            },
+            "source_ages_seconds": {
+              "inventory": 0.0,
+              "price": 0.0,
+              "cost": 0.0
+            },
+            "stock_units": 30,
+            "inventory_expires_at": "2026-01-31T12:00:00Z",
+            "expires_at": "2030-01-30T13:00:00Z",
+            "current_price_minor": 800,
+            "reference_price_minor": 800,
+            "unit_cost_minor": 400,
+            "selling_cost_minor": 20,
+            "disposal_cost_minor": 20,
+            "rule_version": 1,
+            "applied_price_version": 1
+          },
+          "model_version": "poisson-grocery-v1-9d31e8c16031",
+          "price_minor": 650,
+          "created_at": "2030-01-30T12:00:00Z",
+          "expires_at": "2030-01-30T13:00:00Z",
+          "projection": {
+            "expected_units": "29.92578125",
+            "expired_units": "0.07421875",
+            "receipts_minor": "20511.279296875",
+            "gross_margin_minor": "8540.966796875",
+            "selling_cost_minor": "598.515625",
+            "disposal_cost_minor": "1.484375",
+            "net_recovery_minor": "19911.279296875",
+            "full_contribution_minor": "7911.279296875",
+            "second_window_price_minor": "800",
+            "seed": "17",
+            "trials": "1024",
+            "demand_recovery_p10_minor": "18900.0",
+            "demand_recovery_p90_minor": "20700.0",
+            "parameter_advantage_min_minor": "-2755.517578125",
+            "parameter_advantage_max_minor": "-2525.9765625"
+          }
+        },
+        "policy": {
+          "status": "requires_review",
+          "reason_ids": [
+            "large_price_change"
+          ]
+        }
+      }
+    ]
+  },
+  "receipt": {
+    "scope": {
+      "owner_id": "learner-1",
+      "scenario_id": "grocery",
+      "generation": 1
+    },
+    "mode": "recorded",
+    "receipt": {
+      "receipt_id": "00000000-0000-0000-0000-000000000004",
+      "decision_id": "00000000-0000-0000-0000-000000000005",
+      "scope": {
+        "owner_id": "learner-1",
+        "scenario_id": "grocery",
+        "generation": 1
+      },
+      "price_minor": 650,
+      "applied_price_version": 2,
+      "acknowledged_at": "2030-01-30T12:00:00+00:00"
+    }
+  },
+  "timeline": {
+    "scope": {
+      "owner_id": "learner-1",
+      "scenario_id": "grocery",
+      "generation": 1
+    },
+    "mode": "recorded",
+    "data": {
+      "events": [
+        {
+          "kind": "applied",
+          "evidence_id": "initial",
+          "at": "2030-01-30T11:58:00+00:00",
+          "price_minor": 800,
+          "applied_price_version": 1
+        },
+        {
+          "kind": "proposed",
+          "evidence_id": "00000000-0000-0000-0000-000000000003",
+          "at": "2030-01-30T12:00:00+00:00",
+          "price_minor": 650
+        }
+      ],
+      "cdc_status": "recorded"
+    }
+  }
+}

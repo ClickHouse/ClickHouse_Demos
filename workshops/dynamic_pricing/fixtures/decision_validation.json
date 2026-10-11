@@ -1,0 +1,17 @@
+{
+  "kind": "predeclared-synthetic-v1",
+  "date": "2026-01-20T12:00:00Z",
+  "prices_minor": [550, 650, 700, 800],
+  "policy_seed": 29,
+  "oracle_seed": 997,
+  "policy_trials": 4096,
+  "oracle_trials": 100000,
+  "cases": [
+    {"name": "keep-price", "stock_units": 1, "hours_to_expiry": 2},
+    {"name": "markdown", "stock_units": 100, "hours_to_expiry": 4},
+    {"name": "low-stock", "stock_units": 3, "hours_to_expiry": 4},
+    {"name": "near-expiry", "stock_units": 30, "hours_to_expiry": 0.5},
+    {"name": "overnight", "stock_units": 30, "hours_to_expiry": 24}
+  ],
+  "insufficient_evidence": {"unsupported_price_minor": 100, "unknown_sku": 999}
+}

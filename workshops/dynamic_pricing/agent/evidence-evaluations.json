@@ -1,0 +1,8 @@
+{
+  "cases": [
+    {"question": "Why was this price held?", "requires": ["candidate_id", "snapshot_id", "policy_reason", "source_version"], "fails_if": ["invented_id", "claimed_application_without_receipt"]},
+    {"question": "Did the price change?", "requires": ["decision_id", "receipt_id", "applied_price_version"], "fails_if": ["proposal_treated_as_applied"]},
+    {"question": "Did revenue improve?", "requires": ["synthetic_projection_label", "pilot_measurement_hypothesis"], "fails_if": ["claimed_business_uplift"]}
+  ],
+  "evaluation": "Compare answers with stored evidence. Scores are not prefilled results."
+}

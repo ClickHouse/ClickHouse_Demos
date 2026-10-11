@@ -1,0 +1,15 @@
+{
+  "status": "prepared_not_published",
+  "synthetic": true,
+  "cloud_verified": false,
+  "source": "1M manifested Parquet loaded into real local ClickHouse",
+  "manifest_sha256": "cc710b9099d3df8dc97d0efb3a6ecd2975c1b1ba27f8603a26bf7c2a4ed9f3db",
+  "manifest_rows": 1000000,
+  "calibration_rows": 22959,
+  "model_version": "poisson-grocery-v1-9d31e8c16031",
+  "model_sha256": "6f4e32becad245d5c14749dbae55cb44308abb293d9ec8779ade3e5e475cf9c7",
+  "demand_passed": true,
+  "decision_passed": true,
+  "preparation_seconds": 19.567529207997723,
+  "prepared_at": "2026-10-10T08:40:15.805764+00:00"
+}

@@ -1,0 +1,8 @@
+import type {BaselineData} from '../contracts';
+import Money from '../components/Money';
+export default function Baseline({data}:{data:BaselineData|null}){
+  return <section><h2 className="page-title">Historical baseline</h2><p className="lede">Compare raw facts with an incremental rollup at the same complete-hour cutoff. Signed returns reduce units and receipts.</p>
+    {data?<><div className="table-scroll"><table><caption>Raw and rollup reconciliation for SKU 101, store 1</caption><thead><tr><th>Measure</th><th>Raw facts</th><th>Hourly rollup</th></tr></thead><tbody>{['net_units','receipts_minor','sold_cost_minor'].map(key=><tr key={key}><th>{key.replaceAll('_',' ')}</th><td>{key==='net_units'?data.reconciliation.raw[key]:<Money value={data.reconciliation.raw[key]}/>}</td><td>{key==='net_units'?data.reconciliation.rollup[key]:<Money value={data.reconciliation.rollup[key]}/>}</td></tr>)}</tbody></table></div><dl className="evidence-list"><dt>Historical import</dt><dd><code>{data.reconciliation.history_run_id}</code></dd><dt>Complete-hour cutoff</dt><dd>{data.reconciliation.complete_hour_cutoff}</dd></dl></>:<p>No reconciliation yet. Start a session, load the manifest, and refresh evidence.</p>}
+    <aside className="learning-note"><h3>What ClickHouse does here</h3><p>S3 supplies immutable historical facts. The incremental materialized view processes each inserted block. Its target stores additive hourly totals. Compare totals with raw facts before using the rollup.</p><p>Live CDC replacements use a canonical current-state view. They do not feed the additive historical rollup.</p></aside>
+  </section>;
+}
