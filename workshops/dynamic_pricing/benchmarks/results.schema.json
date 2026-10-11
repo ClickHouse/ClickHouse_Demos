@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "captured_at", "facts", "facts_fingerprint", "fixed_parameters", "queries", "raw", "rollup", "cache", "concurrency", "environment", "import", "freshness"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "concurrency": {"const": 1},
+    "raw": {"$ref": "#/$defs/query"},
+    "rollup": {"$ref": "#/$defs/query"},
+    "import": {"type": ["object", "null"]},
+    "freshness": {"type": ["object", "null"]},
+    "environment": {"type": "object", "required": ["hardware", "cloud_sizing", "sizing_verified"]}
+  },
+  "$defs": {
+    "query": {
+      "type": "object", "required": ["samples", "summary"],
+      "properties": {
+        "samples": {"type": "array", "minItems": 3, "items": {
+          "type": "object", "required": ["query_id", "client_seconds", "read_rows", "read_bytes"],
+          "properties": {
+            "query_id": {"type": ["string", "null"]},
+            "client_seconds": {"type": "number", "minimum": 0},
+            "read_rows": {"type": ["integer", "null"], "minimum": 0},
+            "read_bytes": {"type": ["integer", "null"], "minimum": 0}
+          }
+        }}
+      }
+    }
+  }
+}

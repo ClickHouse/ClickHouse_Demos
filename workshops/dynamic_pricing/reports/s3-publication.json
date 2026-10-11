@@ -1,0 +1,42 @@
+{
+  "status": "published_and_anonymous_verified",
+  "captured_at": "2026-10-11T02:15:35.463732+00:00",
+  "bucket": "partner-workshop",
+  "region": "ap-southeast-1",
+  "versioned_prefix": "dynamic-pricing/2026-10-10",
+  "bucket_policy_changed": false,
+  "object_acl_changed": false,
+  "verification": "Local independent Parquet counts, signed monetary sums, file SHA-256; service-validated SHA-256 and size for every remote object; anonymous manifest GET and checksum-enabled file HEAD for every declared object.",
+  "transfer": "Authenticated conditional SDK and native AWS CLI PutObject with explicit SHA-256. Connection-reset retries preserve verified objects. Showcase service checksum verification uses anonymous HTTPS HEAD; final manifest conditional write uses the SDK.",
+  "tiers": {
+    "core": {
+      "manifest_verified": true,
+      "learner_download_verified": true,
+      "manifest_uri": "https://s3.ap-southeast-1.amazonaws.com/partner-workshop/dynamic-pricing/2026-10-10/core/manifest.json",
+      "manifest_sha256": "cc710b9099d3df8dc97d0efb3a6ecd2975c1b1ba27f8603a26bf7c2a4ed9f3db",
+      "rows": 1000000,
+      "bucket": "partner-workshop",
+      "prefix": "dynamic-pricing/2026-10-10/core",
+      "region": "ap-southeast-1",
+      "objects_verified": 14,
+      "uploaded_objects_final_publisher_run": 1
+    },
+    "showcase": {
+      "manifest_verified": true,
+      "learner_download_verified": true,
+      "manifest_uri": "https://s3.ap-southeast-1.amazonaws.com/partner-workshop/dynamic-pricing/2026-10-10/showcase/manifest.json",
+      "manifest_sha256": "df41eead4d987facabb893c85dbcef97030e17eb6c4cab851b8280073712653a",
+      "rows": 100000000,
+      "bucket": "partner-workshop",
+      "prefix": "dynamic-pricing/2026-10-10/showcase",
+      "region": "ap-southeast-1",
+      "objects_verified": 1004,
+      "uploaded_objects_final_publisher_run": 1
+    }
+  },
+  "server_side_s3_loading": {
+    "core": "passed in local Docker; see s3-core-loading.json",
+    "showcase": "not rehearsed against a managed Cloud service"
+  },
+  "managed_cloud_verified": false
+}

@@ -1,0 +1,6 @@
+[
+  {"name":"below-floor","price_minor":499,"reason_id":"below_floor"},
+  {"name":"wrong-step","price_minor":701,"reason_id":"invalid_price_step"},
+  {"name":"outside-change-limit","price_minor":450,"reason_id":"change_limit"},
+  {"name":"outside-model-support","price_minor":500,"reason_id":"unsupported_price_ratio"}
+]

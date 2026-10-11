@@ -1,0 +1,61 @@
+{
+  "verified_at": "2026-10-10",
+  "environment": "macOS local Docker; no Cloud rehearsal",
+  "unit_tests": 98,
+  "real_sql_integration_tests": 56,
+  "browser_tests": 9,
+  "site_tests": 413,
+  "admin_tests": 16,
+  "site_build": "passed",
+  "admin_build": "passed",
+  "golden_failure_propagation": "nonzero; fixture restored",
+  "container_receipt_next_sale": "passed with test-only local CDC replay",
+  "local_otlp_delivery": "passed",
+  "route_visibility_sign_in": "passed on disposable local tracking database",
+  "windows_literal_contract": "passed; actual Windows rehearsal unfulfilled",
+  "client_assets": {
+    "control_sha": "983a8b50a6ffbc4702b0d0ae16629f30a9eb2c83",
+    "measurement": "sum of direct script src response bytes, uncompressed; not full transfer or gzip",
+    "comparisons": [
+      {
+        "route": "/dynamic-pricing",
+        "control_route": "/postgres-migration",
+        "control_script_bytes": 792889,
+        "current_script_bytes": 793098,
+        "delta": 209
+      },
+      {
+        "route": "/docs/dynamic-pricing/learner/00-setup",
+        "control_route": "/docs/build-workshop/learner/00-setup",
+        "control_script_bytes": 1044611,
+        "current_script_bytes": 1044820,
+        "delta": 209
+      },
+      {
+        "route": "/docs/build-workshop/learner/00-setup",
+        "control_route": "/docs/build-workshop/learner/00-setup",
+        "control_script_bytes": 1044611,
+        "current_script_bytes": 1044820,
+        "delta": 209
+      },
+      {
+        "route": "/postgres-migration",
+        "control_route": "/postgres-migration",
+        "control_script_bytes": 792889,
+        "current_script_bytes": 793098,
+        "delta": 209
+      }
+    ]
+  },
+  "cloud_cdc": "unfulfilled",
+  "s3_distribution": "verified: core1M and showcase100M; every declared object checksum and anonymous read verified",
+  "independent_review": "all six Important and two Minor findings addressed; see code-review.md",
+  "post_review_kit": "passed: docs, units, real SQL, container receipt-to-sale, local OTLP, frontend build/E2E, Compose configuration",
+  "site_type_check": "passed after setup documentation fixes",
+  "post_publication_unit_tests": 107,
+  "publisher_concurrency_tests": 8,
+  "s3_core_server_loading": "passed: anonymous server-side s3() on actual1M rows, local Docker only",
+  "public_read_tests": 5,
+  "s3_core_parallel_manifest_checks": "passed;19.298seconds;8workers",
+  "s3_publication_report": "s3-publication.json"
+}

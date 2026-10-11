@@ -1,0 +1,63 @@
+name: dynamic-pricing
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: app/backend/Dockerfile
+    env_file:
+      - path: .env.workshop
+        required: false
+    environment:
+      PRICING_OWNER_ID: ${PRICING_OWNER_ID:-learner-1}
+      PRICING_SCENARIO_ID: ${PRICING_SCENARIO_ID:-grocery}
+      PRICING_POSTGRES_DSN: ${PRICING_POSTGRES_DSN:-}
+      PRICING_CLICKHOUSE_HOST: ${PRICING_CLICKHOUSE_HOST:-localhost}
+      PRICING_CLICKHOUSE_PORT: ${PRICING_CLICKHOUSE_PORT:-8443}
+      PRICING_CLICKHOUSE_SECURE: ${PRICING_CLICKHOUSE_SECURE:-true}
+      PRICING_CLICKHOUSE_DATABASE: ${PRICING_CLICKHOUSE_DATABASE:-pricing}
+      PRICING_CLICKHOUSE_USERNAME: ${PRICING_CLICKHOUSE_USERNAME:-default}
+      PRICING_CLICKHOUSE_PASSWORD: ${PRICING_CLICKHOUSE_PASSWORD:-}
+      PRICING_SESSION_SECRET: ${PRICING_SESSION_SECRET:-}
+      PRICING_ALLOWED_ORIGIN: ${PRICING_ALLOWED_ORIGIN:-http://localhost:8080}
+      PRICING_DATASET_MANIFEST: ${PRICING_DATASET_MANIFEST:-}
+      PRICING_OTEL_ENDPOINT: ${PRICING_OTEL_ENDPOINT:-}
+      PRICING_AGENT_PROVIDER: ${AGENT_PROVIDER:-}
+      PRICING_AGENT_MODEL: ${AGENT_MODEL:-}
+      PRICING_AGENT_API_KEY: ${AGENT_API_KEY:-}
+      PRICING_DIAGNOSTICS_AGENT_MODE: ${PRICING_DIAGNOSTICS_AGENT_MODE:-replay}
+      PRICING_CLICKSTACK_DATABASE: ${PRICING_CLICKSTACK_DATABASE:-otel}
+      PRICING_CLICKSTACK_TRACE_TABLE: ${PRICING_CLICKSTACK_TRACE_TABLE:-otel_traces}
+      PRICING_MODEL_PATH: ${PRICING_MODEL_PATH:-/opt/pricing/pricing/artifacts/development/model.json}
+    volumes:
+      - decision_exports:/opt/pricing/reports/exports
+    extra_hosts: ["host.docker.internal:host-gateway"]
+  frontend:
+    build:
+      context: ..
+      dockerfile: app/frontend/Dockerfile
+    ports:
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+  writer:
+    profiles: [writer]
+    build:
+      context: ..
+      dockerfile: app/loadgen/Dockerfile
+    environment:
+      PRICING_OWNER_ID: ${PRICING_OWNER_ID:-learner-1}
+      PRICING_SCENARIO_ID: ${PRICING_SCENARIO_ID:-grocery}
+      PRICING_POSTGRES_DSN: ${PRICING_POSTGRES_DSN:-}
+      PRICING_OTEL_ENDPOINT: ${PRICING_OTEL_ENDPOINT:-}
+    extra_hosts: ["host.docker.internal:host-gateway"]
+  collector:
+    profiles: [telemetry]
+    image: otel/opentelemetry-collector-contrib:0.139.0@sha256:faf125d656fa47cea568b2f3b4494efd2525083bc75c1e96038bc23f05cd68fd
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes: ["../obs/collector.yaml:/etc/otelcol/config.yaml:ro"]
+    environment:
+      PRICING_CLICKSTACK_ENDPOINT: ${PRICING_CLICKSTACK_ENDPOINT:-}
+      PRICING_CLICKSTACK_API_KEY: ${PRICING_CLICKSTACK_API_KEY:-}
+volumes:
+  decision_exports:

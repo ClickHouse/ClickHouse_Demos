@@ -1,0 +1,23 @@
+{
+  "companion_files": [],
+  "currency": "SGD",
+  "dataset_version": "retail-v1",
+  "files": [
+    {
+      "bytes": 4103,
+      "key": "golden.parquet",
+      "quantity": 4,
+      "receipts_minor": 2900,
+      "rows": 3,
+      "sha256": "c1f2dbbdd0bb7205575c01c100082ba640a8cbae098b70b1291b9e2914a2e143",
+      "sold_cost_minor": 1600
+    }
+  ],
+  "generator_version": "1.0",
+  "history_cutover": "2026-01-30T00:00:00Z",
+  "rows": 3,
+  "seed": 17,
+  "source_namespace": "history-v1",
+  "synthetic": true,
+  "tier": "golden"
+}

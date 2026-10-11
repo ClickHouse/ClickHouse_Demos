@@ -1,0 +1,10 @@
+{
+  "kind": "workshop-panel-definitions",
+  "importable_hyperdx_dashboard": false,
+  "panels": [
+    {"name": "Application path", "filter": "service.name:pricing-backend", "group_by": "SpanName", "measure": "Duration", "unit": "ns"},
+    {"name": "Snapshot evidence", "filter": "SpanName:pricing.snapshot", "columns": ["pricing.owner_id", "pricing.generation", "pricing.snapshot_id", "pricing.error_type"]},
+    {"name": "Review and acknowledgement", "filter": "SpanName:pricing.application*", "columns": ["pricing.candidate_id", "pricing.decision_id", "pricing.receipt_id"]}
+  ],
+  "note": "Create panels in your ClickStack UI using fields available in your configured source. These definitions are guidance, not an unverified dashboard import format."
+}

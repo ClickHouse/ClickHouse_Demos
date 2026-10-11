@@ -1,0 +1,15 @@
+.venv/
+.run/
+.pytest_cache/
+__pycache__/
+*.egg-info/
+*.pyc
+app/.env.workshop
+node_modules/
+dist/
+test-results/
+playwright-report/
+infra/resources.json
+benchmarks/results/private/
+reports/exports/
+infra/resources.lock

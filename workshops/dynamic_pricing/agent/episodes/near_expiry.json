@@ -1,0 +1,285 @@
+{
+  "mode": "recorded",
+  "provenance": "Synthetic teaching fixture scored locally; not a recorded Cloud or agent execution",
+  "event": "near_expiry",
+  "snapshot": {
+    "snapshot_id": "e57330ee-6d73-4aaf-9f38-fc991139af8a",
+    "scope": {
+      "owner_id": "recorded",
+      "scenario_id": "grocery",
+      "generation": 1
+    },
+    "subject": {
+      "sku": 101,
+      "store_id": 1,
+      "channel": "store"
+    },
+    "scenario_cutoff": "2026-01-30T12:00:00Z",
+    "captured_at": "2026-10-10T06:00:00Z",
+    "source_versions": {
+      "inventory": "recorded-1",
+      "price": "1",
+      "cost": "1"
+    },
+    "source_ages_seconds": {
+      "inventory": 0.0,
+      "price": 0.0,
+      "cost": 0.0
+    },
+    "stock_units": 30,
+    "inventory_expires_at": "2026-01-30T12:30:00Z",
+    "expires_at": "2026-10-10T07:00:00Z",
+    "current_price_minor": 800,
+    "reference_price_minor": 800,
+    "unit_cost_minor": 400,
+    "selling_cost_minor": 20,
+    "disposal_cost_minor": 20,
+    "rule_version": 1,
+    "applied_price_version": 1
+  },
+  "candidates": [
+    {
+      "candidate_id": "4d71df18-bfe7-4e62-aa60-0e6f89895db4",
+      "snapshot": {
+        "snapshot_id": "e57330ee-6d73-4aaf-9f38-fc991139af8a",
+        "scope": {
+          "owner_id": "recorded",
+          "scenario_id": "grocery",
+          "generation": 1
+        },
+        "subject": {
+          "sku": 101,
+          "store_id": 1,
+          "channel": "store"
+        },
+        "scenario_cutoff": "2026-01-30T12:00:00Z",
+        "captured_at": "2026-10-10T06:00:00Z",
+        "source_versions": {
+          "inventory": "recorded-1",
+          "price": "1",
+          "cost": "1"
+        },
+        "source_ages_seconds": {
+          "inventory": 0.0,
+          "price": 0.0,
+          "cost": 0.0
+        },
+        "stock_units": 30,
+        "inventory_expires_at": "2026-01-30T12:30:00Z",
+        "expires_at": "2026-10-10T07:00:00Z",
+        "current_price_minor": 800,
+        "reference_price_minor": 800,
+        "unit_cost_minor": 400,
+        "selling_cost_minor": 20,
+        "disposal_cost_minor": 20,
+        "rule_version": 1,
+        "applied_price_version": 1
+      },
+      "model_version": "poisson-grocery-v1-9d31e8c16031",
+      "price_minor": 550,
+      "created_at": "2026-10-10T06:00:00Z",
+      "expires_at": "2026-10-10T07:00:00Z",
+      "projection": {
+        "expected_units": "3.775390625",
+        "expired_units": "26.224609375",
+        "receipts_minor": "2076.46484375",
+        "gross_margin_minor": "566.30859375",
+        "selling_cost_minor": "75.5078125",
+        "disposal_cost_minor": "524.4921875",
+        "net_recovery_minor": "1476.46484375",
+        "full_contribution_minor": "-10523.53515625",
+        "second_window_price_minor": "550",
+        "seed": "17",
+        "trials": "1024",
+        "demand_recovery_p10_minor": "500.0",
+        "demand_recovery_p90_minor": "2700.0",
+        "parameter_advantage_min_minor": "240.576171875",
+        "parameter_advantage_max_minor": "312.939453125"
+      }
+    },
+    {
+      "candidate_id": "f7169e6a-c56b-47db-95f2-2ab6ed76d029",
+      "snapshot": {
+        "snapshot_id": "e57330ee-6d73-4aaf-9f38-fc991139af8a",
+        "scope": {
+          "owner_id": "recorded",
+          "scenario_id": "grocery",
+          "generation": 1
+        },
+        "subject": {
+          "sku": 101,
+          "store_id": 1,
+          "channel": "store"
+        },
+        "scenario_cutoff": "2026-01-30T12:00:00Z",
+        "captured_at": "2026-10-10T06:00:00Z",
+        "source_versions": {
+          "inventory": "recorded-1",
+          "price": "1",
+          "cost": "1"
+        },
+        "source_ages_seconds": {
+          "inventory": 0.0,
+          "price": 0.0,
+          "cost": 0.0
+        },
+        "stock_units": 30,
+        "inventory_expires_at": "2026-01-30T12:30:00Z",
+        "expires_at": "2026-10-10T07:00:00Z",
+        "current_price_minor": 800,
+        "reference_price_minor": 800,
+        "unit_cost_minor": 400,
+        "selling_cost_minor": 20,
+        "disposal_cost_minor": 20,
+        "rule_version": 1,
+        "applied_price_version": 1
+      },
+      "model_version": "poisson-grocery-v1-9d31e8c16031",
+      "price_minor": 650,
+      "created_at": "2026-10-10T06:00:00Z",
+      "expires_at": "2026-10-10T07:00:00Z",
+      "projection": {
+        "expected_units": "3.29296875",
+        "expired_units": "26.70703125",
+        "receipts_minor": "1951.171875",
+        "gross_margin_minor": "633.984375",
+        "selling_cost_minor": "65.859375",
+        "disposal_cost_minor": "534.140625",
+        "net_recovery_minor": "1351.171875",
+        "full_contribution_minor": "-10648.828125",
+        "second_window_price_minor": "550",
+        "seed": "17",
+        "trials": "1024",
+        "demand_recovery_p10_minor": "50.0",
+        "demand_recovery_p90_minor": "2900.0",
+        "parameter_advantage_min_minor": "132.470703125",
+        "parameter_advantage_max_minor": "168.5546875"
+      }
+    },
+    {
+      "candidate_id": "52d4a75b-f5c8-49e5-b1f8-a578ab013d95",
+      "snapshot": {
+        "snapshot_id": "e57330ee-6d73-4aaf-9f38-fc991139af8a",
+        "scope": {
+          "owner_id": "recorded",
+          "scenario_id": "grocery",
+          "generation": 1
+        },
+        "subject": {
+          "sku": 101,
+          "store_id": 1,
+          "channel": "store"
+        },
+        "scenario_cutoff": "2026-01-30T12:00:00Z",
+        "captured_at": "2026-10-10T06:00:00Z",
+        "source_versions": {
+          "inventory": "recorded-1",
+          "price": "1",
+          "cost": "1"
+        },
+        "source_ages_seconds": {
+          "inventory": 0.0,
+          "price": 0.0,
+          "cost": 0.0
+        },
+        "stock_units": 30,
+        "inventory_expires_at": "2026-01-30T12:30:00Z",
+        "expires_at": "2026-10-10T07:00:00Z",
+        "current_price_minor": 800,
+        "reference_price_minor": 800,
+        "unit_cost_minor": 400,
+        "selling_cost_minor": 20,
+        "disposal_cost_minor": 20,
+        "rule_version": 1,
+        "applied_price_version": 1
+      },
+      "model_version": "poisson-grocery-v1-9d31e8c16031",
+      "price_minor": 700,
+      "created_at": "2026-10-10T06:00:00Z",
+      "expires_at": "2026-10-10T07:00:00Z",
+      "projection": {
+        "expected_units": "3.107421875",
+        "expired_units": "26.892578125",
+        "receipts_minor": "1891.30859375",
+        "gross_margin_minor": "648.33984375",
+        "selling_cost_minor": "62.1484375",
+        "disposal_cost_minor": "537.8515625",
+        "net_recovery_minor": "1291.30859375",
+        "full_contribution_minor": "-10708.69140625",
+        "second_window_price_minor": "550",
+        "seed": "17",
+        "trials": "1024",
+        "demand_recovery_p10_minor": "-50.0",
+        "demand_recovery_p90_minor": "2750.0",
+        "parameter_advantage_min_minor": "80.46875",
+        "parameter_advantage_max_minor": "102.5390625"
+      }
+    },
+    {
+      "candidate_id": "1fd6f48f-8af4-4f69-aa23-432d81e4429c",
+      "snapshot": {
+        "snapshot_id": "e57330ee-6d73-4aaf-9f38-fc991139af8a",
+        "scope": {
+          "owner_id": "recorded",
+          "scenario_id": "grocery",
+          "generation": 1
+        },
+        "subject": {
+          "sku": 101,
+          "store_id": 1,
+          "channel": "store"
+        },
+        "scenario_cutoff": "2026-01-30T12:00:00Z",
+        "captured_at": "2026-10-10T06:00:00Z",
+        "source_versions": {
+          "inventory": "recorded-1",
+          "price": "1",
+          "cost": "1"
+        },
+        "source_ages_seconds": {
+          "inventory": 0.0,
+          "price": 0.0,
+          "cost": 0.0
+        },
+        "stock_units": 30,
+        "inventory_expires_at": "2026-01-30T12:30:00Z",
+        "expires_at": "2026-10-10T07:00:00Z",
+        "current_price_minor": 800,
+        "reference_price_minor": 800,
+        "unit_cost_minor": 400,
+        "selling_cost_minor": 20,
+        "disposal_cost_minor": 20,
+        "rule_version": 1,
+        "applied_price_version": 1
+      },
+      "model_version": "poisson-grocery-v1-9d31e8c16031",
+      "price_minor": 800,
+      "created_at": "2026-10-10T06:00:00Z",
+      "expires_at": "2026-10-10T07:00:00Z",
+      "projection": {
+        "expected_units": "2.8427734375",
+        "expired_units": "27.1572265625",
+        "receipts_minor": "1801.07421875",
+        "gross_margin_minor": "663.96484375",
+        "selling_cost_minor": "56.85546875",
+        "disposal_cost_minor": "543.14453125",
+        "net_recovery_minor": "1201.07421875",
+        "full_contribution_minor": "-10798.92578125",
+        "second_window_price_minor": "550",
+        "seed": "17",
+        "trials": "1024",
+        "demand_recovery_p10_minor": "-50.0",
+        "demand_recovery_p90_minor": "2650.0",
+        "parameter_advantage_min_minor": "0.0",
+        "parameter_advantage_max_minor": "0.0"
+      }
+    }
+  ],
+  "investigation": [
+    "Compare stock expiry with the scenario cutoff.",
+    "Inspect selected inventory and price versions.",
+    "Compare projected net recovery with the keep-price baseline.",
+    "Review the policy result before learner approval."
+  ],
+  "application": "No application receipt; all candidate prices are proposals"
+}

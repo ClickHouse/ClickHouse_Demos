@@ -1,0 +1,43 @@
+# Explicit test/developer override. Never use this file for learner Cloud provisioning.
+services:
+  postgres:
+    profiles: [developer]
+    image: postgres:17.5@sha256:aadf2c0696f5ef357aa7a68da995137f0cf17bad0bf6e1f17de06ae5c769b302
+    environment:
+      POSTGRES_USER: pricing_test
+      POSTGRES_PASSWORD: test-only-password
+      POSTGRES_DB: postgres
+    command: [postgres, -c, wal_level=logical]
+    ports: ["127.0.0.1::5432"]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U pricing_test -d postgres"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  clickhouse:
+    profiles: [developer]
+    image: clickhouse/clickhouse-server:25.8@sha256:0152dd511befe6a2c2ef53e930726179669b08116da78500b37c51c96ff5ee77
+    environment:
+      CLICKHOUSE_PASSWORD: test-only-password
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports: ["127.0.0.1::8123"]
+    healthcheck:
+      test: [CMD-SHELL, "wget -qO- http://localhost:8123/ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  backend:
+    environment:
+      PRICING_POSTGRES_DSN: postgresql://pricing_test:test-only-password@postgres:5432/postgres
+      PRICING_CLICKHOUSE_HOST: clickhouse
+      PRICING_CLICKHOUSE_PORT: 8123
+      PRICING_CLICKHOUSE_SECURE: false
+      PRICING_CLICKHOUSE_PASSWORD: test-only-password
+      PRICING_SESSION_SECRET: developer-only-session-secret-at-least-32-characters
+      PRICING_INGESTION_MODE: local_replay
+    depends_on:
+      postgres: {condition: service_healthy}
+      clickhouse: {condition: service_healthy}
+  writer:
+    environment:
+      PRICING_POSTGRES_DSN: postgresql://pricing_test:test-only-password@postgres:5432/postgres

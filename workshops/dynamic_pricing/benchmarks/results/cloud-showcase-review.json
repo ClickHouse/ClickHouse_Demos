@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-10-11T03:45:30.161736+00:00",
+  "facts": {
+    "canonical_rows": 24998408,
+    "net_units": 24998408,
+    "receipts_minor": 19998141600,
+    "sold_cost_minor": 9999363200
+  },
+  "facts_fingerprint": "5f1c2a0d17ea2651984ffe770f5e4f0e12ac7ad1981eb73a563071c98d614d51",
+  "fixed_parameters": {
+    "sandbox": "yss-review/grocery",
+    "sku": 101,
+    "store": 1,
+    "cutoff": "2026-01-30 12:00:00+00:00"
+  },
+  "queries": {
+    "raw": "SELECT count() AS canonical_rows,sum(quantity) AS net_units,sum(receipts_minor) AS receipts_minor,sum(sold_cost_minor) AS sold_cost_minor FROM pricing.hist_raw_5a29a10e244749fa973d424292f9abaa WHERE sandbox_id={sandbox:String} AND store_id={store:Int32} AND sku={sku:Int32} AND event_time<{cutoff:DateTime64(3,'UTC')}",
+    "rollup": "SELECT sum(row_count) AS canonical_rows,sum(net_units) AS net_units,sum(receipts_minor) AS receipts_minor,sum(sold_cost_minor) AS sold_cost_minor FROM pricing.hist_hour_5a29a10e244749fa973d424292f9abaa WHERE sandbox_id={sandbox:String} AND store_id={store:Int32} AND sku={sku:Int32} AND hour<{cutoff:DateTime64(3,'UTC')}"
+  },
+  "raw": {
+    "samples": [
+      {
+        "query_id": "dd60e645-d5f8-4008-ab96-63647e572346",
+        "client_seconds": 0.42182312498334795,
+        "read_rows": 25042944,
+        "read_bytes": 1377011008
+      },
+      {
+        "query_id": "46617506-2d1b-4bc7-9ad0-bc5b95b32f8b",
+        "client_seconds": 0.39789058300084434,
+        "read_rows": 25042944,
+        "read_bytes": 1377011008
+      },
+      {
+        "query_id": "982a1a0f-e77e-44f8-8402-0ce9745b3ffa",
+        "client_seconds": 0.4170647909922991,
+        "read_rows": 25042944,
+        "read_bytes": 1377011008
+      },
+      {
+        "query_id": "09b4dc04-5b48-4c92-94c6-644f3fe2957c",
+        "client_seconds": 0.3936907080060337,
+        "read_rows": 25042944,
+        "read_bytes": 1377011008
+      },
+      {
+        "query_id": "dec158d8-3734-4722-b0da-f8782cae3b55",
+        "client_seconds": 0.4050637500185985,
+        "read_rows": 25042944,
+        "read_bytes": 1377011008
+      },
+      {
+        "query_id": "5cb780a6-86e6-43d8-9958-44a74e645c44",
+        "client_seconds": 0.39962583300075494,
+        "read_rows": 25042944,
+        "read_bytes": 1377011008
+      },
+      {
+        "query_id": "df5e0c11-d7d8-44fa-8d32-3084f770b756",
+        "client_seconds": 0.3972539999813307,
+        "read_rows": 25042944,
+        "read_bytes": 1377011008
+      },
+      {
+        "query_id": "44ef644b-51e3-45cf-8e74-166aa5ec68f9",
+        "client_seconds": 0.40673691700794734,
+        "read_rows": 25042944,
+        "read_bytes": 1377011008
+      },
+      {
+        "query_id": "dae6045a-7275-425b-95c5-9e9248892389",
+        "client_seconds": 0.39583049999782816,
+        "read_rows": 25042944,
+        "read_bytes": 1377011008
+      },
+      {
+        "query_id": "a75c586c-852e-4e51-acec-e8045da3a8c3",
+        "client_seconds": 0.41076404199702665,
+        "read_rows": 25042944,
+        "read_bytes": 1377011008
+      }
+    ],
+    "summary": {
+      "samples": 10,
+      "median_seconds": 0.4023447915096767,
+      "minimum_seconds": 0.3936907080060337,
+      "maximum_seconds": 0.42182312498334795,
+      "p95_seconds": null,
+      "tail_label": "insufficient_samples"
+    }
+  },
+  "rollup": {
+    "samples": [
+      {
+        "query_id": "b2540890-7953-4b03-948d-86eb6241f822",
+        "client_seconds": 0.018370208999840543,
+        "read_rows": 8192,
+        "read_bytes": 516096
+      },
+      {
+        "query_id": "7c9e12af-7762-42d5-a158-c3e1c049529a",
+        "client_seconds": 0.04321870900457725,
+        "read_rows": 8192,
+        "read_bytes": 516096
+      },
+      {
+        "query_id": "399e0508-abaa-4154-aeb4-75bb4f1924f7",
+        "client_seconds": 0.015507292002439499,
+        "read_rows": 8192,
+        "read_bytes": 516096
+      },
+      {
+        "query_id": "8b4ca310-e61d-4e70-bde9-c475b6ff8848",
+        "client_seconds": 0.016467041976284236,
+        "read_rows": 8192,
+        "read_bytes": 516096
+      },
+      {
+        "query_id": "3da80b0c-f50f-4788-8928-41a07e1d2e92",
+        "client_seconds": 0.019269083975814283,
+        "read_rows": 8192,
+        "read_bytes": 516096
+      },
+      {
+        "query_id": "d5949a9a-d052-4431-814d-d6e81a399298",
+        "client_seconds": 0.01798841598792933,
+        "read_rows": 8192,
+        "read_bytes": 516096
+      },
+      {
+        "query_id": "2cc7a161-5270-45d1-948b-656f2350c68f",
+        "client_seconds": 0.020763708016602322,
+        "read_rows": 8192,
+        "read_bytes": 516096
+      },
+      {
+        "query_id": "2bbf2f96-c07b-4c51-b2cd-eaff93dfa690",
+        "client_seconds": 0.01676837500417605,
+        "read_rows": 8192,
+        "read_bytes": 516096
+      },
+      {
+        "query_id": "dcb27ef5-415b-4cdc-a7a4-2e88281629a6",
+        "client_seconds": 0.016059416986536235,
+        "read_rows": 8192,
+        "read_bytes": 516096
+      },
+      {
+        "query_id": "a03a35ea-f17e-46c6-81e8-1e698d09129d",
+        "client_seconds": 0.019868208008119836,
+        "read_rows": 8192,
+        "read_bytes": 516096
+      }
+    ],
+    "summary": {
+      "samples": 10,
+      "median_seconds": 0.018179312493884936,
+      "minimum_seconds": 0.015507292002439499,
+      "maximum_seconds": 0.04321870900457725,
+      "p95_seconds": null,
+      "tail_label": "insufficient_samples"
+    }
+  },
+  "cache": {
+    "use_query_cache": 0,
+    "warmups_per_query": 2,
+    "storage_caches": "not_flushed",
+    "query_condition_cache": "server_default"
+  },
+  "concurrency": 1,
+  "environment": {
+    "hardware": null,
+    "cloud_sizing": null,
+    "sizing_verified": false,
+    "configured_ingestion_mode": "clickpipes",
+    "cloud_rehearsal_verified": false,
+    "clickhouse_version": "26.6.1.2326",
+    "python_version": "3.12.13",
+    "host_platform": "macOS-26.7.1-arm64-arm-64bit",
+    "dependency_lock_sha256": "5a0366eb737990c35959393ff83ce4c701f674cda5cb50bde3c5df538f8f86d0"
+  },
+  "import": {
+    "rows": 100000000,
+    "clock": "monotonic",
+    "load_seconds": 342.8108505830169,
+    "verification_seconds": 2.179630083992379,
+    "rows_per_second": 291706.05256493617
+  },
+  "freshness": null,
+  "barrier": {
+    "import_run_id": "5a29a10e-2447-49fa-973d-424292f9abaa",
+    "scope": {
+      "owner_id": "yss-review",
+      "scenario_id": "grocery",
+      "generation": 2
+    },
+    "scenario_cutoff": "2026-01-30T12:00:00+00:00",
+    "manifest_sha256": "525e3813469529ea6e797e6aa6d6f456d03a90bf4ae0dff0c957a8d6d2dbc74c",
+    "dataset_rows": 100000000,
+    "tier": "showcase"
+  },
+  "query_log": {
+    "status": "not_visible",
+    "rows": [],
+    "table": "clusterAllReplicas('default',system.query_log)",
+    "action": "Query-log rows were not all visible within the bounded wait. Do not fill missing metrics with zeros."
+  },
+  "verification": {
+    "targeted_cloud_benchmark_passed": true,
+    "service_id": "9c240924-7aa0-4ce3-9874-6646da3e1efb",
+    "region": "ap-southeast-1",
+    "repetitions": 10,
+    "full_cloud_rehearsal_passed": false,
+    "source": "Existing yss-review sandbox from learner review; no source sales, resets, pipe creation, or resource deletion during this benchmark."
+  }
+}

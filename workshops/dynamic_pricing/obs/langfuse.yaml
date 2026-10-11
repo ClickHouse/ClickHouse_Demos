@@ -1,0 +1,24 @@
+# Optional second collector pipeline; the application keeps the same provider.
+processors:
+  filter/agents:
+    error_mode: ignore
+    traces:
+      span:
+        - 'not IsMatch(name, "^pricing\\.agent\\.")'
+exporters:
+  otlphttp/langfuse:
+    endpoint: ${env:PRICING_LANGFUSE_ENDPOINT}
+    headers:
+      Authorization: ${env:PRICING_LANGFUSE_AUTH}
+      x-langfuse-ingestion-version: "4"
+    timeout: 5s
+    retry_on_failure:
+      initial_interval: 1s
+      max_interval: 5s
+      max_elapsed_time: 10s
+service:
+  pipelines:
+    traces/langfuse:
+      receivers: [otlp]
+      processors: [memory_limiter, filter/agents, batch]
+      exporters: [otlphttp/langfuse]

@@ -1,0 +1,57 @@
+{
+  "status": "datasets_published_anonymous_verified",
+  "verification_seconds": 2.8890622909966623,
+  "seed": 17,
+  "dataset_version": "retail-v1",
+  "calibration_rows": 22959,
+  "shared_calibration_identical": true,
+  "s3_published": true,
+  "learner_download_verified": true,
+  "tiers": {
+    "core": {
+      "rows": 1000000,
+      "files": 11,
+      "parquet_bytes": 29959711,
+      "manifest_sha256": "cc710b9099d3df8dc97d0efb3a6ecd2975c1b1ba27f8603a26bf7c2a4ed9f3db",
+      "local_path": ".run/core/manifest.json",
+      "manifest_uri": "https://s3.ap-southeast-1.amazonaws.com/partner-workshop/dynamic-pricing/2026-10-10/core/manifest.json",
+      "quantity": 902296,
+      "receipts_minor": 808468100,
+      "sold_cost_minor": 406296000,
+      "s3_published": true,
+      "learner_download_verified": true,
+      "objects_verified": 14
+    },
+    "showcase": {
+      "rows": 100000000,
+      "files": 1001,
+      "parquet_bytes": 2998944947,
+      "manifest_sha256": "df41eead4d987facabb893c85dbcef97030e17eb6c4cab851b8280073712653a",
+      "local_path": ".run/showcase/manifest.json",
+      "manifest_uri": "https://s3.ap-southeast-1.amazonaws.com/partner-workshop/dynamic-pricing/2026-10-10/showcase/manifest.json",
+      "quantity": 90002296,
+      "receipts_minor": 80998468100,
+      "sold_cost_minor": 40501296000,
+      "s3_published": true,
+      "learner_download_verified": true,
+      "objects_verified": 1004
+    }
+  },
+  "local_showcase_benchmark": {
+    "path": "benchmarks/results/local-showcase.json",
+    "dataset_rows": 100000000,
+    "selected_rows": 24998408,
+    "repetitions_per_query": 30,
+    "load_seconds": 880.1782361669902,
+    "cloud_verified": false,
+    "s3_load_verified": false
+  },
+  "publication": {
+    "bucket": "partner-workshop",
+    "region": "ap-southeast-1",
+    "prefix": "dynamic-pricing/2026-10-10",
+    "profile": "sa",
+    "bucket_access_policy_changed": false,
+    "verification_report": "reports/s3-publication.json"
+  }
+}

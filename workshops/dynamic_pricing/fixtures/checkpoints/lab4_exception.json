@@ -1,0 +1,38 @@
+{
+  "checkpoint": "lab4_exception",
+  "scenario_cutoff": "2026-01-30T12:00:00Z",
+  "requires_cdc": true,
+  "subject": {
+    "sku": 101,
+    "store_id": 1,
+    "channel": "store"
+  },
+  "state": {
+    "stock_units": 30,
+    "inventory_expires_at": "2026-01-30T12:30:00Z",
+    "current_price_minor": 800,
+    "reference_price_minor": 800,
+    "unit_cost_minor": 400,
+    "selling_cost_minor": 20,
+    "disposal_cost_minor": 20,
+    "rule_version": 1,
+    "applied_price_version": 1
+  },
+  "rules": {
+    "version": 1,
+    "floor_minor": 500,
+    "max_change_bps": 4000,
+    "price_step_minor": 50,
+    "review_change_bps": 1500,
+    "max_source_age_seconds": 120,
+    "allowed_price_ratios": [
+      0.65,
+      1.0
+    ]
+  },
+  "prepared_prices_minor": [
+    550,
+    650,
+    700
+  ]
+}

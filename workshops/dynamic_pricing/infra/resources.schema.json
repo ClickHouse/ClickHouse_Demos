@@ -1,0 +1,97 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "owner_id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+      "title": "Owner Id",
+      "type": "string"
+    },
+    "organization_id": {
+      "format": "uuid",
+      "title": "Organization Id",
+      "type": "string"
+    },
+    "region": {
+      "title": "Region",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "service_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Service Id"
+    },
+    "postgres_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Postgres Id"
+    },
+    "clickpipe_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Clickpipe Id"
+    },
+    "pricing_database": {
+      "default": "pricing",
+      "title": "Pricing Database",
+      "type": "string"
+    },
+    "postgres_database": {
+      "default": "postgres",
+      "title": "Postgres Database",
+      "type": "string"
+    },
+    "pending_creation": {
+      "anyOf": [
+        {
+          "enum": [
+            "service",
+            "postgres"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pending Creation"
+    }
+  },
+  "required": [
+    "owner_id",
+    "organization_id",
+    "region",
+    "created_at"
+  ],
+  "title": "ResourceInventory",
+  "type": "object"
+}
