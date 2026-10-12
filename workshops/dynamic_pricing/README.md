@@ -10,6 +10,16 @@ This public checkout contains the runnable kit. Site-only documentation checks s
 
 Implementation is under review. The 1M and 100M S3 tiers are published and verified, and the prepared model passes its synthetic validation gates. Complete managed Cloud rehearsal, Windows WSL2 rehearsal, and pacing must pass before a public session. The template selects the prepared model artifact; the development artifact remains available for local verification. Local SQL replay is not managed CDC evidence.
 
+## Learner setup
+
+After installing dependencies, configuring `app/.env.workshop`, and logging in with your organization API key from this lab directory, run:
+
+```bash
+bash scripts/setup-cloud.sh
+```
+
+The script creates your owned Cloud services, analytical databases, managed Postgres schema/roles/publication, and four-table ClickPipe, then verifies readiness. Reruns reuse inventory and private credentials. See [Cloud provisioning](infra/README.md) for prerequisites and recovery.
+
 ## Local verification
 
 Use Python 3.12 and Node 22. Docker must be running. From this lab directory:

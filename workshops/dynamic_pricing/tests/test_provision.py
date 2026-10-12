@@ -298,3 +298,19 @@ def test_cdc_readiness_checks_running_pipe_configuration(settings,inventory,monk
 
 def test_unit_settings_ignore_inherited_learner_owner():
     assert Settings().owner_id=='learner-1'
+
+
+def test_inventory_can_record_ambiguous_clickpipe_creation(inventory):
+    recorded=ResourceInventory.model_validate({**inventory.model_dump(),'pending_creation':'clickpipe'})
+    assert recorded.pending_creation=='clickpipe'
+
+
+def test_initial_provisioning_can_take_more_than_three_minutes(settings):
+    from infra.provision import wait_running
+    runner=Runner();original=runner.run
+    def run(argv):
+        result=original(argv)
+        result['state']='creating' if runner.polls<=100 else 'running'
+        return result
+    runner.run=run
+    assert wait_running(runner,settings,'postgres',PG,sleep=lambda _:None)['state']=='running'

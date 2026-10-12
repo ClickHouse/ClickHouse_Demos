@@ -4,13 +4,13 @@ services:
     build:
       context: ..
       dockerfile: app/backend/Dockerfile
-    env_file:
-      - path: .env.workshop
-        required: false
     environment:
       PRICING_OWNER_ID: ${PRICING_OWNER_ID:-learner-1}
       PRICING_SCENARIO_ID: ${PRICING_SCENARIO_ID:-grocery}
       PRICING_POSTGRES_DSN: ${PRICING_POSTGRES_DSN:-}
+      PRICING_INGESTION_MODE: ${PRICING_INGESTION_MODE:-clickpipes}
+      PRICING_CONVERGENCE_TIMEOUT_SECONDS: ${PRICING_CONVERGENCE_TIMEOUT_SECONDS:-30}
+      PRICING_LEASE_MINUTES: ${PRICING_LEASE_MINUTES:-60}
       PRICING_CLICKHOUSE_HOST: ${PRICING_CLICKHOUSE_HOST:-localhost}
       PRICING_CLICKHOUSE_PORT: ${PRICING_CLICKHOUSE_PORT:-8443}
       PRICING_CLICKHOUSE_SECURE: ${PRICING_CLICKHOUSE_SECURE:-true}

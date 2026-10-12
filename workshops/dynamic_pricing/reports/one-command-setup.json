@@ -1,0 +1,73 @@
+{
+  "verified_at": "2026-10-12T04:16:31.997055+00:00",
+  "region": "ap-southeast-1",
+  "owner_id": "rehearsal-setup-20261012",
+  "resources": {
+    "service_id": "4f39d8f6-25b9-4592-9aec-6ec818d56922",
+    "postgres_id": "622beb48-df80-82d0-ab16-f0306c60acc3",
+    "clickpipe_id": "11b6cb7a-5c56-455d-accf-4701c6d727f3"
+  },
+  "command": "bash scripts/setup-cloud.sh",
+  "first_run_passed": true,
+  "second_run_reused_all_ids": true,
+  "application_role": "pricing_app",
+  "databases": [
+    "otel",
+    "pricing"
+  ],
+  "cdc_tables": [
+    {
+      "name": "cost_history_cdc",
+      "engine": "SharedReplacingMergeTree"
+    },
+    {
+      "name": "inventory_history_cdc",
+      "engine": "SharedReplacingMergeTree"
+    },
+    {
+      "name": "price_history_cdc",
+      "engine": "SharedReplacingMergeTree"
+    },
+    {
+      "name": "sales_transactions_cdc",
+      "engine": "SharedReplacingMergeTree"
+    }
+  ],
+  "live_sale_and_inventory_converged": true,
+  "event_id": "a118fdce-2270-4143-831d-b240897eda4c",
+  "inventory_revision_id": "3f1b283e-eab4-4c4f-a4c4-c283787971a9",
+  "unit_price_minor": 800,
+  "stock_after": 28,
+  "cdc_wait_seconds": 10.512388917035423,
+  "scope_generation": 1,
+  "telemetry_receiver_verified": false,
+  "full_workshop_rehearsal_verified": false,
+  "guarded_rerun_passed": true,
+  "rerun_preserved_source_state": true,
+  "administrator_tls": "verify-full with owned CA",
+  "role_privileges_verified": true,
+  "pipe_source_configuration_verified": true,
+  "source_credentials_redacted_in_api_get": true,
+  "temporary_resources_deleted": true,
+  "deleted_resources": {
+    "clickpipe": "2026-10-12T04:23:16.336991+00:00",
+    "postgres": "2026-10-12T04:23:17.719160+00:00",
+    "service": "2026-10-12T04:26:03.683800+00:00"
+  },
+  "temporary_resource_absence_verified": true,
+  "local_verification": {
+    "unit_tests": 149,
+    "sql_tests": 61,
+    "browser_tests": 10,
+    "site_tests": 414,
+    "types_docs_links_passed": true
+  },
+  "review": {
+    "critical": 0,
+    "important": 3,
+    "important_addressed": 3,
+    "follow_up_critical_or_important": 0
+  },
+  "cdc_wait_measurement": "Await-revisions and subsequent value/schema verification queries, after source commit.",
+  "temporary_cleanup_status": "Complete; prior yss-review sandbox unchanged."
+}
