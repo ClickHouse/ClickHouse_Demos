@@ -44,3 +44,8 @@ def test_tool_versions_reject_wrong_major_and_cli_release(monkeypatch):
     assert not tool_version(['clickhousectl','--version'],0,exact=(0,4,2))
     output='clickhousectl 0.4.2'
     assert tool_version(['clickhousectl','--version'],0,exact=(0,4,2))
+
+
+def test_register_history_parses_without_a_manifest_override(capsys):
+    assert main(['register-history','--offline'])==2
+    assert 'offline_command_unavailable' in capsys.readouterr().err

@@ -3,6 +3,7 @@ from base64 import b64encode
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
+import re
 import time
 from pathlib import Path, PurePosixPath
 from urllib.parse import urlparse, urljoin, unquote
@@ -22,6 +23,21 @@ from generator.manifest import read_manifest
 
 class ImportInterrupted(RuntimeError):
     pass
+
+
+CONSOLE_SCHEMAS = {
+    "hist_raw_console": [
+        ("sandbox_id", "String"), ("batch_id", "UUID"), ("dataset_version", "LowCardinality(String)"),
+        ("event_id", "UUID"), ("original_event_id", "UUID"), ("sku", "UInt32"), ("store_id", "UInt16"),
+        ("channel", "LowCardinality(String)"), ("event_type", "LowCardinality(String)"), ("quantity", "Int32"),
+        ("offered_price_minor", "Int64"), ("receipts_minor", "Int64"), ("sold_cost_minor", "Int64"),
+        ("event_time", "DateTime64(3, 'UTC')"), ("calibration", "Bool"), ("currency", "LowCardinality(String)"),
+    ],
+    "hist_hour_console": [
+        ("sandbox_id", "String"), ("store_id", "UInt16"), ("sku", "UInt32"), ("hour", "DateTime('UTC')"),
+        ("net_units", "Int64"), ("receipts_minor", "Int64"), ("sold_cost_minor", "Int64"), ("row_count", "UInt64"),
+    ],
+}
 
 
 def public_url(uri: str) -> str:
@@ -144,6 +160,123 @@ class HistoryLoader:
             finally:
                 guard.execute("SELECT pg_advisory_unlock(hashtextextended(%s,0))", (scope.sandbox_id,))
 
+    def register_console(self, manifest_uri: str, scope: Scope) -> dict:
+        """Verify and activate console-loaded tables; never INSERT or DROP their facts."""
+        with self.ledger.connect() as guard:
+            guard.autocommit = True
+            locked = guard.execute(
+                "SELECT pg_try_advisory_lock(hashtextextended(%s,0)) AS locked",
+                (scope.sandbox_id,),
+            ).fetchone()["locked"]
+            if not locked:
+                raise WorkshopError("import_running", "Wait for the active import to finish before registering another.")
+            run_id = None
+            created = False
+            views_changed = False
+            previous = None
+            try:
+                manifest, _ = resolve_manifest(manifest_uri)
+                data = {"manifest": manifest, "sandbox_id": scope.sandbox_id,
+                        "raw_table": "hist_raw_console", "rollup_table": "hist_hour_console",
+                        "mv_table": "hist_mv_console", "source": "sql_console"}
+                db = self.analytics.database
+                tables = self.analytics.query(
+                    """SELECT name,engine,sorting_key,create_table_query FROM system.tables
+                       WHERE database={db:String} AND name IN {names:Array(String)} LIMIT 3""",
+                    {"db": db, "names": [data[key] for key in ("raw_table", "rollup_table", "mv_table")]},
+                )
+                meta = {row["name"]: row for row in tables}
+                valid_engines = (
+                    len(meta) == 3
+                    and meta["hist_raw_console"]["engine"] in ("MergeTree", "SharedMergeTree")
+                    and meta["hist_hour_console"]["engine"] in ("SummingMergeTree", "SharedSummingMergeTree")
+                    and meta["hist_mv_console"]["engine"] == "MaterializedView"
+                    and meta["hist_raw_console"]["sorting_key"] == "sandbox_id, store_id, sku, event_time, event_id"
+                    and meta["hist_hour_console"]["sorting_key"] == "sandbox_id, store_id, sku, hour"
+                )
+                if not valid_engines:
+                    raise WorkshopError(
+                        "console_history_schema",
+                        "Create the three tables and materialized view shown in the SQL console tab before registration.",
+                    )
+                columns = self.analytics.query(
+                    """SELECT table,name,type FROM system.columns
+                       WHERE database={db:String} AND table IN {tables:Array(String)} ORDER BY table,position""",
+                    {"db": db, "tables": list(CONSOLE_SCHEMAS)},
+                )
+                actual_schemas = {
+                    table: [(row["name"], row["type"]) for row in columns if row["table"] == table]
+                    for table in CONSOLE_SCHEMAS
+                }
+                if actual_schemas != CONSOLE_SCHEMAS:
+                    raise WorkshopError(
+                        "console_history_schema",
+                        "Use the column names and types shown in the SQL console tab.",
+                    )
+                definition = meta["hist_mv_console"]["create_table_query"].replace("`", "")
+                if (not re.search(r"\bFROM\s+" + re.escape(db) + r"\.hist_raw_console\b", definition, re.I)
+                        or not re.search(r"\bTO\s+" + re.escape(db) + r"\.hist_hour_console\b", definition, re.I)):
+                    raise WorkshopError(
+                        "console_history_schema",
+                        "Use the materialized view linking hist_raw_console to hist_hour_console.",
+                    )
+                groups = self.analytics.query(
+                    f"""SELECT sandbox_id,dataset_version,uniqExact(batch_id) AS batches
+                        FROM {db}.hist_raw_console GROUP BY sandbox_id,dataset_version LIMIT 2"""
+                )
+                expected_group = {"sandbox_id": scope.sandbox_id,
+                                  "dataset_version": manifest["dataset_version"], "batches": 1}
+                if len(groups) != 1 or groups[0] != expected_group:
+                    raise WorkshopError(
+                        "console_history_scope",
+                        "Use your configured owner ID and the supplied dataset version in the console INSERT statement.",
+                    )
+                previous = guard.execute(
+                    """SELECT r.data FROM pricing.history_active a JOIN pricing.import_runs r USING(run_id)
+                       WHERE a.owner_id=%s AND a.scenario_id=%s""",
+                    (scope.owner_id, scope.scenario_id),
+                ).fetchone()
+                existing = guard.execute(
+                    """SELECT run_id,data FROM pricing.import_runs
+                       WHERE owner_id=%s AND scenario_id=%s AND status='verified'
+                         AND data->>'raw_table'='hist_raw_console'
+                       ORDER BY created_at DESC LIMIT 1""",
+                    (scope.owner_id, scope.scenario_id),
+                ).fetchone()
+                if existing and existing["data"] == data:
+                    run_id = existing["run_id"]
+                else:
+                    run_id = uuid4()
+                    created = True
+                    guard.execute(
+                        """INSERT INTO pricing.import_runs(run_id,owner_id,scenario_id,status,data)
+                           VALUES (%s,%s,%s,'loading',%s)""",
+                        (run_id, scope.owner_id, scope.scenario_id, Jsonb(data)),
+                    )
+                result = self.verify(run_id)
+                views_changed = True
+                self._promote_views(data)
+                with guard.transaction():
+                    guard.execute("UPDATE pricing.import_runs SET status='verified' WHERE run_id=%s", (run_id,))
+                    guard.execute(
+                        """INSERT INTO pricing.history_active VALUES (%s,%s,%s)
+                           ON CONFLICT(owner_id,scenario_id) DO UPDATE SET run_id=excluded.run_id""",
+                        (scope.owner_id, scope.scenario_id, run_id),
+                    )
+                return {**result, "source": "sql_console", "rows_loaded": 0}
+            except Exception:
+                if created:
+                    guard.execute("UPDATE pricing.import_runs SET status='abandoned' WHERE run_id=%s", (run_id,))
+                if views_changed:
+                    if previous:
+                        self._promote_views(previous["data"])
+                    else:
+                        for name in ("sales_history", "sales_history_hourly"):
+                            self.analytics.command(f"DROP VIEW IF EXISTS {self.analytics.database}.{name} SYNC")
+                raise
+            finally:
+                guard.execute("SELECT pg_advisory_unlock(hashtextextended(%s,0))", (scope.sandbox_id,))
+
     def _promote_views(self, data):
         db = self.analytics.database
         self.analytics.command(f"CREATE OR REPLACE VIEW {db}.sales_history AS SELECT * FROM {db}.{identifier(data['raw_table'])}")
@@ -211,4 +344,26 @@ class HistoryLoader:
                     "sold_cost_minor":sum(f["sold_cost_minor"] for f in manifest["files"])}
         if raw != expected or any(raw[k] != rollup[k] for k in rollup):
             raise ValueError("History counts/revenue/rollup totals do not reconcile.")
+        grouped = self.analytics.query(f"""SELECT count() AS mismatches FROM (
+          SELECT sandbox_id,store_id,sku,hour,
+                 sum(net_units_delta) AS net_units_delta,
+                 sum(receipts_delta) AS receipts_delta,
+                 sum(cost_delta) AS cost_delta,
+                 sum(rows_delta) AS rows_delta
+          FROM (
+            SELECT sandbox_id,store_id,sku,toStartOfHour(event_time) AS hour,
+                   sum(quantity) AS net_units_delta,sum(receipts_minor) AS receipts_delta,
+                   sum(sold_cost_minor) AS cost_delta,toInt64(count()) AS rows_delta
+            FROM {db}.{identifier(data['raw_table'])} WHERE sandbox_id={{sandbox:String}}
+            GROUP BY sandbox_id,store_id,sku,hour
+            UNION ALL
+            SELECT sandbox_id,store_id,sku,hour,
+                   -sum(net_units),-sum(receipts_minor),-sum(sold_cost_minor),-toInt64(sum(row_count))
+            FROM {db}.{identifier(data['rollup_table'])} WHERE sandbox_id={{sandbox:String}}
+            GROUP BY sandbox_id,store_id,sku,hour
+          ) GROUP BY sandbox_id,store_id,sku,hour
+          HAVING net_units_delta!=0 OR receipts_delta!=0 OR cost_delta!=0 OR rows_delta!=0
+        )""", {"sandbox":data["sandbox_id"]})[0]["mismatches"]
+        if grouped:
+            raise ValueError("History grouped facts do not reconcile.")
         return {**raw, "run_id":run_id,"raw_table":data["raw_table"],"rollup_table":data["rollup_table"],"rollup":rollup}

@@ -75,11 +75,11 @@ def current_scope(ledger,settings):
 
 def main(argv=None):
     parser=argparse.ArgumentParser(prog='workshop');sub=parser.add_subparsers(dest='command',required=True)
-    for command in ('initialize','preflight','load-history','scenario','reset','export-report','benchmark'):
+    for command in ('initialize','preflight','load-history','register-history','scenario','reset','export-report','benchmark'):
         item=sub.add_parser(command);item.add_argument('--participant');item.add_argument('--offline',action='store_true')
         if command=='preflight': item.add_argument('--module',choices=['setup','baseline','cdc','diagnostics'],default='setup')
         if command=='benchmark': item.add_argument('--repetitions',type=int,default=10);item.add_argument('--probe-freshness',action='store_true')
-        if command in ('load-history','benchmark'): item.add_argument('--manifest',required=True)
+        if command in ('load-history','register-history','benchmark'): item.add_argument('--manifest',help='Dataset metadata URI; defaults to PRICING_DATASET_MANIFEST.')
         if command=='scenario': item.add_argument('--event',choices=EVENTS,required=True);item.add_argument('--event-id',type=UUID,required=True)
         if command=='reset': item.add_argument('--checkpoint',choices=CHECKPOINTS,required=True);item.add_argument('--request-id',type=UUID)
         if command=='export-report': item.add_argument('--decision',type=UUID,required=True)
@@ -110,9 +110,14 @@ def main(argv=None):
                 result={'mode':'live','scope':scope.model_dump(mode='json'),'initialized':True}
         elif args.command=='preflight': result=build_preflight(settings,args.module)
         else:
+            if args.command in ('load-history','register-history','benchmark'):
+                args.manifest=args.manifest or settings.dataset_manifest
+                if not args.manifest:
+                    raise WorkshopError('dataset_manifest_missing','Set PRICING_DATASET_MANIFEST in app/.env.workshop or pass --manifest.')
             ledger=Ledger(settings.postgres_dsn.get_secret_value());scope,cutoff=current_scope(ledger,settings)
             analytics=AnalyticsClient(settings);clock=Clock(cutoff);features=FeatureService(analytics,ledger,clock)
             if args.command=='load-history': result=HistoryLoader(analytics,ledger).load(args.manifest,scope)
+            elif args.command=='register-history': result=HistoryLoader(analytics,ledger).register_console(args.manifest,scope)
             elif args.command=='export-report': result={'path':str(export_report(scope,args.decision,EXPORT_ROOT/f'{args.decision}.json',ledger))}
             elif args.command=='benchmark':
                 from .benchmark import run_benchmark,run_freshness_probe
