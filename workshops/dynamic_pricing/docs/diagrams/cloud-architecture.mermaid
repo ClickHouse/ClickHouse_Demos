@@ -45,7 +45,7 @@ flowchart TB
         PG["Managed Postgres<br/>live transactions"]:::storage
         PIPE["ClickPipes<br/>Postgres CDC"]:::integration
         CH["ClickHouse service<br/>pricing analytics"]:::replica
-        STACK["ClickStack<br/>configured in Module 04"]:::special
+        STACK["ClickStack<br/>connected in Module 02"]:::special
     end
 
     APP -->|"sales and approvals"| PG
@@ -53,4 +53,4 @@ flowchart TB
     PIPE ==>|"CDC tables"| CH
     S3 ==>|"bulk load in Module 01"| CH
     CH -->|"features and evidence"| APP
-    APP -.->|"OTLP in Module 04"| STACK
+    APP -.->|"OTLP in Module 02"| STACK
