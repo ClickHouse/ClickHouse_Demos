@@ -7,9 +7,10 @@ from pricing_lab.history import HistoryLoader
 def test_public_s3_loading_explicitly_ignores_server_credentials():
     calls=[]
     analytics=SimpleNamespace(database='pricing',command=lambda sql,params:calls.append((sql,params)))
-    HistoryLoader(analytics,None)._insert_file('https://public.example.test/manifest.json',{'key':'facts.parquet'},{'raw_table':'hist_test','sandbox_id':'learner/grocery','manifest':{'dataset_version':'retail-v1'}},uuid4())
+    HistoryLoader(analytics,None)._insert_file('https://public.example.test/manifest.json',{'key':'facts.parquet'},{'raw_table':'hist_test','manifest':{'dataset_version':'retail-v1'}},uuid4())
     sql,params=calls[0]
     assert "s3({url:String}, NOSIGN, 'Parquet')" in sql
+    assert 'sandbox_id' not in sql and 'sandbox' not in params
     assert params['url']=='https://public.example.test/facts.parquet'
 
 

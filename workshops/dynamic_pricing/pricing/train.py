@@ -132,4 +132,4 @@ def export_training_rows(analytics,ledger,scope,manifest_uri:str)->list[dict]:
         raise ValueError("Availability import did not reconcile. Start a fresh dataset import.")
     text=(LAB_ROOT/"sql/clickhouse/005_training_rows.sql").read_text()
     for token,value in [("__DATABASE__",db),("__AVAILABILITY__",name),("__RAW__",active["raw_table"])]: text=text.replace(token,identifier(value))
-    return analytics.query(text.rstrip().removesuffix(";"),{"sandbox":scope.sandbox_id})
+    return analytics.query(text.rstrip().removesuffix(";"))

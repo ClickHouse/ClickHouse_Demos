@@ -27,14 +27,14 @@ class ImportInterrupted(RuntimeError):
 
 CONSOLE_SCHEMAS = {
     "hist_raw_console": [
-        ("sandbox_id", "String"), ("batch_id", "UUID"), ("dataset_version", "LowCardinality(String)"),
+        ("batch_id", "UUID"), ("dataset_version", "LowCardinality(String)"),
         ("event_id", "UUID"), ("original_event_id", "UUID"), ("sku", "UInt32"), ("store_id", "UInt16"),
         ("channel", "LowCardinality(String)"), ("event_type", "LowCardinality(String)"), ("quantity", "Int32"),
         ("offered_price_minor", "Int64"), ("receipts_minor", "Int64"), ("sold_cost_minor", "Int64"),
         ("event_time", "DateTime64(3, 'UTC')"), ("calibration", "Bool"), ("currency", "LowCardinality(String)"),
     ],
     "hist_hour_console": [
-        ("sandbox_id", "String"), ("store_id", "UInt16"), ("sku", "UInt32"), ("hour", "DateTime('UTC')"),
+        ("store_id", "UInt16"), ("sku", "UInt32"), ("hour", "DateTime('UTC')"),
         ("net_units", "Int64"), ("receipts_minor", "Int64"), ("sold_cost_minor", "Int64"), ("row_count", "UInt64"),
     ],
 }
@@ -122,7 +122,7 @@ class HistoryLoader:
               WHERE a.owner_id=%s AND a.scenario_id=%s""", (scope.owner_id, scope.scenario_id)).fetchone()
             try:
                 manifest, source = resolve_manifest(manifest_uri)
-                data = {"manifest": manifest, "sandbox_id": scope.sandbox_id,
+                data = {"manifest": manifest,
                         "raw_table": f"hist_raw_{run_id.hex}", "rollup_table": f"hist_hour_{run_id.hex}",
                         "mv_table": f"hist_mv_{run_id.hex}"}
                 guard.execute("UPDATE pricing.import_runs SET status='abandoned' WHERE owner_id=%s AND scenario_id=%s AND status='loading'",
@@ -176,7 +176,7 @@ class HistoryLoader:
             previous = None
             try:
                 manifest, _ = resolve_manifest(manifest_uri)
-                data = {"manifest": manifest, "sandbox_id": scope.sandbox_id,
+                data = {"manifest": manifest,
                         "raw_table": "hist_raw_console", "rollup_table": "hist_hour_console",
                         "mv_table": "hist_mv_console", "source": "sql_console"}
                 db = self.analytics.database
@@ -191,8 +191,8 @@ class HistoryLoader:
                     and meta["hist_raw_console"]["engine"] in ("MergeTree", "SharedMergeTree")
                     and meta["hist_hour_console"]["engine"] in ("SummingMergeTree", "SharedSummingMergeTree")
                     and meta["hist_mv_console"]["engine"] == "MaterializedView"
-                    and meta["hist_raw_console"]["sorting_key"] == "sandbox_id, store_id, sku, event_time, event_id"
-                    and meta["hist_hour_console"]["sorting_key"] == "sandbox_id, store_id, sku, hour"
+                    and meta["hist_raw_console"]["sorting_key"] == "store_id, sku, event_time, event_id"
+                    and meta["hist_hour_console"]["sorting_key"] == "store_id, sku, hour"
                 )
                 if not valid_engines:
                     raise WorkshopError(
@@ -221,15 +221,14 @@ class HistoryLoader:
                         "Use the materialized view linking hist_raw_console to hist_hour_console.",
                     )
                 groups = self.analytics.query(
-                    f"""SELECT sandbox_id,dataset_version,uniqExact(batch_id) AS batches
-                        FROM {db}.hist_raw_console GROUP BY sandbox_id,dataset_version LIMIT 2"""
+                    f"""SELECT dataset_version,uniqExact(batch_id) AS batches
+                        FROM {db}.hist_raw_console GROUP BY dataset_version LIMIT 2"""
                 )
-                expected_group = {"sandbox_id": scope.sandbox_id,
-                                  "dataset_version": manifest["dataset_version"], "batches": 1}
+                expected_group = {"dataset_version": manifest["dataset_version"], "batches": 1}
                 if len(groups) != 1 or groups[0] != expected_group:
                     raise WorkshopError(
-                        "console_history_scope",
-                        "Use your configured owner ID and the supplied dataset version in the console INSERT statement.",
+                        "console_history_dataset",
+                        "Use the supplied dataset version and one batch ID in the console INSERT statement.",
                     )
                 previous = guard.execute(
                     """SELECT r.data FROM pricing.history_active a JOIN pricing.import_runs r USING(run_id)
@@ -298,23 +297,23 @@ class HistoryLoader:
         table = f"{self.analytics.database}.{data['raw_table']}"
         if isinstance(source, Path):
             # Explicit local/developer path. This validates SQL semantics, not S3 connectivity.
-            columns = ["sandbox_id","batch_id","dataset_version","event_id","original_event_id","sku","store_id",
+            columns = ["batch_id","dataset_version","event_id","original_event_id","sku","store_id",
                        "channel","event_type","quantity","offered_price_minor","receipts_minor","sold_cost_minor",
                        "event_time","calibration","currency"]
             for batch in pq.ParquetFile(source / file["key"]).iter_batches(batch_size=10000):
                 records = []
                 for row in batch.to_pylist():
-                    row.update(sandbox_id=data["sandbox_id"],batch_id=run_id,dataset_version=data["manifest"]["dataset_version"])
+                    row.update(batch_id=run_id,dataset_version=data["manifest"]["dataset_version"])
                     row["event_id"] = UUID(row["event_id"])
                     row["original_event_id"] = UUID(row["original_event_id"]) if row["original_event_id"] else UUID(int=0)
                     records.append([row[c] for c in columns])
                 self.analytics.client.insert(table, records, column_names=columns)
         else:
             self.analytics.command(f"""INSERT INTO {table} SELECT
-              {{sandbox:String}}, {{batch:UUID}}, {{version:String}}, toUUID(event_id), toUUIDOrZero(original_event_id),
+              {{batch:UUID}}, {{version:String}}, toUUID(event_id), toUUIDOrZero(original_event_id),
               sku,store_id,channel,event_type,quantity,offered_price_minor,receipts_minor,sold_cost_minor,
               event_time,calibration,currency FROM s3({{url:String}}, NOSIGN, 'Parquet')""",
-              {"sandbox":data["sandbox_id"],"batch":run_id,"version":data["manifest"]["dataset_version"],"url":urljoin(source,file["key"])})
+              {"batch":run_id,"version":data["manifest"]["dataset_version"],"url":urljoin(source,file["key"])})
 
     def active(self, scope: Scope) -> dict:
         with self.ledger.connect() as conn:
@@ -333,10 +332,9 @@ class HistoryLoader:
         data, db = row["data"], self.analytics.database
         raw = self.analytics.query(f"""SELECT count() AS canonical_rows, sum(quantity) AS net_units,
           sum(receipts_minor) AS receipts_minor, sum(sold_cost_minor) AS sold_cost_minor
-          FROM {db}.{identifier(data['raw_table'])} WHERE sandbox_id={{sandbox:String}}""", {"sandbox":data["sandbox_id"]})[0]
+          FROM {db}.{identifier(data['raw_table'])}""")[0]
         rollup = self.analytics.query(f"""SELECT sum(net_units) AS net_units, sum(receipts_minor) AS receipts_minor,
-          sum(sold_cost_minor) AS sold_cost_minor FROM {db}.{identifier(data['rollup_table'])}
-          WHERE sandbox_id={{sandbox:String}}""", {"sandbox":data["sandbox_id"]})[0]
+          sum(sold_cost_minor) AS sold_cost_minor FROM {db}.{identifier(data['rollup_table'])}""")[0]
         manifest = data["manifest"]
         expected = {"canonical_rows": manifest["rows"],
                     "net_units":sum(f["quantity"] for f in manifest["files"]),
@@ -345,25 +343,25 @@ class HistoryLoader:
         if raw != expected or any(raw[k] != rollup[k] for k in rollup):
             raise ValueError("History counts/revenue/rollup totals do not reconcile.")
         grouped = self.analytics.query(f"""SELECT count() AS mismatches FROM (
-          SELECT sandbox_id,store_id,sku,hour,
+          SELECT store_id,sku,hour,
                  sum(net_units_delta) AS net_units_delta,
                  sum(receipts_delta) AS receipts_delta,
                  sum(cost_delta) AS cost_delta,
                  sum(rows_delta) AS rows_delta
           FROM (
-            SELECT sandbox_id,store_id,sku,toStartOfHour(event_time) AS hour,
+            SELECT store_id,sku,toStartOfHour(event_time) AS hour,
                    sum(quantity) AS net_units_delta,sum(receipts_minor) AS receipts_delta,
                    sum(sold_cost_minor) AS cost_delta,toInt64(count()) AS rows_delta
-            FROM {db}.{identifier(data['raw_table'])} WHERE sandbox_id={{sandbox:String}}
-            GROUP BY sandbox_id,store_id,sku,hour
+            FROM {db}.{identifier(data['raw_table'])}
+            GROUP BY store_id,sku,hour
             UNION ALL
-            SELECT sandbox_id,store_id,sku,hour,
+            SELECT store_id,sku,hour,
                    -sum(net_units),-sum(receipts_minor),-sum(sold_cost_minor),-toInt64(sum(row_count))
-            FROM {db}.{identifier(data['rollup_table'])} WHERE sandbox_id={{sandbox:String}}
-            GROUP BY sandbox_id,store_id,sku,hour
-          ) GROUP BY sandbox_id,store_id,sku,hour
+            FROM {db}.{identifier(data['rollup_table'])}
+            GROUP BY store_id,sku,hour
+          ) GROUP BY store_id,sku,hour
           HAVING net_units_delta!=0 OR receipts_delta!=0 OR cost_delta!=0 OR rows_delta!=0
-        )""", {"sandbox":data["sandbox_id"]})[0]["mismatches"]
+        )""")[0]["mismatches"]
         if grouped:
             raise ValueError("History grouped facts do not reconcile.")
         return {**raw, "run_id":run_id,"raw_table":data["raw_table"],"rollup_table":data["rollup_table"],"rollup":rollup}

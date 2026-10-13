@@ -41,7 +41,7 @@ class BenchmarkRunner:
     def __init__(self,analytics,database,raw_table,rollup_table,parameters):
         self.analytics=analytics;self.parameters=parameters
         db=identifier(database)
-        common="WHERE sandbox_id={sandbox:String} AND store_id={store:Int32} AND sku={sku:Int32}"
+        common="WHERE store_id={store:Int32} AND sku={sku:Int32}"
         self.queries={
             'raw':f"SELECT count() AS canonical_rows,sum(quantity) AS net_units,sum(receipts_minor) AS receipts_minor,sum(sold_cost_minor) AS sold_cost_minor FROM {db}.{identifier(raw_table)} {common} AND event_time<{{cutoff:DateTime64(3,'UTC')}}",
             'rollup':f"SELECT sum(row_count) AS canonical_rows,sum(net_units) AS net_units,sum(receipts_minor) AS receipts_minor,sum(sold_cost_minor) AS sold_cost_minor FROM {db}.{identifier(rollup_table)} {common} AND hour<{{cutoff:DateTime64(3,'UTC')}}"}
@@ -94,7 +94,7 @@ def run_benchmark(manifest_path,analytics,repetitions,*,ledger=None):
     loader.verify(active['run_id'])
     complete_cutoff=cutoff.replace(minute=0,second=0,microsecond=0)
     result=BenchmarkRunner(analytics,analytics.database,active['raw_table'],active['rollup_table'],
-                           {'sandbox':scope.sandbox_id,'sku':101,'store':1,'cutoff':complete_cutoff}).run(repetitions,import_measurement=active.get('measurement'))
+                           {'sku':101,'store':1,'cutoff':complete_cutoff}).run(repetitions,import_measurement=active.get('measurement'))
     result['barrier']={'import_run_id':str(active['run_id']),'scope':scope.model_dump(),'scenario_cutoff':cutoff.isoformat(),
                        'manifest_sha256':fingerprint(manifest),'dataset_rows':manifest['rows'],'tier':manifest['tier']}
     version=analytics.query('SELECT version() AS version')[0]['version']
