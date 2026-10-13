@@ -1,0 +1,56 @@
+%%{init: {
+  'theme': 'dark',
+  'themeVariables': {
+    'primaryColor':      '#1565C0',
+    'primaryTextColor':  '#FFFFFF',
+    'primaryBorderColor':'#42A5F5',
+    'secondaryColor':    '#00897B',
+    'tertiaryColor':     '#222233',
+    'lineColor':         '#90CAF9',
+    'textColor':         '#E0E0E0',
+    'mainBkg':           '#1E1E2E',
+    'nodeBorder':        '#42A5F5',
+    'clusterBkg':        '#1A1A2E',
+    'clusterBorder':     '#5C6BC0',
+    'titleColor':        '#FFFFFF',
+    'edgeLabelBackground':'#1E1E2E'
+  }
+}}%%
+flowchart TB
+    classDef query       fill:#C2185B,color:#FFF,stroke:#E91E63,stroke-width:2px
+    classDef executor    fill:#00897B,color:#FFF,stroke:#26A69A,stroke-width:2px
+    classDef storage     fill:#0D47A1,color:#FFF,stroke:#1976D2,stroke-width:2px
+    classDef replica     fill:#1565C0,color:#FFF,stroke:#42A5F5,stroke-width:2px
+    classDef special     fill:#1976D2,color:#FFF,stroke:#42A5F5,stroke-width:2px
+    classDef integration fill:#00695C,color:#FFF,stroke:#00897B,stroke-width:2px
+    classDef external    fill:#37474F,color:#FFF,stroke:#546E7A,stroke-width:2px
+    classDef accent      fill:#F5FF50,color:#111,stroke:#C6CC41,stroke-width:2px
+    classDef success     fill:#2E7D32,color:#FFF,stroke:#43A047,stroke-width:2px
+    classDef warn        fill:#E65100,color:#FFF,stroke:#FF8F00,stroke-width:2px
+    classDef danger      fill:#B71C1C,color:#FFF,stroke:#E53935,stroke-width:2px
+    classDef neutral     fill:#455A64,color:#FFF,stroke:#607D8B,stroke-width:2px
+    classDef decision    fill:#FF8F00,color:#FFF,stroke:#FFB300,stroke-width:2px
+    classDef info        fill:#283593,color:#FFF,stroke:#5C6BC0,stroke-width:2px
+
+    subgraph LAPTOP ["LEARNER LAPTOP"]
+        APP["Dynamic pricing workbench<br/>learner reviews and approves"]:::query
+    end
+
+    subgraph SOURCES ["DATA SOURCES"]
+        S3[/"Public S3 Parquet<br/>historical sales"/]:::external
+    end
+
+    subgraph CLOUD ["CLICKHOUSE CLOUD — ONE LEARNER"]
+        direction LR
+        PG["Managed Postgres<br/>live transactions"]:::storage
+        PIPE["ClickPipes<br/>Postgres CDC"]:::integration
+        CH["ClickHouse service<br/>pricing analytics"]:::replica
+        STACK["ClickStack<br/>configured in Module 04"]:::special
+    end
+
+    APP -->|"sales and approvals"| PG
+    PG ==>|"row changes"| PIPE
+    PIPE ==>|"CDC tables"| CH
+    S3 ==>|"bulk load in Module 01"| CH
+    CH -->|"features and evidence"| APP
+    APP -.->|"OTLP in Module 04"| STACK
