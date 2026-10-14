@@ -44,7 +44,7 @@ class Settings(BaseSettings):
             from .contracts import WorkshopError
             raise WorkshopError("admin_credentials_missing", "Set PRICING_POSTGRES_ADMIN_DSN for initialization and source grants.")
         return value
-    clickhouse_host: str = "localhost"
+    clickhouse_host: str = ""
     clickhouse_port: int = Field(default=8443, ge=1, le=65535)
     clickhouse_secure: bool = True
     clickhouse_database: str = Field(default="pricing", pattern=r"^[a-z][a-z0-9_]{0,62}$")
@@ -82,7 +82,7 @@ class Settings(BaseSettings):
     @field_validator("clickhouse_host")
     @classmethod
     def bare_host(cls, value: str) -> str:
-        if not value or any(c in value for c in "/:@?# "):
+        if value and any(c in value for c in "/:@?# "):
             raise ValueError("Use a bare hostname. Configure the port and TLS separately.")
         return value
 

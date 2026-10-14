@@ -213,3 +213,61 @@ def test_setup_refuses_existing_overprivileged_roles(ledger,tmp_path,postgres_ds
     finally:
         if defect=='app_replication':
             with ledger.connect() as conn: conn.execute('ALTER ROLE pricing_app NOREPLICATION')
+
+
+def test_fresh_template_has_no_local_database_or_manual_owner(tmp_path,monkeypatch):
+    from pricing_lab.settings import LAB_ROOT
+    env=tmp_path/'workshop.env'
+    env.write_text((LAB_ROOT/'app/.env.workshop.example').read_text())
+    monkeypatch.setenv('PRICING_PRIVATE_ENV_PATH',str(env))
+    settings=Settings.from_env()
+    assert settings.clickhouse_host==''
+    assert settings.postgres_dsn.get_secret_value()==''
+    assert settings.postgres_admin_dsn.get_secret_value()==''
+    assert 'PRICING_OWNER_ID=' not in env.read_text()
+
+
+def test_setup_generates_and_preserves_installation_identity(tmp_path,monkeypatch):
+    from infra.setup_cloud import installation_settings
+    from dotenv import dotenv_values
+    env=tmp_path/'workshop.env';env.write_text('PRICING_CLICKHOUSE_HOST=\n')
+    monkeypatch.setenv('PRICING_PRIVATE_ENV_PATH',str(env))
+    monkeypatch.setenv('PRICING_RESOURCE_INVENTORY_PATH',str(tmp_path/'resources.json'))
+    first=installation_settings()
+    second=installation_settings()
+    assert first.owner_id.startswith('pricing-')
+    assert second.owner_id==first.owner_id
+    assert dotenv_values(env)['PRICING_OWNER_ID']==first.owner_id
+    assert env.stat().st_mode & 0o777==0o600
+
+
+def test_setup_recovers_identity_from_existing_inventory(tmp_path,monkeypatch):
+    from infra.setup_cloud import installation_settings
+    from infra.provision import ResourceInventory
+    env=tmp_path/'workshop.env';env.write_text('')
+    inventory=tmp_path/'resources.json'
+    inventory.write_text(ResourceInventory(owner_id='existing-installation',organization_id=ORG,region='ap-southeast-1',created_at=datetime.now(UTC)).model_dump_json())
+    monkeypatch.setenv('PRICING_PRIVATE_ENV_PATH',str(env))
+    monkeypatch.setenv('PRICING_RESOURCE_INVENTORY_PATH',str(inventory))
+    assert installation_settings().owner_id=='existing-installation'
+
+
+def test_setup_preserves_explicit_legacy_owner(tmp_path,monkeypatch):
+    from infra.setup_cloud import installation_settings
+    env=tmp_path/'workshop.env';env.write_text('PRICING_OWNER_ID=my-existing-owner\n')
+    monkeypatch.setenv('PRICING_PRIVATE_ENV_PATH',str(env))
+    monkeypatch.setenv('PRICING_RESOURCE_INVENTORY_PATH',str(tmp_path/'resources.json'))
+    assert installation_settings().owner_id=='my-existing-owner'
+
+
+def test_missing_cloud_endpoint_never_falls_back_to_localhost(monkeypatch):
+    import pytest
+    from pricing_lab.analytics import AnalyticsClient
+    from pricing_lab.settings import Settings
+    from pricing_lab.contracts import WorkshopError
+    monkeypatch.setattr('pricing_lab.analytics.clickhouse_connect.get_client',lambda **kwargs:pytest.fail('An empty Cloud endpoint must never reach the driver.'))
+    analytics=AnalyticsClient(Settings(clickhouse_host=''))
+    with pytest.raises(WorkshopError,match='cloud_endpoint_missing'):
+        analytics.bootstrap_database()
+    with pytest.raises(WorkshopError,match='cloud_endpoint_missing'):
+        analytics.query('SELECT 1')

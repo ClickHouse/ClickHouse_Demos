@@ -19,9 +19,32 @@ from pricing_lab.clock import Clock
 from pricing_lab.ledger import Ledger
 from pricing_lab.settings import Settings,LAB_ROOT
 from .configure_cdc import configure_source
-from .provision import CliRunner,_provision,command,save_inventory,save_private,verify_clickpipe,verify_pipe_name
+from .provision import CliRunner,ResourceInventory,_provision,command,save_inventory,save_private,verify_clickpipe,verify_pipe_name
 
 TABLES=('sales_transactions','inventory_history','price_history','cost_history')
+
+
+def installation_settings():
+    """Persist one installation identity before any Cloud resources are created."""
+    settings=Settings.from_env()
+    path=settings.private_env_path.with_suffix('.identity.lock')
+    path.parent.mkdir(parents=True,exist_ok=True)
+    fd=os.open(path,os.O_CREAT|os.O_RDWR,0o600)
+    try:
+        fcntl.flock(fd,fcntl.LOCK_EX)
+        settings=Settings.from_env()
+        values=dotenv_values(settings.private_env_path,interpolate=False)
+        explicit=os.environ.get('PRICING_OWNER_ID') or values.get('PRICING_OWNER_ID')
+        if explicit:
+            owner=explicit
+        elif settings.resource_inventory_path.exists():
+            owner=ResourceInventory.model_validate_json(settings.resource_inventory_path.read_text()).owner_id
+        else:
+            owner='pricing-'+secrets.token_hex(8)
+        settings=Settings(**{**settings.model_dump(),'owner_id':owner})
+        save_private(settings,{'PRICING_OWNER_ID':owner})
+        return settings
+    finally: os.close(fd)
 
 
 class CloudApi:
@@ -228,7 +251,7 @@ def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=print):
 
 def main():
     try:
-        settings=Settings.from_env()
+        settings=installation_settings()
         if not settings.cloud_org_id or not settings.learner_cidr:
             raise WorkshopError('cloud_configuration_missing','Set PRICING_CLOUD_ORG_ID and PRICING_LEARNER_CIDR in the private file before setup.')
         with CloudApi(settings.cloud_org_id) as api:

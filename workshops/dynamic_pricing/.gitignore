@@ -5,6 +5,7 @@ __pycache__/
 *.egg-info/
 *.pyc
 app/.env.workshop
+app/.env.identity.lock
 node_modules/
 dist/
 test-results/

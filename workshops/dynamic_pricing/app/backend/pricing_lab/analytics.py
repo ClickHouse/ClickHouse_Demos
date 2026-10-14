@@ -7,6 +7,7 @@ from threading import Lock
 import clickhouse_connect
 
 from .settings import Settings
+from .contracts import WorkshopError
 
 
 def identifier(value: str) -> str:
@@ -27,6 +28,7 @@ class AnalyticsClient:
 
     def bootstrap_database(self):
         """Create the validated workshop database before its first connection."""
+        self.require_host()
         client = clickhouse_connect.get_client(
             host=self.settings.clickhouse_host, port=self.settings.clickhouse_port,
             secure=self.settings.clickhouse_secure, database='default',
@@ -43,6 +45,7 @@ class AnalyticsClient:
     def client(self):
         with self._connect_lock:
             if self._client is None:
+                self.require_host()
                 self._client = clickhouse_connect.get_client(
                     host=self.settings.clickhouse_host, port=self.settings.clickhouse_port,
                     secure=self.settings.clickhouse_secure, database=self.database,
@@ -51,6 +54,10 @@ class AnalyticsClient:
                     autogenerate_session_id=False, connect_timeout=10, send_receive_timeout=self.request_timeout_seconds,
                 )
         return self._client
+
+    def require_host(self):
+        if not self.settings.clickhouse_host:
+            raise WorkshopError('cloud_endpoint_missing','Run bash scripts/setup-cloud.sh to save your ClickHouse Cloud endpoint before querying data.')
 
     @traced('pricing.sql.query')
     def query(self, sql: str, parameters: dict | None = None) -> list[dict]:
