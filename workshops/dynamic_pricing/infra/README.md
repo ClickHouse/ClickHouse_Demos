@@ -28,8 +28,8 @@ The sections below retain the individual operations for inspection and recovery.
 
 1. Sign in to your ClickHouse Cloud account. Confirm your organization and service quota.
 2. Authenticate the CLI with your own Cloud API key through its supported credential configuration. OAuth access is read-only. Keep credentials in the CLI credential store or environment; do not put secrets in command arguments or commit them.
-3. Check `clickhousectl cloud auth status` and `clickhousectl cloud org list`. Set an explicit organization ID.
-4. Copy `app/.env.workshop.example` to `app/.env.workshop`. Set `PRICING_CLOUD_ORG_ID`, `PRICING_LEARNER_CIDR`, `PRICING_REGION`, and `PRICING_POSTGRES_SIZE`. Use your current public IPv4 address with `/32`. The source's ClickPipes egress access is a separate requirement.
+3. Check `clickhousectl cloud auth status` and `clickhousectl cloud org list`. Setup detects the organization, with a numbered choice if your key has access to several.
+4. Copy `app/.env.workshop.example` to `app/.env.workshop`. Change the region or Postgres size if needed. Setup detects your public IPv4 address and configures `/32` access. It saves the organization in the resource inventory for reruns and cleanup. The source's ClickPipes egress access is a separate requirement.
 5. Protect the file with `chmod 600 app/.env.workshop`.
 
 Run from the lab directory in macOS Terminal or Ubuntu under Windows WSL2:

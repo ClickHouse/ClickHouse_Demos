@@ -2,6 +2,7 @@
 from datetime import datetime
 import fcntl
 import json
+import ipaddress
 import os
 from pathlib import Path
 import secrets
@@ -45,6 +46,42 @@ def installation_settings():
         save_private(settings,{'PRICING_OWNER_ID':owner})
         return settings
     finally: os.close(fd)
+
+
+def public_ipv4():
+    try:
+        response=httpx.get('https://api4.ipify.org',timeout=15)
+        response.raise_for_status()
+        address=ipaddress.ip_address(response.text.strip())
+        if not isinstance(address,ipaddress.IPv4Address) or not address.is_global:
+            raise ValueError('Expected a public IPv4 address.')
+        return str(address)
+    except (httpx.HTTPError,ValueError):
+        raise WorkshopError('public_ip_unavailable','Public IPv4 detection failed. Check your internet connection and rerun setup.') from None
+
+
+def cloud_settings(settings,runner,*,detect_ip=public_ipv4,choose=input):
+    organization=settings.cloud_org_id
+    if not organization and settings.resource_inventory_path.exists():
+        organization=ResourceInventory.model_validate_json(settings.resource_inventory_path.read_text()).organization_id
+    if not organization:
+        rows=runner.run(['clickhousectl','cloud','org','list','--json'])
+        if isinstance(rows,dict): rows=rows.get('result',rows.get('organizations',[]))
+        if not isinstance(rows,list) or not rows:
+            raise WorkshopError('organization_unavailable','Log in with a Cloud organization API key before running setup.')
+        if len(rows)==1:
+            organization=rows[0]['id']
+        else:
+            print('Choose the Cloud organization for this workshop:')
+            for i,row in enumerate(rows,1): print(f"{i}. {row.get('name',row['id'])} ({row['id']})")
+            try:
+                selected=int(choose('Organization number: '))
+                if not 1<=selected<=len(rows): raise ValueError()
+                organization=rows[selected-1]['id']
+            except (ValueError,EOFError):
+                raise WorkshopError('organization_selection_invalid','Rerun setup and select one of the listed organization numbers.') from None
+    cidr=settings.learner_cidr or str(ipaddress.IPv4Address(detect_ip()))+'/32'
+    return Settings(**{**settings.model_dump(),'cloud_org_id':organization,'learner_cidr':cidr})
 
 
 class CloudApi:
@@ -252,10 +289,10 @@ def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=print):
 def main():
     try:
         settings=installation_settings()
-        if not settings.cloud_org_id or not settings.learner_cidr:
-            raise WorkshopError('cloud_configuration_missing','Set PRICING_CLOUD_ORG_ID and PRICING_LEARNER_CIDR in the private file before setup.')
+        runner=CliRunner()
+        settings=cloud_settings(settings,runner)
         with CloudApi(settings.cloud_org_id) as api:
-            setup_cloud(settings,CliRunner(),api)
+            setup_cloud(settings,runner,api)
         return 0
     except WorkshopError as error: print(str(error));return 2
     except Exception:

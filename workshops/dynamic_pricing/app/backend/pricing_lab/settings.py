@@ -98,4 +98,9 @@ class Settings(BaseSettings):
             if not any(k in os.environ for k in keys):
                 key=next((k for k in keys if k in values),None)
                 if key and values[key] is not None: arguments[name]=values[key]
-        return cls(_env_file=None,**arguments)
+        settings=cls(_env_file=None,**arguments)
+        if not settings.cloud_org_id and settings.resource_inventory_path.exists():
+            import json
+            inventory=json.loads(settings.resource_inventory_path.read_text())
+            settings=cls(_env_file=None,**{**settings.model_dump(),'cloud_org_id':inventory['organization_id']})
+        return settings
