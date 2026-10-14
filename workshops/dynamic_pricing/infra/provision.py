@@ -30,7 +30,7 @@ class ResourceInventory(BaseModel):
     pricing_database:str='pricing'
     postgres_database:str='postgres'
     deleted_resources: dict[str,str] = Field(default_factory=dict)
-    pending_creation:Literal['service','postgres']|None=None
+    pending_creation:Literal['service','postgres','clickpipe']|None=None
     @field_validator('created_at')
     @classmethod
     def aware(cls,value):
@@ -121,7 +121,7 @@ def verify_clickpipe(row,settings):
 
 
 def wait_running(runner,settings,kind,resource_id,*,sleep=time.sleep):
-    for _ in range(90):
+    for _ in range(300):
         row=runner.run(command(settings,kind,'get',resource_id))
         if not owned(row,settings.owner_id,kind):
             from .cleanup import OwnerMismatch

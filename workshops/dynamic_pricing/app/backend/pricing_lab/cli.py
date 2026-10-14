@@ -28,8 +28,21 @@ def tool_version(argv,major,*,minimum=None,exact=None):
     return version[0]==major and (minimum is None or version>=minimum) and (exact is None or version==exact)
 
 
+PREFLIGHT_MODULES = ('setup','baseline','cdc','telemetry','diagnostics')
+
+
+def preflight_layers(module):
+    if module not in PREFLIGHT_MODULES: raise ValueError('Unknown module.')
+    return {
+        'history': module != 'setup',
+        'cdc': module in ('cdc','telemetry','diagnostics'),
+        'clickstack': module in ('telemetry','diagnostics'),
+        'agent': module == 'diagnostics',
+    }
+
+
 def build_preflight(settings,module,check_toolchain=True):
-    if module not in ('setup','baseline','cdc','diagnostics'): raise ValueError('Unknown module.')
+    layers = preflight_layers(module)
     checks=[]
     def check(name,fn,action):
         try: passed=bool(fn())
@@ -50,16 +63,17 @@ def build_preflight(settings,module,check_toolchain=True):
     if settings.postgres_dsn.get_secret_value(): check('source_schema',pg_schema,'Initialize the pricing source schema with the setup command.')
     if settings.clickhouse_password.get_secret_value(): check('clickhouse_connection',lambda:analytics.query('SELECT 1 AS ok')[0]['ok']==1,'Check the service endpoint, IP access list, TLS, and credentials.')
     scope=Scope(owner_id=settings.owner_id,scenario_id=settings.scenario_id,generation=1)
-    if module!='setup':
+    if layers['history']:
         check('dataset_manifest',lambda:resolve_manifest(settings.dataset_manifest),'Configure a verified manifest and its read-only S3 access.')
         check('history_import',lambda:HistoryLoader(analytics,ledger).active(scope),'Load and reconcile the historical dataset.')
-    if module in ('cdc','diagnostics'):
+    if layers['cdc']:
         features=FeatureService(analytics,ledger,Clock(datetime(2026,1,30,12,tzinfo=UTC)))
         def cdc(): features.configure_views();return True
         check('cdc_canonical_views',cdc,'Configure the Postgres ClickPipe and wait for its source-table snapshot.')
-    if module=='diagnostics':
+    if layers['clickstack']:
         check('clickstack_tables',lambda:analytics.query("SELECT count() AS n FROM system.tables WHERE database={db:String} AND name={table:String}",{'db':settings.clickstack_database,'table':settings.clickstack_trace_table})[0]['n']>0,'Configure ClickStack and deliver a trace before this module.')
         check('clickstack_delivery',lambda:analytics.query(f"SELECT count() AS n FROM {settings.clickstack_database}.{settings.clickstack_trace_table} WHERE Timestamp>=now()-INTERVAL 30 MINUTE AND SpanAttributes['pricing.owner_id']={{owner:String}}",{'owner':settings.owner_id})[0]['n']>0,'Send an application trace and verify this owner ID in the configured ClickStack source.')
+    if layers['agent']:
         check('agent_access',lambda:settings.diagnostics_agent_mode=='replay' and (LAB_ROOT/'agent/episodes/near_expiry.json').is_file() or settings.agent_provider=='openai' and bool(settings.agent_model) and bool(settings.agent_api_key.get_secret_value()),'Configure an available agent model and key, or select replay mode.')
         checks.append({'name':'agent_mode','passed':True,'action':None,'mode':settings.diagnostics_agent_mode,'verified_live_access':False})
     analytics.close()
@@ -75,11 +89,11 @@ def current_scope(ledger,settings):
 
 def main(argv=None):
     parser=argparse.ArgumentParser(prog='workshop');sub=parser.add_subparsers(dest='command',required=True)
-    for command in ('initialize','preflight','load-history','scenario','reset','export-report','benchmark'):
+    for command in ('initialize','preflight','load-history','register-history','scenario','reset','export-report','benchmark'):
         item=sub.add_parser(command);item.add_argument('--participant');item.add_argument('--offline',action='store_true')
-        if command=='preflight': item.add_argument('--module',choices=['setup','baseline','cdc','diagnostics'],default='setup')
+        if command=='preflight': item.add_argument('--module',choices=PREFLIGHT_MODULES,default='setup')
         if command=='benchmark': item.add_argument('--repetitions',type=int,default=10);item.add_argument('--probe-freshness',action='store_true')
-        if command in ('load-history','benchmark'): item.add_argument('--manifest',required=True)
+        if command in ('load-history','register-history','benchmark'): item.add_argument('--manifest',help='Dataset metadata URI; defaults to PRICING_DATASET_MANIFEST.')
         if command=='scenario': item.add_argument('--event',choices=EVENTS,required=True);item.add_argument('--event-id',type=UUID,required=True)
         if command=='reset': item.add_argument('--checkpoint',choices=CHECKPOINTS,required=True);item.add_argument('--request-id',type=UUID)
         if command=='export-report': item.add_argument('--decision',type=UUID,required=True)
@@ -110,9 +124,14 @@ def main(argv=None):
                 result={'mode':'live','scope':scope.model_dump(mode='json'),'initialized':True}
         elif args.command=='preflight': result=build_preflight(settings,args.module)
         else:
+            if args.command in ('load-history','register-history','benchmark'):
+                args.manifest=args.manifest or settings.dataset_manifest
+                if not args.manifest:
+                    raise WorkshopError('dataset_manifest_missing','Set PRICING_DATASET_MANIFEST in app/.env.workshop or pass --manifest.')
             ledger=Ledger(settings.postgres_dsn.get_secret_value());scope,cutoff=current_scope(ledger,settings)
             analytics=AnalyticsClient(settings);clock=Clock(cutoff);features=FeatureService(analytics,ledger,clock)
             if args.command=='load-history': result=HistoryLoader(analytics,ledger).load(args.manifest,scope)
+            elif args.command=='register-history': result=HistoryLoader(analytics,ledger).register_console(args.manifest,scope)
             elif args.command=='export-report': result={'path':str(export_report(scope,args.decision,EXPORT_ROOT/f'{args.decision}.json',ledger))}
             elif args.command=='benchmark':
                 from .benchmark import run_benchmark,run_freshness_probe

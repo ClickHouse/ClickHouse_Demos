@@ -114,7 +114,7 @@ def create_app(settings,services):
         response.set_cookie(COOKIE,issue_session(settings),httponly=True,samesite='strict',max_age=8*3600,secure=settings.allowed_origin.startswith('https://'),path='/api')
         return response
     @app.get('/api/readiness',response_model=Envelope,dependencies=[Depends(protected)])
-    def readiness(module:Literal['setup','baseline','cdc','diagnostics']='setup'):
+    def readiness(module:Literal['setup','baseline','cdc','telemetry','diagnostics']='setup'):
         return envelope(None,build_preflight(settings,module,check_toolchain=False))
     @app.get('/api/baseline',response_model=Envelope,dependencies=[Depends(protected)])
     def baseline(request:Request,sku:int=Query(101,ge=1,le=500),store_id:int=Query(1,ge=1,le=20)):

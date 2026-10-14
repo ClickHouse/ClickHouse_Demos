@@ -4,6 +4,26 @@ Each learner owns one ClickHouse Cloud service, one managed Postgres instance, o
 
 These commands target `clickhousectl 0.4.2`. Help and the tagged [CLI source](https://github.com/ClickHouse/clickhousectl/tree/v0.4.2) were inspected on Oct 10, 2026. Region availability, sizing, and actual Cloud delivery remain release rehearsal checks. `ap-southeast-1` and `c6gd.large` are configurable starting values, not measured workshop guarantees.
 
+## One-command setup
+
+After installing dependencies and logging in with your organization API key from the lab directory, set owner, organization, public IPv4 `/32`, region, and Postgres size in `app/.env.workshop`. Run:
+
+```bash
+bash scripts/setup-cloud.sh
+```
+
+This creates or verifies the owned ClickHouse Cloud and managed Postgres services, downloads the source CA, creates `pricing` and the configured telemetry database, initializes the source schema, generates separate app/CDC credentials, applies grants and the four-table publication, and creates a Postgres ClickPipe through the Cloud API. The pipe targets `pricing` with ReplacingMergeTree, preserved NULLs, verified TLS, and a 10-second sync interval. Readiness checks actual table engines and metadata before enabling canonical views.
+
+The command uses the API key pair saved by `clickhousectl cloud auth login` in this lab's `.clickhouse/credentials.json`, or `CLICKHOUSE_CLOUD_API_KEY` and `CLICKHOUSE_CLOUD_API_SECRET` from the shell or current `.env`. No source password or API secret enters process arguments. Generated credentials go to the private environment file with mode 0600. The runtime gets only the limited app DSN; the administrator DSN stays available for host schema operations.
+
+Rerun the same command after fixing a failed dependency. Saved IDs and generated passwords are reused. An ambiguous create response leaves `pending_creation` set and stops automatic retries. Reconcile the owned resource ID in the console, record it in the corresponding inventory field, and clear `pending_creation` only after identifying that exact resource. Setup rejects unverified administrator TLS, elevated role attributes or memberships, excess source privileges, and mismatched existing pipe source configuration. Correct those settings before retrying; the script does not silently broaden privileges.
+
+A preexisting manually created pipe requires its current `pricing_cdc` password in `PRICING_POSTGRES_CDC_PASSWORD` before adoption; setup refuses to change an unknown replication password. The Cloud GET response omits source credentials, so confirm that a manually created pipe uses `pricing_cdc` in the console before adopting it. New pipes always use that role.
+
+Creating the telemetry database does not configure a ClickStack receiver or UI. Follow the diagnostics module for that connection and actual span delivery. Historical bulk loading remains the Module 01 exercise.
+
+The sections below retain the individual operations for inspection and recovery.
+
 ## Prepare configuration
 
 1. Sign in to your ClickHouse Cloud account. Confirm your organization and service quota.

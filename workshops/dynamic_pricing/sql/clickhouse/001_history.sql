@@ -1,7 +1,6 @@
--- Derived ordering from bounded sandbox/store/SKU/time queries. Start without partitions.
+-- Derived ordering from bounded store/SKU/time queries. Start without partitions.
 -- Per schema-types-native-types and schema-pk-prioritize-filters.
 CREATE TABLE __DATABASE__.__RAW__ (
-  sandbox_id String,
   batch_id UUID,
   dataset_version LowCardinality(String),
   event_id UUID,
@@ -18,4 +17,4 @@ CREATE TABLE __DATABASE__.__RAW__ (
   calibration Bool,
   currency LowCardinality(String)
 ) ENGINE = MergeTree
-ORDER BY (sandbox_id, store_id, sku, event_time, event_id);
+ORDER BY (store_id, sku, event_time, event_id);

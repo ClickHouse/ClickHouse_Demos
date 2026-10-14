@@ -75,7 +75,7 @@ class FeatureService:
 
     @staticmethod
     def _params(scope, subject=None, cutoff=None):
-        params = {"owner":scope.owner_id,"scenario":scope.scenario_id,"generation":scope.generation,"sandbox":scope.sandbox_id}
+        params = {"owner":scope.owner_id,"scenario":scope.scenario_id,"generation":scope.generation}
         if subject:
             params.update(sku=subject.sku,store=subject.store_id)
         if cutoff:
@@ -195,7 +195,7 @@ class FeatureService:
         live = f"""SELECT sum(quantity) AS net_units,sum(receipts_minor) AS receipts_minor,sum(sold_cost_minor) AS sold_cost_minor
           FROM {db}.sales_live_current WHERE owner_id={{owner:String}} AND scenario_id={{scenario:String}} AND generation={{generation:Int32}}
           AND sku={{sku:Int32}} AND store_id={{store:Int32}} AND event_time<toStartOfHour(parseDateTime64BestEffort({{cutoff:String}},3,'UTC'))"""
-        condition = "sandbox_id={sandbox:String} AND sku={sku:Int32} AND store_id={store:Int32}"
+        condition = "sku={sku:Int32} AND store_id={store:Int32}"
         raw = self.analytics.query(f"""SELECT sum(quantity) AS net_units,sum(receipts_minor) AS receipts_minor,sum(sold_cost_minor) AS sold_cost_minor
           FROM {db}.{active['raw_table']} WHERE {condition} AND event_time<toStartOfHour(parseDateTime64BestEffort({{cutoff:String}},3,'UTC'))""",params)[0]
         rollup = self.analytics.query(f"""SELECT sum(net_units) AS net_units,sum(receipts_minor) AS receipts_minor,sum(sold_cost_minor) AS sold_cost_minor

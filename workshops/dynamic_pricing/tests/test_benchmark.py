@@ -14,7 +14,7 @@ class QueryAdapter:
 @pytest.fixture
 def benchmark_runner():
     adapter=QueryAdapter()
-    return BenchmarkRunner(adapter,'pricing','hist_raw_test','hist_hour_test',{'sandbox':'learner-1/grocery','sku':101,'store':1,'cutoff':datetime(2026,1,30,tzinfo=UTC)})
+    return BenchmarkRunner(adapter,'pricing','hist_raw_test','hist_hour_test',{'sku':101,'store':1,'cutoff':datetime(2026,1,30,tzinfo=UTC)})
 
 def test_latency_comparison_refuses_different_facts(benchmark_runner):
     benchmark_runner.analytics.rollup_result={**benchmark_runner.analytics.rollup_result,'net_units':99}
@@ -27,6 +27,7 @@ def test_low_sample_count_has_no_tail_percentile_claim(benchmark_runner):
     assert result['facts']['net_units']==4
     assert result['environment']['hardware'] is None
     assert result['cache']['use_query_cache']==0
+    assert all('sandbox_id' not in sql for sql in result['queries'].values())
 
 def test_negative_or_mixed_clock_durations_are_rejected():
     with pytest.raises(ValueError): elapsed_seconds(20,10)

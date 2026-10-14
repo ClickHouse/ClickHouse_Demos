@@ -15,7 +15,7 @@ PYTHONPATH="$PWD:$PWD/tests" .venv/bin/python tests/prepare_developer.py
 .venv/bin/python - <<'PY'
 import httpx,uuid,os
 origin=os.environ["PRICING_ALLOWED_ORIGIN"]
-with httpx.Client(base_url=origin,timeout=90) as client:
+with httpx.Client(base_url=origin,timeout=90,trust_env=False) as client:
  assert client.get('/api/health').status_code==200
  session=client.post('/api/session',json={},headers={'Origin':origin})
  assert session.status_code==200,session.text

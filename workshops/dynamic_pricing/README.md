@@ -2,28 +2,19 @@
 
 A three-hour Use-Case Series workshop. Each learner owns ClickHouse Cloud, managed Postgres, a Postgres ClickPipe, and ClickStack access. The local React/FastAPI edge shows historical reconciliation, source freshness, projected candidates, learner review, receipt, and a next-sale/CDC price timeline.
 
-The learner, instructor, and reference playbooks are maintained in WorkshopHouse and served at [the dynamic pricing workshop](https://labs.demohouse.cloud/docs/dynamic-pricing). That route becomes available when the paired WorkshopHouse PR deploys. Start with [Cloud provisioning](infra/README.md) and [model common ground](pricing/model-card.md).
+The learner, instructor, and reference playbooks are maintained in WorkshopHouse and served at [the dynamic pricing workshop](https://labs.demohouse.cloud/docs/dynamic-pricing). Start with Module 00 in the playbook and [model common ground](pricing/model-card.md).
 
-This public checkout contains the runnable kit. Site-only documentation checks stay in WorkshopHouse; the local kit checks run independently here.
+The kit contains the local workbench, data contracts, prepared model, and Cloud setup script.
 
-## Release status
+## Learner setup
 
-Implementation is under review. The 1M and 100M S3 tiers are published and verified, and the prepared model passes its synthetic validation gates. Complete managed Cloud rehearsal, Windows WSL2 rehearsal, and pacing must pass before a public session. The template selects the prepared model artifact; the development artifact remains available for local verification. Local SQL replay is not managed CDC evidence.
-
-## Local verification
-
-Use Python 3.12 and Node 22. Docker must be running. From this lab directory:
+After installing dependencies, configuring `app/.env.workshop`, and logging in with your organization API key from this lab directory, run:
 
 ```bash
-python3.12 -m venv .venv
-.venv/bin/python -m pip install -r versions.lock -e app/backend
-.venv/bin/python -m pytest tests -m 'not integration and not cloud' -q
-bash scripts/test-integration.sh
-# Full local kit (Node 22 and Docker required):
-bash scripts/check-kit.sh
+bash scripts/setup-cloud.sh
 ```
 
-The integration wrapper starts only its isolated local project, executes actual Postgres and ClickHouse SQL, refuses skipped/no integration tests, and removes its own containers and volumes. It does not create Cloud resources. Frontend checks run in `app/frontend/` using its lockfile and Playwright fixtures.
+The script creates your owned Cloud services, analytical databases, managed Postgres schema/roles/publication, and four-table ClickPipe, then verifies readiness. Reruns reuse inventory and private credentials. Follow Module 00 for account and software prerequisites.
 
 ## Layout
 

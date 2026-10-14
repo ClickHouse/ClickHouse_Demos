@@ -1,10 +1,18 @@
-from pricing_lab.cli import main,build_preflight
+from pricing_lab.cli import main,build_preflight,preflight_layers
 from pricing_lab.settings import Settings
 
 
 def test_offline_preflight_labels_recorded_mode(capsys):
     assert main(['preflight','--participant','learner-1','--module','setup','--offline'])==0
     assert 'recorded' in capsys.readouterr().out
+
+
+def test_telemetry_preflight_is_a_supported_module(capsys):
+    assert main(['preflight','--module','telemetry','--offline'])==0
+    assert '"module": "telemetry"' in capsys.readouterr().out
+    assert preflight_layers('telemetry') == {
+        'history': True, 'cdc': True, 'clickstack': True, 'agent': False,
+    }
 
 
 def test_cli_rejects_other_participant_without_connecting(capsys):
@@ -44,3 +52,8 @@ def test_tool_versions_reject_wrong_major_and_cli_release(monkeypatch):
     assert not tool_version(['clickhousectl','--version'],0,exact=(0,4,2))
     output='clickhousectl 0.4.2'
     assert tool_version(['clickhousectl','--version'],0,exact=(0,4,2))
+
+
+def test_register_history_parses_without_a_manifest_override(capsys):
+    assert main(['register-history','--offline'])==2
+    assert 'offline_command_unavailable' in capsys.readouterr().err

@@ -5,6 +5,11 @@ pytestmark = pytest.mark.integration
 
 def test_canonical_rollup_matches_raw_before_and_after_merges(loader, scope, manifest_uri, analytics):
     result = loader.load(manifest_uri, scope)
+    columns = analytics.query(
+        "SELECT table,name FROM system.columns WHERE database={db:String} AND table IN {tables:Array(String)}",
+        {"db": analytics.database, "tables": [result["raw_table"], result["rollup_table"]]},
+    )
+    assert all(row["name"] != "sandbox_id" for row in columns)
     for _ in range(2):
         verified = loader.verify(result["run_id"])
         assert verified["canonical_rows"] == 3
@@ -14,7 +19,7 @@ def test_canonical_rollup_matches_raw_before_and_after_merges(loader, scope, man
         assert verified["rollup"] == {"net_units": 4, "receipts_minor": 2900, "sold_cost_minor": 1600}
         # A characterization of merge-independent reads, never a learner tuning command.
         analytics.command(f"OPTIMIZE TABLE {analytics.database}.{result['rollup_table']} FINAL")
-    explain = analytics.query(f"EXPLAIN indexes = 1 SELECT sum(receipts_minor) FROM {analytics.database}.{result['raw_table']} WHERE sandbox_id={{sandbox:String}} AND store_id=1 AND sku=101", {"sandbox":scope.sandbox_id})
+    explain = analytics.query(f"EXPLAIN indexes = 1 SELECT sum(receipts_minor) FROM {analytics.database}.{result['raw_table']} WHERE store_id=1 AND sku=101")
     assert any("PrimaryKey" in str(row) for row in explain)
 
 @pytest.mark.integration

@@ -6,7 +6,7 @@ Run from the lab directory after loading and reconciling a verified manifest:
 .venv/bin/workshop benchmark --manifest "$PRICING_DATASET_MANIFEST" --repetitions 10
 ```
 
-Supply the same manifest you loaded. The command verifies its contents against the active immutable import. It fixes sandbox, store, SKU, physical table IDs, import-run ID, and a complete-hour cutoff. Every raw and rollup query must return identical row counts, net units, receipts, and sold costs. A mismatch stops the comparison.
+Supply the same manifest you loaded. The command verifies its contents against the active immutable import. It fixes store, SKU, physical table IDs, import-run ID, and a complete-hour cutoff. Every raw and rollup query must return identical row counts, net units, receipts, and sold costs. A mismatch stops the comparison.
 
 The runner alternates raw and rollup order, performs two warmups each, and records 3–100 samples per query at concurrency one. The query result cache is disabled. Storage caches are not flushed, and the query-condition cache remains at the server default. This is a warm workload; do not label it a cold-cache benchmark.
 

@@ -1,6 +1,6 @@
 # Public learner kit
 
-Source: ClickHouse/WorkshopHouse, commit `6fb1e99` (dynamic pricing implementation and reviewed fixes).
+Source: ClickHouse/WorkshopHouse, commit `8c9ba85` (dynamic pricing implementation and reviewed fixes).
 
 This directory publishes the runnable lab at `workshops/dynamic_pricing/`. Application code, SQL, fixtures, model artifacts, dependency locks, and lab tests match the maintained implementation. The public README links to the hosted playbook. Site-only `scripts/check-docs.py` and `tests/test_docs.py`, plus internal learner-review/handoff reports, stay in WorkshopHouse. The public `check-kit.sh` runs the same lab checks without the site-documentation gate.
 

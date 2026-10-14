@@ -8,7 +8,7 @@ LEFT JOIN (
   SELECT sku, store_id, toStartOfHour(event_time) AS hour, sum(quantity) AS units,
          uniqExact(offered_price_minor) AS prices, max(offered_price_minor) AS price
   FROM __DATABASE__.__RAW__
-  WHERE sandbox_id = {sandbox:String} AND calibration AND event_type = 'sale' AND quantity > 0
+  WHERE calibration AND event_type = 'sale' AND quantity > 0
   GROUP BY sku, store_id, hour
 ) AS s ON a.sku = s.sku AND a.store_id = s.store_id AND a.hour = s.hour
 WHERE a.open AND a.calibration AND a.exposure_hours = 1 AND a.available_units > s.units
