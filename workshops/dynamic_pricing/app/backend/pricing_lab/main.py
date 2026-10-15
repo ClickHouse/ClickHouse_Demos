@@ -32,5 +32,5 @@ def build_services(settings):
             'scenarios':ScenarioService(source,ledger,features,clock,model),'mode':'live'}
 
 
-settings=Settings.from_env()
+settings=Settings.from_env(include_inventory=False)
 app=create_app(settings,build_services(settings))

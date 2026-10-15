@@ -8,3 +8,7 @@
 **/test-results
 **/playwright-report
 reports/exports
+infra/resources.json
+infra/resources.deleted-*.json
+infra/resources.lock
+.clickhouse

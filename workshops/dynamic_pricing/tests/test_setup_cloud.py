@@ -328,3 +328,14 @@ def test_clickpipe_wait_reports_progress(tmp_path,monkeypatch):
     assert len(messages)>=4
     assert 'starting' in messages[0]
     assert 'schemas are ready' in messages[-1]
+
+
+def test_runtime_settings_do_not_read_private_provisioning_inventory(tmp_path,monkeypatch):
+    path=tmp_path/'resources.json';path.write_text('{"organization_id":"'+ORG+'"}')
+    monkeypatch.setenv('PRICING_RESOURCE_INVENTORY_PATH',str(path))
+    original=Path.read_text
+    def private_read(file,*args,**kwargs):
+        if file==path: raise PermissionError('Private provisioning inventory')
+        return original(file,*args,**kwargs)
+    monkeypatch.setattr(Path,'read_text',private_read)
+    assert Settings.from_env(include_inventory=False).cloud_org_id is None

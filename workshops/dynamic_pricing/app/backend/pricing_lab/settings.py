@@ -87,7 +87,7 @@ class Settings(BaseSettings):
         return value
 
     @classmethod
-    def from_env(cls) -> "Settings":
+    def from_env(cls,*,include_inventory=True) -> "Settings":
         from dotenv import dotenv_values
         path=Path(os.environ.get('PRICING_PRIVATE_ENV_PATH',LAB_ROOT/'app/.env.workshop'))
         values=dotenv_values(path,interpolate=False) if path.exists() else {}
@@ -99,7 +99,7 @@ class Settings(BaseSettings):
                 key=next((k for k in keys if k in values),None)
                 if key and values[key] is not None: arguments[name]=values[key]
         settings=cls(_env_file=None,**arguments)
-        if not settings.cloud_org_id and settings.resource_inventory_path.exists():
+        if include_inventory and not settings.cloud_org_id and settings.resource_inventory_path.exists():
             import json
             inventory=json.loads(settings.resource_inventory_path.read_text())
             settings=cls(_env_file=None,**{**settings.model_dump(),'cloud_org_id':inventory['organization_id']})
