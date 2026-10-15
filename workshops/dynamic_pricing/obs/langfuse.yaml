@@ -19,6 +19,6 @@ exporters:
 service:
   pipelines:
     traces/langfuse:
-      receivers: [otlp]
+      receivers: [otlp/hyperdx]
       processors: [memory_limiter, filter/agents, batch]
       exporters: [otlphttp/langfuse]

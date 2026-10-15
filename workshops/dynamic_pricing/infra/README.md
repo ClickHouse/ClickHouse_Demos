@@ -40,7 +40,7 @@ Rerun the same command after fixing a failed dependency. Saved IDs and generated
 
 A preexisting manually created pipe requires its current `pricing_cdc` password in `PRICING_POSTGRES_CDC_PASSWORD` before adoption; setup refuses to change an unknown replication password. The Cloud GET response omits source credentials, so confirm that a manually created pipe uses `pricing_cdc` in the console before adopting it. New pipes always use that role.
 
-Creating the telemetry database does not configure a ClickStack receiver or UI. Follow the diagnostics module for that connection and actual span delivery. Historical bulk loading remains the Module 01 exercise.
+Creating the telemetry database does not start the local collector or enable the Managed ClickStack UI. Follow Module 02 to start telemetry ingestion and launch ClickStack. Historical bulk loading remains the Module 01 exercise.
 
 The sections below retain the individual operations for inspection and recovery.
 
@@ -127,7 +127,7 @@ docker compose --env-file app/.env.workshop \
 
 ## Connect diagnostics and agents
 
-Enable managed ClickStack against the owned service's telemetry database. Configure its source and owned gateway receiver as required by your Cloud deployment. Follow [obs/README.md](../obs/README.md), set the verified receiver URL and ingestion key privately, and start the telemetry profile. Verify a real snapshot ID in ClickStack. The installed CLI has no `cloud clickstack` command.
+Start the telemetry profile with `PRICING_OTEL_ENDPOINT=http://collector:4318`. The local ClickStack collector reuses the workshop's ClickHouse connection settings and writes directly to the telemetry database. Enable Managed ClickStack on that service and launch its UI to read the `otel` tables. Follow [obs/README.md](../obs/README.md). Verify a real snapshot ID in ClickStack. The installed CLI has no `cloud clickstack` command.
 
 Connect ClickHouse Agents or your coding agent's MCP connection with a read-only ClickHouse user scoped to the named evidence views. Run one question from [agent/bi-prompts.md](../agent/bi-prompts.md), inspect its SQL, and compare IDs with the ledger. Optional live exception-provider and Langfuse access do not block earlier modules. Use the recorded episode when those optional services are unavailable.
 

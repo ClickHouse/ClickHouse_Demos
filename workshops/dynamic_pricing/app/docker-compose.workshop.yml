@@ -53,11 +53,13 @@ services:
     extra_hosts: ["host.docker.internal:host-gateway"]
   collector:
     profiles: [telemetry]
-    image: otel/opentelemetry-collector-contrib:0.139.0@sha256:faf125d656fa47cea568b2f3b4494efd2525083bc75c1e96038bc23f05cd68fd
-    command: ["--config=/etc/otelcol/config.yaml"]
-    volumes: ["../obs/collector.yaml:/etc/otelcol/config.yaml:ro"]
+    image: clickhouse/clickstack-otel-collector@sha256:fbd9438f836036f8daec905c79d7cfc9eb5c71b543aaa610ca317609b0974254
+    volumes: ["../obs/collector.yaml:/etc/otelcol-contrib/workshop.yaml:ro"]
     environment:
-      PRICING_CLICKSTACK_ENDPOINT: ${PRICING_CLICKSTACK_ENDPOINT:-}
-      PRICING_CLICKSTACK_API_KEY: ${PRICING_CLICKSTACK_API_KEY:-}
+      CLICKHOUSE_ENDPOINT: https://${PRICING_CLICKHOUSE_HOST:-}:${PRICING_CLICKHOUSE_PORT:-8443}
+      CLICKHOUSE_USER: ${PRICING_CLICKHOUSE_USERNAME:-default}
+      CLICKHOUSE_PASSWORD: ${PRICING_CLICKHOUSE_PASSWORD:-}
+      HYPERDX_OTEL_EXPORTER_CLICKHOUSE_DATABASE: ${PRICING_CLICKSTACK_DATABASE:-otel}
+      CUSTOM_OTELCOL_CONFIG_FILE: /etc/otelcol-contrib/workshop.yaml
 volumes:
   decision_exports:
