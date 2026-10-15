@@ -11,6 +11,7 @@ dist/
 test-results/
 playwright-report/
 infra/resources.json
+infra/resources.deleted-*.json
 benchmarks/results/private/
 reports/exports/
 infra/resources.lock

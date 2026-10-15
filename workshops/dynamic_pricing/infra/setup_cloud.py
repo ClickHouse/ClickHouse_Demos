@@ -1,5 +1,6 @@
 """One resumable learner-owned setup. Secrets never enter process arguments."""
 from datetime import datetime
+import argparse
 import fcntl
 import json
 import ipaddress
@@ -23,6 +24,39 @@ from .configure_cdc import configure_source
 from .provision import CliRunner,ResourceInventory,_provision,command,save_inventory,save_private,verify_clickpipe,verify_pipe_name,report_progress
 
 TABLES=('sales_transactions','inventory_history','price_history','cost_history')
+
+
+def destroy_cloud(settings,runner,*,execute=False,progress=report_progress):
+    from .cleanup import cleanup
+    path=settings.resource_inventory_path
+    if not path.exists():
+        progress('No saved workshop resources to destroy.')
+        return []
+    lock=path.with_suffix('.lock')
+    fd=os.open(lock,os.O_CREAT|os.O_RDWR,0o600)
+    try:
+        try: fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise WorkshopError('provision_in_progress','Another setup or destroy command is active. Wait for it to finish.') from None
+        inventory=ResourceInventory.model_validate_json(path.read_text())
+        if inventory.pending_creation:
+            raise WorkshopError('creation_ack_unknown','Identify the pending resource in the Cloud console and record its ID before destroying this installation.')
+        plan=cleanup(inventory,runner,settings,execute=execute,progress=progress)
+        if not execute:
+            for item in plan: progress(f"Would delete {item['kind']}: {item['id']}")
+            progress('Preview only. Run bash scripts/setup-cloud.sh --destroy --execute to delete these resources and their data.')
+            return plan
+        updates={key:'' for key in ('PRICING_CLICKHOUSE_HOST','PRICING_CLICKHOUSE_PASSWORD',
+            'PRICING_POSTGRES_ADMIN_DSN','PRICING_POSTGRES_DSN','PRICING_POSTGRES_APP_PASSWORD',
+            'PRICING_POSTGRES_CDC_PASSWORD','PRICING_SESSION_SECRET','PRICING_CLICKSTACK_ENDPOINT',
+            'PRICING_CLICKSTACK_API_KEY')}
+        save_private(settings,updates)
+        archive=path.with_name(path.stem+'.deleted-'+secrets.token_hex(8)+path.suffix)
+        path.rename(archive)
+        progress(f'Workshop resources deleted. Inventory archived as {archive.name}.')
+        progress('Run bash scripts/setup-cloud.sh to create a fresh stack, then reload history in Module 01.')
+        return plan
+    finally: os.close(fd)
 
 
 def installation_settings():
@@ -292,8 +326,16 @@ def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=report_progress)
     finally: os.close(fd)
 
 
-def main():
+def main(argv=None):
+    parser=argparse.ArgumentParser(description='Create, verify, or destroy your workshop Cloud stack.')
+    parser.add_argument('--destroy',action='store_true',help='Preview deletion of the resources in the saved inventory.')
+    parser.add_argument('--execute',action='store_true',help='With --destroy, delete the listed resources and their data.')
+    args=parser.parse_args(argv)
+    if args.execute and not args.destroy: parser.error('--execute requires --destroy')
     try:
+        if args.destroy:
+            destroy_cloud(Settings.from_env(),CliRunner(),execute=args.execute)
+            return 0
         report_progress('Starting workshop Cloud setup...')
         settings=installation_settings()
         runner=CliRunner()

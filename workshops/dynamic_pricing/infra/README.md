@@ -6,7 +6,7 @@ These commands target `clickhousectl 0.4.2`. Help and the tagged [CLI source](ht
 
 ## One-command setup
 
-After installing dependencies and logging in with your organization API key from the lab directory, set owner, organization, public IPv4 `/32`, region, and Postgres size in `app/.env.workshop`. Run:
+After installing dependencies and logging in with your organization API key from the lab directory, copy the environment template and change the region or Postgres size if needed. Setup generates the installation ID and detects your organization and public IPv4 address. Run:
 
 ```bash
 bash scripts/setup-cloud.sh
@@ -15,6 +15,26 @@ bash scripts/setup-cloud.sh
 This creates or verifies the owned ClickHouse Cloud and managed Postgres services, downloads the source CA, creates `pricing` and the configured telemetry database, initializes the source schema, generates separate app/CDC credentials, applies grants and the four-table publication, and creates a Postgres ClickPipe through the Cloud API. The pipe targets `pricing` with ReplacingMergeTree, preserved NULLs, verified TLS, and a 10-second sync interval. Readiness checks actual table engines and metadata before enabling canonical views.
 
 The command uses the API key pair saved by `clickhousectl cloud auth login` in this lab's `.clickhouse/credentials.json`, or `CLICKHOUSE_CLOUD_API_KEY` and `CLICKHOUSE_CLOUD_API_SECRET` from the shell or current `.env`. No source password or API secret enters process arguments. Generated credentials go to the private environment file with mode 0600. The runtime gets only the limited app DSN; the administrator DSN stays available for host schema operations.
+
+## Destroy and recreate
+
+Stop the local workbench before deleting its Cloud resources. Preview the resources recorded in this installation's inventory:
+
+```bash
+bash scripts/setup-cloud.sh --destroy
+```
+
+Review the resource IDs, then permanently delete the owned ClickPipe, Managed Postgres instance, and ClickHouse service and their data:
+
+```bash
+bash scripts/setup-cloud.sh --destroy --execute
+```
+
+Deletion verifies ownership before removing any resources and journals each completed deletion. If interrupted, repeat the command to resume. Only after all deletions succeed does it archive the inventory and clear the old database credentials, session secret, and ClickStack receiver credentials. CLI authentication, installation identity, and workshop preferences remain available.
+
+Run `bash scripts/setup-cloud.sh` to create a fresh stack with one ClickHouse replica. Reload history in Module 01, reconnect ClickStack in Module 02, and restart the local workbench with the new connection settings.
+
+## Resume setup
 
 Rerun the same command after fixing a failed dependency. Saved IDs and generated passwords are reused. An ambiguous create response leaves `pending_creation` set and stops automatic retries. Reconcile the owned resource ID in the console, record it in the corresponding inventory field, and clear `pending_creation` only after identifying that exact resource. Setup rejects unverified administrator TLS, elevated role attributes or memberships, excess source privileges, and mismatched existing pipe source configuration. Correct those settings before retrying; the script does not silently broaden privileges.
 
