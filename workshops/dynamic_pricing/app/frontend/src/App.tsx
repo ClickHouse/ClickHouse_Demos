@@ -34,6 +34,10 @@ export default function App(){
   const [note,setNote]=useState('');
   const [checkpoint,setCheckpoint]=useState('lab3_policy');
   const [lastSale,setLastSale]=useState<string|null>(null);
+  const [resetElapsed,setResetElapsed]=useState(0);
+  const [resetConfirmed,setResetConfirmed]=useState(false);
+  const [resetMessage,setResetMessage]=useState('');
+  const viewPanel=useRef<HTMLElement|null>(null);
   const generation=useRef(0),owner=useRef(''),version=useRef(0),busy=useRef(false);
   const sequence=useRef(0),acceptedSequence=useRef<Record<string,number>>({});
   const approvalKeys=useRef(new Map<string,string>()),resetKeys=useRef(new Map<string,string>());
@@ -74,7 +78,18 @@ export default function App(){
       }).catch(fail),
     ]);
   },[accept,fail]);
-  useEffect(()=>{if(!session)return;const timer=setInterval(()=>void refresh(),2000);return()=>clearInterval(timer);},[session,refresh]);
+  useEffect(()=>{if(!session||pending==='reset')return;const timer=setInterval(()=>void refresh(),2000);return()=>clearInterval(timer);},[session,refresh,pending]);
+  useEffect(()=>{
+    if(!session)return;
+    viewPanel.current?.focus({preventScroll:true});
+    viewPanel.current?.querySelector('h2')?.scrollIntoView({block:'nearest'});
+  },[view,session]);
+  useEffect(()=>{
+    if(pending!=='reset')return;
+    const started=Date.now();setResetElapsed(0);
+    const timer=setInterval(()=>setResetElapsed(Math.floor((Date.now()-started)/1000)),1000);
+    return()=>clearInterval(timer);
+  },[pending]);
   async function start(){
     try{const r=await api.startSession();owner.current=r.data.owner_id;setSession(r.data);setError(null);await refresh();}catch(cause){fail(cause);}
   }
@@ -107,13 +122,17 @@ export default function App(){
     if(typeof r.data.decision_id==='string'){const report=await api.getDecision(r.data.decision_id);if(accept(report.scope))setDecision(report.data);}
   });}
   async function reset(){
+    if(busy.current)return;
+    setResetConfirmed(false);setResetMessage('');setResetElapsed(0);
     const key=resetKeys.current.get(checkpoint)??crypto.randomUUID();resetKeys.current.set(checkpoint,key);
     await action('reset',async()=>{
       const r=await api.reset(checkpoint,key,generation.current);if(!r.scope||r.scope.owner_id!==owner.current||r.scope.generation<generation.current)return;
+      setResetConfirmed(true);
       generation.current=r.scope.generation;setScope(r.scope);version.current=0;acceptedSequence.current={};acknowledgedEvents.current=[];
       setItems([]);setSelectedId(null);setSnapshot(null);currentSnapshot.current=null;setPrevious(null);setReceipt(null);setDecision(null);setEvents([]);setFreshness(null);setApplied(null);setLastSale(null);setEpisode(null);setPhase('pending_review');approvalKeys.current.clear();resetKeys.current.delete(checkpoint);
       saleRequest.current=null;
       setNotice('Checkpoint restored. Earlier proposals cannot be applied in this generation.');await refresh();
+      setResetMessage(`Restored ${checkpoint.replaceAll('_',' ')}. Generation ${r.scope.generation}.`);
     });
   }
   async function sale(){if(!freshness||!applied)return;await action('sale',async()=>{
@@ -129,14 +148,17 @@ export default function App(){
   async function trigger(event:string){await action('scenario',async()=>{const r=await api.trigger(event,generation.current);if(!accept(r.scope))return;setNotice(`${event.replaceAll('_',' ')} scenario recorded. Inspect source revisions, then generate a fresh proposal.`);await refresh();});}
   const hardBlocked=phase==='rejected'||['price_version_changed','policy_blocked','generation_changed'].includes(error?.code??'');
   return <><a className="skip-link" href="#workspace">Skip to workshop evidence</a><header className="app-header"><h1 className="brand">ClickHouse <span>Dynamic pricing workbench</span></h1><div className="session-meta">{session?<><span>{session.owner_id}</span><span data-testid="generation">Generation {scope?.generation??'not loaded'}</span><button className="text-button" onClick={start}>Restart learner session</button></>:<span>Your own instance</span>}</div></header>
-    {!session?<main className="welcome" id="workspace"><h2 className="welcome-title">Follow a price change through the data</h2><p>Load historical facts, inspect live source revisions, compare price candidates, and approve a mock change yourself.</p><button className="primary" onClick={start}>Start learner session</button><p>Database credentials stay in your local backend. The workshop uses synthetic grocery transactions.</p>{error&&<p role="alert">{error.message}</p>}</main>:<div className="app-layout"><aside className="sidebar"><nav aria-label="Workshop evidence views">{views.map(name=><button key={name} aria-current={view===name?'page':undefined} onClick={()=>setView(name)}>{name}</button>)}</nav><div className="checkpoint"><label htmlFor="checkpoint">Recovery checkpoint</label><select id="checkpoint" value={checkpoint} onChange={e=>setCheckpoint(e.target.value)}>{['lab1_baseline','lab2_features','lab3_policy','lab4_exception','lab5_review'].map(value=><option key={value} value={value}>{value.replaceAll('_',' ')}</option>)}</select><button onClick={reset} disabled={!!pending}>Restore checkpoint</button><p>Restores scenario state in a new generation. Historical imports remain.</p></div></aside>
+    {!session?<main className="welcome" id="workspace"><h2 className="welcome-title">Follow a price change through the data</h2><p>Load historical facts, inspect live source revisions, compare price candidates, and approve a mock change yourself.</p><button className="primary" onClick={start}>Start learner session</button><p>Database credentials stay in your local backend. The workshop uses synthetic grocery transactions.</p>{error&&<p role="alert">{error.message}</p>}</main>:<div className="app-layout"><aside className="sidebar"><nav aria-label="Workshop evidence views">{views.map(name=><button key={name} aria-current={view===name?'page':undefined} onClick={()=>setView(name)}>{name}</button>)}</nav><div className="checkpoint"><label htmlFor="checkpoint">Recovery checkpoint</label><select id="checkpoint" disabled={!!pending} value={checkpoint} onChange={e=>setCheckpoint(e.target.value)}>{['lab1_baseline','lab2_features','lab3_policy','lab4_exception','lab5_review'].map(value=><option key={value} value={value}>{value.replaceAll('_',' ')}</option>)}</select><button onClick={reset} disabled={!!pending}>{pending==='reset'?'Restoring checkpoint...':'Restore checkpoint'}</button>
+      {pending==='reset'?<div className="checkpoint-progress" role="status"><strong>{resetConfirmed?'Checkpoint restored. Refreshing the workbench...':`Restoring ${checkpoint.replaceAll('_',' ')}...`}</strong>{!resetConfirmed&&<p>Waiting for source records to reach ClickHouse and preparing exercise inputs.</p>}<span aria-live="off">{resetElapsed}s elapsed</span></div>:resetMessage&&<p className="checkpoint-result" role="status">{resetMessage}</p>}<p>Restores scenario state in a new generation. Historical imports remain.</p></div></aside>
     <main id="workspace" className="workspace"><div className="context-strip"><span>SKU 101 / Store 1 / SGD</span><span>{session.ingestion_mode==='clickpipes'?'ClickPipes ingestion':`${session.ingestion_mode.replaceAll('_',' ')} ingestion`}</span><span>{session.model_distribution==='development'?'Development model':'Prepared model'}</span></div>
       <div className="price-strip"><div><span className="price-label">Acknowledged mock price</span><strong data-testid="applied-price">{applied?<Money value={applied.price}/>:'Awaiting source state'}</strong><span>Applied version {applied?.version??'—'}</span></div><div className="proposed-price"><span className="price-label">Selected proposal</span><strong>{selected?<Money value={selected.candidate.price_minor}/>:'No proposal selected'}</strong><span>Projected current-window price</span></div><button className="refresh-button" onClick={()=>void refresh()}>Refresh evidence</button></div>
       {error&&<div className="alert" role="alert">{error.message}</div>}{notice&&<p className="notice" role="status">{notice}</p>}
-      <PriceTimeline events={events}/>
+      <section className="view-content" aria-label={`${view} view`} tabIndex={-1} ref={viewPanel}>
       {view==='Baseline'&&<Baseline data={baseline}/>} {view==='Freshness'&&<Freshness data={freshness} onSale={sale} pending={pending==='sale'} lastSale={lastSale}/>}
       {view==='Candidates'&&<Candidates items={items} selectedId={selectedId} onSelect={id=>{setSelectedId(id);setPhase('pending_review');setError(null);}} onPropose={propose} onApprove={approve} onReject={reject} pending={pending} phase={phase} receipt={receipt} note={note} setNote={setNote} previous={previous} current={snapshot} blocked={hardBlocked}/>}
       {view==='Diagnostics'&&<Diagnostics data={diagnostics} episode={episode} onEpisode={runEpisode} onInspect={inspect} onTrigger={trigger} pending={!!pending}/>}
       {view==='Decision report'&&<DecisionReport decision={decision} receipt={receipt}/>}
+      </section>
+      <PriceTimeline events={events}/>
     </main></div>}<footer className="app-footer">Synthetic projections and mock prices. Only an acknowledged receipt establishes an applied price.</footer></>;
 }

@@ -8,3 +8,5 @@
 @media(max-width:680px){.page-title{font-size:27px}}
 
 .episode-evidence{font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:450px;overflow:auto;background:var(--quartz);padding:16px}
+
+.view-content{margin-bottom:32px;scroll-margin-top:20px}.view-content:focus{outline:none}.checkpoint-progress{margin:12px 0;padding:12px;border:1px solid #cad0d8;border-radius:5px;background:white;font-size:13px;overflow-wrap:anywhere}.checkpoint-progress strong{font-weight:500}.checkpoint-progress p{margin:8px 0}.checkpoint-progress span{display:block;color:#4d5764}.checkpoint .checkpoint-result{color:var(--teal);font-weight:500}
