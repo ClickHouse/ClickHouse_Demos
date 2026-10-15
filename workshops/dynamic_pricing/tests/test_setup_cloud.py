@@ -310,3 +310,21 @@ def test_public_ipv4_detection_reports_failure_without_creating_resources(monkey
     from infra.setup_cloud import public_ipv4
     monkeypatch.setattr('infra.setup_cloud.httpx.get',lambda *a,**k: httpx.Response(200,text='::1',request=httpx.Request('GET','https://api4.ipify.org')))
     with pytest.raises(WorkshopError,match='public_ip_unavailable'): public_ipv4()
+
+
+def test_clickpipe_wait_reports_progress(tmp_path,monkeypatch):
+    from infra.setup_cloud import wait_pipe
+    from infra.provision import ResourceInventory
+    inventory=ResourceInventory(owner_id='learner-1',organization_id=ORG,region='ap-southeast-1',created_at=datetime.now(UTC),service_id=CH,clickpipe_id=PIPE)
+    class Runner:
+        polls=0
+        def run(self,argv):
+            self.polls+=1
+            return {'id':PIPE,'state':'Running' if self.polls==12 else 'Starting'}
+    monkeypatch.setattr('infra.setup_cloud.verify_pipe_source',lambda *args:None)
+    monkeypatch.setattr('infra.setup_cloud.verify_clickpipe',lambda *args:None)
+    messages=[]
+    wait_pipe(inventory,Settings(),Runner(),sleep=lambda _:None,progress=messages.append)
+    assert len(messages)>=4
+    assert 'starting' in messages[0]
+    assert 'schemas are ready' in messages[-1]

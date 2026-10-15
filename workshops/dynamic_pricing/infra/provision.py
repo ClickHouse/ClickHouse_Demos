@@ -120,13 +120,21 @@ def verify_clickpipe(row,settings):
         analytics.close()
 
 
-def wait_running(runner,settings,kind,resource_id,*,sleep=time.sleep):
-    for _ in range(300):
+def report_progress(message):
+    print(message,flush=True)
+
+
+def wait_running(runner,settings,kind,resource_id,*,sleep=time.sleep,progress=report_progress):
+    previous=None
+    for attempt in range(300):
         row=runner.run(command(settings,kind,'get',resource_id))
         if not owned(row,settings.owner_id,kind):
             from .cleanup import OwnerMismatch
             raise OwnerMismatch()
         state=str(row.get('state','')).lower()
+        if state!=previous or attempt%10==0:
+            progress(f'{kind} {resource_id}: {state or "pending"} (readiness check {attempt+1}/300)')
+        previous=state
         if state=='running' or (kind=='service' and state=='idle'): return row
         if state in ('failed','deleted','terminated'): raise WorkshopError('cloud_service_failed','Inspect this owned service in the Cloud console. Its ID and creation credentials remain saved.')
         sleep(2)
@@ -152,7 +160,7 @@ def provision(runner,settings,module,*,sleep=time.sleep):
     finally: os.close(fd)
 
 
-def _provision(runner,settings,module,*,sleep=time.sleep):
+def _provision(runner,settings,module,*,sleep=time.sleep,progress=report_progress):
     if module not in ('setup','cdc','diagnostics'): raise ValueError('Choose setup, cdc, or diagnostics.')
     if not settings.cloud_org_id or not settings.learner_cidr: raise WorkshopError('cloud_configuration_missing','Set an explicit organization ID, region, and learner IPv4 /32 CIDR before provisioning.')
     if settings.resource_inventory_path.exists():
@@ -169,9 +177,10 @@ def _provision(runner,settings,module,*,sleep=time.sleep):
     for kind,field in (('service','service_id'),('postgres','postgres_id')):
         resource_id=getattr(inventory,field)
         if resource_id is None:
+            progress(f'Creating {kind} in {settings.region}'+(' with 1 replica...' if kind=='service' else '...'))
             inventory=inventory.model_copy(update={'pending_creation':kind});save_inventory(settings,inventory)
             args=['--name',f'pricing-{settings.owner_id}'+('-source' if kind=='postgres' else ''),'--provider','aws','--region',settings.region,'--tag','workshop=dynamic-pricing','--tag','owner='+settings.owner_id]
-            if kind=='service': args+=['--ip-allow',settings.learner_cidr]
+            if kind=='service': args+=['--ip-allow',settings.learner_cidr,'--num-replicas','1']
             else: args+=['--size',settings.postgres_size,'--pg-version','17','--ha-type','none']
             created=runner.run(command(settings,kind,'create',*args))
             row=created.get('service',{}) if kind=='service' else created
@@ -184,14 +193,18 @@ def _provision(runner,settings,module,*,sleep=time.sleep):
                 dsn=verified_dsn(created.get('connectionString',''),settings.pg_ca_path)
                 save_private(settings,{'PRICING_POSTGRES_ADMIN_DSN':dsn,'PRICING_POSTGRES_DSN':dsn})
             private=dict(dotenv_values(settings.private_env_path,interpolate=False))
+            progress(f'{kind} created: {resource_id}. Credentials saved privately.')
+        else:
+            progress(f'Reusing saved {kind}: {resource_id}.')
         required='PRICING_CLICKHOUSE_PASSWORD' if kind=='service' else 'PRICING_POSTGRES_ADMIN_DSN'
         if not private.get(required): raise WorkshopError('credentials_missing','Explicitly recover the saved service password. Service get does not return creation credentials.')
-        row=wait_running(runner,settings,kind,resource_id,sleep=sleep)
+        row=wait_running(runner,settings,kind,resource_id,sleep=sleep,progress=progress)
         if kind=='service':
             endpoint=next((e for e in row.get('endpoints',[]) if e.get('protocol')=='https'),None)
             if not endpoint: raise WorkshopError('endpoint_pending','Wait for the HTTPS endpoint of this saved service.')
             save_private(settings,{'PRICING_CLICKHOUSE_HOST':endpoint['host'],'PRICING_CLICKHOUSE_PORT':endpoint['port'],'PRICING_CLICKHOUSE_SECURE':'true','PRICING_CLICKHOUSE_DATABASE':settings.clickhouse_database,'PRICING_OWNER_ID':settings.owner_id,'PRICING_SESSION_SECRET':private.get('PRICING_SESSION_SECRET') or secrets.token_urlsafe(48)})
         else:
+            progress('Downloading the Managed Postgres CA certificate...')
             settings.pg_ca_path.parent.mkdir(parents=True,exist_ok=True)
             runner.run(command(settings,'postgres','certs','get',resource_id,'--output',settings.pg_ca_path))
             if not settings.pg_ca_path.is_file() or not settings.pg_ca_path.stat().st_size: raise WorkshopError('certificate_missing','Download the saved Postgres instance CA before starting the local application.')

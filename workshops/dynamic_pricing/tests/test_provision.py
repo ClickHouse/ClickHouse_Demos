@@ -314,3 +314,24 @@ def test_initial_provisioning_can_take_more_than_three_minutes(settings):
         return result
     runner.run=run
     assert wait_running(runner,settings,'postgres',PG,sleep=lambda _:None)['state']=='running'
+
+
+def test_workshop_service_requests_one_replica(settings):
+    runner=Runner()
+    provision(runner,settings,'setup',sleep=lambda _:None)
+    create=next(call for call in runner.calls if call[2:4]==['service','create'])
+    assert create[create.index('--num-replicas')+1]=='1'
+
+
+def test_wait_reports_state_and_heartbeat(settings):
+    from infra.provision import wait_running
+    messages=[]
+    class WaitingRunner:
+        polls=0
+        def run(self,argv):
+            self.polls+=1
+            return {'state':'running' if self.polls==12 else 'starting',
+                    'tags':[{'key':'workshop','value':'dynamic-pricing'},{'key':'owner','value':settings.owner_id}]}
+    wait_running(WaitingRunner(),settings,'service',CH,sleep=lambda _:None,progress=messages.append)
+    assert len(messages)>=3
+    assert 'starting' in messages[0] and 'running' in messages[-1]

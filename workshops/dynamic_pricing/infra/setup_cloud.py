@@ -20,7 +20,7 @@ from pricing_lab.clock import Clock
 from pricing_lab.ledger import Ledger
 from pricing_lab.settings import Settings,LAB_ROOT
 from .configure_cdc import configure_source
-from .provision import CliRunner,ResourceInventory,_provision,command,save_inventory,save_private,verify_clickpipe,verify_pipe_name
+from .provision import CliRunner,ResourceInventory,_provision,command,save_inventory,save_private,verify_clickpipe,verify_pipe_name,report_progress
 
 TABLES=('sales_transactions','inventory_history','price_history','cost_history')
 
@@ -228,19 +228,24 @@ def ensure_pipe(inventory,settings,api,body):
     return inventory
 
 
-def wait_pipe(inventory,settings,runner,*,sleep=time.sleep):
+def wait_pipe(inventory,settings,runner,*,sleep=time.sleep,progress=report_progress):
     # Initial snapshot + schema creation may take minutes, independently of CDC cadence.
-    for _ in range(300):
+    previous=None
+    for attempt in range(300):
         row=runner.run(command(settings,'clickpipe','get',inventory.service_id,inventory.clickpipe_id))
         if str(row.get('id'))!=str(inventory.clickpipe_id):
             raise WorkshopError('clickpipe_id_mismatch','Verify the saved pipe ID on the owned service.')
         state=str(row.get('state','')).lower()
+        if state!=previous or attempt%10==0:
+            progress(f'ClickPipe {inventory.clickpipe_id}: {state or "pending"} (readiness check {attempt+1}/300)')
+        previous=state
         if state in ('failed','error','deleted'):
             raise WorkshopError('clickpipe_failed','Inspect the owned pipe, source network access, and replication privileges. Its ID remains saved.')
         if state=='running':
             verify_pipe_source(row,settings)
             try:
                 verify_clickpipe(row,settings)
+                progress('ClickPipe is running and all four destination schemas are ready.')
                 return
             except WorkshopError as error:
                 if error.code!='cdc_schema_missing': raise
@@ -248,7 +253,7 @@ def wait_pipe(inventory,settings,runner,*,sleep=time.sleep):
     raise WorkshopError('clickpipe_pending','CDC is still initializing. Rerun the same setup command to resume the saved pipe; do not create another pipe.')
 
 
-def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=print):
+def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=report_progress):
     path=settings.resource_inventory_path.with_suffix('.lock');path.parent.mkdir(parents=True,exist_ok=True)
     fd=os.open(path,os.O_CREAT|os.O_RDWR,0o600)
     try:
@@ -256,7 +261,7 @@ def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=print):
         except BlockingIOError:
             raise WorkshopError('provision_in_progress','Another setup command is active for this inventory. Wait for it to finish.') from None
         progress('Creating or verifying your ClickHouse and managed Postgres services...')
-        inventory=_provision(runner,settings,'setup',sleep=sleep)
+        inventory=_provision(runner,settings,'setup',sleep=sleep,progress=progress)
         settings=refreshed(settings)
         source=runner.run(command(settings,'postgres','get',inventory.postgres_id))
         parts=urlsplit(settings.administrator_dsn())
@@ -275,7 +280,8 @@ def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=print):
         cdc_password=dotenv_values(settings.private_env_path,interpolate=False)['PRICING_POSTGRES_CDC_PASSWORD']
         progress('Creating or verifying your four-table Postgres ClickPipe...')
         inventory=ensure_pipe(inventory,settings,api,pipe_request(settings,cdc_password))
-        wait_pipe(inventory,settings,runner,sleep=sleep)
+        wait_pipe(inventory,settings,runner,sleep=sleep,progress=progress)
+        progress('Creating and verifying canonical ClickHouse views...')
         analytics=AnalyticsClient(settings)
         try:
             _,cutoff=ledger.current_scope(settings.owner_id,settings.scenario_id)
@@ -288,9 +294,12 @@ def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=print):
 
 def main():
     try:
+        report_progress('Starting workshop Cloud setup...')
         settings=installation_settings()
         runner=CliRunner()
+        report_progress('Detecting your Cloud organization and public IPv4 address...')
         settings=cloud_settings(settings,runner)
+        report_progress(f'Using organization {settings.cloud_org_id}, region {settings.region}, access {settings.learner_cidr}.')
         with CloudApi(settings.cloud_org_id) as api:
             setup_cloud(settings,runner,api)
         return 0
