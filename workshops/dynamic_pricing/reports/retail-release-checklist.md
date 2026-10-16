@@ -18,6 +18,6 @@ Local code and curriculum can be reviewed without calling every external gate pa
 - [ ] Managed ClickStack UI receipt search.
 - [ ] Windows WSL2 execution.
 - [ ] Full timed learner run and costs.
-- [ ] Separate rehearsal resource cleanup.
+- [x] Separate rehearsal resource cleanup; absence verified.
 
 Do not advertise a measured throughput, speedup, fully verified agent workflow, or release readiness while its required evidence is missing. Keep this checklist out of learner instructions.

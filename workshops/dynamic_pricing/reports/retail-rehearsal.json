@@ -1860,7 +1860,8 @@
       "status": "not_run"
     },
     "cleanup": {
-      "status": "not_run"
+      "status": "passed",
+      "evidence": "Owned ClickPipe, managed Postgres and ClickHouse service deleted; service/Postgres absence verified using successful full inventory responses. Separate rehearsal Docker project and volumes removed; original dynamic-pricing stack remains healthy."
     },
     "cloud_cdc_deletes": {
       "status": "passed",
