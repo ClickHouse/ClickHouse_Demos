@@ -339,3 +339,16 @@ def test_runtime_settings_do_not_read_private_provisioning_inventory(tmp_path,mo
         return original(file,*args,**kwargs)
     monkeypatch.setattr(Path,'read_text',private_read)
     assert Settings.from_env(include_inventory=False).cloud_org_id is None
+
+
+def test_retail_pipe_maps_operational_metadata_and_preserves_legacy_pipe(tmp_path):
+    from infra.setup_cloud import pipe_request, verify_pipe_source
+    from pricing_lab.retail_cdc import RETAIL_TABLES
+    ca=tmp_path/'ca.pem';ca.write_text('test-public-ca')
+    settings=Settings(retail_mode=True,postgres_admin_dsn='postgresql://postgres:admin@pg.example.test/postgres?sslmode=verify-full',pg_ca_path=ca)
+    request=pipe_request(settings,'test-secret')
+    assert {r['sourceTable'] for r in request['source']['postgres']['tableMappings']} == set(RETAIL_TABLES)
+    assert request['source']['postgres']['settings']['publicationName'] == 'pricing_retail'
+    legacy=pipe_request(settings.model_copy(update={'retail_mode':False}),'test-secret')
+    with pytest.raises(WorkshopError,match='clickpipe_source_mismatch'):
+        verify_pipe_source(legacy,settings)

@@ -17,6 +17,24 @@ from .source import SourceStore
 
 def build_services(settings):
     ledger=Ledger(settings.postgres_dsn.get_secret_value())
+    from .retail_source import RetailSource
+    from .retail_analytics import RetailAnalytics
+    from .retail_approval import RetailApprovalService
+    from .retail_outcomes import OutcomeService
+    from .retail_api import RetailWorkbench
+    analytics=AnalyticsClient(settings,request_timeout_seconds=60)
+    clock=Clock(datetime(2026,1,30,2,tzinfo=UTC))
+    telemetry=configure('pricing-backend',settings.otel_endpoint)
+    source=RetailSource(ledger,settings.retail_spool)
+    analysis=RetailAnalytics(analytics)
+    approval=RetailApprovalService(ledger,analysis,clock)
+    retail=RetailWorkbench(ledger,analytics,source,analysis,approval,OutcomeService(analytics))
+    def shutdown():analytics.close();telemetry.shutdown()
+    return {'retail':retail,'ledger':ledger,'shutdown':shutdown,'mode':'live'}
+
+
+def build_legacy_services(settings):
+    ledger=Ledger(settings.postgres_dsn.get_secret_value())
     source=SourceStore(settings.postgres_dsn.get_secret_value())
     analytics=AnalyticsClient(settings,request_timeout_seconds=60)
     clock=Clock(datetime(2026,1,30,12,tzinfo=UTC))

@@ -115,7 +115,14 @@ def verify_clickpipe(row,settings):
     connection={name:values['PRICING_'+name.upper()] for name in ('clickhouse_host','clickhouse_port','clickhouse_secure','clickhouse_database','clickhouse_username','clickhouse_password') if values.get('PRICING_'+name.upper()) is not None}
     analytics=AnalyticsClient(Settings(**{**settings.model_dump(),**connection}))
     try:
-        verify_cdc_schema(analytics)
+        if settings.retail_mode:
+            from pricing_lab.retail_cdc import RETAIL_TABLES
+            found=analytics.query("SELECT table,name FROM system.columns WHERE database={db:String}",{'db':analytics.database})
+            columns={(r['table'],r['name']) for r in found}
+            if any((name+'_cdc',column) not in columns for name in RETAIL_TABLES for column in ('run_id','_peerdb_version','_peerdb_is_deleted')):
+                raise WorkshopError('cdc_schema_missing','Wait for all operational CDC tables and metadata columns.')
+        else:
+            verify_cdc_schema(analytics)
     finally:
         analytics.close()
 

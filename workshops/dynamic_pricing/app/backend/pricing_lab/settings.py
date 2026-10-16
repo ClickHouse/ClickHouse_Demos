@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     session_secret: SecretStr = SecretStr("")
     allowed_origin: str = "http://localhost:8080"
     dataset_manifest: str = ""
+    retail_dataset_manifest: str = ""
+    retail_mode: bool = False
+    retail_model_path: Path = LAB_ROOT / "pricing/artifacts/retail/manifest.json"
+    retail_spool: Path = LAB_ROOT / ".run/retail-spool"
     lease_minutes: int = Field(default=60, ge=1, le=60)
     convergence_timeout_seconds: float = Field(default=30, gt=0, le=120, allow_inf_nan=False)
 

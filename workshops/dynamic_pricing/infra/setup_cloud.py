@@ -25,6 +25,13 @@ from .provision import CliRunner,ResourceInventory,_provision,command,save_inven
 
 TABLES=('sales_transactions','inventory_history','price_history','cost_history')
 
+def source_tables(settings):
+    from pricing_lab.retail_cdc import RETAIL_TABLES
+    return RETAIL_TABLES if settings.retail_mode else TABLES
+
+def source_publication(settings):
+    return 'pricing_retail' if settings.retail_mode else 'pricing_workshop'
+
 
 def destroy_cloud(settings,runner,*,execute=False,progress=report_progress):
     from .cleanup import cleanup
@@ -186,7 +193,7 @@ def verify_pipe_source(row,settings):
     parts=urlsplit(settings.administrator_dsn());options=source.get('settings') or {}
     mappings=source.get('tableMappings') or []
     actual={(r.get('sourceSchemaName'),r.get('sourceTable'),r.get('targetTable'),r.get('tableEngine')) for r in mappings}
-    expected={('pricing',name,name+'_cdc','ReplacingMergeTree') for name in TABLES}
+    expected={('pricing',name,name+'_cdc','ReplacingMergeTree') for name in source_tables(settings)}
     # API GET deliberately omits source credentials. Validate username if returned;
     # newly created credentials are fixed to pricing_cdc in the POST request.
     username=(source.get('credentials') or {}).get('username')
@@ -194,10 +201,10 @@ def verify_pipe_source(row,settings):
         or source.get('database')!=parts.path.lstrip('/') or source.get('authentication')!='basic'
         or source.get('disableTls') is not False or source.get('skipCertVerification') is not False
         or (source.get('caCertificate') or '').strip()!=settings.pg_ca_path.read_text().strip()
-        or options.get('publicationName')!='pricing_workshop' or options.get('replicationMode')!='cdc'
+        or options.get('publicationName')!=source_publication(settings) or options.get('replicationMode')!='cdc'
         or options.get('allowNullableColumns') is not True
-        or len(mappings)!=4 or actual!=expected or username not in (None,'pricing_cdc')):
-        raise WorkshopError('clickpipe_source_mismatch','Use the owned Postgres source, verified TLS, pricing_workshop publication, preserved NULLs, and exactly the four pricing mappings. Inspect the saved pipe before changing source roles.')
+        or len(mappings)!=len(source_tables(settings)) or actual!=expected or username not in (None,'pricing_cdc')):
+        raise WorkshopError('clickpipe_source_mismatch','Use the owned Postgres source, verified TLS, the expected publication, preserved NULLs, and all configured mappings. Inspect the saved pipe before changing source roles.')
 
 
 def verify_role_attributes(conn):
@@ -222,10 +229,10 @@ def configure_roles(settings,ledger,*,existing_pipe=False):
         verify_role_attributes(conn)
         for name,password in passwords.items():
             conn.execute(sql.SQL('ALTER ROLE {} WITH LOGIN PASSWORD {}').format(sql.Identifier('pricing_'+name),sql.Literal(password)))
-    configure_source(ledger)
+    configure_source(ledger,retail=settings.retail_mode)
     with ledger.connect() as conn:
         verify_role_attributes(conn)
-        for name in TABLES:
+        for name in source_tables(settings):
             table='pricing.'+name
             invalid=conn.execute("SELECT has_table_privilege('pricing_app',%s,'DELETE, TRUNCATE, REFERENCES, TRIGGER') OR has_table_privilege('pricing_cdc',%s,'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') AS invalid",(table,table)).fetchone()['invalid']
             if invalid:
@@ -244,11 +251,11 @@ def pipe_request(settings,password):
         'type':'postgres','host':source.hostname,'port':source.port or 5432,'database':source.path.lstrip('/'),
         'authentication':'basic','credentials':{'username':'pricing_cdc','password':password},
         'disableTls':False,'skipCertVerification':False,'caCertificate':settings.pg_ca_path.read_text(),
-        'settings':{'replicationMode':'cdc','publicationName':'pricing_workshop','syncIntervalSeconds':10,
+        'settings':{'replicationMode':'cdc','publicationName':source_publication(settings),'syncIntervalSeconds':10,
                     'allowNullableColumns':True,'deleteOnMerge':False,'enableFailoverSlots':False},
         'tableMappings':[{'sourceSchemaName':'pricing','sourceTable':name,'targetTable':name+'_cdc',
                           'tableEngine':'ReplacingMergeTree','excludedColumns':[],'sortingKeys':[],
-                          'useCustomSortingKey':False,'partitionByExpr':'','partitionKey':''} for name in TABLES]}}}
+                          'useCustomSortingKey':False,'partitionByExpr':'','partitionKey':''} for name in source_tables(settings)]}}}
 
 
 def ensure_pipe(inventory,settings,api,body):
@@ -279,7 +286,7 @@ def wait_pipe(inventory,settings,runner,*,sleep=time.sleep,progress=report_progr
             verify_pipe_source(row,settings)
             try:
                 verify_clickpipe(row,settings)
-                progress('ClickPipe is running and all four destination schemas are ready.')
+                progress('ClickPipe is running and all mapped destination schemas are ready.')
                 return
             except WorkshopError as error:
                 if error.code!='cdc_schema_missing': raise
@@ -312,14 +319,24 @@ def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=report_progress)
         ledger=initialize_schema(settings);configure_roles(settings,ledger,existing_pipe=bool(inventory.clickpipe_id))
         settings=refreshed(settings)
         cdc_password=dotenv_values(settings.private_env_path,interpolate=False)['PRICING_POSTGRES_CDC_PASSWORD']
-        progress('Creating or verifying your four-table Postgres ClickPipe...')
+        progress('Creating or verifying your Postgres ClickPipe...')
         inventory=ensure_pipe(inventory,settings,api,pipe_request(settings,cdc_password))
         wait_pipe(inventory,settings,runner,sleep=sleep,progress=progress)
         progress('Creating and verifying canonical ClickHouse views...')
         analytics=AnalyticsClient(settings)
         try:
             _,cutoff=ledger.current_scope(settings.owner_id,settings.scenario_id)
-            FeatureService(analytics,ledger,Clock(cutoff)).configure_views()
+            if settings.retail_mode:
+                from pricing_lab.retail_schema import install_retail_schema
+                from pricing_lab.retail_cdc import configure_retail_cdc
+                install_retail_schema(analytics)
+                configure_retail_cdc(analytics)
+                from pricing_lab.retail_outcomes import install_retail_outcomes
+                install_retail_outcomes(analytics)
+                from pricing_lab.retail_schema import install_retail_agent_access
+                install_retail_agent_access(analytics)
+            else:
+                FeatureService(analytics,ledger,Clock(cutoff)).configure_views()
         finally: analytics.close()
         progress('Setup ready: pricing and telemetry databases, managed Postgres, app role, and CDC. Start the local application next.')
         return inventory

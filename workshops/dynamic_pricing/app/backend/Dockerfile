@@ -13,7 +13,7 @@ COPY sql sql
 COPY fixtures fixtures
 COPY agent agent
 COPY reports reports
-RUN mkdir -p .run reports/exports && chown -R workshop:workshop .run reports/exports
+RUN mkdir -p .run/retail-spool reports/exports && chown -R workshop:workshop .run reports/exports
 USER workshop
 EXPOSE 8000
 HEALTHCHECK --interval=10s --timeout=3s CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health',timeout=2)"

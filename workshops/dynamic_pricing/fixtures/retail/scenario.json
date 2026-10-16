@@ -1,0 +1,36 @@
+{
+  "input": {
+    "subject": {"store_id": 5000, "sku": 101},
+    "cutoff": "2026-01-30T08:00:00Z",
+    "expires_at": "2026-01-30T10:00:00Z",
+    "stock_units": 20,
+    "current_price_minor": 800,
+    "unit_cost_minor": 400,
+    "selling_cost_minor": 20,
+    "disposal_cost_minor": 50,
+    "price_version": 1,
+    "inventory_version": 1,
+    "rule_version": 1,
+    "sales_sequence": 0,
+    "model_version": "retail-fixture-v2",
+    "base_demand_units": "16",
+    "elasticity": "-2",
+    "permitted_prices_minor": [600, 700, 800],
+    "demand_multipliers": ["1"],
+    "scenario_weights": ["1"]
+  },
+  "expected": {
+    "current_recovery_minor": "12280",
+    "recommended_price_minor": 700,
+    "recommended_units": "20",
+    "recommended_recovery_minor": "13600",
+    "recommended_incremental_profit_minor": "1320",
+    "recommended_contribution_minor": "5600"
+  },
+  "keep_price": {"stock_units": 4, "recommended_price_minor": 800},
+  "capped_uncertainty": {
+    "demand_multipliers": ["0.5", "1", "1.5"],
+    "scenario_weights": ["0.25", "0.5", "0.25"],
+    "expected_current_units": "15"
+  }
+}

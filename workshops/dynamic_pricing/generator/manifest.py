@@ -45,9 +45,10 @@ def checked_path(root: Path, key: str) -> Path:
 def read_manifest(path: Path) -> dict:
     manifest = json.loads(path.read_text())
     required = {"dataset_version", "tier", "seed", "history_cutover", "files", "companion_files", "currency", "source_namespace", "rows"}
-    if not required <= manifest.keys() or manifest["dataset_version"] != "retail-v1" or manifest["currency"] != "SGD":
+    namespaces = {"retail-v1": "history-v1", "retail-chain-v2": "retail-chain-v2"}
+    if not required <= manifest.keys() or manifest["dataset_version"] not in namespaces or manifest["currency"] != "SGD":
         raise ValueError("Unsupported dataset manifest schema or currency.")
-    if manifest["source_namespace"] != "history-v1" or not manifest["files"]:
+    if manifest["source_namespace"] != namespaces[manifest["dataset_version"]] or not manifest["files"]:
         raise ValueError("Historical namespace/files missing.")
     keys = set()
     for file in manifest["files"] + manifest["companion_files"]:

@@ -1,0 +1,94 @@
+{
+  "mode": "actual-managed-agent-evaluation",
+  "cases": [
+    {
+      "case": "profitable_markdown",
+      "prompt": "Find excess stock in district 1 and compare every permitted price.",
+      "required_queried_fields": [
+        "eligibility",
+        "stock_units",
+        "permitted_prices_minor",
+        "incremental_profit_minor",
+        "recommended"
+      ],
+      "expected_predicates": "ready; selected incremental_profit_minor > 0; selected recovery is maximal",
+      "cross_check_sql": "SELECT store_id,sku,eligibility,inventory_version,price_version,rule_version,sales_sequence,permitted_prices_minor FROM pricing.retail_opportunities(run=toUUID('RUN_UUID'),district=1,cutoff=toDateTime64('CUTOFF_UTC',3,'UTC')) WHERE store_id=STORE_ID AND sku=SKU LIMIT 1",
+      "status": "not_run",
+      "conversation_evidence": null
+    },
+    {
+      "case": "keep_price",
+      "prompt": "For a low-stock product, should I keep the current price?",
+      "required_queried_fields": [
+        "current_price_minor",
+        "stock_units",
+        "units",
+        "net_recovery_minor",
+        "recommended"
+      ],
+      "expected_predicates": "ready; no permitted markdown beats unchanged pricing",
+      "cross_check_sql": "SELECT store_id,sku,eligibility,inventory_version,price_version,rule_version,sales_sequence,permitted_prices_minor FROM pricing.retail_opportunities(run=toUUID('RUN_UUID'),district=1,cutoff=toDateTime64('CUTOFF_UTC',3,'UTC')) WHERE store_id=STORE_ID AND sku=SKU LIMIT 1",
+      "status": "not_run",
+      "conversation_evidence": null
+    },
+    {
+      "case": "stale_inventory",
+      "prompt": "Can we recommend a price with inventory newer than the completed sales boundary?",
+      "required_queried_fields": [
+        "eligibility",
+        "inventory_version",
+        "sales_sequence"
+      ],
+      "expected_predicates": "waiting_for_cdc; no recommendation or fabricated price result",
+      "cross_check_sql": "SELECT store_id,sku,eligibility,inventory_version,price_version,rule_version,sales_sequence,permitted_prices_minor FROM pricing.retail_opportunities(run=toUUID('RUN_UUID'),district=1,cutoff=toDateTime64('CUTOFF_UTC',3,'UTC')) WHERE store_id=STORE_ID AND sku=SKU LIMIT 1",
+      "status": "not_run",
+      "conversation_evidence": null
+    },
+    {
+      "case": "missing_exposure",
+      "prompt": "Compare a product without complete historical availability.",
+      "required_queried_fields": [
+        "eligibility",
+        "base_demand_units"
+      ],
+      "expected_predicates": "missing_history; decline recommendation and explain missing exposure",
+      "cross_check_sql": "SELECT store_id,sku,eligibility,inventory_version,price_version,rule_version,sales_sequence,permitted_prices_minor FROM pricing.retail_opportunities(run=toUUID('RUN_UUID'),district=1,cutoff=toDateTime64('CUTOFF_UTC',3,'UTC')) WHERE store_id=STORE_ID AND sku=SKU LIMIT 1",
+      "status": "not_run",
+      "conversation_evidence": null
+    },
+    {
+      "case": "changed_policy",
+      "prompt": "I changed the permitted price policy after the earlier comparison. Review it again.",
+      "required_queried_fields": [
+        "rule_version",
+        "permitted_prices_minor",
+        "price_minor",
+        "cutoff"
+      ],
+      "expected_predicates": "fresh rule_version and permitted grid; reject obsolete recommendation",
+      "cross_check_sql": "SELECT store_id,sku,eligibility,inventory_version,price_version,rule_version,sales_sequence,permitted_prices_minor FROM pricing.retail_opportunities(run=toUUID('RUN_UUID'),district=1,cutoff=toDateTime64('CUTOFF_UTC',3,'UTC')) WHERE store_id=STORE_ID AND sku=SKU LIMIT 1",
+      "status": "not_run",
+      "conversation_evidence": null
+    },
+    {
+      "case": "post_approval_outcome",
+      "prompt": "For this receipt, compare observed units, receipts, waste and profit against unchanged pricing.",
+      "required_queried_fields": [
+        "receipt_id",
+        "minute",
+        "branch",
+        "units",
+        "receipts_minor",
+        "remaining_stock",
+        "waste_units",
+        "contribution_minor"
+      ],
+      "expected_predicates": "acknowledged receipt; both branches; actual event series; label synthetic comparison",
+      "cross_check_sql": "SELECT minute,branch,units,receipts_minor,remaining_stock,waste_units,contribution_minor FROM pricing.retail_outcome_series(run=toUUID('RUN_UUID'),receipt=toUUID('RECEIPT_UUID')) ORDER BY minute,branch LIMIT 1000",
+      "status": "not_run",
+      "conversation_evidence": null
+    }
+  ],
+  "status": "not_run",
+  "reason": "Managed UI browser connection unavailable: native pipe startup failed; no browsers exposed. Local restricted-user SQL tests do not substitute for native managed-tool identity verification."
+}

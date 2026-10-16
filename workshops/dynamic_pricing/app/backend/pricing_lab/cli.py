@@ -89,11 +89,18 @@ def current_scope(ledger,settings):
 
 def main(argv=None):
     parser=argparse.ArgumentParser(prog='workshop');sub=parser.add_subparsers(dest='command',required=True)
-    for command in ('initialize','preflight','load-history','register-history','scenario','reset','export-report','benchmark'):
+    for command in ('initialize','preflight','load-history','register-history','scenario','reset','export-report','benchmark','retail-import','retail-register-history','retail-create-rollup','retail-register-rollup','retail-initialize','retail-context','retail-stream','retail-benchmark'):
         item=sub.add_parser(command);item.add_argument('--participant');item.add_argument('--offline',action='store_true')
+        if command=='retail-benchmark':
+            item.add_argument('--district',type=int,default=1);item.add_argument('--repetitions',type=int,default=20)
+            item.add_argument('--output',type=Path,required=True)
+        if command=='retail-initialize': item.add_argument('--model',type=Path)
+        if command=='retail-stream':
+            item.add_argument('--action',choices=('start','stop','slow_district'),required=True)
+            item.add_argument('--district',type=int,default=1);item.add_argument('--rate',type=float,default=.5)
         if command=='preflight': item.add_argument('--module',choices=PREFLIGHT_MODULES,default='setup')
         if command=='benchmark': item.add_argument('--repetitions',type=int,default=10);item.add_argument('--probe-freshness',action='store_true')
-        if command in ('load-history','register-history','benchmark'): item.add_argument('--manifest',help='Dataset metadata URI; defaults to PRICING_DATASET_MANIFEST.')
+        if command in ('load-history','register-history','benchmark','retail-import','retail-register-history','retail-initialize'): item.add_argument('--manifest',help='Dataset metadata URI; defaults to PRICING_DATASET_MANIFEST.')
         if command=='scenario': item.add_argument('--event',choices=EVENTS,required=True);item.add_argument('--event-id',type=UUID,required=True)
         if command=='reset': item.add_argument('--checkpoint',choices=CHECKPOINTS,required=True);item.add_argument('--request-id',type=UUID)
         if command=='export-report': item.add_argument('--decision',type=UUID,required=True)
@@ -122,6 +129,49 @@ def main(argv=None):
                 scope=Scope(owner_id=settings.owner_id,scenario_id=settings.scenario_id,generation=1)
                 ledger.initialize(scope,Subject.model_validate(fixture['subject']),fixture['state'],fixture['rules'],datetime.fromisoformat(fixture['scenario_cutoff']))
                 result={'mode':'live','scope':scope.model_dump(mode='json'),'initialized':True}
+        elif args.command.startswith('retail-'):
+            from .retail_history import RetailHistory
+            from .retail_source import RetailSource
+            from .retail_initialize import install_retail_model
+            from .retail_schema import install_retail_analysis
+            analytics=AnalyticsClient(settings)
+            ledger=Ledger(settings.postgres_dsn.get_secret_value())
+            history=RetailHistory(analytics,ledger)
+            if args.command=='retail-benchmark':
+                from .retail_benchmark import run_retail_benchmark
+                context=analytics.query(f'SELECT * FROM {analytics.database}.retail_analysis_context LIMIT 1')
+                if not context: raise WorkshopError('retail_not_ready','Wait for an acknowledged sales batch before measuring queries.')
+                result=run_retail_benchmark(analytics,context[0]['run_id'],args.district,context[0]['cutoff'],args.repetitions)
+                with ledger.connect() as conn:
+                    state=conn.execute('SELECT data FROM pricing.retail_history_state WHERE id').fetchone()
+                if state:
+                    result['dataset_manifest']={'digest':state['data'].get('digest'),'version':state['data'].get('manifest',{}).get('dataset_version')}
+                args.output.parent.mkdir(parents=True,exist_ok=True)
+                args.output.write_text(json.dumps(result,default=str,indent=2)+'\n')
+            elif args.command in ('retail-create-rollup','retail-register-rollup'):
+                result=history.create_rollup() if args.command=='retail-create-rollup' else history.register_rollup()
+                install_retail_model(analytics,settings.retail_model_path)
+                install_retail_analysis(analytics)
+            elif args.command in ('retail-context','retail-stream'):
+                from .retail_api import RetailWorkbench,StreamRequest
+                from .retail_analytics import RetailAnalytics
+                from .retail_approval import RetailApprovalService
+                from .retail_outcomes import OutcomeService
+                analysis=RetailAnalytics(analytics)
+                retail=RetailWorkbench(ledger,analytics,RetailSource(ledger,settings.retail_spool),analysis,
+                    RetailApprovalService(ledger,analysis,Clock(datetime.now(UTC))),OutcomeService(analytics))
+                result=retail.context() if args.command=='retail-context' else retail.control(
+                    StreamRequest(action=args.action,district=args.district,rate=args.rate))
+            else:
+                manifest=args.manifest or settings.retail_dataset_manifest
+                if not manifest:
+                    raise WorkshopError('dataset_manifest_missing','Set PRICING_RETAIL_DATASET_MANIFEST or pass --manifest.')
+                if args.command=='retail-initialize':
+                    version=install_retail_model(analytics,args.model or settings.retail_model_path)
+                    run=RetailSource(ledger,settings.retail_spool).initialize(manifest)
+                    result={'run_id':str(run),'model_version':version}
+                else:
+                    result=(history.load(manifest) if args.command=='retail-import' else history.register_console(manifest))
         elif args.command=='preflight': result=build_preflight(settings,args.module)
         else:
             if args.command in ('load-history','register-history','benchmark'):

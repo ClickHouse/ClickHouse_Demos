@@ -1,12 +1,49 @@
 {
-  "application_tools": [
-    {"name": "get_evidence", "arguments": []},
-    {"name": "request_candidates", "arguments": []},
-    {"name": "select_candidate", "arguments": ["candidate_id"]},
-    {"name": "hold", "arguments": []},
-    {"name": "explain", "arguments": ["candidate_id"]}
-  ],
-  "authority": "stored evidence and independent policy",
-  "approval": "owning learner only",
-  "limits": {"provider_rounds": 4, "episode_seconds": 30, "provider_request_seconds": 8}
+  "managed_retail": {
+    "connection": "native ClickHouse tool in managed ClickHouse Agents",
+    "read_views": [
+      "retail_analysis_context",
+      "retail_opportunities",
+      "retail_price_comparison",
+      "retail_outcome_series"
+    ],
+    "approval": "learner workbench",
+    "write_tools": [],
+    "identity_verification": "Query currentUser(), currentRoles(), system.settings through the actual connection."
+  },
+  "legacy_diagnostics": {
+    "application_tools": [
+      {
+        "name": "get_evidence",
+        "arguments": []
+      },
+      {
+        "name": "request_candidates",
+        "arguments": []
+      },
+      {
+        "name": "select_candidate",
+        "arguments": [
+          "candidate_id"
+        ]
+      },
+      {
+        "name": "hold",
+        "arguments": []
+      },
+      {
+        "name": "explain",
+        "arguments": [
+          "candidate_id"
+        ]
+      }
+    ],
+    "authority": "stored evidence and independent policy",
+    "approval": "owning learner only",
+    "limits": {
+      "provider_rounds": 4,
+      "episode_seconds": 30,
+      "provider_request_seconds": 8
+    }
+  }
 }

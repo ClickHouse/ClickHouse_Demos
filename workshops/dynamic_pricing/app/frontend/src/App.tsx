@@ -1,3 +1,4 @@
+import RetailApp from './RetailApp';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {api,ApiError} from './api';
 import type {Scope,SessionData,FreshnessData,BaselineData,AssessedCandidate,Snapshot,Receipt,TimelineEvent,DecisionData,DiagnosticsData} from './contracts';
@@ -11,7 +12,7 @@ import Money from './components/Money';
 const views=['Baseline','Freshness','Candidates','Diagnostics','Decision report'] as const;
 type View=typeof views[number];
 
-export default function App(){
+function LegacyApp(){
   const [view,setView]=useState<View>('Baseline');
   const [session,setSession]=useState<SessionData|null>(null);
   const [scope,setScope]=useState<Scope|null>(null);
@@ -162,3 +163,5 @@ export default function App(){
       <PriceTimeline events={events}/>
     </main></div>}<footer className="app-footer">Synthetic projections and mock prices. Only an acknowledged receipt establishes an applied price.</footer></>;
 }
+
+export default function App(){return new URLSearchParams(window.location.search).has("legacy")?<LegacyApp/>:<RetailApp/>;}

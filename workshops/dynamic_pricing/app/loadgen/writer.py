@@ -11,6 +11,9 @@ from pricing_lab.observability import configure
 
 
 def main():
+    if Settings.from_env(include_inventory=False).retail_mode:
+        from retail_writer import main as retail_main
+        return retail_main()
     parser=argparse.ArgumentParser();parser.add_argument('--count',type=int,default=20);parser.add_argument('--interval',type=float,default=2.)
     args=parser.parse_args()
     if not 1<=args.count<=1000 or not .1<=args.interval<=60: parser.error('Use 1–1,000 sales and an interval of 0.1–60 seconds.')

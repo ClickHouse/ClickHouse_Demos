@@ -1,25 +1,25 @@
-# Prepared demand model
+# Prepared retail demand model
 
-This workshop uses a model trained offline on synthetic grocery transactions. Learners inspect its inputs and compare price candidates.
+The chain-wide workshop uses synthetic calibration data to estimate how demand changes when a price changes. ClickHouse SQL combines these prepared coefficients with current sales, stock, expiry, and permitted prices. Learners inspect the calculation; they do not train the model.
 
-## How demand estimates work
+## How it is prepared
 
-The model estimates units sold per hour from SKU, store, hour, day of week, exposure, and price relative to a fixed reference price. A Poisson model with a log link keeps demand positive. The price coefficient is constrained to zero or less, so a higher price cannot increase predicted demand for the same context.
+The generator creates 28 trading days of randomized prices with ample stock, separately from business sales. Each of 20 products has a fitted coefficient for each of four store groups. A Poisson model uses a log link, trading-hour exposure, and a known calendar factor. The price coefficient is bounded between -6 and 0. Zero-sales open intervals count as observations; closed intervals, missing exposure, and stockout-censored counts do not.
 
-The simulator uses these estimates to compare supported prices against the current price. It caps sales at available stock and subtracts selling and disposal costs. These projections describe the synthetic scenario. They do not establish revenue uplift for a real retailer.
+Whole dates are split chronologically at 60% and 80%, rounded down: 16 days train, 6 validate, and 6 test. The report records split boundaries, supported prices, group coverage, fitting-code and data hashes, observed and predicted units, and mean absolute error. A release requires complete catalog coverage and aggregate predicted/observed units between 0.9 and 1.1 on both validation and test data. The evaluation stream uses a separate seed from calibration.
 
-## Training and validation
+## How price comparison works
 
-Training uses 90 days of calibration data with randomized prices and ample stock. ClickHouse joins complete availability intervals to aggregated sales. Eligible hours with no sales remain in the training data. Returns and stockout intervals are excluded from demand labels.
+For each permitted price, SQL multiplies demand at the current price by the price ratio raised to the elasticity coefficient. Low, typical, and high scenarios multiply demand by 0.5, 1, and 1.5, with weights 0.25, 0.5, and 0.25. These are sensitivity assumptions, not confidence intervals.
 
-The first 60 dates train the model. The next 15 select regularization. The final 15 remain untouched until evaluation. SciPy L-BFGS-B fits the constrained coefficients. Five seeded bootstrap fits resample whole training dates to illustrate parameter variability. Demand randomness and parameter variability are separate quantities.
+Each scenario caps sales at available stock before averaging. Net recovery is receipts minus variable selling costs and disposal costs. Full contribution also subtracts the acquisition cost of all starting stock. Incremental profit compares net recovery with keeping the current price. Ties keep the current price. ClickHouse evaluates fractional demand with Float64; money enters as integer minor units, and SQL results are checked against an independent Decimal reference within one cent.
 
-The output records the feature schema, training SQL hash, data hash, date splits, support bounds, fit convergence, held-out calibration, and deviance against a model without a price effect. Calibration must be between 0.9 and 1.1 overall and for declared groups with at least 500 observed units. The price model must improve held-out deviance.
+Historical generation records a rate normalization factor. Apply it once when using calibration reference rates to forecast the generated chain. Demand estimated directly from historical sales already contains that scale and must not be multiplied again. Calibration records never enter sales totals.
 
-## Validation and model limits
+## Interpretation and limits
 
-Demand checks and decision checks are separate gates. Validation checks supported-grid coverage, monotonic predictions, and candidate regret at most 5% against the known synthetic generator. The simulator uses identical random draws across candidate prices.
+A markdown can recover more value from excess stock before expiry. When stock is scarce, the unchanged price can win. The preparation report checks both outcomes using fitted parameters. Projections describe synthetic demand, not demonstrated revenue uplift for a retailer. Randomized prices and complete exposure make this exercise identifiable; real observational prices can be confounded by promotions, seasonality, and stockouts. Unsupported products or prices must be held for review.
 
-Unknown subjects, unsupported prices, invalid coefficients, and missing context hold a recommendation. Learners cannot override a held recommendation.
+## Earlier workshop model
 
-The model assumes randomized calibration prices, complete exposure, and no stock constraints in its training labels. Real pricing data may violate these assumptions. Training on observational transactions alone can confuse price response with promotions, seasonality, or stockouts.
+The retained two-store exercise uses a separate 90-day artifact and a two-window simulator. Its artifacts are not interchangeable with the chain-wide model.

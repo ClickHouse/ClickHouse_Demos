@@ -64,7 +64,7 @@ class AnalyticsClient:
         # The pinned driver otherwise returns naive datetimes for pytz.UTC.
         date_columns = ("effective_at","event_time","emitted_at","commit_acknowledged_at","acknowledged_at",
                         "inventory_expires_at","_peerdb_synced_at","captured_at","scenario_cutoff","hour",
-                        "occurred_at","query_start_time","query_start_time_microseconds")
+                        "occurred_at","query_start_time","query_start_time_microseconds","expires_at","cutoff","logical_end")
         result = self.client.query(sql, parameters=parameters or {},query_tz=UTC,
                                    column_tzs={name:UTC for name in date_columns},
                                    settings={"max_execution_time": 60, "max_result_rows": 10000, "result_overflow_mode": "throw"})

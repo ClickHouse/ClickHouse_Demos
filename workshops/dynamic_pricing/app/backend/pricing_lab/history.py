@@ -62,14 +62,14 @@ def public_read(request,consume):
         time.sleep(.25*2**attempt)
 
 
-def resolve_manifest(uri: str) -> tuple[dict, Path | str]:
+def resolve_manifest(uri: str, expected_version: str = "retail-v1") -> tuple[dict, Path | str]:
     parsed = urlparse(uri)
     if parsed.scheme == "file":
         path = Path(unquote(parsed.path))
         return read_manifest(path), path.parent
     url = public_url(uri)
     manifest = public_read(url,json.load)
-    if manifest.get("dataset_version") != "retail-v1" or manifest.get("source_namespace") != "history-v1" or manifest.get("currency") != "SGD":
+    if manifest.get("dataset_version") != expected_version or manifest.get("source_namespace") != {"retail-v1": "history-v1", "retail-chain-v2": "retail-chain-v2"}.get(expected_version) or manifest.get("currency") != "SGD":
         raise ValueError("Unsupported historical manifest.")
     files = manifest["files"] + manifest["companion_files"]
     keys = set()
