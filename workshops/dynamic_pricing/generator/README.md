@@ -45,3 +45,29 @@ The verified release uses `partner-workshop` in AWS Singapore (`ap-southeast-1`)
 Every declared object passed service SHA-256 and anonymous access checks. See `reports/s3-publication.json`. The 1M tier also passed a real local `INSERT SELECT FROM s3(..., NOSIGN, 'Parquet')` import and reconciliation. Managed Cloud performance remains unverified.
 
 For this transfer, native AWS CLI conditional uploads completed objects after repeated SDK connection resets. Each upload supplied `--if-none-match '*'` and `--checksum-sha256` from the independently verified manifest. Service checksum checks resolved ambiguous acknowledgements. The manifest was published only after all data objects passed, then the complete remote manifest was verified anonymously.
+# Chain-wide retail history
+
+Generate the `retail-chain-v2` dataset with Python 3.12 from the lab directory:
+
+```bash
+.venv/bin/python -m generator.retail --rows 100000000 --seed 17 --output .run/retail-chain-v2
+```
+
+The generator writes deterministic Parquet shards of at most 100,000 sales lines,
+5,000 stores, 20 ready-to-eat products, operational starting inventory, a shared
+trading calendar, and separate randomized price-calibration intervals. The 28-day
+history covers 10 a.m.–6 p.m. Asia/Singapore; stored timestamps use UTC. Each basket
+contains up to two lines. Returns have their own transaction ID and reference an
+earlier sale. Sales-line counts and transaction counts are reported separately.
+
+`availability.parquet` describes open, ample-stock hours for every store/product
+combination, including combinations with zero sales. It is compact calendar data;
+expand it against the catalog when deriving exposure. `history_rate_scale` records
+the operational sampling normalization. Calibration is an independent experiment
+for estimating price response and is excluded from operational sales totals.
+
+Use `--rows 100000` for a smoke run. Both small and full artifacts contain the full
+catalog, so a small sample is sparse and is not the workshop's performance dataset.
+Output must be an empty directory. Manifests contain checksums, counts, monetary
+totals, exposure metadata, and version identifiers for immutable publication.
+The existing `retail-v1` generator and objects remain available for the previous lab.

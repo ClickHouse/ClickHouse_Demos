@@ -5,11 +5,13 @@ __pycache__/
 *.egg-info/
 *.pyc
 app/.env.workshop
+app/.env.identity.lock
 node_modules/
 dist/
 test-results/
 playwright-report/
 infra/resources.json
+infra/resources.deleted-*.json
 benchmarks/results/private/
 reports/exports/
 infra/resources.lock

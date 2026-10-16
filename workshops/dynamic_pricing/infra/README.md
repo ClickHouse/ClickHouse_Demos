@@ -6,7 +6,7 @@ These commands target `clickhousectl 0.4.2`. Help and the tagged [CLI source](ht
 
 ## One-command setup
 
-After installing dependencies and logging in with your organization API key from the lab directory, set owner, organization, public IPv4 `/32`, region, and Postgres size in `app/.env.workshop`. Run:
+After installing dependencies and logging in with your organization API key from the lab directory, copy the environment template and change the region or Postgres size if needed. Setup generates the installation ID and detects your organization and public IPv4 address. Run:
 
 ```bash
 bash scripts/setup-cloud.sh
@@ -16,11 +16,31 @@ This creates or verifies the owned ClickHouse Cloud and managed Postgres service
 
 The command uses the API key pair saved by `clickhousectl cloud auth login` in this lab's `.clickhouse/credentials.json`, or `CLICKHOUSE_CLOUD_API_KEY` and `CLICKHOUSE_CLOUD_API_SECRET` from the shell or current `.env`. No source password or API secret enters process arguments. Generated credentials go to the private environment file with mode 0600. The runtime gets only the limited app DSN; the administrator DSN stays available for host schema operations.
 
+## Destroy and recreate
+
+Stop the local workbench before deleting its Cloud resources. Preview the resources recorded in this installation's inventory:
+
+```bash
+bash scripts/setup-cloud.sh --destroy
+```
+
+Review the resource IDs, then permanently delete the owned ClickPipe, Managed Postgres instance, and ClickHouse service and their data:
+
+```bash
+bash scripts/setup-cloud.sh --destroy --execute
+```
+
+Deletion verifies ownership before removing any resources and journals each completed deletion. If interrupted, repeat the command to resume. Only after all deletions succeed does it archive the inventory and clear the old database credentials, session secret, and ClickStack receiver credentials. CLI authentication, installation identity, and workshop preferences remain available.
+
+Run `bash scripts/setup-cloud.sh` to create a fresh stack with one ClickHouse replica. Reload history in Module 01, reconnect ClickStack in Module 02, and restart the local workbench with the new connection settings.
+
+## Resume setup
+
 Rerun the same command after fixing a failed dependency. Saved IDs and generated passwords are reused. An ambiguous create response leaves `pending_creation` set and stops automatic retries. Reconcile the owned resource ID in the console, record it in the corresponding inventory field, and clear `pending_creation` only after identifying that exact resource. Setup rejects unverified administrator TLS, elevated role attributes or memberships, excess source privileges, and mismatched existing pipe source configuration. Correct those settings before retrying; the script does not silently broaden privileges.
 
 A preexisting manually created pipe requires its current `pricing_cdc` password in `PRICING_POSTGRES_CDC_PASSWORD` before adoption; setup refuses to change an unknown replication password. The Cloud GET response omits source credentials, so confirm that a manually created pipe uses `pricing_cdc` in the console before adopting it. New pipes always use that role.
 
-Creating the telemetry database does not configure a ClickStack receiver or UI. Follow the diagnostics module for that connection and actual span delivery. Historical bulk loading remains the Module 01 exercise.
+Creating the telemetry database does not start the local collector or enable the Managed ClickStack UI. Follow Module 02 to start telemetry ingestion and launch ClickStack. Historical bulk loading remains the Module 01 exercise.
 
 The sections below retain the individual operations for inspection and recovery.
 
@@ -28,8 +48,8 @@ The sections below retain the individual operations for inspection and recovery.
 
 1. Sign in to your ClickHouse Cloud account. Confirm your organization and service quota.
 2. Authenticate the CLI with your own Cloud API key through its supported credential configuration. OAuth access is read-only. Keep credentials in the CLI credential store or environment; do not put secrets in command arguments or commit them.
-3. Check `clickhousectl cloud auth status` and `clickhousectl cloud org list`. Set an explicit organization ID.
-4. Copy `app/.env.workshop.example` to `app/.env.workshop`. Set `PRICING_CLOUD_ORG_ID`, `PRICING_LEARNER_CIDR`, `PRICING_REGION`, and `PRICING_POSTGRES_SIZE`. Use your current public IPv4 address with `/32`. The source's ClickPipes egress access is a separate requirement.
+3. Check `clickhousectl cloud auth status` and `clickhousectl cloud org list`. Setup detects the organization, with a numbered choice if your key has access to several.
+4. Copy `app/.env.workshop.example` to `app/.env.workshop`. Change the region or Postgres size if needed. Setup detects your public IPv4 address and configures `/32` access. It saves the organization in the resource inventory for reruns and cleanup. The source's ClickPipes egress access is a separate requirement.
 5. Protect the file with `chmod 600 app/.env.workshop`.
 
 Run from the lab directory in macOS Terminal or Ubuntu under Windows WSL2:
@@ -107,7 +127,7 @@ docker compose --env-file app/.env.workshop \
 
 ## Connect diagnostics and agents
 
-Enable managed ClickStack against the owned service's telemetry database. Configure its source and owned gateway receiver as required by your Cloud deployment. Follow [obs/README.md](../obs/README.md), set the verified receiver URL and ingestion key privately, and start the telemetry profile. Verify a real snapshot ID in ClickStack. The installed CLI has no `cloud clickstack` command.
+Start the telemetry profile with `PRICING_OTEL_ENDPOINT=http://collector:4318`. The local ClickStack collector reuses the workshop's ClickHouse connection settings and writes directly to the telemetry database. Enable Managed ClickStack on that service and launch its UI to read the `otel` tables. Follow [obs/README.md](../obs/README.md). Verify a real snapshot ID in ClickStack. The installed CLI has no `cloud clickstack` command.
 
 Connect ClickHouse Agents or your coding agent's MCP connection with a read-only ClickHouse user scoped to the named evidence views. Run one question from [agent/bi-prompts.md](../agent/bi-prompts.md), inspect its SQL, and compare IDs with the ledger. Optional live exception-provider and Langfuse access do not block earlier modules. Use the recorded episode when those optional services are unavailable.
 

@@ -203,4 +203,7 @@ def create_app(settings,services):
     def episode(body:EpisodeAction,request:Request):
         scope=scope_for(request,True)
         return envelope(scope,services['agent'].run_episode(scope,body.subject,body.mode))
+    if services.get('retail'):
+        from .retail_api import retail_router
+        app.include_router(retail_router(services['retail'],protected,settings.owner_id))
     return app

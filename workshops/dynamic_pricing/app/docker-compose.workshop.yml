@@ -11,7 +11,7 @@ services:
       PRICING_INGESTION_MODE: ${PRICING_INGESTION_MODE:-clickpipes}
       PRICING_CONVERGENCE_TIMEOUT_SECONDS: ${PRICING_CONVERGENCE_TIMEOUT_SECONDS:-30}
       PRICING_LEASE_MINUTES: ${PRICING_LEASE_MINUTES:-60}
-      PRICING_CLICKHOUSE_HOST: ${PRICING_CLICKHOUSE_HOST:-localhost}
+      PRICING_CLICKHOUSE_HOST: ${PRICING_CLICKHOUSE_HOST:-}
       PRICING_CLICKHOUSE_PORT: ${PRICING_CLICKHOUSE_PORT:-8443}
       PRICING_CLICKHOUSE_SECURE: ${PRICING_CLICKHOUSE_SECURE:-true}
       PRICING_CLICKHOUSE_DATABASE: ${PRICING_CLICKHOUSE_DATABASE:-pricing}
@@ -19,6 +19,9 @@ services:
       PRICING_CLICKHOUSE_PASSWORD: ${PRICING_CLICKHOUSE_PASSWORD:-}
       PRICING_SESSION_SECRET: ${PRICING_SESSION_SECRET:-}
       PRICING_ALLOWED_ORIGIN: ${PRICING_ALLOWED_ORIGIN:-http://localhost:8080}
+      PRICING_RETAIL_MODE: ${PRICING_RETAIL_MODE:-false}
+      PRICING_RETAIL_DATASET_MANIFEST: ${PRICING_RETAIL_DATASET_MANIFEST:-}
+      PRICING_RETAIL_SPOOL: /opt/pricing/.run/retail-spool
       PRICING_DATASET_MANIFEST: ${PRICING_DATASET_MANIFEST:-}
       PRICING_OTEL_ENDPOINT: ${PRICING_OTEL_ENDPOINT:-}
       PRICING_AGENT_PROVIDER: ${AGENT_PROVIDER:-}
@@ -30,6 +33,7 @@ services:
       PRICING_MODEL_PATH: ${PRICING_MODEL_PATH:-/opt/pricing/pricing/artifacts/development/model.json}
     volumes:
       - decision_exports:/opt/pricing/reports/exports
+      - retail_spool:/opt/pricing/.run/retail-spool
     extra_hosts: ["host.docker.internal:host-gateway"]
   frontend:
     build:
@@ -46,18 +50,31 @@ services:
       context: ..
       dockerfile: app/loadgen/Dockerfile
     environment:
+      PRICING_RETAIL_MODE: ${PRICING_RETAIL_MODE:-false}
+      PRICING_RETAIL_SPOOL: /opt/pricing/.run/retail-spool
+      PRICING_CLICKHOUSE_HOST: ${PRICING_CLICKHOUSE_HOST:-}
+      PRICING_CLICKHOUSE_PORT: ${PRICING_CLICKHOUSE_PORT:-8443}
+      PRICING_CLICKHOUSE_SECURE: ${PRICING_CLICKHOUSE_SECURE:-true}
+      PRICING_CLICKHOUSE_DATABASE: ${PRICING_CLICKHOUSE_DATABASE:-pricing}
+      PRICING_CLICKHOUSE_USERNAME: ${PRICING_CLICKHOUSE_USERNAME:-default}
+      PRICING_CLICKHOUSE_PASSWORD: ${PRICING_CLICKHOUSE_PASSWORD:-}
       PRICING_OWNER_ID: ${PRICING_OWNER_ID:-learner-1}
       PRICING_SCENARIO_ID: ${PRICING_SCENARIO_ID:-grocery}
       PRICING_POSTGRES_DSN: ${PRICING_POSTGRES_DSN:-}
       PRICING_OTEL_ENDPOINT: ${PRICING_OTEL_ENDPOINT:-}
+    volumes:
+      - retail_spool:/opt/pricing/.run/retail-spool
     extra_hosts: ["host.docker.internal:host-gateway"]
   collector:
     profiles: [telemetry]
-    image: otel/opentelemetry-collector-contrib:0.139.0@sha256:faf125d656fa47cea568b2f3b4494efd2525083bc75c1e96038bc23f05cd68fd
-    command: ["--config=/etc/otelcol/config.yaml"]
-    volumes: ["../obs/collector.yaml:/etc/otelcol/config.yaml:ro"]
+    image: clickhouse/clickstack-otel-collector@sha256:fbd9438f836036f8daec905c79d7cfc9eb5c71b543aaa610ca317609b0974254
+    volumes: ["../obs/collector.yaml:/etc/otelcol-contrib/workshop.yaml:ro"]
     environment:
-      PRICING_CLICKSTACK_ENDPOINT: ${PRICING_CLICKSTACK_ENDPOINT:-}
-      PRICING_CLICKSTACK_API_KEY: ${PRICING_CLICKSTACK_API_KEY:-}
+      CLICKHOUSE_ENDPOINT: https://${PRICING_CLICKHOUSE_HOST:-}:${PRICING_CLICKHOUSE_PORT:-8443}
+      CLICKHOUSE_USER: ${PRICING_CLICKHOUSE_USERNAME:-default}
+      CLICKHOUSE_PASSWORD: ${PRICING_CLICKHOUSE_PASSWORD:-}
+      HYPERDX_OTEL_EXPORTER_CLICKHOUSE_DATABASE: ${PRICING_CLICKSTACK_DATABASE:-otel}
+      CUSTOM_OTELCOL_CONFIG_FILE: /etc/otelcol-contrib/workshop.yaml
 volumes:
   decision_exports:
+  retail_spool:

@@ -57,3 +57,8 @@ def test_tool_versions_reject_wrong_major_and_cli_release(monkeypatch):
 def test_register_history_parses_without_a_manifest_override(capsys):
     assert main(['register-history','--offline'])==2
     assert 'offline_command_unavailable' in capsys.readouterr().err
+
+
+def test_retail_import_requires_explicit_dataset(capsys):
+    assert main(['retail-import']) == 2
+    assert 'PRICING_RETAIL_DATASET_MANIFEST' in capsys.readouterr().err

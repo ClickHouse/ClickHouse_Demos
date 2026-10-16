@@ -17,6 +17,11 @@ from pricing_lab.contracts import Scope, Snapshot, Subject
 LAB_ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.fixture
+def retail_fixture():
+    return json.loads((LAB_ROOT / "fixtures/retail/scenario.json").read_text())
+
+
 @pytest.fixture(autouse=True)
 def private_test_environment(monkeypatch,tmp_path):
     from pricing_lab.settings import Settings

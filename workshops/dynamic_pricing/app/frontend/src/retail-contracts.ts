@@ -1,0 +1,10 @@
+export type Amount=number|string;
+export type RetailEnvelope<T>={run_id:string;mode:'synthetic';data:T;generated_at:string};
+export type RetailContext={cutoff:string;logical_time?:string;stream_state:string;model_version:string;delivery_age_seconds:number|null;aggregation_ready:boolean;analysis_ready?:boolean;writer_connected?:boolean};
+export type Subject={store_id:number;sku:number};
+export type Opportunity=Subject&{stock_units:number;base_demand_units:Amount;excess_units:Amount;eligibility:string;current_price_minor:number;recent_demand_factor?:number};
+export type PriceRow={price_minor:number;units:Amount;receipts_minor:Amount;waste_units:Amount;net_recovery_minor:Amount;contribution_minor:Amount;incremental_profit_minor:Amount;recommended:boolean};
+export type Comparison={inputs:{subject:Subject;cutoff:string;expires_at:string;stock_units:number;current_price_minor:number;model_version:string;base_demand_units:Amount;demand_multipliers:Amount[];scenario_weights:Amount[]};rows:PriceRow[];query_seconds:number;query_id?:string};
+export type RetailReceipt={receipt_id:string;price_minor:number;subject?:Subject};
+export type Outcome={minute:string;branch:'applied'|'comparison';price_minor:number;units:number;receipts_minor:number;remaining_stock:number;contribution_minor:number;expired:boolean;waste_units:number};
+export type Overview={totals:{units:number;receipts_minor:number;transactions:number};series:{minute:string;transactions:number;receipts_minor:number}[];districts:{district_id:number;units:number;receipts_minor:number;transactions:number}[];query_seconds:number;read_rows:number|null;read_bytes?:number|null;query_id:string;engine:string;transactions_per_second:number};

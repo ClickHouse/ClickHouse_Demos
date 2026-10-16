@@ -213,3 +213,142 @@ def test_setup_refuses_existing_overprivileged_roles(ledger,tmp_path,postgres_ds
     finally:
         if defect=='app_replication':
             with ledger.connect() as conn: conn.execute('ALTER ROLE pricing_app NOREPLICATION')
+
+
+def test_fresh_template_has_no_local_database_or_manual_owner(tmp_path,monkeypatch):
+    from pricing_lab.settings import LAB_ROOT
+    env=tmp_path/'workshop.env'
+    env.write_text((LAB_ROOT/'app/.env.workshop.example').read_text())
+    monkeypatch.setenv('PRICING_PRIVATE_ENV_PATH',str(env))
+    settings=Settings.from_env()
+    assert settings.clickhouse_host==''
+    assert settings.postgres_dsn.get_secret_value()==''
+    assert settings.postgres_admin_dsn.get_secret_value()==''
+    assert 'PRICING_OWNER_ID=' not in env.read_text()
+    assert 'PRICING_CLOUD_ORG_ID=' not in env.read_text()
+    assert 'PRICING_LEARNER_CIDR=' not in env.read_text()
+
+
+def test_setup_generates_and_preserves_installation_identity(tmp_path,monkeypatch):
+    from infra.setup_cloud import installation_settings
+    from dotenv import dotenv_values
+    env=tmp_path/'workshop.env';env.write_text('PRICING_CLICKHOUSE_HOST=\n')
+    monkeypatch.setenv('PRICING_PRIVATE_ENV_PATH',str(env))
+    monkeypatch.setenv('PRICING_RESOURCE_INVENTORY_PATH',str(tmp_path/'resources.json'))
+    first=installation_settings()
+    second=installation_settings()
+    assert first.owner_id.startswith('pricing-')
+    assert second.owner_id==first.owner_id
+    assert dotenv_values(env)['PRICING_OWNER_ID']==first.owner_id
+    assert env.stat().st_mode & 0o777==0o600
+
+
+def test_setup_recovers_identity_from_existing_inventory(tmp_path,monkeypatch):
+    from infra.setup_cloud import installation_settings
+    from infra.provision import ResourceInventory
+    env=tmp_path/'workshop.env';env.write_text('')
+    inventory=tmp_path/'resources.json'
+    inventory.write_text(ResourceInventory(owner_id='existing-installation',organization_id=ORG,region='ap-southeast-1',created_at=datetime.now(UTC)).model_dump_json())
+    monkeypatch.setenv('PRICING_PRIVATE_ENV_PATH',str(env))
+    monkeypatch.setenv('PRICING_RESOURCE_INVENTORY_PATH',str(inventory))
+    assert installation_settings().owner_id=='existing-installation'
+
+
+def test_setup_preserves_explicit_legacy_owner(tmp_path,monkeypatch):
+    from infra.setup_cloud import installation_settings
+    env=tmp_path/'workshop.env';env.write_text('PRICING_OWNER_ID=my-existing-owner\n')
+    monkeypatch.setenv('PRICING_PRIVATE_ENV_PATH',str(env))
+    monkeypatch.setenv('PRICING_RESOURCE_INVENTORY_PATH',str(tmp_path/'resources.json'))
+    assert installation_settings().owner_id=='my-existing-owner'
+
+
+def test_missing_cloud_endpoint_never_falls_back_to_localhost(monkeypatch):
+    import pytest
+    from pricing_lab.analytics import AnalyticsClient
+    from pricing_lab.settings import Settings
+    from pricing_lab.contracts import WorkshopError
+    monkeypatch.setattr('pricing_lab.analytics.clickhouse_connect.get_client',lambda **kwargs:pytest.fail('An empty Cloud endpoint must never reach the driver.'))
+    analytics=AnalyticsClient(Settings(clickhouse_host=''))
+    with pytest.raises(WorkshopError,match='cloud_endpoint_missing'):
+        analytics.bootstrap_database()
+    with pytest.raises(WorkshopError,match='cloud_endpoint_missing'):
+        analytics.query('SELECT 1')
+
+
+def test_cloud_settings_detects_organization_and_ipv4_without_env_fields(tmp_path):
+    from infra.setup_cloud import cloud_settings
+    settings=Settings(resource_inventory_path=tmp_path/'resources.json')
+    class Runner:
+        def run(self,argv):
+            assert argv==['clickhousectl','cloud','org','list','--json']
+            return [{'id':ORG,'name':'Workshop'}]
+    resolved=cloud_settings(settings,Runner(),detect_ip=lambda:'203.0.113.12')
+    assert str(resolved.cloud_org_id)==ORG
+    assert resolved.learner_cidr=='203.0.113.12/32'
+
+
+def test_cloud_settings_requires_choice_for_multiple_organizations(tmp_path):
+    from infra.setup_cloud import cloud_settings
+    class Runner:
+        def run(self,argv): return [{'id':CH,'name':'First'},{'id':ORG,'name':'Second'}]
+    settings=Settings(resource_inventory_path=tmp_path/'resources.json')
+    resolved=cloud_settings(settings,Runner(),detect_ip=lambda:'203.0.113.12',choose=lambda _: '2')
+    assert str(resolved.cloud_org_id)==ORG
+    with pytest.raises(WorkshopError,match='organization_selection_invalid'):
+        cloud_settings(settings,Runner(),detect_ip=lambda:'203.0.113.12',choose=lambda _: '0')
+
+
+def test_runtime_reads_saved_organization_for_cleanup(tmp_path,monkeypatch):
+    from infra.provision import ResourceInventory
+    inventory=tmp_path/'resources.json'
+    inventory.write_text(ResourceInventory(owner_id='saved-owner',organization_id=ORG,region='ap-southeast-1',created_at=datetime.now(UTC)).model_dump_json())
+    monkeypatch.setenv('PRICING_RESOURCE_INVENTORY_PATH',str(inventory))
+    assert str(Settings.from_env().cloud_org_id)==ORG
+
+
+def test_public_ipv4_detection_reports_failure_without_creating_resources(monkeypatch):
+    from infra.setup_cloud import public_ipv4
+    monkeypatch.setattr('infra.setup_cloud.httpx.get',lambda *a,**k: httpx.Response(200,text='::1',request=httpx.Request('GET','https://api4.ipify.org')))
+    with pytest.raises(WorkshopError,match='public_ip_unavailable'): public_ipv4()
+
+
+def test_clickpipe_wait_reports_progress(tmp_path,monkeypatch):
+    from infra.setup_cloud import wait_pipe
+    from infra.provision import ResourceInventory
+    inventory=ResourceInventory(owner_id='learner-1',organization_id=ORG,region='ap-southeast-1',created_at=datetime.now(UTC),service_id=CH,clickpipe_id=PIPE)
+    class Runner:
+        polls=0
+        def run(self,argv):
+            self.polls+=1
+            return {'id':PIPE,'state':'Running' if self.polls==12 else 'Starting'}
+    monkeypatch.setattr('infra.setup_cloud.verify_pipe_source',lambda *args:None)
+    monkeypatch.setattr('infra.setup_cloud.verify_clickpipe',lambda *args:None)
+    messages=[]
+    wait_pipe(inventory,Settings(),Runner(),sleep=lambda _:None,progress=messages.append)
+    assert len(messages)>=4
+    assert 'starting' in messages[0]
+    assert 'schemas are ready' in messages[-1]
+
+
+def test_runtime_settings_do_not_read_private_provisioning_inventory(tmp_path,monkeypatch):
+    path=tmp_path/'resources.json';path.write_text('{"organization_id":"'+ORG+'"}')
+    monkeypatch.setenv('PRICING_RESOURCE_INVENTORY_PATH',str(path))
+    original=Path.read_text
+    def private_read(file,*args,**kwargs):
+        if file==path: raise PermissionError('Private provisioning inventory')
+        return original(file,*args,**kwargs)
+    monkeypatch.setattr(Path,'read_text',private_read)
+    assert Settings.from_env(include_inventory=False).cloud_org_id is None
+
+
+def test_retail_pipe_maps_operational_metadata_and_preserves_legacy_pipe(tmp_path):
+    from infra.setup_cloud import pipe_request, verify_pipe_source
+    from pricing_lab.retail_cdc import RETAIL_TABLES
+    ca=tmp_path/'ca.pem';ca.write_text('test-public-ca')
+    settings=Settings(retail_mode=True,postgres_admin_dsn='postgresql://postgres:admin@pg.example.test/postgres?sslmode=verify-full',pg_ca_path=ca)
+    request=pipe_request(settings,'test-secret')
+    assert {r['sourceTable'] for r in request['source']['postgres']['tableMappings']} == set(RETAIL_TABLES)
+    assert request['source']['postgres']['settings']['publicationName'] == 'pricing_retail'
+    legacy=pipe_request(settings.model_copy(update={'retail_mode':False}),'test-secret')
+    with pytest.raises(WorkshopError,match='clickpipe_source_mismatch'):
+        verify_pipe_source(legacy,settings)

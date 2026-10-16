@@ -20,6 +20,9 @@ service:
     traces:
       receivers: [otlp]
       exporters: [debug]
+    logs:
+      receivers: [otlp]
+      exporters: [debug]
 YAML
 docker run --detach --name "$container" -p 127.0.0.1::4318 \
   -v "$directory/collector.yaml:/etc/otelcol/config.yaml:ro" \
@@ -51,7 +54,7 @@ docker logs "$container" > "$directory/received.log" 2>&1
 import sys
 from pathlib import Path
 text=Path(sys.argv[1]).read_text()
-for marker in ('smoke-learner','smoke-snapshot-001','pricing.generation','pricing.snapshot'):
+for marker in ('smoke-learner','smoke-snapshot-001','pricing.generation','pricing.snapshot','pricing.snapshot completed'):
     assert marker in text, f'Missing correlation marker: {marker}'
-print('Local OTLP receiver verified correlation IDs. Cloud delivery remains unverified.')
+print('Local OTLP receiver verified traces, operation logs, and correlation IDs. Cloud delivery remains unverified.')
 PY

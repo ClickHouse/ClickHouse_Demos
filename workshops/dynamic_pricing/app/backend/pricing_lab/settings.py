@@ -44,7 +44,7 @@ class Settings(BaseSettings):
             from .contracts import WorkshopError
             raise WorkshopError("admin_credentials_missing", "Set PRICING_POSTGRES_ADMIN_DSN for initialization and source grants.")
         return value
-    clickhouse_host: str = "localhost"
+    clickhouse_host: str = ""
     clickhouse_port: int = Field(default=8443, ge=1, le=65535)
     clickhouse_secure: bool = True
     clickhouse_database: str = Field(default="pricing", pattern=r"^[a-z][a-z0-9_]{0,62}$")
@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     session_secret: SecretStr = SecretStr("")
     allowed_origin: str = "http://localhost:8080"
     dataset_manifest: str = ""
+    retail_dataset_manifest: str = ""
+    retail_mode: bool = False
+    retail_model_path: Path = LAB_ROOT / "pricing/artifacts/retail/manifest.json"
+    retail_spool: Path = LAB_ROOT / ".run/retail-spool"
     lease_minutes: int = Field(default=60, ge=1, le=60)
     convergence_timeout_seconds: float = Field(default=30, gt=0, le=120, allow_inf_nan=False)
 
@@ -82,12 +86,12 @@ class Settings(BaseSettings):
     @field_validator("clickhouse_host")
     @classmethod
     def bare_host(cls, value: str) -> str:
-        if not value or any(c in value for c in "/:@?# "):
+        if value and any(c in value for c in "/:@?# "):
             raise ValueError("Use a bare hostname. Configure the port and TLS separately.")
         return value
 
     @classmethod
-    def from_env(cls) -> "Settings":
+    def from_env(cls,*,include_inventory=True) -> "Settings":
         from dotenv import dotenv_values
         path=Path(os.environ.get('PRICING_PRIVATE_ENV_PATH',LAB_ROOT/'app/.env.workshop'))
         values=dotenv_values(path,interpolate=False) if path.exists() else {}
@@ -98,4 +102,9 @@ class Settings(BaseSettings):
             if not any(k in os.environ for k in keys):
                 key=next((k for k in keys if k in values),None)
                 if key and values[key] is not None: arguments[name]=values[key]
-        return cls(_env_file=None,**arguments)
+        settings=cls(_env_file=None,**arguments)
+        if include_inventory and not settings.cloud_org_id and settings.resource_inventory_path.exists():
+            import json
+            inventory=json.loads(settings.resource_inventory_path.read_text())
+            settings=cls(_env_file=None,**{**settings.model_dump(),'cloud_org_id':inventory['organization_id']})
+        return settings

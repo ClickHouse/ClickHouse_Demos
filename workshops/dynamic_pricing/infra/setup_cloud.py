@@ -1,7 +1,9 @@
 """One resumable learner-owned setup. Secrets never enter process arguments."""
 from datetime import datetime
+import argparse
 import fcntl
 import json
+import ipaddress
 import os
 from pathlib import Path
 import secrets
@@ -19,9 +21,108 @@ from pricing_lab.clock import Clock
 from pricing_lab.ledger import Ledger
 from pricing_lab.settings import Settings,LAB_ROOT
 from .configure_cdc import configure_source
-from .provision import CliRunner,_provision,command,save_inventory,save_private,verify_clickpipe,verify_pipe_name
+from .provision import CliRunner,ResourceInventory,_provision,command,save_inventory,save_private,verify_clickpipe,verify_pipe_name,report_progress
 
 TABLES=('sales_transactions','inventory_history','price_history','cost_history')
+
+def source_tables(settings):
+    from pricing_lab.retail_cdc import RETAIL_TABLES
+    return RETAIL_TABLES if settings.retail_mode else TABLES
+
+def source_publication(settings):
+    return 'pricing_retail' if settings.retail_mode else 'pricing_workshop'
+
+
+def destroy_cloud(settings,runner,*,execute=False,progress=report_progress):
+    from .cleanup import cleanup
+    path=settings.resource_inventory_path
+    if not path.exists():
+        progress('No saved workshop resources to destroy.')
+        return []
+    lock=path.with_suffix('.lock')
+    fd=os.open(lock,os.O_CREAT|os.O_RDWR,0o600)
+    try:
+        try: fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise WorkshopError('provision_in_progress','Another setup or destroy command is active. Wait for it to finish.') from None
+        inventory=ResourceInventory.model_validate_json(path.read_text())
+        if inventory.pending_creation:
+            raise WorkshopError('creation_ack_unknown','Identify the pending resource in the Cloud console and record its ID before destroying this installation.')
+        plan=cleanup(inventory,runner,settings,execute=execute,progress=progress)
+        if not execute:
+            for item in plan: progress(f"Would delete {item['kind']}: {item['id']}")
+            progress('Preview only. Run bash scripts/setup-cloud.sh --destroy --execute to delete these resources and their data.')
+            return plan
+        updates={key:'' for key in ('PRICING_CLICKHOUSE_HOST','PRICING_CLICKHOUSE_PASSWORD',
+            'PRICING_POSTGRES_ADMIN_DSN','PRICING_POSTGRES_DSN','PRICING_POSTGRES_APP_PASSWORD',
+            'PRICING_POSTGRES_CDC_PASSWORD','PRICING_SESSION_SECRET','PRICING_CLICKSTACK_ENDPOINT',
+            'PRICING_CLICKSTACK_API_KEY')}
+        save_private(settings,updates)
+        archive=path.with_name(path.stem+'.deleted-'+secrets.token_hex(8)+path.suffix)
+        path.rename(archive)
+        progress(f'Workshop resources deleted. Inventory archived as {archive.name}.')
+        progress('Run bash scripts/setup-cloud.sh to create a fresh stack, then reload history in Module 01.')
+        return plan
+    finally: os.close(fd)
+
+
+def installation_settings():
+    """Persist one installation identity before any Cloud resources are created."""
+    settings=Settings.from_env()
+    path=settings.private_env_path.with_suffix('.identity.lock')
+    path.parent.mkdir(parents=True,exist_ok=True)
+    fd=os.open(path,os.O_CREAT|os.O_RDWR,0o600)
+    try:
+        fcntl.flock(fd,fcntl.LOCK_EX)
+        settings=Settings.from_env()
+        values=dotenv_values(settings.private_env_path,interpolate=False)
+        explicit=os.environ.get('PRICING_OWNER_ID') or values.get('PRICING_OWNER_ID')
+        if explicit:
+            owner=explicit
+        elif settings.resource_inventory_path.exists():
+            owner=ResourceInventory.model_validate_json(settings.resource_inventory_path.read_text()).owner_id
+        else:
+            owner='pricing-'+secrets.token_hex(8)
+        settings=Settings(**{**settings.model_dump(),'owner_id':owner})
+        save_private(settings,{'PRICING_OWNER_ID':owner})
+        return settings
+    finally: os.close(fd)
+
+
+def public_ipv4():
+    try:
+        response=httpx.get('https://api4.ipify.org',timeout=15)
+        response.raise_for_status()
+        address=ipaddress.ip_address(response.text.strip())
+        if not isinstance(address,ipaddress.IPv4Address) or not address.is_global:
+            raise ValueError('Expected a public IPv4 address.')
+        return str(address)
+    except (httpx.HTTPError,ValueError):
+        raise WorkshopError('public_ip_unavailable','Public IPv4 detection failed. Check your internet connection and rerun setup.') from None
+
+
+def cloud_settings(settings,runner,*,detect_ip=public_ipv4,choose=input):
+    organization=settings.cloud_org_id
+    if not organization and settings.resource_inventory_path.exists():
+        organization=ResourceInventory.model_validate_json(settings.resource_inventory_path.read_text()).organization_id
+    if not organization:
+        rows=runner.run(['clickhousectl','cloud','org','list','--json'])
+        if isinstance(rows,dict): rows=rows.get('result',rows.get('organizations',[]))
+        if not isinstance(rows,list) or not rows:
+            raise WorkshopError('organization_unavailable','Log in with a Cloud organization API key before running setup.')
+        if len(rows)==1:
+            organization=rows[0]['id']
+        else:
+            print('Choose the Cloud organization for this workshop:')
+            for i,row in enumerate(rows,1): print(f"{i}. {row.get('name',row['id'])} ({row['id']})")
+            try:
+                selected=int(choose('Organization number: '))
+                if not 1<=selected<=len(rows): raise ValueError()
+                organization=rows[selected-1]['id']
+            except (ValueError,EOFError):
+                raise WorkshopError('organization_selection_invalid','Rerun setup and select one of the listed organization numbers.') from None
+    cidr=settings.learner_cidr or str(ipaddress.IPv4Address(detect_ip()))+'/32'
+    return Settings(**{**settings.model_dump(),'cloud_org_id':organization,'learner_cidr':cidr})
 
 
 class CloudApi:
@@ -92,7 +193,7 @@ def verify_pipe_source(row,settings):
     parts=urlsplit(settings.administrator_dsn());options=source.get('settings') or {}
     mappings=source.get('tableMappings') or []
     actual={(r.get('sourceSchemaName'),r.get('sourceTable'),r.get('targetTable'),r.get('tableEngine')) for r in mappings}
-    expected={('pricing',name,name+'_cdc','ReplacingMergeTree') for name in TABLES}
+    expected={('pricing',name,name+'_cdc','ReplacingMergeTree') for name in source_tables(settings)}
     # API GET deliberately omits source credentials. Validate username if returned;
     # newly created credentials are fixed to pricing_cdc in the POST request.
     username=(source.get('credentials') or {}).get('username')
@@ -100,10 +201,10 @@ def verify_pipe_source(row,settings):
         or source.get('database')!=parts.path.lstrip('/') or source.get('authentication')!='basic'
         or source.get('disableTls') is not False or source.get('skipCertVerification') is not False
         or (source.get('caCertificate') or '').strip()!=settings.pg_ca_path.read_text().strip()
-        or options.get('publicationName')!='pricing_workshop' or options.get('replicationMode')!='cdc'
+        or options.get('publicationName')!=source_publication(settings) or options.get('replicationMode')!='cdc'
         or options.get('allowNullableColumns') is not True
-        or len(mappings)!=4 or actual!=expected or username not in (None,'pricing_cdc')):
-        raise WorkshopError('clickpipe_source_mismatch','Use the owned Postgres source, verified TLS, pricing_workshop publication, preserved NULLs, and exactly the four pricing mappings. Inspect the saved pipe before changing source roles.')
+        or len(mappings)!=len(source_tables(settings)) or actual!=expected or username not in (None,'pricing_cdc')):
+        raise WorkshopError('clickpipe_source_mismatch','Use the owned Postgres source, verified TLS, the expected publication, preserved NULLs, and all configured mappings. Inspect the saved pipe before changing source roles.')
 
 
 def verify_role_attributes(conn):
@@ -128,10 +229,10 @@ def configure_roles(settings,ledger,*,existing_pipe=False):
         verify_role_attributes(conn)
         for name,password in passwords.items():
             conn.execute(sql.SQL('ALTER ROLE {} WITH LOGIN PASSWORD {}').format(sql.Identifier('pricing_'+name),sql.Literal(password)))
-    configure_source(ledger)
+    configure_source(ledger,retail=settings.retail_mode)
     with ledger.connect() as conn:
         verify_role_attributes(conn)
-        for name in TABLES:
+        for name in source_tables(settings):
             table='pricing.'+name
             invalid=conn.execute("SELECT has_table_privilege('pricing_app',%s,'DELETE, TRUNCATE, REFERENCES, TRIGGER') OR has_table_privilege('pricing_cdc',%s,'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') AS invalid",(table,table)).fetchone()['invalid']
             if invalid:
@@ -150,11 +251,11 @@ def pipe_request(settings,password):
         'type':'postgres','host':source.hostname,'port':source.port or 5432,'database':source.path.lstrip('/'),
         'authentication':'basic','credentials':{'username':'pricing_cdc','password':password},
         'disableTls':False,'skipCertVerification':False,'caCertificate':settings.pg_ca_path.read_text(),
-        'settings':{'replicationMode':'cdc','publicationName':'pricing_workshop','syncIntervalSeconds':10,
+        'settings':{'replicationMode':'cdc','publicationName':source_publication(settings),'syncIntervalSeconds':10,
                     'allowNullableColumns':True,'deleteOnMerge':False,'enableFailoverSlots':False},
         'tableMappings':[{'sourceSchemaName':'pricing','sourceTable':name,'targetTable':name+'_cdc',
                           'tableEngine':'ReplacingMergeTree','excludedColumns':[],'sortingKeys':[],
-                          'useCustomSortingKey':False,'partitionByExpr':'','partitionKey':''} for name in TABLES]}}}
+                          'useCustomSortingKey':False,'partitionByExpr':'','partitionKey':''} for name in source_tables(settings)]}}}
 
 
 def ensure_pipe(inventory,settings,api,body):
@@ -168,19 +269,24 @@ def ensure_pipe(inventory,settings,api,body):
     return inventory
 
 
-def wait_pipe(inventory,settings,runner,*,sleep=time.sleep):
+def wait_pipe(inventory,settings,runner,*,sleep=time.sleep,progress=report_progress):
     # Initial snapshot + schema creation may take minutes, independently of CDC cadence.
-    for _ in range(300):
+    previous=None
+    for attempt in range(300):
         row=runner.run(command(settings,'clickpipe','get',inventory.service_id,inventory.clickpipe_id))
         if str(row.get('id'))!=str(inventory.clickpipe_id):
             raise WorkshopError('clickpipe_id_mismatch','Verify the saved pipe ID on the owned service.')
         state=str(row.get('state','')).lower()
+        if state!=previous or attempt%10==0:
+            progress(f'ClickPipe {inventory.clickpipe_id}: {state or "pending"} (readiness check {attempt+1}/300)')
+        previous=state
         if state in ('failed','error','deleted'):
             raise WorkshopError('clickpipe_failed','Inspect the owned pipe, source network access, and replication privileges. Its ID remains saved.')
         if state=='running':
             verify_pipe_source(row,settings)
             try:
                 verify_clickpipe(row,settings)
+                progress('ClickPipe is running and all mapped destination schemas are ready.')
                 return
             except WorkshopError as error:
                 if error.code!='cdc_schema_missing': raise
@@ -188,7 +294,7 @@ def wait_pipe(inventory,settings,runner,*,sleep=time.sleep):
     raise WorkshopError('clickpipe_pending','CDC is still initializing. Rerun the same setup command to resume the saved pipe; do not create another pipe.')
 
 
-def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=print):
+def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=report_progress):
     path=settings.resource_inventory_path.with_suffix('.lock');path.parent.mkdir(parents=True,exist_ok=True)
     fd=os.open(path,os.O_CREAT|os.O_RDWR,0o600)
     try:
@@ -196,7 +302,7 @@ def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=print):
         except BlockingIOError:
             raise WorkshopError('provision_in_progress','Another setup command is active for this inventory. Wait for it to finish.') from None
         progress('Creating or verifying your ClickHouse and managed Postgres services...')
-        inventory=_provision(runner,settings,'setup',sleep=sleep)
+        inventory=_provision(runner,settings,'setup',sleep=sleep,progress=progress)
         settings=refreshed(settings)
         source=runner.run(command(settings,'postgres','get',inventory.postgres_id))
         parts=urlsplit(settings.administrator_dsn())
@@ -213,26 +319,48 @@ def setup_cloud(settings,runner,api,*,sleep=time.sleep,progress=print):
         ledger=initialize_schema(settings);configure_roles(settings,ledger,existing_pipe=bool(inventory.clickpipe_id))
         settings=refreshed(settings)
         cdc_password=dotenv_values(settings.private_env_path,interpolate=False)['PRICING_POSTGRES_CDC_PASSWORD']
-        progress('Creating or verifying your four-table Postgres ClickPipe...')
+        progress('Creating or verifying your Postgres ClickPipe...')
         inventory=ensure_pipe(inventory,settings,api,pipe_request(settings,cdc_password))
-        wait_pipe(inventory,settings,runner,sleep=sleep)
+        wait_pipe(inventory,settings,runner,sleep=sleep,progress=progress)
+        progress('Creating and verifying canonical ClickHouse views...')
         analytics=AnalyticsClient(settings)
         try:
             _,cutoff=ledger.current_scope(settings.owner_id,settings.scenario_id)
-            FeatureService(analytics,ledger,Clock(cutoff)).configure_views()
+            if settings.retail_mode:
+                from pricing_lab.retail_schema import install_retail_schema
+                from pricing_lab.retail_cdc import configure_retail_cdc
+                install_retail_schema(analytics)
+                configure_retail_cdc(analytics)
+                from pricing_lab.retail_outcomes import install_retail_outcomes
+                install_retail_outcomes(analytics)
+                from pricing_lab.retail_schema import install_retail_agent_access
+                install_retail_agent_access(analytics)
+            else:
+                FeatureService(analytics,ledger,Clock(cutoff)).configure_views()
         finally: analytics.close()
         progress('Setup ready: pricing and telemetry databases, managed Postgres, app role, and CDC. Start the local application next.')
         return inventory
     finally: os.close(fd)
 
 
-def main():
+def main(argv=None):
+    parser=argparse.ArgumentParser(description='Create, verify, or destroy your workshop Cloud stack.')
+    parser.add_argument('--destroy',action='store_true',help='Preview deletion of the resources in the saved inventory.')
+    parser.add_argument('--execute',action='store_true',help='With --destroy, delete the listed resources and their data.')
+    args=parser.parse_args(argv)
+    if args.execute and not args.destroy: parser.error('--execute requires --destroy')
     try:
-        settings=Settings.from_env()
-        if not settings.cloud_org_id or not settings.learner_cidr:
-            raise WorkshopError('cloud_configuration_missing','Set PRICING_CLOUD_ORG_ID and PRICING_LEARNER_CIDR in the private file before setup.')
+        if args.destroy:
+            destroy_cloud(Settings.from_env(),CliRunner(),execute=args.execute)
+            return 0
+        report_progress('Starting workshop Cloud setup...')
+        settings=installation_settings()
+        runner=CliRunner()
+        report_progress('Detecting your Cloud organization and public IPv4 address...')
+        settings=cloud_settings(settings,runner)
+        report_progress(f'Using organization {settings.cloud_org_id}, region {settings.region}, access {settings.learner_cidr}.')
         with CloudApi(settings.cloud_org_id) as api:
-            setup_cloud(settings,CliRunner(),api)
+            setup_cloud(settings,runner,api)
         return 0
     except WorkshopError as error: print(str(error));return 2
     except Exception:

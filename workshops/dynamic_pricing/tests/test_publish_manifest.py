@@ -126,3 +126,18 @@ def test_stale_inventory_hint_still_verifies_conditional_write_races(dataset,con
     else:
         result=publish_dataset(path,BUCKET,PREFIX,client,known_keys=set())
         assert result['uploaded_objects']==0 and result['manifest_verified']
+
+def test_anonymous_retail_verification_uses_declared_version(monkeypatch):
+    from types import SimpleNamespace
+    from generator import publish
+    import pricing_lab.history
+    manifest={'dataset_version':'retail-chain-v2'}
+    monkeypatch.setattr('sys.argv',['publish','--manifest','fixture.json','--bucket',BUCKET,'--prefix',PREFIX,'--region','ap-southeast-1','--verify-anonymous'])
+    monkeypatch.setattr(publish.boto3,'Session',lambda **kwargs:SimpleNamespace(client=lambda *a,**k:object()))
+    monkeypatch.setattr(publish,'publish_dataset',lambda *a,**k:{'manifest_uri':'https://example.test/manifest.json'})
+    monkeypatch.setattr(publish,'read_manifest',lambda *a:manifest)
+    def resolve(uri,*,expected_version):
+        assert expected_version=='retail-chain-v2'
+        return manifest,None
+    monkeypatch.setattr(pricing_lab.history,'resolve_manifest',resolve)
+    assert publish.main()==0

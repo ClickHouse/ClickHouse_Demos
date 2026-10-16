@@ -3,7 +3,7 @@ import argparse
 from datetime import UTC, datetime
 from pricing_lab.contracts import WorkshopError
 from pricing_lab.settings import Settings
-from .provision import ResourceInventory,CliRunner,check_inventory,command,owned,save_inventory,verify_pipe_name
+from .provision import ResourceInventory,CliRunner,check_inventory,command,owned,save_inventory,verify_pipe_name,report_progress
 
 class OwnerMismatch(WorkshopError):
     def __init__(self): super().__init__('owner_mismatch','Use the matching owner and organization. Resource ownership could not be verified; no further resources were deleted.')
@@ -25,7 +25,7 @@ def resource_row(inventory,runner,settings,kind,value):
         return None
 
 
-def cleanup(inventory,runner,settings,execute=False):
+def cleanup(inventory,runner,settings,execute=False,*,progress=report_progress):
     check_inventory(inventory,settings)
     plan=[]
     for kind,value in (('clickpipe',inventory.clickpipe_id),('postgres',inventory.postgres_id),('service',inventory.service_id)):
@@ -34,6 +34,7 @@ def cleanup(inventory,runner,settings,execute=False):
     if not execute: return plan
     present={}
     for item in plan:
+        progress(f"Verifying owned {item['kind']}: {item['id']}...")
         kind=item['kind'];row=resource_row(inventory,runner,settings,kind,item['id'])
         present[kind]=row is not None
         if row is None: continue
@@ -44,6 +45,7 @@ def cleanup(inventory,runner,settings,execute=False):
     for item in plan:
         kind=item['kind']
         if present[kind]:
+            progress(f"Deleting {kind}: {item['id']}...")
             args=[inventory.service_id,item['id']] if kind=='clickpipe' else [item['id']]
             if kind=='service': args+=['--force']
             runner.run(command(settings,kind,'delete',*args))

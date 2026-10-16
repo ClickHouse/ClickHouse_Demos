@@ -39,3 +39,7 @@ This harness is not live-Cloud-tested yet. It returns nonzero on incomplete depe
 Preview owned cleanup after saving evidence. Execute deletion only for those saved IDs. Shared synthetic dataset objects remain outside Cloud service cleanup. Promote release links and the model only after every required gate has evidence.
 
 Before the dedicated correction/deletion rehearsal, export `PRICING_REHEARSAL_ADMIN_DSN` from a private credential source. Use the same source host, database, verified TLS, and CA with a separate administrator role. The harness verifies the endpoint and UPDATE/DELETE privileges before writes. Do not add this credential to the application environment or broaden `pricing_app` privileges.
+
+## Retail chain redesign
+
+See `retail-rehearsal.json`, `retail-agent-evaluation.json`, and `retail-release-checklist.md` for the new retail flow. Older two-store evidence in this directory does not validate the redesigned dataset or managed agent. The new real container browser smoke uses actual SQL and source writes with explicitly local CDC replay; Cloud CDC evidence is recorded separately.

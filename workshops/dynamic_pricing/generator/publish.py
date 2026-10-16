@@ -105,8 +105,9 @@ def main():
         result=publish_dataset(args.manifest,args.bucket,prefix,client,workers=args.workers,known_keys=keys)
         if args.verify_anonymous:
             from pricing_lab.history import resolve_manifest
-            remote,_=resolve_manifest(result['manifest_uri'])
-            assert remote==read_manifest(args.manifest)
+            local=read_manifest(args.manifest)
+            remote,_=resolve_manifest(result['manifest_uri'],expected_version=local['dataset_version'])
+            assert remote==local
             result['learner_download_verified']=True
         print(json.dumps(result,indent=2));return 0
     except Exception:

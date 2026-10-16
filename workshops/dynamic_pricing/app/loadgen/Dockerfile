@@ -9,5 +9,8 @@ COPY pricing pricing
 COPY infra infra
 RUN pip install --no-cache-dir --no-deps app/backend && useradd --uid 10001 --create-home workshop
 COPY app/loadgen/writer.py writer.py
+COPY app/loadgen/retail_writer.py retail_writer.py
+COPY sql sql
+RUN mkdir -p .run/retail-spool && chown -R workshop:workshop .run
 USER workshop
 CMD ["python", "writer.py"]

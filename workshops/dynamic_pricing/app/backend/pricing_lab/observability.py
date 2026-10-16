@@ -1,6 +1,8 @@
 """One explicit vanilla OTel provider per process; no automatic body capture."""
 from contextlib import contextmanager
 from functools import wraps
+from dataclasses import dataclass
+from time import time_ns
 import inspect
 from uuid import UUID
 from opentelemetry import context, trace
@@ -10,23 +12,49 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SimpleSpanProcessor, SpanExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.trace import Link, Status, StatusCode
+from opentelemetry._logs import SeverityNumber
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, SimpleLogRecordProcessor
+from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
 
 ALLOWED = frozenset('owner_id scenario_id generation sandbox_id snapshot_id candidate_id decision_id receipt_id event_id sku store_id applied_price_version policy_status error_type query_id http_status operation'.split())
 _provider = None
 _tracer = trace.get_tracer('pricing-workshop')
+_logger = None
 
 
-def configure(service_name, endpoint='', *, exporter: SpanExporter | None = None):
-    global _provider, _tracer
-    provider = TracerProvider(resource=Resource.create({'service.name':service_name}))
+@dataclass
+class TelemetryRuntime:
+    traces: TracerProvider
+    logs: LoggerProvider
+
+    def force_flush(self, timeout_millis=30000):
+        trace_ok=self.traces.force_flush(timeout_millis=timeout_millis)
+        log_ok=self.logs.force_flush(timeout_millis=timeout_millis)
+        return trace_ok and log_ok
+
+    def shutdown(self):
+        self.traces.shutdown()
+        self.logs.shutdown()
+
+
+def configure(service_name, endpoint='', *, exporter: SpanExporter | None = None, log_exporter=None):
+    global _provider, _tracer, _logger
+    resource=Resource.create({'service.name':service_name})
+    provider = TracerProvider(resource=resource)
+    logs=LoggerProvider(resource=resource)
     if exporter:
         provider.add_span_processor(SimpleSpanProcessor(exporter))
     elif endpoint:
         provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint.rstrip('/')+'/v1/traces',timeout=3),max_queue_size=512))
-    # Deliberately do not replace the process-global provider or auto-instrument.
-    # All workshop spans use this single explicit provider, including agent spans.
+    if log_exporter:
+        logs.add_log_record_processor(SimpleLogRecordProcessor(log_exporter))
+    elif endpoint:
+        logs.add_log_record_processor(BatchLogRecordProcessor(OTLPLogExporter(endpoint=endpoint.rstrip('/')+'/v1/logs',timeout=3),max_queue_size=512))
+    # Keep explicit providers so no other SDK replaces them or captures request bodies.
     _provider, _tracer = provider, provider.get_tracer('pricing-workshop')
-    return provider
+    _logger=logs.get_logger('pricing-workshop')
+    return TelemetryRuntime(provider,logs)
 
 
 def safe_attributes(attributes):
@@ -44,7 +72,16 @@ def start_span(name, attributes=None, *, parent_headers=None, links=None):
         except BaseException as error:
             span.set_attribute('pricing.error_type',type(error).__name__)
             span.set_status(Status(StatusCode.ERROR))
+            if _logger:
+                _logger.emit(timestamp=time_ns(),severity_number=SeverityNumber.ERROR,severity_text='ERROR',
+                             body=name+' failed',attributes=safe_attributes(dict(span.attributes or {})))
             raise
+        else:
+            if _logger:
+                failed=span.attributes.get('pricing.http_status',200)>=400
+                _logger.emit(timestamp=time_ns(),severity_number=SeverityNumber.WARN if failed else SeverityNumber.INFO,
+                             severity_text='WARN' if failed else 'INFO',body=name+' completed',
+                             attributes=safe_attributes(dict(span.attributes or {})))
 
 
 def propagation_headers():

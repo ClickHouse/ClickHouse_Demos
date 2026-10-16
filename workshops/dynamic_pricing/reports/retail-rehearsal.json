@@ -1,0 +1,1971 @@
+{
+  "status": "incomplete",
+  "checks": {
+    "automated_checks": {
+      "status": "passed",
+      "unit_tests": 229,
+      "integration_tests": 135,
+      "site_tests": 414,
+      "browser_tests": 18,
+      "real_browser_edge": "Actual API/ClickHouse/Postgres approval and paired observed sales; local CDC replay",
+      "otel": "local OTLP receiver correlation verified",
+      "public_kit": {
+        "unit_tests": 226,
+        "integration_tests_before_final_writer_change": 134,
+        "browser_tests": 18,
+        "final_writer_integration_tests": 6,
+        "real_edge_otel_frontend": "passed"
+      }
+    },
+    "dataset_100m": {
+      "status": "passed",
+      "evidence": {
+        "status": "passed",
+        "rows": 100000000,
+        "transactions": 51000000,
+        "files": 1000,
+        "manifest_sha256": "6b4ac906fd7c9fd68c6ab7159fd0f89d7a978adc63328c090a01ab06976ce2ba",
+        "totals": {
+          "quantity": 98000000,
+          "receipts_minor": 98542210000,
+          "sold_cost_minor": 49271105000
+        },
+        "bytes": 1340148278
+      }
+    },
+    "model": {
+      "status": "passed",
+      "evidence": {
+        "calibration_seed": 100017,
+        "coverage_groups": 80,
+        "dataset_sha256": "6b4ac906fd7c9fd68c6ab7159fd0f89d7a978adc63328c090a01ab06976ce2ba",
+        "decision_checks": {
+          "keep_price": {
+            "incremental_profit_minor": 0.0,
+            "recommended_price_minor": 800
+          },
+          "markdown": {
+            "incremental_profit_minor": 1320.0,
+            "recommended_price_minor": 700
+          }
+        },
+        "evaluation_seed": 200017,
+        "files": [
+          {
+            "key": "parameters.parquet",
+            "rows": 80,
+            "sha256": "6eae93c370bbf17f2540246c8dc47b89173dbe800255a0610ec26bf26268a9a7"
+          },
+          {
+            "key": "scenarios.parquet",
+            "rows": 3,
+            "sha256": "c83a736bb312d5a39bca2351ec83e6b2cbae8c4ddf52ade839e8be571c00fdad"
+          }
+        ],
+        "history_rate_scale": 0.7546009966434586,
+        "model_version": "retail-model-v2-6b4ac906fd7c",
+        "preparation_sha256": "f8ec4b8ec25413ce229fd9ce950f13364f68ec9af79bd50741076f87a3ee4ee6",
+        "preparation_version": "2.0",
+        "rejections": [],
+        "released": true,
+        "scenario_interpretation": "Sensitivity assumptions, not confidence intervals.",
+        "schema_version": "retail-model-v2",
+        "split": {
+          "method": "chronological dates, floor(60%)/floor(80%)/100%",
+          "test_end": "2026-01-29",
+          "train_end": "2026-01-17",
+          "validation_end": "2026-01-23"
+        },
+        "synthetic": true,
+        "test": {
+          "mean_absolute_error": 2.242813382597411,
+          "observed_units": 30709.0,
+          "predicted_units": 30765.284390718727
+        },
+        "validation": {
+          "mean_absolute_error": 2.243408787348912,
+          "observed_units": 30165.0,
+          "predicted_units": 30346.383247185153
+        }
+      }
+    },
+    "s3_publication": {
+      "status": "not_run",
+      "reason": "AWS sa SSO session expired; renewal requested."
+    },
+    "cloud_load": {
+      "status": "not_run",
+      "reason": "Exact server-side S3 learner load awaits immutable publication. Separate cloud_direct_load is actual 100M Arrow ingestion."
+    },
+    "cloud_initialize": {
+      "status": "passed",
+      "duration_seconds": 493.9045075000031,
+      "evidence": {
+        "model": "retail-model-v2-6b4ac906fd7c",
+        "run_id": "3e95ebf9-de7d-43a1-a219-4a5cd0a7bdba",
+        "rollup": {
+          "ready": true
+        }
+      }
+    },
+    "cloud_benchmark_running": {
+      "status": "passed",
+      "duration_seconds": 14.008644125016872,
+      "evidence": {
+        "schema_version": 2,
+        "captured_at": "2026-10-16T02:39:53.609732+00:00",
+        "run_id": "3e95ebf9-de7d-43a1-a219-4a5cd0a7bdba",
+        "district_id": 1,
+        "cutoff": "2026-01-30T02:02:00+00:00",
+        "repetitions": 20,
+        "equal": true,
+        "facts": [
+          {
+            "district_id": 1,
+            "sku": 101,
+            "units": 180399,
+            "receipts_minor": 144319200,
+            "transactions": 180756
+          },
+          {
+            "district_id": 1,
+            "sku": 102,
+            "units": 187201,
+            "receipts_minor": 168480900,
+            "transactions": 187344
+          },
+          {
+            "district_id": 1,
+            "sku": 103,
+            "units": 194727,
+            "receipts_minor": 194727000,
+            "transactions": 194867
+          },
+          {
+            "district_id": 1,
+            "sku": 104,
+            "units": 200426,
+            "receipts_minor": 220468600,
+            "transactions": 200402
+          },
+          {
+            "district_id": 1,
+            "sku": 105,
+            "units": 207826,
+            "receipts_minor": 249391200,
+            "transactions": 207677
+          },
+          {
+            "district_id": 1,
+            "sku": 106,
+            "units": 215120,
+            "receipts_minor": 172096000,
+            "transactions": 214818
+          },
+          {
+            "district_id": 1,
+            "sku": 107,
+            "units": 222078,
+            "receipts_minor": 199870200,
+            "transactions": 221544
+          },
+          {
+            "district_id": 1,
+            "sku": 108,
+            "units": 227567,
+            "receipts_minor": 227567000,
+            "transactions": 226976
+          },
+          {
+            "district_id": 1,
+            "sku": 109,
+            "units": 235018,
+            "receipts_minor": 258519800,
+            "transactions": 234167
+          },
+          {
+            "district_id": 1,
+            "sku": 110,
+            "units": 241373,
+            "receipts_minor": 289647600,
+            "transactions": 240319
+          },
+          {
+            "district_id": 1,
+            "sku": 111,
+            "units": 248954,
+            "receipts_minor": 199163200,
+            "transactions": 247682
+          },
+          {
+            "district_id": 1,
+            "sku": 112,
+            "units": 256504,
+            "receipts_minor": 230853600,
+            "transactions": 255011
+          },
+          {
+            "district_id": 1,
+            "sku": 113,
+            "units": 262112,
+            "receipts_minor": 262112000,
+            "transactions": 260679
+          },
+          {
+            "district_id": 1,
+            "sku": 114,
+            "units": 269138,
+            "receipts_minor": 296051800,
+            "transactions": 266932
+          },
+          {
+            "district_id": 1,
+            "sku": 115,
+            "units": 276235,
+            "receipts_minor": 331482000,
+            "transactions": 274078
+          },
+          {
+            "district_id": 1,
+            "sku": 116,
+            "units": 282606,
+            "receipts_minor": 226084800,
+            "transactions": 280153
+          },
+          {
+            "district_id": 1,
+            "sku": 117,
+            "units": 288442,
+            "receipts_minor": 259597800,
+            "transactions": 285822
+          },
+          {
+            "district_id": 1,
+            "sku": 118,
+            "units": 296054,
+            "receipts_minor": 296054000,
+            "transactions": 293142
+          },
+          {
+            "district_id": 1,
+            "sku": 119,
+            "units": 303342,
+            "receipts_minor": 333676200,
+            "transactions": 300167
+          },
+          {
+            "district_id": 1,
+            "sku": 120,
+            "units": 310637,
+            "receipts_minor": 372764400,
+            "transactions": 307002
+          }
+        ],
+        "samples": [
+          {
+            "query_id": "9a02a6ae-89f8-4c2f-a777-dca421c5d9d1",
+            "client_seconds": 0.2971916670212522,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.267,
+            "memory_usage": 380496220
+          },
+          {
+            "query_id": "713aa1f7-6075-4675-9e83-e4173ba38198",
+            "client_seconds": 0.18049291602801532,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.172,
+            "memory_usage": 532538051
+          },
+          {
+            "query_id": "2ddbffc0-8073-4af4-b334-9b1b6a1c25f6",
+            "client_seconds": 0.27440129197202623,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.266,
+            "memory_usage": 523012484
+          },
+          {
+            "query_id": "7c914ee9-0fe0-4563-8415-f1d167cb2f5c",
+            "client_seconds": 0.24732412496814504,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.237,
+            "memory_usage": 393240529
+          },
+          {
+            "query_id": "26ee8283-2fcd-4231-b488-8ef513a638c2",
+            "client_seconds": 0.23503733304096386,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.223,
+            "memory_usage": 399406111
+          },
+          {
+            "query_id": "90495d79-2ed9-4199-803a-4d4ec54bd523",
+            "client_seconds": 0.1884408330079168,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.179,
+            "memory_usage": 529311604
+          },
+          {
+            "query_id": "e9e17206-4146-4587-8012-7d56f6b2293b",
+            "client_seconds": 0.1599656249745749,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.142,
+            "memory_usage": 553714572
+          },
+          {
+            "query_id": "faacb67f-0c65-4630-97fb-ab5aae201f6c",
+            "client_seconds": 0.24372458300786093,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.235,
+            "memory_usage": 380448577
+          },
+          {
+            "query_id": "7a3f9555-fdfc-45d9-a393-b76fed8c01a1",
+            "client_seconds": 0.22564812505152076,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.214,
+            "memory_usage": 388528824
+          },
+          {
+            "query_id": "34dad998-b535-4365-8ffd-972b21195946",
+            "client_seconds": 0.17522741598077118,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.165,
+            "memory_usage": 529311612
+          },
+          {
+            "query_id": "515ea99a-25d6-4c86-997c-b66e8a90a31c",
+            "client_seconds": 0.1819238750031218,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.173,
+            "memory_usage": 529308044
+          },
+          {
+            "query_id": "3799e6a3-8eb2-47c0-b45c-77c399660b91",
+            "client_seconds": 0.2229235420236364,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.211,
+            "memory_usage": 394507140
+          },
+          {
+            "query_id": "6fcb6d06-b558-4283-8db7-9ecabdf0a9ce",
+            "client_seconds": 0.2374519169679843,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.228,
+            "memory_usage": 385379777
+          },
+          {
+            "query_id": "d1470e0c-4670-4227-b88f-1ab166007820",
+            "client_seconds": 0.1667206670390442,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.156,
+            "memory_usage": 526238923
+          },
+          {
+            "query_id": "cc114e0f-f1af-445e-a9bb-cf684524f809",
+            "client_seconds": 0.1596775830257684,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.149,
+            "memory_usage": 529311612
+          },
+          {
+            "query_id": "a2ae3c4a-16bb-4611-9e1b-6226b29898d9",
+            "client_seconds": 0.22977695800364017,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.22,
+            "memory_usage": 399406111
+          },
+          {
+            "query_id": "98c01d97-94f9-437a-911e-0028836bd85c",
+            "client_seconds": 0.2402936250437051,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.232,
+            "memory_usage": 385379937
+          },
+          {
+            "query_id": "2f934dbf-1218-453e-8ac4-4e1cfc2d1253",
+            "client_seconds": 0.1808837919961661,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.171,
+            "memory_usage": 529308044
+          },
+          {
+            "query_id": "6d9d386e-934d-491a-9f8a-c2c9fb345f98",
+            "client_seconds": 0.1903081249911338,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.177,
+            "memory_usage": 526165868
+          },
+          {
+            "query_id": "36b9059a-861e-4675-bdd7-0a9dcd807e0a",
+            "client_seconds": 0.2964448750135489,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.267,
+            "memory_usage": 393473223
+          },
+          {
+            "query_id": "c3c4216e-b9f5-4694-9cc0-7e2d7893f1e9",
+            "client_seconds": 0.26215379196219146,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.247,
+            "memory_usage": 388846423
+          },
+          {
+            "query_id": "168efbe6-405b-45b5-ae90-0c10b5232fe1",
+            "client_seconds": 0.181198249978479,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.17,
+            "memory_usage": 526158220
+          },
+          {
+            "query_id": "0e791d57-80a9-46f4-b906-821627976919",
+            "client_seconds": 0.20005516603123397,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.188,
+            "memory_usage": 526162308
+          },
+          {
+            "query_id": "b08ad0b6-5ef1-419b-81f5-032a2d69f39c",
+            "client_seconds": 0.23185483401175588,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.222,
+            "memory_usage": 393476791
+          },
+          {
+            "query_id": "4ee8a117-b9a2-4412-9599-8913aa1b9f20",
+            "client_seconds": 0.24653162498725578,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.233,
+            "memory_usage": 380140999
+          },
+          {
+            "query_id": "11a8a728-fef8-4a83-a310-1aea3614aba0",
+            "client_seconds": 0.18749624997144565,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.176,
+            "memory_usage": 515680108
+          },
+          {
+            "query_id": "bfb54b5f-9f81-4125-bbdc-3d9254453d30",
+            "client_seconds": 0.25374754099175334,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.245,
+            "memory_usage": 524070204
+          },
+          {
+            "query_id": "1b5ac947-5f85-4007-87cf-768f9b91a4fc",
+            "client_seconds": 0.28149512503296137,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.274,
+            "memory_usage": 376305198
+          },
+          {
+            "query_id": "c6ebcb2a-e3bc-4f5e-9537-ec5d5ecb0aae",
+            "client_seconds": 0.2417390420450829,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.228,
+            "memory_usage": 393477319
+          },
+          {
+            "query_id": "3cfc0a89-552b-4cdb-b782-cc6c02abf9ec",
+            "client_seconds": 0.24564445903524756,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.234,
+            "memory_usage": 528255340
+          },
+          {
+            "query_id": "c1af149c-2131-43c4-b13a-156831d67ea3",
+            "client_seconds": 0.1714441659860313,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.162,
+            "memory_usage": 526162316
+          },
+          {
+            "query_id": "0d8dfdc9-a41c-4b7f-b1c5-065d901fd0ac",
+            "client_seconds": 0.28148345899535343,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.272,
+            "memory_usage": 376301566
+          },
+          {
+            "query_id": "46e5be2a-e4b0-4b42-897b-33c653cd3410",
+            "client_seconds": 0.2424760409630835,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.231,
+            "memory_usage": 399410207
+          },
+          {
+            "query_id": "d62964e3-2bda-46e2-8afa-177a010c8f3f",
+            "client_seconds": 0.17620429099770263,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.164,
+            "memory_usage": 529312140
+          },
+          {
+            "query_id": "6fd1ee11-e292-489f-bd9e-958bdd718f71",
+            "client_seconds": 0.1938495420035906,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.183,
+            "memory_usage": 526162316
+          },
+          {
+            "query_id": "1de6f04b-bf77-46cc-98bd-6196effa93f6",
+            "client_seconds": 0.26023441704455763,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.246,
+            "memory_usage": 380448945
+          },
+          {
+            "query_id": "c058b193-454e-49be-87b5-aa958d0335a9",
+            "client_seconds": 0.23064862500177696,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.22,
+            "memory_usage": 399406111
+          },
+          {
+            "query_id": "27f903a5-4bfd-4b60-8927-fd66116155d7",
+            "client_seconds": 0.18126108398428187,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.172,
+            "memory_usage": 526166420
+          },
+          {
+            "query_id": "4a232698-cf05-406d-aeb0-07eddd84844c",
+            "client_seconds": 0.17001529200933874,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": 0.16,
+            "memory_usage": 545112843
+          },
+          {
+            "query_id": "7b0b7e86-0749-4d81-82e0-eae95741865d",
+            "client_seconds": 0.2661446660058573,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": 0.254,
+            "memory_usage": 380444849
+          }
+        ],
+        "warmup": [
+          {
+            "query_id": "f4a56ffe-fac4-4536-9470-09932cbdc933",
+            "client_seconds": 0.2115000420017168,
+            "read_rows": 5029888,
+            "read_bytes": 222363884,
+            "query": "raw",
+            "server_seconds": null,
+            "memory_usage": null
+          },
+          {
+            "query_id": "f6a2f46e-a0f7-44f1-b550-edeefbfe33fc",
+            "client_seconds": 0.29359112499514595,
+            "read_rows": 280128,
+            "read_bytes": 104235124,
+            "query": "rollup",
+            "server_seconds": null,
+            "memory_usage": null
+          }
+        ],
+        "summary": {
+          "raw": {
+            "client_p50_seconds": 0.181198249978479,
+            "client_p95_seconds": 0.25374754099175334,
+            "server_p50_seconds": 0.172,
+            "server_p95_seconds": 0.245
+          },
+          "rollup": {
+            "client_p50_seconds": 0.2424760409630835,
+            "client_p95_seconds": 0.2964448750135489,
+            "server_p50_seconds": 0.232,
+            "server_p95_seconds": 0.272
+          }
+        },
+        "performance_complete": true,
+        "query_log_note": null,
+        "query_log_scope": "clusterAllReplicas('default', system.query_log)",
+        "query_settings": {
+          "use_query_cache": 0,
+          "max_execution_time": 60
+        },
+        "cache": {
+          "result_cache": "disabled",
+          "storage_cache": "not flushed; one warmup per query"
+        },
+        "queries": {
+          "raw": "SELECT district_id,sku,sum(quantity) AS units,sum(receipts_minor) AS receipts_minor,\n uniqExact(transaction_id) AS transactions\nFROM pricing.retail_sales\nWHERE district_id={district:UInt16} AND event_time<{cutoff:DateTime64(3,'UTC')}\n AND branch='applied' AND (source='history' OR (source='live' AND run_id={run:UUID}))\nGROUP BY district_id,sku ORDER BY district_id,sku\n",
+          "rollup": "SELECT district_id,sku,sumMerge(units_state) AS units,sumMerge(receipts_state) AS receipts_minor,\n uniqExactMerge(transactions_state) AS transactions\nFROM pricing.retail_district_minute\nWHERE district_id={district:UInt16} AND minute<{cutoff:DateTime64(3,'UTC')}\n AND branch='applied' AND (source='history' OR (source='live' AND run_id={run:UUID}))\nGROUP BY district_id,sku ORDER BY district_id,sku\n"
+        },
+        "explain": {
+          "raw": [
+            {
+              "explain": "Expression (Project names)"
+            },
+            {
+              "explain": "  Sorting (Sorting for ORDER BY)"
+            },
+            {
+              "explain": "    Expression ((Before ORDER BY + Projection))"
+            },
+            {
+              "explain": "      Aggregating"
+            },
+            {
+              "explain": "        Expression (Before GROUP BY)"
+            },
+            {
+              "explain": "          Expression ((WHERE + Change column names to column identifiers))"
+            },
+            {
+              "explain": "            ReadFromMergeTree (pricing.retail_sales)"
+            },
+            {
+              "explain": "            Indexes:"
+            },
+            {
+              "explain": "              Min-Max"
+            },
+            {
+              "explain": "                Keys:"
+            },
+            {
+              "explain": "                  event_time"
+            },
+            {
+              "explain": "                Condition: (event_time in (-Inf, '1769738520'))"
+            },
+            {
+              "explain": "                Parts: 4/6"
+            },
+            {
+              "explain": "                Granules: 12245/12274"
+            },
+            {
+              "explain": "              Partition"
+            },
+            {
+              "explain": "                Keys:"
+            },
+            {
+              "explain": "                  toYYYYMM(event_time)"
+            },
+            {
+              "explain": "                Condition: (toYYYYMM(event_time) in (-Inf, 202601])"
+            },
+            {
+              "explain": "                Parts: 4/4"
+            },
+            {
+              "explain": "                Granules: 12245/12245"
+            },
+            {
+              "explain": "              PrimaryKey"
+            },
+            {
+              "explain": "                Keys:"
+            },
+            {
+              "explain": "                  district_id"
+            },
+            {
+              "explain": "                  event_time"
+            },
+            {
+              "explain": "                Condition: and((event_time in (-Inf, '1769738520')), (district_id in [1, 1]))"
+            },
+            {
+              "explain": "                Parts: 4/4"
+            },
+            {
+              "explain": "                Granules: 614/12245"
+            },
+            {
+              "explain": "                Search Algorithm: generic exclusion search"
+            },
+            {
+              "explain": "              Ranges: 4"
+            }
+          ],
+          "rollup": [
+            {
+              "explain": "Expression (Project names)"
+            },
+            {
+              "explain": "  Sorting (Sorting for ORDER BY)"
+            },
+            {
+              "explain": "    Expression ((Before ORDER BY + Projection))"
+            },
+            {
+              "explain": "      Aggregating"
+            },
+            {
+              "explain": "        Expression (Before GROUP BY)"
+            },
+            {
+              "explain": "          Expression ((WHERE + Change column names to column identifiers))"
+            },
+            {
+              "explain": "            ReadFromMergeTree (pricing.retail_district_minute)"
+            },
+            {
+              "explain": "            Indexes:"
+            },
+            {
+              "explain": "              Min-Max"
+            },
+            {
+              "explain": "                Keys:"
+            },
+            {
+              "explain": "                  minute"
+            },
+            {
+              "explain": "                Condition: (minute in (-Inf, '1769738520'))"
+            },
+            {
+              "explain": "                Parts: 5/6"
+            },
+            {
+              "explain": "                Granules: 660/661"
+            },
+            {
+              "explain": "              Partition"
+            },
+            {
+              "explain": "                Keys:"
+            },
+            {
+              "explain": "                  toYYYYMM(minute)"
+            },
+            {
+              "explain": "                Condition: (toYYYYMM(minute) in (-Inf, 202601])"
+            },
+            {
+              "explain": "                Parts: 5/5"
+            },
+            {
+              "explain": "                Granules: 660/660"
+            },
+            {
+              "explain": "              PrimaryKey"
+            },
+            {
+              "explain": "                Keys:"
+            },
+            {
+              "explain": "                  district_id"
+            },
+            {
+              "explain": "                  run_id"
+            },
+            {
+              "explain": "                  branch"
+            },
+            {
+              "explain": "                  source"
+            },
+            {
+              "explain": "                  minute"
+            },
+            {
+              "explain": "                Condition: and(or(and((run_id in ['3e95ebf9-de7d-43a1-a219-4a5cd0a7bdba', '3e95ebf9-de7d-43a1-a219-4a5cd0a7bdba']), (source in ['live', 'live'])), (source in ['history', 'history'])), and((branch in ['applied', 'applied']), and((minute in (-Inf, '1769738520')), (district_id in [1, 1]))))"
+            },
+            {
+              "explain": "                Parts: 5/5"
+            },
+            {
+              "explain": "                Granules: 35/660"
+            },
+            {
+              "explain": "                Search Algorithm: generic exclusion search"
+            },
+            {
+              "explain": "              Ranges: 5"
+            }
+          ]
+        },
+        "environment": {
+          "version": [
+            {
+              "version": "26.6.1.2326"
+            }
+          ],
+          "service_sizing": null,
+          "sizing_verified": false
+        },
+        "active_parts": [
+          {
+            "table": "retail_runs_cdc",
+            "active_parts": 5,
+            "bytes_on_disk": 9184
+          },
+          {
+            "table": "retail_sales",
+            "active_parts": 6,
+            "bytes_on_disk": 1887114790
+          },
+          {
+            "table": "retail_products",
+            "active_parts": 1,
+            "bytes_on_disk": 1828
+          },
+          {
+            "table": "retail_stores",
+            "active_parts": 1,
+            "bytes_on_disk": 20725
+          },
+          {
+            "table": "retail_district_minute",
+            "active_parts": 6,
+            "bytes_on_disk": 466689865
+          },
+          {
+            "table": "retail_demand_scenarios",
+            "active_parts": 1,
+            "bytes_on_disk": 771
+          },
+          {
+            "table": "retail_availability",
+            "active_parts": 1,
+            "bytes_on_disk": 1730
+          },
+          {
+            "table": "retail_sales_minute",
+            "active_parts": 9,
+            "bytes_on_disk": 1163601800
+          },
+          {
+            "table": "retail_price_history_cdc",
+            "active_parts": 3,
+            "bytes_on_disk": 575577
+          },
+          {
+            "table": "retail_batches_cdc",
+            "active_parts": 2,
+            "bytes_on_disk": 15255
+          },
+          {
+            "table": "retail_model_parameters",
+            "active_parts": 1,
+            "bytes_on_disk": 2605
+          },
+          {
+            "table": "retail_inventory_history_cdc",
+            "active_parts": 6,
+            "bytes_on_disk": 6746244
+          },
+          {
+            "table": "retail_policy_history_cdc",
+            "active_parts": 1,
+            "bytes_on_disk": 1054768
+          },
+          {
+            "table": "_peerdb_raw_mirror_ec40305b__a7dc__4072__88f9__c66748cff362",
+            "active_parts": 7,
+            "bytes_on_disk": 19370006
+          }
+        ],
+        "dataset": [
+          {
+            "rows": 100000000
+          }
+        ],
+        "live": [
+          {
+            "transactions_per_second": 1500.0
+          }
+        ],
+        "ingestion_overlap_batches": 1
+      }
+    },
+    "cloud_benchmark_paused": {
+      "status": "passed",
+      "duration_seconds": 17.70748670800822,
+      "evidence": {
+        "schema_version": 2,
+        "captured_at": "2026-10-16T02:34:51.715640+00:00",
+        "run_id": "3e95ebf9-de7d-43a1-a219-4a5cd0a7bdba",
+        "district_id": 1,
+        "cutoff": "2026-01-30T02:02:00+00:00",
+        "repetitions": 20,
+        "equal": true,
+        "facts": [
+          {
+            "district_id": 1,
+            "sku": 101,
+            "units": 180399,
+            "receipts_minor": 144319200,
+            "transactions": 180756
+          },
+          {
+            "district_id": 1,
+            "sku": 102,
+            "units": 187201,
+            "receipts_minor": 168480900,
+            "transactions": 187344
+          },
+          {
+            "district_id": 1,
+            "sku": 103,
+            "units": 194727,
+            "receipts_minor": 194727000,
+            "transactions": 194867
+          },
+          {
+            "district_id": 1,
+            "sku": 104,
+            "units": 200426,
+            "receipts_minor": 220468600,
+            "transactions": 200402
+          },
+          {
+            "district_id": 1,
+            "sku": 105,
+            "units": 207826,
+            "receipts_minor": 249391200,
+            "transactions": 207677
+          },
+          {
+            "district_id": 1,
+            "sku": 106,
+            "units": 215120,
+            "receipts_minor": 172096000,
+            "transactions": 214818
+          },
+          {
+            "district_id": 1,
+            "sku": 107,
+            "units": 222078,
+            "receipts_minor": 199870200,
+            "transactions": 221544
+          },
+          {
+            "district_id": 1,
+            "sku": 108,
+            "units": 227567,
+            "receipts_minor": 227567000,
+            "transactions": 226976
+          },
+          {
+            "district_id": 1,
+            "sku": 109,
+            "units": 235018,
+            "receipts_minor": 258519800,
+            "transactions": 234167
+          },
+          {
+            "district_id": 1,
+            "sku": 110,
+            "units": 241373,
+            "receipts_minor": 289647600,
+            "transactions": 240319
+          },
+          {
+            "district_id": 1,
+            "sku": 111,
+            "units": 248954,
+            "receipts_minor": 199163200,
+            "transactions": 247682
+          },
+          {
+            "district_id": 1,
+            "sku": 112,
+            "units": 256504,
+            "receipts_minor": 230853600,
+            "transactions": 255011
+          },
+          {
+            "district_id": 1,
+            "sku": 113,
+            "units": 262112,
+            "receipts_minor": 262112000,
+            "transactions": 260679
+          },
+          {
+            "district_id": 1,
+            "sku": 114,
+            "units": 269138,
+            "receipts_minor": 296051800,
+            "transactions": 266932
+          },
+          {
+            "district_id": 1,
+            "sku": 115,
+            "units": 276235,
+            "receipts_minor": 331482000,
+            "transactions": 274078
+          },
+          {
+            "district_id": 1,
+            "sku": 116,
+            "units": 282606,
+            "receipts_minor": 226084800,
+            "transactions": 280153
+          },
+          {
+            "district_id": 1,
+            "sku": 117,
+            "units": 288442,
+            "receipts_minor": 259597800,
+            "transactions": 285822
+          },
+          {
+            "district_id": 1,
+            "sku": 118,
+            "units": 296054,
+            "receipts_minor": 296054000,
+            "transactions": 293142
+          },
+          {
+            "district_id": 1,
+            "sku": 119,
+            "units": 303342,
+            "receipts_minor": 333676200,
+            "transactions": 300167
+          },
+          {
+            "district_id": 1,
+            "sku": 120,
+            "units": 310637,
+            "receipts_minor": 372764400,
+            "transactions": 307002
+          }
+        ],
+        "samples": [
+          {
+            "query_id": "d597648f-9d95-46f6-adad-baf8300b18dc",
+            "client_seconds": 0.24767829099437222,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.237,
+            "memory_usage": 393237329
+          },
+          {
+            "query_id": "f603dfde-83e5-4289-851d-555875d6a5fe",
+            "client_seconds": 0.18676599999889731,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.176,
+            "memory_usage": 526164988
+          },
+          {
+            "query_id": "4fad4a5f-bc32-416e-9c72-f62cd9460264",
+            "client_seconds": 0.18569445895263925,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.175,
+            "memory_usage": 529310732
+          },
+          {
+            "query_id": "5e8cda6b-6467-4f04-a0cc-f9a864f3be00",
+            "client_seconds": 0.2567114160046913,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.241,
+            "memory_usage": 380137799
+          },
+          {
+            "query_id": "bd22c1a7-7a9a-4b54-be23-77fc0080e7ce",
+            "client_seconds": 0.22987300000386313,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.217,
+            "memory_usage": 399402911
+          },
+          {
+            "query_id": "d5623920-161b-480c-b88b-478dc3d20689",
+            "client_seconds": 0.17242845898726955,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.162,
+            "memory_usage": 538829299
+          },
+          {
+            "query_id": "cc9e97ef-8059-4429-98bb-5876fb569998",
+            "client_seconds": 0.16141716699348763,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.152,
+            "memory_usage": 545121203
+          },
+          {
+            "query_id": "f2abb1cf-793a-4d58-8697-9d97370b3a0b",
+            "client_seconds": 0.2880231669987552,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.27,
+            "memory_usage": 393470023
+          },
+          {
+            "query_id": "07cbb038-5a66-4449-a85c-d352624c0675",
+            "client_seconds": 0.2791799580445513,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.269,
+            "memory_usage": 376298366
+          },
+          {
+            "query_id": "e670326d-bcd6-4063-bbca-65a28c62a0ff",
+            "client_seconds": 0.1691076250281185,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.159,
+            "memory_usage": 538829747
+          },
+          {
+            "query_id": "baf32899-a759-4d6d-871b-6363a6f9c2af",
+            "client_seconds": 0.19880995899438858,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.188,
+            "memory_usage": 520922116
+          },
+          {
+            "query_id": "1af1b68b-d74f-4cb8-a518-cb64a23927d9",
+            "client_seconds": 0.2584621670539491,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.247,
+            "memory_usage": 393237489
+          },
+          {
+            "query_id": "28ef3227-0c2b-48b1-afad-48afb827e4e0",
+            "client_seconds": 0.2694875829620287,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.258,
+            "memory_usage": 376298366
+          },
+          {
+            "query_id": "bf54e162-1434-4e5e-aafd-3ebf81b4047e",
+            "client_seconds": 0.17282041697762907,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.16,
+            "memory_usage": 532538515
+          },
+          {
+            "query_id": "1a1e085c-a406-4159-8659-99f00f97e017",
+            "client_seconds": 0.16091891599353403,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.151,
+            "memory_usage": 529310724
+          },
+          {
+            "query_id": "463dfbf5-2485-40c8-bc12-cf7bce330b58",
+            "client_seconds": 0.2337743749958463,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.22,
+            "memory_usage": 395211063
+          },
+          {
+            "query_id": "2100942f-e950-4425-80f5-21a40a5db151",
+            "client_seconds": 0.2300406669965014,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.218,
+            "memory_usage": 399402911
+          },
+          {
+            "query_id": "c46c3a9f-c387-4697-911a-41d85545f929",
+            "client_seconds": 0.17209445795742795,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.161,
+            "memory_usage": 538829747
+          },
+          {
+            "query_id": "e51a51db-73bb-4e23-9ec2-282d9a10a264",
+            "client_seconds": 0.162961375026498,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.152,
+            "memory_usage": 549189177
+          },
+          {
+            "query_id": "0414e0b5-f092-415e-bf23-83606660c8e9",
+            "client_seconds": 0.23710249998839572,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.226,
+            "memory_usage": 393237329
+          },
+          {
+            "query_id": "028ec46b-8f68-4ab2-9361-d6a444740f2d",
+            "client_seconds": 0.25209270894993097,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.235,
+            "memory_usage": 393237489
+          },
+          {
+            "query_id": "877e9a59-67bb-4771-95b8-fe3b44953d3a",
+            "client_seconds": 0.17149429104756564,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.158,
+            "memory_usage": 529310716
+          },
+          {
+            "query_id": "6d2db2df-02cf-4cde-bce6-0bd5631baf9b",
+            "client_seconds": 0.15970995801035315,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.147,
+            "memory_usage": 528347281
+          },
+          {
+            "query_id": "6c8a9272-a9f1-4830-9afd-cd75dcd7f2ee",
+            "client_seconds": 0.23061191698070616,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.219,
+            "memory_usage": 388525624
+          },
+          {
+            "query_id": "b8930e9f-1d0d-4603-8180-dfbf71fd6813",
+            "client_seconds": 0.2530121669988148,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.242,
+            "memory_usage": 393470023
+          },
+          {
+            "query_id": "6035841f-930a-4893-888a-56c6739e0505",
+            "client_seconds": 0.1849709580419585,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.175,
+            "memory_usage": 520922108
+          },
+          {
+            "query_id": "8b707d90-235c-4442-9f4f-3c3cea6a3f3c",
+            "client_seconds": 0.1957659170147963,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.18,
+            "memory_usage": 526165004
+          },
+          {
+            "query_id": "165542bc-fea2-4a22-a0a3-d25cd3cb2b58",
+            "client_seconds": 0.26073883404023945,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.25,
+            "memory_usage": 393237329
+          },
+          {
+            "query_id": "a9bcccbd-f1ca-4788-9dab-04d2a9953b23",
+            "client_seconds": 0.23587824997957796,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.226,
+            "memory_usage": 399402911
+          },
+          {
+            "query_id": "f0e9b5e4-c1c0-453a-95ba-98033d675dee",
+            "client_seconds": 0.2021806250559166,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.189,
+            "memory_usage": 525112340
+          },
+          {
+            "query_id": "1116fef3-ffdd-4cf3-a59e-cc47d16df12b",
+            "client_seconds": 0.18099833303131163,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.168,
+            "memory_usage": 529310732
+          },
+          {
+            "query_id": "037e41ac-0791-4cac-a6a8-00a6f3332874",
+            "client_seconds": 0.2818393330089748,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.27,
+            "memory_usage": 380441649
+          },
+          {
+            "query_id": "1a7802aa-e4dd-43f0-bf80-1b312e51f5ef",
+            "client_seconds": 0.2812612919951789,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.266,
+            "memory_usage": 383939996
+          },
+          {
+            "query_id": "3359f2c5-cc67-46b2-a96f-c3ed4c2ad9a6",
+            "client_seconds": 0.17848116595996544,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.166,
+            "memory_usage": 526165004
+          },
+          {
+            "query_id": "35d24e96-fcbd-405f-95c6-09a4747a381b",
+            "client_seconds": 0.1820864169858396,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.169,
+            "memory_usage": 529310732
+          },
+          {
+            "query_id": "17cfbc48-ac0b-4472-87e8-db8d6c1916fc",
+            "client_seconds": 0.35240112501196563,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.263,
+            "memory_usage": 385395719
+          },
+          {
+            "query_id": "86014db5-924d-4fbd-a89c-7c5c03cf8c29",
+            "client_seconds": 0.23469287500483915,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.226,
+            "memory_usage": 393430356
+          },
+          {
+            "query_id": "b272faf2-d9b7-4a13-84fd-6b5a4de8f578",
+            "client_seconds": 0.17896862496854737,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.168,
+            "memory_usage": 538829747
+          },
+          {
+            "query_id": "10e7575f-c98b-4681-a187-2a70d9640d21",
+            "client_seconds": 0.1580139160505496,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": 0.146,
+            "memory_usage": 555480633
+          },
+          {
+            "query_id": "0eeab133-98ee-4b64-b2bb-478795b741b7",
+            "client_seconds": 0.23771087499335408,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": 0.225,
+            "memory_usage": 388525752
+          }
+        ],
+        "warmup": [
+          {
+            "query_id": "fb6904b5-9d07-45a1-ac04-2358710110db",
+            "client_seconds": 0.1968457920011133,
+            "read_rows": 5021696,
+            "read_bytes": 221872321,
+            "query": "raw",
+            "server_seconds": null,
+            "memory_usage": null
+          },
+          {
+            "query_id": "7bd52b9e-65b6-4ca4-ac0e-9d92c40960a8",
+            "client_seconds": 0.2558716249768622,
+            "read_rows": 279728,
+            "read_bytes": 104079924,
+            "query": "rollup",
+            "server_seconds": null,
+            "memory_usage": null
+          }
+        ],
+        "summary": {
+          "raw": {
+            "client_p50_seconds": 0.17282041697762907,
+            "client_p95_seconds": 0.19880995899438858,
+            "server_p50_seconds": 0.162,
+            "server_p95_seconds": 0.188
+          },
+          "rollup": {
+            "client_p50_seconds": 0.25209270894993097,
+            "client_p95_seconds": 0.2880231669987552,
+            "server_p50_seconds": 0.237,
+            "server_p95_seconds": 0.27
+          }
+        },
+        "performance_complete": true,
+        "query_log_note": null,
+        "query_log_scope": "clusterAllReplicas('default', system.query_log)",
+        "query_settings": {
+          "use_query_cache": 0,
+          "max_execution_time": 60
+        },
+        "cache": {
+          "result_cache": "disabled",
+          "storage_cache": "not flushed; one warmup per query"
+        },
+        "queries": {
+          "raw": "SELECT district_id,sku,sum(quantity) AS units,sum(receipts_minor) AS receipts_minor,\n uniqExact(transaction_id) AS transactions\nFROM pricing.retail_sales\nWHERE district_id={district:UInt16} AND event_time<{cutoff:DateTime64(3,'UTC')}\n AND branch='applied' AND (source='history' OR (source='live' AND run_id={run:UUID}))\nGROUP BY district_id,sku ORDER BY district_id,sku\n",
+          "rollup": "SELECT district_id,sku,sumMerge(units_state) AS units,sumMerge(receipts_state) AS receipts_minor,\n uniqExactMerge(transactions_state) AS transactions\nFROM pricing.retail_district_minute\nWHERE district_id={district:UInt16} AND minute<{cutoff:DateTime64(3,'UTC')}\n AND branch='applied' AND (source='history' OR (source='live' AND run_id={run:UUID}))\nGROUP BY district_id,sku ORDER BY district_id,sku\n"
+        },
+        "explain": {
+          "raw": [
+            {
+              "explain": "Expression (Project names)"
+            },
+            {
+              "explain": "  Sorting (Sorting for ORDER BY)"
+            },
+            {
+              "explain": "    Expression ((Before ORDER BY + Projection))"
+            },
+            {
+              "explain": "      Aggregating"
+            },
+            {
+              "explain": "        Expression (Before GROUP BY)"
+            },
+            {
+              "explain": "          Expression ((WHERE + Change column names to column identifiers))"
+            },
+            {
+              "explain": "            ReadFromMergeTree (pricing.retail_sales)"
+            },
+            {
+              "explain": "            Indexes:"
+            },
+            {
+              "explain": "              Min-Max"
+            },
+            {
+              "explain": "                Keys:"
+            },
+            {
+              "explain": "                  event_time"
+            },
+            {
+              "explain": "                Condition: (event_time in (-Inf, '1769738520'))"
+            },
+            {
+              "explain": "                Parts: 4/9"
+            },
+            {
+              "explain": "                Granules: 12234/12241"
+            },
+            {
+              "explain": "              Partition"
+            },
+            {
+              "explain": "                Keys:"
+            },
+            {
+              "explain": "                  toYYYYMM(event_time)"
+            },
+            {
+              "explain": "                Condition: (toYYYYMM(event_time) in (-Inf, 202601])"
+            },
+            {
+              "explain": "                Parts: 4/4"
+            },
+            {
+              "explain": "                Granules: 12234/12234"
+            },
+            {
+              "explain": "              PrimaryKey"
+            },
+            {
+              "explain": "                Keys:"
+            },
+            {
+              "explain": "                  district_id"
+            },
+            {
+              "explain": "                  event_time"
+            },
+            {
+              "explain": "                Condition: and((event_time in (-Inf, '1769738520')), (district_id in [1, 1]))"
+            },
+            {
+              "explain": "                Parts: 4/4"
+            },
+            {
+              "explain": "                Granules: 613/12234"
+            },
+            {
+              "explain": "                Search Algorithm: generic exclusion search"
+            },
+            {
+              "explain": "              Ranges: 4"
+            }
+          ],
+          "rollup": [
+            {
+              "explain": "Expression (Project names)"
+            },
+            {
+              "explain": "  Sorting (Sorting for ORDER BY)"
+            },
+            {
+              "explain": "    Expression ((Before ORDER BY + Projection))"
+            },
+            {
+              "explain": "      Aggregating"
+            },
+            {
+              "explain": "        Expression (Before GROUP BY)"
+            },
+            {
+              "explain": "          Expression ((WHERE + Change column names to column identifiers))"
+            },
+            {
+              "explain": "            ReadFromMergeTree (pricing.retail_district_minute)"
+            },
+            {
+              "explain": "            Indexes:"
+            },
+            {
+              "explain": "              Min-Max"
+            },
+            {
+              "explain": "                Keys:"
+            },
+            {
+              "explain": "                  minute"
+            },
+            {
+              "explain": "                Condition: (minute in (-Inf, '1769738520'))"
+            },
+            {
+              "explain": "                Parts: 5/6"
+            },
+            {
+              "explain": "                Granules: 660/661"
+            },
+            {
+              "explain": "              Partition"
+            },
+            {
+              "explain": "                Keys:"
+            },
+            {
+              "explain": "                  toYYYYMM(minute)"
+            },
+            {
+              "explain": "                Condition: (toYYYYMM(minute) in (-Inf, 202601])"
+            },
+            {
+              "explain": "                Parts: 5/5"
+            },
+            {
+              "explain": "                Granules: 660/660"
+            },
+            {
+              "explain": "              PrimaryKey"
+            },
+            {
+              "explain": "                Keys:"
+            },
+            {
+              "explain": "                  district_id"
+            },
+            {
+              "explain": "                  run_id"
+            },
+            {
+              "explain": "                  branch"
+            },
+            {
+              "explain": "                  source"
+            },
+            {
+              "explain": "                  minute"
+            },
+            {
+              "explain": "                Condition: and(or(and((run_id in ['3e95ebf9-de7d-43a1-a219-4a5cd0a7bdba', '3e95ebf9-de7d-43a1-a219-4a5cd0a7bdba']), (source in ['live', 'live'])), (source in ['history', 'history'])), and((branch in ['applied', 'applied']), and((minute in (-Inf, '1769738520')), (district_id in [1, 1]))))"
+            },
+            {
+              "explain": "                Parts: 5/5"
+            },
+            {
+              "explain": "                Granules: 35/660"
+            },
+            {
+              "explain": "                Search Algorithm: generic exclusion search"
+            },
+            {
+              "explain": "              Ranges: 5"
+            }
+          ]
+        },
+        "environment": {
+          "version": [
+            {
+              "version": "26.6.1.2326"
+            }
+          ],
+          "service_sizing": null,
+          "sizing_verified": false
+        },
+        "active_parts": [
+          {
+            "table": "retail_runs_cdc",
+            "active_parts": 4,
+            "bytes_on_disk": 7530
+          },
+          {
+            "table": "retail_sales",
+            "active_parts": 9,
+            "bytes_on_disk": 1874042261
+          },
+          {
+            "table": "retail_products",
+            "active_parts": 1,
+            "bytes_on_disk": 1828
+          },
+          {
+            "table": "retail_stores",
+            "active_parts": 1,
+            "bytes_on_disk": 20725
+          },
+          {
+            "table": "retail_district_minute",
+            "active_parts": 6,
+            "bytes_on_disk": 462036483
+          },
+          {
+            "table": "retail_demand_scenarios",
+            "active_parts": 1,
+            "bytes_on_disk": 771
+          },
+          {
+            "table": "retail_availability",
+            "active_parts": 1,
+            "bytes_on_disk": 1730
+          },
+          {
+            "table": "retail_sales_minute",
+            "active_parts": 5,
+            "bytes_on_disk": 1157271529
+          },
+          {
+            "table": "retail_price_history_cdc",
+            "active_parts": 3,
+            "bytes_on_disk": 575577
+          },
+          {
+            "table": "retail_batches_cdc",
+            "active_parts": 3,
+            "bytes_on_disk": 14100
+          },
+          {
+            "table": "retail_model_parameters",
+            "active_parts": 1,
+            "bytes_on_disk": 2605
+          },
+          {
+            "table": "retail_inventory_history_cdc",
+            "active_parts": 3,
+            "bytes_on_disk": 4158677
+          },
+          {
+            "table": "retail_policy_history_cdc",
+            "active_parts": 1,
+            "bytes_on_disk": 1054768
+          },
+          {
+            "table": "_peerdb_raw_mirror_ec40305b__a7dc__4072__88f9__c66748cff362",
+            "active_parts": 4,
+            "bytes_on_disk": 12932969
+          }
+        ],
+        "dataset": [
+          {
+            "rows": 100000000
+          }
+        ],
+        "live": [
+          {
+            "transactions_per_second": 0.0
+          }
+        ]
+      }
+    },
+    "cloud_decision": {
+      "status": "passed",
+      "evidence": {
+        "run_id": "3e95ebf9-de7d-43a1-a219-4a5cd0a7bdba",
+        "subject": {
+          "sku": 101,
+          "store_id": 185
+        },
+        "receipt_id": "b5fd3fc6-f25d-4daf-8b29-f2d0b3b5713d",
+        "price_minor": 600,
+        "proposal_id": "31c8c7a2-1894-4f1b-8f28-da3ba8c3eacb",
+        "price_version": 2,
+        "acknowledged_at": "2026-10-16T02:56:43.060316Z",
+        "effective_sequence": 285
+      }
+    },
+    "cloud_outcomes": {
+      "status": "passed",
+      "evidence": {
+        "applied": {
+          "minute": "2026-01-30T04:33:00+00:00",
+          "branch": "applied",
+          "price_minor": 600,
+          "units": 1,
+          "receipts_minor": 600,
+          "remaining_stock": 58,
+          "expired": false,
+          "waste_units": 0,
+          "contribution_minor": -23020
+        },
+        "comparison": {
+          "minute": "2026-01-30T04:33:00+00:00",
+          "branch": "comparison",
+          "price_minor": 800,
+          "units": 0,
+          "receipts_minor": 0,
+          "remaining_stock": 59,
+          "expired": false,
+          "waste_units": 0,
+          "contribution_minor": -23600
+        }
+      },
+      "series_rows": 238,
+      "interpretation": "Recorded integer sales, not forecast averages; zero sales in either branch is a valid observed outcome. Remaining stock is not waste before expiry."
+    },
+    "managed_agent": {
+      "status": "not_run",
+      "reason": "Computer-use connection returned native pipe startup failure and no available browsers."
+    },
+    "managed_clickstack": {
+      "status": "not_run"
+    },
+    "windows_wsl2": {
+      "status": "not_run"
+    },
+    "timed_workshop": {
+      "status": "not_run"
+    },
+    "cleanup": {
+      "status": "passed",
+      "evidence": "Owned ClickPipe, managed Postgres and ClickHouse service deleted; service/Postgres absence verified using successful full inventory responses. Separate rehearsal Docker project and volumes removed; original dynamic-pricing stack remains healthy."
+    },
+    "cloud_cdc_deletes": {
+      "status": "passed",
+      "evidence": "Inserted revision became visible; deleted newest revision disappeared without resurrecting an older price."
+    },
+    "cloud_insert_deduplication": {
+      "status": "passed",
+      "evidence": {
+        "raw_rows": 1,
+        "aggregate_rows": 1,
+        "settings": {
+          "insert_deduplicate": 1,
+          "insert_deduplication_token": "stable probe UUID",
+          "deduplicate_blocks_in_dependent_materialized_views": 1,
+          "async_insert": 0
+        }
+      }
+    },
+    "cloud_provisioning": {
+      "status": "passed",
+      "evidence": "Separate owned ClickHouse service, managed Postgres, six-table operational ClickPipe and canonical views ready."
+    },
+    "cloud_initial_state_cdc": {
+      "status": "passed",
+      "counts": {
+        "retail_inventory_history": 100000,
+        "retail_price_history": 100003,
+        "retail_policy_history": 100000
+      }
+    },
+    "cloud_telemetry_storage": {
+      "status": "passed",
+      "evidence": [
+        {
+          "Body": "pricing.retail.apply completed",
+          "TraceId": "d0ceecf774400a58e1e23f212979c612",
+          "receipt_id": "b5fd3fc6-f25d-4daf-8b29-f2d0b3b5713d"
+        }
+      ],
+      "scope": "actual Cloud otel logs; managed ClickStack UI not verified"
+    },
+    "cloud_direct_load": {
+      "status": "passed",
+      "method": "direct local Arrow; S3 not verified",
+      "duration_seconds": 1004.9172210840043,
+      "totals": {
+        "rows": 100000000,
+        "units": 98000000,
+        "receipts": 98542210000
+      }
+    },
+    "cloud_manual_registration": {
+      "status": "passed",
+      "duration_seconds": 371.9187105000019,
+      "evidence": {
+        "ready": true
+      }
+    },
+    "cloud_target_ingestion": {
+      "status": "passed",
+      "evidence": {
+        "status": "finished",
+        "elapsed_seconds": 120.10356974997558,
+        "transactions": 200000,
+        "rows": 200000,
+        "actual_transactions_per_second": 1665.2294383618075
+      },
+      "speed": 1
+    },
+    "cloud_continuing_ingestion": {
+      "status": "passed",
+      "evidence": {
+        "status": "finished",
+        "elapsed_seconds": 60.11985812499188,
+        "transactions": 9996,
+        "rows": 9996,
+        "actual_transactions_per_second": 166.26785743934838
+      },
+      "speed": 1
+    },
+    "cloud_accelerated_observation": {
+      "status": "passed",
+      "business_minutes": 120,
+      "requested_speed": 20,
+      "evidence": {
+        "status": "finished",
+        "elapsed_seconds": 389.0863513330114,
+        "transactions": 1199322,
+        "rows": 1199322,
+        "actual_transactions_per_second": 3082.405733049021
+      },
+      "final_business_time": "2026-01-30T04:35:00Z",
+      "note": "Observed series was captured at04:33 during final CDC convergence. Individual paired sales remained1 applied/0 comparison at that capture; no guaranteed lift claim."
+    }
+  },
+  "environment": {
+    "cloud": "AWS",
+    "region": "ap-southeast-1",
+    "replicas": 1,
+    "min_replica_memory_gb": 16,
+    "max_replica_memory_gb": 120,
+    "autoscaling": "vertical",
+    "private_inventory": ".run/retail-rehearsal/resources.json",
+    "clickhouse_version": "26.6.1.2326"
+  },
+  "captured_at": "2026-10-16T03:04:03.973153+00:00"
+}

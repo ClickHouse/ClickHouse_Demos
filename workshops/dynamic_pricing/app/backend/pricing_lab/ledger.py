@@ -41,6 +41,7 @@ class Ledger:
     def migrate(self) -> None:
         with self.connect() as conn:
             conn.execute((LAB_ROOT / "sql/postgres/001_schema.sql").read_text())
+            conn.execute((LAB_ROOT / "sql/postgres/003_retail.sql").read_text())
 
     def initialize(self, scope: Scope, subject: Subject, state: dict, rules: dict, cutoff: datetime) -> None:
         with self.connect() as conn:

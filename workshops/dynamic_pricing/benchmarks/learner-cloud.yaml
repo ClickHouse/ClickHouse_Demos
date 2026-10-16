@@ -1,12 +1,14 @@
-workload: same-fact-history-comparison
-subject: {sku: 101, store_id: 1}
-warmups_per_query: 2
-repetitions: 10
+workload: retail-district-product
+population: historical-and-active-run-applied-sales
+warmups_per_query: 1
+repetitions_per_query: 20
 concurrency: 1
 query_cache: disabled
 storage_caches: not_flushed
-cutoff: complete_hour_at_scenario_cutoff
-comparison: raw_and_rollup_fingerprint_must_match_every_sample
-service_sizing: unrecorded
+cutoff: exclusive-complete-minute-covered-by-acknowledged-batches
+comparison: exact-raw-and-rollup-results-every-sample
+service_sizing: one-replica-16-to-120-GB-vertical
+clickhouse_version: 26.6.1.2326
+cloud_query_benchmark_verified: true
+evidence: ../reports/retail-rehearsal.json
 cloud_rehearsal_verified: false
-note: Record actual service sizing and cadence during rehearsal; these are test conditions, not performance claims.

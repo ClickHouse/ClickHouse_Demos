@@ -9,7 +9,7 @@ export async function setup(page:Page){
     if(key==='session'||key==='baseline'||key==='freshness'||key==='candidates'||key==='timeline')return route.fulfill({json:fixture[key]});
     return route.fulfill({json:{scope:fixture.freshness.scope,mode:'recorded',data:{checks:[],ready:false,label:'Recorded test fixture'}}});
   });
-  await page.goto('/');await page.getByRole('button',{name:'Start learner session'}).click();
+  await page.goto('/?legacy=1');await page.getByRole('button',{name:'Start learner session'}).click();
   await expect(page.getByTestId('applied-price')).toHaveText('SGD 8.00');
   await page.getByRole('button',{name:'Candidates',exact:true}).click();
 }

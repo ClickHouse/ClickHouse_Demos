@@ -1,0 +1,53 @@
+{
+  "calibration_seed": 100017,
+  "coverage_groups": 80,
+  "dataset_sha256": "6b4ac906fd7c9fd68c6ab7159fd0f89d7a978adc63328c090a01ab06976ce2ba",
+  "decision_checks": {
+    "keep_price": {
+      "incremental_profit_minor": 0.0,
+      "recommended_price_minor": 800
+    },
+    "markdown": {
+      "incremental_profit_minor": 1320.0,
+      "recommended_price_minor": 700
+    }
+  },
+  "evaluation_seed": 200017,
+  "files": [
+    {
+      "key": "parameters.parquet",
+      "rows": 80,
+      "sha256": "6eae93c370bbf17f2540246c8dc47b89173dbe800255a0610ec26bf26268a9a7"
+    },
+    {
+      "key": "scenarios.parquet",
+      "rows": 3,
+      "sha256": "c83a736bb312d5a39bca2351ec83e6b2cbae8c4ddf52ade839e8be571c00fdad"
+    }
+  ],
+  "history_rate_scale": 0.7546009966434586,
+  "model_version": "retail-model-v2-6b4ac906fd7c",
+  "preparation_sha256": "f8ec4b8ec25413ce229fd9ce950f13364f68ec9af79bd50741076f87a3ee4ee6",
+  "preparation_version": "2.0",
+  "rejections": [],
+  "released": true,
+  "scenario_interpretation": "Sensitivity assumptions, not confidence intervals.",
+  "schema_version": "retail-model-v2",
+  "split": {
+    "method": "chronological dates, floor(60%)/floor(80%)/100%",
+    "test_end": "2026-01-29",
+    "train_end": "2026-01-17",
+    "validation_end": "2026-01-23"
+  },
+  "synthetic": true,
+  "test": {
+    "mean_absolute_error": 2.242813382597411,
+    "observed_units": 30709.0,
+    "predicted_units": 30765.284390718727
+  },
+  "validation": {
+    "mean_absolute_error": 2.243408787348912,
+    "observed_units": 30165.0,
+    "predicted_units": 30346.383247185153
+  }
+}

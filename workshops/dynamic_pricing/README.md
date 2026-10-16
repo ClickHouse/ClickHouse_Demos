@@ -1,31 +1,22 @@
-# Dynamic pricing with ClickHouse
+# Retail dynamic pricing with ClickHouse
 
-A three-hour Use-Case Series workshop. Each learner owns ClickHouse Cloud, managed Postgres, a Postgres ClickPipe, and ClickStack access. The local React/FastAPI edge shows historical reconciliation, source freshness, projected candidates, learner review, receipt, and a next-sale/CDC price timeline.
+Investigate a synthetic 5,000-store retail chain using 100 million historical sales lines and a live batched feed. Replicate operational inventory, price, and policy records from managed Postgres with ClickPipes. Measure raw versus aggregate queries, compare prices with SQL, and approve your own change in the workbench.
 
-The learner, instructor, and reference playbooks are maintained in WorkshopHouse and served at [the dynamic pricing workshop](https://labs.demohouse.cloud/docs/dynamic-pricing). Start with Module 00 in the playbook and [model common ground](pricing/model-card.md).
+Follow the [learner workshop](https://dev-labs.demohouse.cloud/docs/dynamic-pricing/learner/00-setup). Complete setup before the three-hour session. Each attendee creates a dedicated Cloud stack; public S3 data and prepared model artifacts are shared.
 
-The kit contains the local workbench, data contracts, prepared model, and Cloud setup script.
-
-## Learner setup
-
-After installing dependencies, configuring `app/.env.workshop`, and logging in with your organization API key from this lab directory, run:
+The main commands, in order:
 
 ```bash
 bash scripts/setup-cloud.sh
+.venv/bin/workshop retail-import
+.venv/bin/workshop retail-initialize
+.venv/bin/workshop retail-create-rollup
 ```
 
-The script creates your owned Cloud services, analytical databases, managed Postgres schema/roles/publication, and four-table ClickPipe, then verifies readiness. Reruns reuse inventory and private credentials. Follow Module 00 for account and software prerequisites.
+The SQL-console lessons provide equivalent manual import and aggregate paths. `retail-register-history` and `retail-register-rollup` verify that work without inserting the same facts again. Start the Docker workbench and separate writer with the commands in Modules 01 and 02.
 
-## Layout
+Create **Retail Pricing Strategist** in managed ClickHouse Agents using the instruction and context files in `agent/`. The agent queries and recommends; you review and approve in the workbench. Inspect the receipt-scoped observed series and ClickStack trace after approval.
 
-- `app/`: local backend, frontend, writer, and Cloud Compose overlay
-- `infra/`: owned inventory, provisioning, limited publication, and cleanup
-- `generator/`: streaming Parquet generation and independently verified manifests
-- `sql/`: source, history, rollup, canonical CDC, training, and evidence contracts
-- `pricing/`: offline preparation, validation, and labeled artifacts
-- `fixtures/`: golden facts and five generation-aware recovery checkpoints
-- `agent/`, `obs/`: read-only evidence questions, bounded exception tools, and OTel forwarding
-- `benchmarks/`, `reports/`: measured conditions and decision exports
-- `tests/`, `scripts/`: local correctness and verification tools
+Stop local containers and use `bash scripts/setup-cloud.sh --destroy` to preview cleanup. Add `--execute` only after reviewing the owned resource IDs. This deletes the workshop Cloud data.
 
-Keep `app/.env.workshop`, inventories, exports, and private benchmark results out of Git. Stop/restart the local edge without recreating Cloud services. For deletion, preview `python -m infra.cleanup` before explicitly executing it for your owned inventory.
+See [DEVELOPMENT.md](DEVELOPMENT.md) for contributor checks and rehearsal evidence.
