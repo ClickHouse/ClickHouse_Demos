@@ -100,3 +100,20 @@ def test_accelerated_writer_batches_a_full_synthetic_minute(approval_case,analyt
     run=source.run(c.run)
     assert run['logical_end']==start+timedelta(minutes=1)
     assert run['sequence']==1
+
+
+def test_writer_switches_at_persisted_burst_boundary(approval_case,analytics,tmp_path,monkeypatch,capsys):
+    from datetime import UTC,datetime
+    c=approval_case;source=prepare_writer(c,analytics,tmp_path,monkeypatch)
+    start=datetime(2026,1,30,2,1,59,999000,tzinfo=UTC)
+    with c.ledger.connect() as conn:conn.execute('UPDATE pricing.retail_runs SET logical_end=%s',(start,))
+    calls=[]
+    def empty_batch(run,sequence,state,transactions,end,seed,window_seconds):
+        calls.append((transactions,end,window_seconds));return []
+    monkeypatch.setattr(retail_writer,'generate_batch',empty_batch)
+    retail_writer.main(['--transactions-per-minute','10000','--burst-transactions-per-minute','100000','--burst-minutes','2','--minutes','1','--speed','20'])
+    assert calls[0][1]==datetime(2026,1,30,2,2,tzinfo=UTC)
+    assert calls[0][2]==.001 and calls[1][0]==9999
+    assert source.run(c.run)['logical_end']==start+timedelta(minutes=1)
+    rates=[json.loads(line)['target_transactions_per_minute'] for line in capsys.readouterr().out.splitlines() if 'sales_rate_changed' in line]
+    assert rates==[100000,10000]

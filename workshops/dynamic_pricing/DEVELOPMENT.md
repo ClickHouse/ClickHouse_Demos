@@ -20,3 +20,7 @@ The default backend and frontend now use retail services. Legacy UI regression c
 Focused checks: retail contract/generator/model unit tests; isolated SQL integration via `bash scripts/test-integration.sh`; frontend build and Playwright; WorkshopHouse docs checker and site type/link checks. The manual aggregate registration must preserve grouped raw facts and prevent a second backfill.
 
 Release evidence requires the actual 100M immutable S3 dataset, model artifact, dedicated Cloud ingestion/CDC/approval/outcome/telemetry rehearsal, sustained observed throughput and sizing, actual managed-agent identity and six conversation cases, Windows WSL2, and pacing/cost observations. Local fixtures and mocked browser screenshots are not substitutes. Keep missing evidence explicit in maintainer reports, never as internal status prose in learner steps.
+
+## Three-hour stock-capacity rehearsal
+
+Run `PYTHONPATH="$PWD:$PWD/app/backend" .venv/bin/python scripts/rehearse-retail-capacity.py` from the kit directory. It uses the actual deterministic transaction generator, the published opening-stock formula, the two-minute 100,000/minute burst followed by 10,000/minute, and a district-1 demand reduction after minute 20. The 180-business-minute run verifies nonnegative stock, unit conservation, and remaining stocked products. It writes `reports/retail-three-hour-capacity.json`. This is generator capacity evidence; it does not claim three wall-clock hours of Cloud throughput.

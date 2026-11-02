@@ -38,7 +38,7 @@ class RetailSource:
         with self.ledger.connect() as conn:
             conn.execute((LAB_ROOT / 'sql/postgres/003_retail.sql').read_text())
 
-    def initialize(self, manifest_uri):
+    def initialize(self, manifest_uri, *, new_run=False):
         from urllib.parse import urljoin
         import io
         manifest, root = resolve_manifest(manifest_uri, expected_version='retail-chain-v2')
@@ -50,13 +50,17 @@ class RetailSource:
         inventory = read('inventory.parquet')
         with self.ledger.connect() as conn:
             conn.execute('SELECT pg_advisory_xact_lock(84927641)')
+            if new_run and not conn.execute('SELECT pg_try_advisory_xact_lock(84927642) locked').fetchone()['locked']:
+                raise ValueError('Stop the writer process before starting a fresh retail scenario.')
             existing = conn.execute('SELECT run_id,manifest_digest FROM pricing.retail_runs ORDER BY created_at DESC LIMIT 1').fetchone()
             if existing:
                 if existing['manifest_digest'] != digest:
                     raise ValueError('A different retail dataset is active.')
-                return existing['run_id']
+                if not new_run:
+                    return existing['run_id']
+                conn.execute("UPDATE pricing.retail_runs SET status='stopped' WHERE run_id=%s",(existing['run_id'],))
             run = uuid4()
-            conn.execute('INSERT INTO pricing.retail_runs(run_id,manifest_digest,logical_end,seed) VALUES (%s,%s,%s,%s)',
+            conn.execute('INSERT INTO pricing.retail_runs(run_id,manifest_digest,logical_end,seed,created_at) VALUES (%s,%s,%s,%s,clock_timestamp())',
                          (run,digest,manifest['history_cutover'],manifest['seed']+200000))
             columns = 'run_id,store_id,district_id,sku,stock_units,expires_at,current_price_minor,unit_cost_minor,selling_cost_minor,disposal_cost_minor,permitted_prices_minor,inventory_version,price_version,rule_version'
             with conn.cursor().copy(f'COPY pricing.retail_state({columns}) FROM STDIN') as copy:

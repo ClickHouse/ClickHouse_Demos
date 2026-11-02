@@ -13,7 +13,9 @@ bash scripts/setup-cloud.sh
 .venv/bin/workshop retail-create-rollup
 ```
 
-The SQL-console lessons provide equivalent manual import and aggregate paths. `retail-register-history` and `retail-register-rollup` verify that work without inserting the same facts again. Start the Docker workbench and separate writer with the commands in Modules 01 and 02.
+The SQL-console lessons provide equivalent manual import and aggregate paths. `retail-register-history` and `retail-register-rollup` verify that work without inserting the same facts again. Start the Docker workbench and separate writer with the commands in Modules 01 and 02. The writer targets 100,000 transactions/minute for its first two business minutes, then 10,000/minute automatically, for a 180-business-minute run. Restarts preserve the clock and do not repeat a completed burst.
+
+For another workshop session, stop the writer and run `.venv/bin/workshop retail-initialize --new-run`. This restores opening stock in a new live scenario while preserving historical data, aggregates, and earlier runs.
 
 Create **Retail Pricing Strategist** in managed ClickHouse Agents using the instruction and context files in `agent/`. The agent queries and recommends; you review and approve in the workbench. Inspect the receipt-scoped observed series and ClickStack trace after approval.
 

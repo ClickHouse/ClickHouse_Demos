@@ -148,3 +148,44 @@ def test_stopped_repair_rebuilds_missing_aggregate_from_verified_raw(pipeline):
         delivery.deliver(batch)
     assert delivery.rebuild_rollups(run)['status']=='stopped'
     assert delivery.deliver(batch)['status']=='acknowledged'
+
+
+def test_fresh_run_retains_history_and_old_run(pipeline):
+    source,delivery,old,analytics=pipeline
+    manifest=source.run(old)['manifest_digest']
+    # The initialized test dataset is in the source fixture's sibling directory.
+    uri=(source.spool.parent/'data'/'manifest.json').as_uri()
+    before=analytics.query(f'SELECT count() n FROM {analytics.database}.retail_sales')[0]['n']
+    fresh=source.initialize(uri,new_run=True)
+    assert fresh!=old and source.initialize(uri)==fresh
+    assert source.run(old)['manifest_digest']==manifest
+    assert source.run(fresh)['logical_end']==datetime(2026,1,30,2,tzinfo=UTC)
+    assert len(source.state(fresh))==100000
+    assert all(20<=r['stock_units']<=60 for r in source.state(fresh))
+    assert analytics.query(f'SELECT count() n FROM {analytics.database}.retail_sales')[0]['n']==before
+
+
+def test_fresh_run_refuses_active_writer(pipeline):
+    source,_,old,_=pipeline
+    uri=(source.spool.parent/'data'/'manifest.json').as_uri()
+    with source.ledger.connect() as lock:
+        lock.autocommit=True
+        lock.execute('SELECT pg_advisory_lock(84927642)')
+        try:
+            with pytest.raises(ValueError,match='writer'):
+                source.initialize(uri,new_run=True)
+        finally:lock.execute('SELECT pg_advisory_unlock(84927642)')
+    assert source.initialize(uri)==old
+
+
+def test_fresh_run_is_latest_even_when_transaction_started_earlier(pipeline):
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+    source,_,_,_=pipeline
+    uri=(source.spool.parent/'data'/'manifest.json').as_uri()
+    with source.ledger.connect() as early:
+        early.execute('SELECT 1')
+        source.initialize(uri,new_run=True)
+        delayed=RetailSource(SimpleNamespace(connect=lambda:nullcontext(early)),source.spool)
+        latest=delayed.initialize(uri,new_run=True)
+        assert early.execute('SELECT run_id FROM pricing.retail_runs ORDER BY created_at DESC LIMIT 1').fetchone()['run_id']==latest
