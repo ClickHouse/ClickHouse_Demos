@@ -8,10 +8,10 @@ Local code and curriculum can be reviewed without calling every external gate pa
 - [x] 100M retail dataset generated and independently checked.
 - [x] Prepared model covers 80 groups and passes held-out checks.
 - [x] Separate Cloud service, managed Postgres and operational ClickPipe provisioned.
-- [x] Full 100M direct load, bounded backfill, and exact manual aggregate registration (S3 remains separate).
+- [x] Full 100M direct load, bounded backfill, and exact manual aggregate registration (separate from the S3 load below).
 - [x] Actual Cloud CDC delete/restore and duplicate insert/MV checks.
-- [ ] Immutable S3 publication and anonymous access.
-- [ ] Exact learner S3 SQL load and load duration.
+- [x] Immutable S3 publication and anonymous access; every object verified.
+- [x] Exact learner S3 SQL load and load duration in an isolated Cloud table; original learner tables preserved.
 - [x] Sustained observed rate and raw/aggregate p50/p95 on the full Cloud workload.
 - [ ] Actual managed-agent identity, limits and six conversations.
 - [x] Actual Cloud browser approval, observed sales API, and correlated receipt log in telemetry tables.
