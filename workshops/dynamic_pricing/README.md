@@ -19,7 +19,7 @@ For another workshop session, stop the writer and run `.venv/bin/workshop retail
 
 Module 02 focuses on ingestion and materialized-view performance. Module 03 finds excess stock and compares permitted prices with SQL before opening the workbench. Run `sql/retail/learner_price_comparison.sql` in SQL console after choosing a ready product; change only the selected store and SKU.
 
-Create **Retail Pricing Strategist** in managed ClickHouse Agents using the instruction and context files in `agent/`. The agent queries and recommends; you review and approve in the workbench. Inspect the receipt-scoped observed series and ClickStack trace after approval.
+Create **Retail Pricing Strategist** in managed ClickHouse Agents using the instruction and context files in `agent/`. The agent queries and recommends; you review and approve in the workbench. Inspect the receipt-scoped observed series after approval.
 
 Stop local containers and use `bash scripts/setup-cloud.sh --destroy` to preview cleanup. Add `--execute` only after reviewing the owned resource IDs. This deletes the workshop Cloud data.
 
