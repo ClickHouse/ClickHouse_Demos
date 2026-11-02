@@ -1,0 +1,267 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1193" height="1103" viewBox="0 0 1193 1103" content="&lt;mxfile host=&quot;Electron&quot;&gt;&#10;  &lt;diagram id=&quot;BjjfSJr9AB94KFm3cnYP&quot; name=&quot;pageWithNumber&quot;&gt;&#10;    &lt;mxGraphModel grid=&quot;0&quot; gridSize=&quot;10&quot; guides=&quot;1&quot; tooltips=&quot;1&quot; connect=&quot;1&quot; arrows=&quot;1&quot; fold=&quot;0&quot; page=&quot;0&quot; pageScale=&quot;1&quot; pageWidth=&quot;850&quot; pageHeight=&quot;1100&quot; background=&quot;#161517&quot; math=&quot;0&quot; shadow=&quot;0&quot; adaptiveColors=&quot;none&quot;&gt;&#10;      &lt;root&gt;&#10;        &lt;mxCell id=&quot;0&quot;/&gt;&#10;        &lt;mxCell id=&quot;1&quot; parent=&quot;0&quot;/&gt;&#10;        &lt;mxCell id=&quot;canvas&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#161517;strokeColor=#161517;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;1070&quot; width=&quot;1160&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=28;fontColor=#f5f5f5;fontStyle=1;&quot; value=&quot;Incremental materialized views&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;1096&quot; x=&quot;32&quot; y=&quot;22&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;subtitle&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=18;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;Compute each inserted block once; reuse its aggregate states in later queries.&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;1096&quot; x=&quot;32&quot; y=&quot;70&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;example-scope&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;Example: the district, SKU, minute, run, source, and branch are the same for all four lines.&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;1096&quot; x=&quot;32&quot; y=&quot;114&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;raw&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#27272c;strokeColor=#60616e;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;310&quot; width=&quot;310&quot; x=&quot;32&quot; y=&quot;172&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;raw-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=21;fontColor=#f5f5f5;fontStyle=1;&quot; value=&quot;Raw sales&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;270&quot; x=&quot;52&quot; y=&quot;188&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;raw-table&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;pricing.retail_sales&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;270&quot; x=&quot;52&quot; y=&quot;229&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;block-a&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=17;fontColor=#f5f5f5;fontStyle=0;&quot; value=&quot;Insert A: transaction IDs A, B&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;270&quot; x=&quot;52&quot; y=&quot;282&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;block-b&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=17;fontColor=#f5f5f5;fontStyle=0;&quot; value=&quot;Insert B: transaction IDs A, C&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;270&quot; x=&quot;52&quot; y=&quot;326&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;raw-lines&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=18;fontColor=#f5f5f5;fontStyle=1;&quot; value=&quot;4 different sale lines&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;270&quot; x=&quot;52&quot; y=&quot;390&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;raw-price&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;Each line: 1 unit at SGD 8&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;270&quot; x=&quot;52&quot; y=&quot;432&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;mv&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#27272c;strokeColor=#86d7c7;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;310&quot; width=&quot;300&quot; x=&quot;412&quot; y=&quot;172&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;mv-header&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#faff69;strokeColor=#60616e;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;86&quot; width=&quot;300&quot; x=&quot;412&quot; y=&quot;172&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;mv-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=21;fontColor=#20232b;fontStyle=1;&quot; value=&quot;Incremental MV&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;260&quot; x=&quot;432&quot; y=&quot;188&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;mv-time&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#20232b;fontStyle=0;&quot; value=&quot;Runs at insert time&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;24&quot; width=&quot;260&quot; x=&quot;432&quot; y=&quot;228&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;mv-group-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=18;fontColor=#f5f5f5;fontStyle=1;&quot; value=&quot;Group each new block&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;260&quot; x=&quot;432&quot; y=&quot;281&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;mv-group&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=17;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;District + SKU + minute&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;260&quot; x=&quot;432&quot; y=&quot;320&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;mv-sum&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=18;fontColor=#86d7c7;fontStyle=1;&quot; value=&quot;sumState(...)&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;260&quot; x=&quot;432&quot; y=&quot;374&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;mv-uniq&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=18;fontColor=#86d7c7;fontStyle=1;&quot; value=&quot;uniqExactState(...)&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;260&quot; x=&quot;432&quot; y=&quot;421&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;target&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#27272c;strokeColor=#86d7c7;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;310&quot; width=&quot;346&quot; x=&quot;782&quot; y=&quot;172&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;target-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=21;fontColor=#f5f5f5;fontStyle=1;&quot; value=&quot;Aggregate target table&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;306&quot; x=&quot;802&quot; y=&quot;188&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;target-name&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;pricing.retail_district_minute&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;306&quot; x=&quot;802&quot; y=&quot;229&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;state-a&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=17;fontColor=#f5f5f5;fontStyle=0;&quot; value=&quot;A: units 2 · receipts SGD 16&amp;#10;Transaction IDs {A, B}&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;52&quot; width=&quot;306&quot; x=&quot;802&quot; y=&quot;282&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;state-b&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=17;fontColor=#f5f5f5;fontStyle=0;&quot; value=&quot;B: units 2 · receipts SGD 16&amp;#10;Transaction IDs {A, C}&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;52&quot; width=&quot;306&quot; x=&quot;802&quot; y=&quot;357&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;state-note&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=15;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;State contents shown conceptually&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;306&quot; x=&quot;802&quot; y=&quot;440&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;new-block&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;raw&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endSize=8;strokeWidth=1.6;strokeColor=#a7afbf;fontFamily=Helvetica;fontSize=15;fontColor=#b9bec9;labelBackgroundColor=#1e1e22;exitX=1;exitY=0.35;entryX=0;entryY=0.35;&quot; target=&quot;mv&quot; value=&quot;Insert&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;save-state&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;mv&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endSize=8;strokeWidth=1.6;strokeColor=#a7afbf;fontFamily=Helvetica;fontSize=15;fontColor=#b9bec9;labelBackgroundColor=#1e1e22;exitX=1;exitY=0.35;entryX=0;entryY=0.35;&quot; target=&quot;target&quot; value=&quot;States&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;backfill&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;raw&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endSize=8;strokeWidth=1.6;strokeColor=#a7afbf;fontFamily=Helvetica;fontSize=15;fontColor=#b9bec9;labelBackgroundColor=#1e1e22;exitX=1;exitY=0.9;entryX=0.5;entryY=1;dashed=1;dashPattern=5 4;strokeColor=#86d7c7;fontColor=#86d7c7;labelBackgroundColor=#161517;&quot; target=&quot;target&quot; value=&quot;Existing history: backfill once (step 2)&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;&gt;&#10;            &lt;Array as=&quot;points&quot;&gt;&#10;              &lt;mxPoint x=&quot;376&quot; y=&quot;451&quot;/&gt;&#10;              &lt;mxPoint x=&quot;376&quot; y=&quot;534&quot;/&gt;&#10;              &lt;mxPoint x=&quot;955&quot; y=&quot;534&quot;/&gt;&#10;            &lt;/Array&gt;&#10;          &lt;/mxGeometry&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;raw-query&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#1e1e22;strokeColor=#60616e;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;180&quot; width=&quot;480&quot; x=&quot;32&quot; y=&quot;604&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;raw-query-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=21;fontColor=#f5f5f5;fontStyle=1;&quot; value=&quot;Without pre-aggregation&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;440&quot; x=&quot;52&quot; y=&quot;621&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;raw-query-code&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=17;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;sum(quantity) · sum(receipts_minor)&amp;#10;uniqExact(transaction_id)&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;54&quot; width=&quot;440&quot; x=&quot;52&quot; y=&quot;670&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;raw-query-work&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;Read and group transaction lines again&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;440&quot; x=&quot;52&quot; y=&quot;748&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;merge-query&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#1e1e22;strokeColor=#60616e;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;180&quot; width=&quot;480&quot; x=&quot;648&quot; y=&quot;604&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;merge-query-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=21;fontColor=#f5f5f5;fontStyle=1;&quot; value=&quot;With pre-aggregation&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;440&quot; x=&quot;668&quot; y=&quot;621&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;merge-query-code&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;sumMerge(units_state) · sumMerge(receipts_state)&amp;#10;uniqExactMerge(transactions_state)&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;54&quot; width=&quot;440&quot; x=&quot;668&quot; y=&quot;670&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;merge-query-work&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;Combine stored states at query time&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;440&quot; x=&quot;668&quot; y=&quot;748&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;read-raw&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;raw&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endSize=8;strokeWidth=1.6;strokeColor=#a7afbf;fontFamily=Helvetica;fontSize=15;fontColor=#b9bec9;labelBackgroundColor=#1e1e22;exitX=0.3;exitY=1;entryX=0.2;entryY=0;&quot; target=&quot;raw-query&quot; value=&quot;&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;read-states&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;target&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endSize=8;strokeWidth=1.6;strokeColor=#a7afbf;fontFamily=Helvetica;fontSize=15;fontColor=#b9bec9;labelBackgroundColor=#1e1e22;exitX=0.9;exitY=1;entryX=0.85;entryY=0;&quot; target=&quot;merge-query&quot; value=&quot;&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;result&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#faff69;strokeColor=#60616e;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;104&quot; width=&quot;408&quot; x=&quot;376&quot; y=&quot;862&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;result-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=22;fontColor=#20232b;fontStyle=1;&quot; value=&quot;Same exact result&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;368&quot; x=&quot;396&quot; y=&quot;878&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;result-values&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=20;fontColor=#20232b;fontStyle=0;&quot; value=&quot;4 units · SGD 32 · 3 transactions&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;368&quot; x=&quot;396&quot; y=&quot;923&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;raw-result&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;raw-query&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endSize=8;strokeWidth=1.6;strokeColor=#a7afbf;fontFamily=Helvetica;fontSize=15;fontColor=#b9bec9;labelBackgroundColor=#1e1e22;exitX=0.5;exitY=1;entryX=0;entryY=0.5;&quot; target=&quot;result&quot; value=&quot;&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;&gt;&#10;            &lt;Array as=&quot;points&quot;&gt;&#10;              &lt;mxPoint x=&quot;272&quot; y=&quot;914&quot;/&gt;&#10;            &lt;/Array&gt;&#10;          &lt;/mxGeometry&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;merge-result&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;merge-query&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endSize=8;strokeWidth=1.6;strokeColor=#a7afbf;fontFamily=Helvetica;fontSize=15;fontColor=#b9bec9;labelBackgroundColor=#1e1e22;exitX=0.5;exitY=1;entryX=1;entryY=0.5;&quot; target=&quot;result&quot; value=&quot;&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;&gt;&#10;            &lt;Array as=&quot;points&quot;&gt;&#10;              &lt;mxPoint x=&quot;888&quot; y=&quot;914&quot;/&gt;&#10;            &lt;/Array&gt;&#10;          &lt;/mxGeometry&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;merge-note&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;The target uses AggregatingMergeTree. Query with -Merge; do not wait for background merges.&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;1096&quot; x=&quot;32&quot; y=&quot;997&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;grains&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;District/SKU/minute supports chain analysis. Add store_id for the store-level pricing aggregate.&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;1096&quot; x=&quot;32&quot; y=&quot;1033&quot; as=&quot;geometry&quot;/&gt;&#10;        &lt;/mxCell&gt;&#10;      &lt;/root&gt;&#10;    &lt;/mxGraphModel&gt;&#10;  &lt;/diagram&gt;&#10;&lt;/mxfile&gt;" role="img" aria-labelledby="architecture-title architecture-description">
+  <title id="architecture-title">Incremental materialized views turn inserted sales blocks into reusable aggregate states</title>
+  <desc id="architecture-description">Two insert blocks contain four distinct sales lines, each for one unit at SGD 8, with transaction IDs A and B in the first block and A and C in the second. An incremental materialized view computes State aggregates for each new block into an AggregatingMergeTree target. Raw queries regroup the four lines; aggregate queries Merge the stored states. Both return four units, SGD 32, and three distinct transactions. Existing history requires a separate one-time backfill; queries need not wait for background merges.</desc>
+  <defs/>
+  <rect fill="#161517" width="100%" height="100%" x="0" y="0"/>
+  <g>
+    <g data-cell-id="0">
+      <g data-cell-id="1">
+        <g data-cell-id="canvas">
+          <g transform="translate(0.5,0.5)">
+            <rect x="10" y="10" width="1160" height="1070" rx="85.6" ry="85.6" fill="#161517" stroke="#161517" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="title">
+          <text x="44.0" y="62.5" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="28.0" font-weight="600">
+            <tspan x="44.0" dy="0">Incremental materialized views</tspan>
+          </text>
+        </g>
+        <g data-cell-id="subtitle">
+          <text x="44.0" y="101.75" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="400">
+            <tspan x="44.0" dy="0">Compute each inserted block once; reuse its aggregate states in later queries.</tspan>
+          </text>
+        </g>
+        <g data-cell-id="example-scope">
+          <text x="44.0" y="144.0" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="44.0" dy="0">Example: the district, SKU, minute, run, source, and branch are the same for all four lines.</tspan>
+          </text>
+        </g>
+        <g data-cell-id="raw">
+          <g transform="translate(0.5,0.5)">
+            <rect x="42" y="182" width="310" height="310" rx="24.8" ry="24.8" fill="#27272c" stroke="#60616e" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="raw-title">
+          <text x="64.0" y="220.875" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="21.0" font-weight="600">
+            <tspan x="64.0" dy="0">Raw sales</tspan>
+          </text>
+        </g>
+        <g data-cell-id="raw-table">
+          <text x="64.0" y="258.0" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="64.0" dy="0">pricing.retail_sales</tspan>
+          </text>
+        </g>
+        <g data-cell-id="block-a">
+          <text x="64.0" y="312.375" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="17.0" font-weight="400">
+            <tspan x="64.0" dy="0">Insert A: transaction IDs A, B</tspan>
+          </text>
+        </g>
+        <g data-cell-id="block-b">
+          <text x="64.0" y="356.375" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="17.0" font-weight="400">
+            <tspan x="64.0" dy="0">Insert B: transaction IDs A, C</tspan>
+          </text>
+        </g>
+        <g data-cell-id="raw-lines">
+          <text x="64.0" y="420.75" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="600">
+            <tspan x="64.0" dy="0">4 different sale lines</tspan>
+          </text>
+        </g>
+        <g data-cell-id="raw-price">
+          <text x="64.0" y="461.0" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="64.0" dy="0">Each line: 1 unit at SGD 8</tspan>
+          </text>
+        </g>
+        <g data-cell-id="mv">
+          <g transform="translate(0.5,0.5)">
+            <rect x="422" y="182" width="300" height="310" rx="24" ry="24" fill="#27272c" stroke="#86d7c7" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="mv-header">
+          <g transform="translate(0.5,0.5)">
+            <rect x="422" y="182" width="300" height="86" rx="6.88" ry="6.88" fill="#faff69" stroke="#60616e" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="mv-title">
+          <text x="444.0" y="220.875" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="21.0" font-weight="600">
+            <tspan x="444.0" dy="0">Incremental MV</tspan>
+          </text>
+        </g>
+        <g data-cell-id="mv-time">
+          <text x="444.0" y="256.0" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="444.0" dy="0">Runs at insert time</tspan>
+          </text>
+        </g>
+        <g data-cell-id="mv-group-title">
+          <text x="444.0" y="311.75" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="600">
+            <tspan x="444.0" dy="0">Group each new block</tspan>
+          </text>
+        </g>
+        <g data-cell-id="mv-group">
+          <text x="444.0" y="350.375" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="17.0" font-weight="400">
+            <tspan x="444.0" dy="0">District + SKU + minute</tspan>
+          </text>
+        </g>
+        <g data-cell-id="mv-sum">
+          <text x="444.0" y="404.75" fill="#86d7c7" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="600">
+            <tspan x="444.0" dy="0">sumState(...)</tspan>
+          </text>
+        </g>
+        <g data-cell-id="mv-uniq">
+          <text x="444.0" y="451.75" fill="#86d7c7" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="600">
+            <tspan x="444.0" dy="0">uniqExactState(...)</tspan>
+          </text>
+        </g>
+        <g data-cell-id="target">
+          <g transform="translate(0.5,0.5)">
+            <rect x="792" y="182" width="346" height="310" rx="24.8" ry="24.8" fill="#27272c" stroke="#86d7c7" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="target-title">
+          <text x="814.0" y="220.875" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="21.0" font-weight="600">
+            <tspan x="814.0" dy="0">Aggregate target table</tspan>
+          </text>
+        </g>
+        <g data-cell-id="target-name">
+          <text x="814.0" y="258.0" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="814.0" dy="0">pricing.retail_district_minute</tspan>
+          </text>
+        </g>
+        <g data-cell-id="state-a">
+          <text x="814.0" y="313.75" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="17.0" font-weight="400">
+            <tspan x="814.0" dy="0">A: units 2 · receipts SGD 16</tspan>
+            <tspan x="814.0" dy="21.25">Transaction IDs {A, B}</tspan>
+          </text>
+        </g>
+        <g data-cell-id="state-b">
+          <text x="814.0" y="388.75" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="17.0" font-weight="400">
+            <tspan x="814.0" dy="0">B: units 2 · receipts SGD 16</tspan>
+            <tspan x="814.0" dy="21.25">Transaction IDs {A, C}</tspan>
+          </text>
+        </g>
+        <g data-cell-id="state-note">
+          <text x="814.0" y="468.625" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="15.0" font-weight="400">
+            <tspan x="814.0" dy="0">State contents shown conceptually</tspan>
+          </text>
+        </g>
+        <g data-cell-id="new-block">
+          <g>
+            <path d="M 352 290.5 L 410.61 290.5" fill="none" stroke="#a7afbf" stroke-width="1.6" stroke-miterlimit="10" pointer-events="stroke"/>
+            <path d="M 420.21 290.5 L 410.61 295.3 L 410.61 285.7 Z" fill="#a7afbf" stroke="#a7afbf" stroke-width="1.6" stroke-miterlimit="10" pointer-events="all"/>
+          </g>
+          <g>
+            <g fill="#b9bec9" font-family="Helvetica" text-anchor="middle" font-size="15px">
+              <rect fill="#1e1e22" stroke="none" x="366.0" y="282" width="42" height="19" stroke-width="0"/>
+              <text x="387" y="297">Insert</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="save-state">
+          <g>
+            <path d="M 722 290.5 L 780.61 290.5" fill="none" stroke="#a7afbf" stroke-width="1.6" stroke-miterlimit="10" pointer-events="stroke"/>
+            <path d="M 790.21 290.5 L 780.61 295.3 L 780.61 285.7 Z" fill="#a7afbf" stroke="#a7afbf" stroke-width="1.6" stroke-miterlimit="10" pointer-events="all"/>
+          </g>
+          <g>
+            <g fill="#b9bec9" font-family="Helvetica" text-anchor="middle" font-size="15px">
+              <rect fill="#1e1e22" stroke="none" x="735" y="282" width="45" height="19" stroke-width="0"/>
+              <text x="757" y="297">States</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="backfill">
+          <g>
+            <path d="M 352 461 L 380 461 Q 386 461 386 467 L 386 538 Q 386 544 392 544 L 959 544 Q 965 544 965 538 L 965 503.39" fill="none" stroke="#86d7c7" stroke-width="1.6" stroke-miterlimit="10" stroke-dasharray="8 6.4" pointer-events="stroke"/>
+            <path d="M 965 493.79 L 969.8 503.39 L 960.2 503.39 Z" fill="#86d7c7" stroke="#86d7c7" stroke-width="1.6" stroke-miterlimit="10" pointer-events="all"/>
+          </g>
+          <g>
+            <g fill="#86d7c7" font-family="Helvetica" text-anchor="middle" font-size="15px">
+              <rect fill="#161517" stroke="none" x="519" y="536" width="249" height="19" stroke-width="0"/>
+              <text x="643" y="550.5">Existing history: backfill once (step 2)</text>
+            </g>
+          </g>
+        </g>
+        <g data-cell-id="raw-query">
+          <g transform="translate(0.5,0.5)">
+            <rect x="42" y="614" width="480" height="180" rx="14.4" ry="14.4" fill="#1e1e22" stroke="#60616e" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="raw-query-title">
+          <text x="64.0" y="653.875" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="21.0" font-weight="600">
+            <tspan x="64.0" dy="0">Without pre-aggregation</tspan>
+          </text>
+        </g>
+        <g data-cell-id="raw-query-code">
+          <text x="64.0" y="702.75" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="17.0" font-weight="400">
+            <tspan x="64.0" dy="0">sum(quantity) · sum(receipts_minor)</tspan>
+            <tspan x="64.0" dy="21.25">uniqExact(transaction_id)</tspan>
+          </text>
+        </g>
+        <g data-cell-id="raw-query-work">
+          <text x="64.0" y="777.0" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="64.0" dy="0">Read and group transaction lines again</tspan>
+          </text>
+        </g>
+        <g data-cell-id="merge-query">
+          <g transform="translate(0.5,0.5)">
+            <rect x="658" y="614" width="480" height="180" rx="14.4" ry="14.4" fill="#1e1e22" stroke="#60616e" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="merge-query-title">
+          <text x="680.0" y="653.875" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="21.0" font-weight="600">
+            <tspan x="680.0" dy="0">With pre-aggregation</tspan>
+          </text>
+        </g>
+        <g data-cell-id="merge-query-code">
+          <text x="680.0" y="703.0" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="680.0" dy="0">sumMerge(units_state) · sumMerge(receipts_state)</tspan>
+            <tspan x="680.0" dy="20.0">uniqExactMerge(transactions_state)</tspan>
+          </text>
+        </g>
+        <g data-cell-id="merge-query-work">
+          <text x="680.0" y="777.0" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="680.0" dy="0">Combine stored states at query time</tspan>
+          </text>
+        </g>
+        <g data-cell-id="read-raw">
+          <g>
+            <path d="M 135 492 L 135 547 Q 135 553 136.5 553 L 137.25 553 Q 138 553 138 559 L 138 602.61" fill="none" stroke="#a7afbf" stroke-width="1.6" stroke-miterlimit="10" pointer-events="stroke"/>
+            <path d="M 138 612.21 L 133.2 602.61 L 142.8 602.61 Z" fill="#a7afbf" stroke="#a7afbf" stroke-width="1.6" stroke-miterlimit="10" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="read-states">
+          <g>
+            <path d="M 1103.4 492 L 1103.4 547 Q 1103.4 553 1097.4 553 L 1072 553 Q 1066 553 1066 559 L 1066 602.61" fill="none" stroke="#a7afbf" stroke-width="1.6" stroke-miterlimit="10" pointer-events="stroke"/>
+            <path d="M 1066 612.21 L 1061.2 602.61 L 1070.8 602.61 Z" fill="#a7afbf" stroke="#a7afbf" stroke-width="1.6" stroke-miterlimit="10" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="result">
+          <g transform="translate(0.5,0.5)">
+            <rect x="386" y="872" width="408" height="104" rx="8.32" ry="8.32" fill="#faff69" stroke="#60616e" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="result-title">
+          <text x="408.0" y="911.25" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="22.0" font-weight="600">
+            <tspan x="408.0" dy="0">Same exact result</tspan>
+          </text>
+        </g>
+        <g data-cell-id="result-values">
+          <text x="408.0" y="954.5" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="20.0" font-weight="400">
+            <tspan x="408.0" dy="0">4 units · SGD 32 · 3 transactions</tspan>
+          </text>
+        </g>
+        <g data-cell-id="raw-result">
+          <g>
+            <path d="M 282 794 L 282 918 Q 282 924 288 924 L 374.61 924" fill="none" stroke="#a7afbf" stroke-width="1.6" stroke-miterlimit="10" pointer-events="stroke"/>
+            <path d="M 384.21 924 L 374.61 928.8 L 374.61 919.2 Z" fill="#a7afbf" stroke="#a7afbf" stroke-width="1.6" stroke-miterlimit="10" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="merge-result">
+          <g>
+            <path d="M 898 794 L 898 918 Q 898 924 892 924 L 805.39 924" fill="none" stroke="#a7afbf" stroke-width="1.6" stroke-miterlimit="10" pointer-events="stroke"/>
+            <path d="M 795.79 924 L 805.39 919.2 L 805.39 928.8 Z" fill="#a7afbf" stroke="#a7afbf" stroke-width="1.6" stroke-miterlimit="10" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="merge-note">
+          <text x="44.0" y="1027.0" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="44.0" dy="0">The target uses AggregatingMergeTree. Query with -Merge; do not wait for background merges.</tspan>
+          </text>
+        </g>
+        <g data-cell-id="grains">
+          <text x="44.0" y="1063.0" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="44.0" dy="0">District/SKU/minute supports chain analysis. Add store_id for the store-level pricing aggregate.</tspan>
+          </text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

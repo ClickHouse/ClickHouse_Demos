@@ -1,0 +1,248 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1193" height="993" viewBox="0 0 1193 993" content="&lt;mxfile host=&quot;Electron&quot;&gt;&#10;  &lt;diagram id=&quot;HWyPKOPjXniyrlN-Rz9o&quot; name=&quot;pageWithNumber&quot;&gt;&#10;    &lt;mxGraphModel grid=&quot;0&quot; gridSize=&quot;10&quot; guides=&quot;1&quot; tooltips=&quot;1&quot; connect=&quot;1&quot; arrows=&quot;1&quot; fold=&quot;0&quot; page=&quot;0&quot; pageScale=&quot;1&quot; pageWidth=&quot;850&quot; pageHeight=&quot;1100&quot; background=&quot;#ffffff&quot; math=&quot;0&quot; shadow=&quot;0&quot; adaptiveColors=&quot;none&quot;&gt;&#10;      &lt;root&gt;&#10;        &lt;mxCell id=&quot;0&quot; /&gt;&#10;        &lt;mxCell id=&quot;1&quot; parent=&quot;0&quot; /&gt;&#10;        &lt;mxCell id=&quot;canvas&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#ffffff;strokeColor=#ffffff;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;960&quot; width=&quot;1160&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;heading&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=28;fontColor=#20232b;fontStyle=1;&quot; value=&quot;What setup creates&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;900&quot; x=&quot;32&quot; y=&quot;24&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;cmd&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=20;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;bash scripts/setup-cloud.sh&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;32&quot; width=&quot;1090&quot; x=&quot;32&quot; y=&quot;72&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;boundary&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#f6f7fa;strokeColor=#c0c5cf;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;542&quot; width=&quot;1096&quot; x=&quot;32&quot; y=&quot;138&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;boundary-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=14;fontColor=#515b6b;fontStyle=1;&quot; value=&quot;YOUR CLOUD ORGANIZATION&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;680&quot; x=&quot;56&quot; y=&quot;157&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;region&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;AWS · Singapore by default · dedicated to your workshop&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;1000&quot; x=&quot;56&quot; y=&quot;188&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pg&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#ffffff;strokeColor=#197568;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;402&quot; width=&quot;310&quot; x=&quot;56&quot; y=&quot;247&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pg-num&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=20;fontColor=#197568;fontStyle=1;&quot; value=&quot;1&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;30&quot; x=&quot;76&quot; y=&quot;265&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pg-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=21;fontColor=#20232b;fontStyle=1;&quot; value=&quot;Managed Postgres&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;234&quot; x=&quot;110&quot; y=&quot;265&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pg-sub&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;PostgreSQL 17 · no HA&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;270&quot; x=&quot;76&quot; y=&quot;304&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pg-schema&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=18;fontColor=#20232b;fontStyle=1;&quot; value=&quot;pricing schema&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;270&quot; x=&quot;76&quot; y=&quot;352&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pg-tables&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;Workshop tables, including:&amp;#xa;Runs · batches · inventory&amp;#xa;Prices · policies · receipts&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;72&quot; width=&quot;270&quot; x=&quot;76&quot; y=&quot;387&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pg-roles&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;pricing_app  ·  application role&amp;#xa;pricing_cdc  ·  replication role&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;48&quot; width=&quot;270&quot; x=&quot;76&quot; y=&quot;483&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pg-pub-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=17;fontColor=#20232b;fontStyle=1;&quot; value=&quot;Six-table publication&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;24&quot; width=&quot;270&quot; x=&quot;76&quot; y=&quot;561&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pg-pub&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;pricing_retail&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;24&quot; width=&quot;270&quot; x=&quot;76&quot; y=&quot;596&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pipe&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#ffffff;strokeColor=#197568;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;402&quot; width=&quot;260&quot; x=&quot;406&quot; y=&quot;247&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pipe-num&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=20;fontColor=#197568;fontStyle=1;&quot; value=&quot;2&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;30&quot; x=&quot;426&quot; y=&quot;265&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pipe-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=21;fontColor=#20232b;fontStyle=1;&quot; value=&quot;CDC ClickPipe&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;186&quot; x=&quot;460&quot; y=&quot;265&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pipe-sub&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;Postgres → ClickHouse&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;220&quot; x=&quot;426&quot; y=&quot;304&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pipe-list&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;Initial snapshot + CDC&amp;#xa;Six table mappings&amp;#xa;10-second sync interval&amp;#xa;Verified source TLS&amp;#xa;NULLs and deletes preserved&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;150&quot; width=&quot;220&quot; x=&quot;426&quot; y=&quot;364&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pipe-target&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=17;fontColor=#20232b;fontStyle=1;&quot; value=&quot;Destination: pricing&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;220&quot; x=&quot;426&quot; y=&quot;561&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pipe-engine&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=15;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;ReplacingMergeTree tables&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;24&quot; width=&quot;220&quot; x=&quot;426&quot; y=&quot;599&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;ch&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#ffffff;strokeColor=#c0c5cf;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;402&quot; width=&quot;398&quot; x=&quot;706&quot; y=&quot;247&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;ch-header&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#faff69;strokeColor=#c0c5cf;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;88&quot; width=&quot;398&quot; x=&quot;706&quot; y=&quot;247&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;ch-num&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=20;fontColor=#20232b;fontStyle=1;&quot; value=&quot;3&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;30&quot; x=&quot;726&quot; y=&quot;263&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;ch-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=21;fontColor=#20232b;fontStyle=1;&quot; value=&quot;ClickHouse Cloud service&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;30&quot; width=&quot;324&quot; x=&quot;760&quot; y=&quot;263&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;ch-replica&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#20232b;fontStyle=0;&quot; value=&quot;1 replica · your public IPv4 /32&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;24&quot; width=&quot;358&quot; x=&quot;726&quot; y=&quot;301&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pricing-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=18;fontColor=#20232b;fontStyle=1;&quot; value=&quot;pricing database&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;358&quot; x=&quot;726&quot; y=&quot;357&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pricing-list&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;Empty sales and dimension/model tables&amp;#xa;Six CDC destination tables&amp;#xa;Canonical CDC and outcome views&amp;#xa;Read-only agent role + query limits&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;110&quot; width=&quot;358&quot; x=&quot;726&quot; y=&quot;393&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;otel-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=18;fontColor=#20232b;fontStyle=1;&quot; value=&quot;otel database&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;358&quot; x=&quot;726&quot; y=&quot;553&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;otel-sub&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;Ready for the telemetry collector later&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;358&quot; x=&quot;726&quot; y=&quot;591&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pg-to-pipe&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;pg&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endSize=8;strokeWidth=1.6;strokeColor=#667085;fontFamily=Helvetica;fontSize=15;fontColor=#515b6b;labelBackgroundColor=#f6f7fa;exitX=1;exitY=0.5;entryX=0;entryY=0.5;&quot; target=&quot;pipe&quot; value=&quot;&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;pipe-to-ch&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;pipe&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=1;arcSize=12;html=0;endArrow=block;endSize=8;strokeWidth=1.6;strokeColor=#667085;fontFamily=Helvetica;fontSize=15;fontColor=#515b6b;labelBackgroundColor=#f6f7fa;exitX=1;exitY=0.5;entryX=0;entryY=0.5;&quot; target=&quot;ch&quot; value=&quot;&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;local-label&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=14;fontColor=#515b6b;fontStyle=1;&quot; value=&quot;SAVED PRIVATELY ON YOUR LAPTOP&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;28&quot; width=&quot;1096&quot; x=&quot;32&quot; y=&quot;711&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;env&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#f6f7fa;strokeColor=#c0c5cf;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;116&quot; width=&quot;348&quot; x=&quot;32&quot; y=&quot;754&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;env-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=18;fontColor=#20232b;fontStyle=1;&quot; value=&quot;app/.env.workshop&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;312&quot; x=&quot;50&quot; y=&quot;771&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;env-sub&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;Cloud endpoints and passwords&amp;#xa;Installation ID and session secret&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;44&quot; width=&quot;312&quot; x=&quot;50&quot; y=&quot;808&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;inventory&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#f6f7fa;strokeColor=#c0c5cf;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;116&quot; width=&quot;348&quot; x=&quot;404&quot; y=&quot;754&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;inventory-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=18;fontColor=#20232b;fontStyle=1;&quot; value=&quot;infra/resources.json&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;312&quot; x=&quot;422&quot; y=&quot;771&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;inventory-sub&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;Three resource IDs&amp;#xa;Ownership, organization, and region&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;44&quot; width=&quot;312&quot; x=&quot;422&quot; y=&quot;808&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;ca&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=8;fillColor=#f6f7fa;strokeColor=#c0c5cf;strokeWidth=1.4;html=0;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;116&quot; width=&quot;352&quot; x=&quot;776&quot; y=&quot;754&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;ca-title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=18;fontColor=#20232b;fontStyle=1;&quot; value=&quot;Managed Postgres CA&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;26&quot; width=&quot;316&quot; x=&quot;794&quot; y=&quot;771&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;ca-sub&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;Certificate for TLS verification&amp;#xa;Used with sslmode=verify-full&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;44&quot; width=&quot;316&quot; x=&quot;794&quot; y=&quot;808&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;next&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#515b6b;fontStyle=0;&quot; value=&quot;Next: load history, build aggregates, and start sales. Create your managed agent in Module 05.&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;40&quot; width=&quot;1096&quot; x=&quot;32&quot; y=&quot;903&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;      &lt;/root&gt;&#10;    &lt;/mxGraphModel&gt;&#10;  &lt;/diagram&gt;&#10;&lt;/mxfile&gt;&#10;" role="img" aria-labelledby="architecture-title architecture-description">
+  <title id="architecture-title">Resources created by workshop Cloud setup</title>
+  <desc id="architecture-description">The setup script creates a Managed Postgres instance, a six-table Postgres CDC ClickPipe, and a one-replica ClickHouse Cloud service. It configures source roles and a publication, pricing and otel databases, CDC destination tables and canonical views, and a read-only agent role. It saves endpoints and credentials, resource IDs, and the TLS CA certificate privately on the learner laptop.</desc>
+  <defs/>
+  <rect fill="#ffffff" width="100%" height="100%" x="0" y="0"/>
+  <g>
+    <g data-cell-id="0">
+      <g data-cell-id="1">
+        <g data-cell-id="canvas">
+          <g transform="translate(0.5,0.5)">
+            <rect x="10" y="10" width="1160" height="960" rx="76.8" ry="76.8" fill="#ffffff" stroke="#ffffff" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="heading">
+          <text x="44.0" y="64.5" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="28.0" font-weight="600">
+            <tspan x="44.0" dy="0">What setup creates</tspan>
+          </text>
+        </g>
+        <g data-cell-id="cmd">
+          <text x="44.0" y="105.5" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="20.0" font-weight="400">
+            <tspan x="44.0" dy="0">bash scripts/setup-cloud.sh</tspan>
+          </text>
+        </g>
+        <g data-cell-id="boundary">
+          <g transform="translate(0.5,0.5)">
+            <rect x="42" y="148" width="1096" height="542" rx="43.36" ry="43.36" fill="#f6f7fa" stroke="#c0c5cf" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="boundary-title">
+          <text x="68.0" y="186.25" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="600">
+            <tspan x="68.0" dy="0">YOUR CLOUD ORGANIZATION</tspan>
+          </text>
+        </g>
+        <g data-cell-id="region">
+          <text x="68.0" y="218.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="68.0" dy="0">AWS · Singapore by default · dedicated to your workshop</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pg">
+          <g transform="translate(0.5,0.5)">
+            <rect x="66" y="257" width="310" height="402" rx="24.8" ry="24.8" fill="#ffffff" stroke="#197568" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="pg-num">
+          <text x="88.0" y="296.5" fill="#197568" font-family="Arial, Helvetica, sans-serif" font-size="20.0" font-weight="600">
+            <tspan x="88.0" dy="0">1</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pg-title">
+          <text x="122.0" y="296.875" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="21.0" font-weight="600">
+            <tspan x="122.0" dy="0">Managed Postgres</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pg-sub">
+          <text x="88.0" y="333.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="88.0" dy="0">PostgreSQL 17 · no HA</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pg-schema">
+          <text x="88.0" y="381.75" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="600">
+            <tspan x="88.0" dy="0">pricing schema</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pg-tables">
+          <text x="88.0" y="419.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="88.0" dy="0">Workshop tables, including:</tspan>
+            <tspan x="88.0" dy="20.0">Runs · batches · inventory</tspan>
+            <tspan x="88.0" dy="20.0">Prices · policies · receipts</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pg-roles">
+          <text x="88.0" y="513.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="88.0" dy="0">pricing_app  ·  application role</tspan>
+            <tspan x="88.0" dy="20.0">pricing_cdc  ·  replication role</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pg-pub-title">
+          <text x="88.0" y="589.375" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="17.0" font-weight="600">
+            <tspan x="88.0" dy="0">Six-table publication</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pg-pub">
+          <text x="88.0" y="624.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="88.0" dy="0">pricing_retail</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pipe">
+          <g transform="translate(0.5,0.5)">
+            <rect x="416" y="257" width="260" height="402" rx="20.8" ry="20.8" fill="#ffffff" stroke="#197568" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="pipe-num">
+          <text x="438.0" y="296.5" fill="#197568" font-family="Arial, Helvetica, sans-serif" font-size="20.0" font-weight="600">
+            <tspan x="438.0" dy="0">2</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pipe-title">
+          <text x="472.0" y="296.875" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="21.0" font-weight="600">
+            <tspan x="472.0" dy="0">CDC ClickPipe</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pipe-sub">
+          <text x="438.0" y="333.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="438.0" dy="0">Postgres → ClickHouse</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pipe-list">
+          <text x="438.0" y="415.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="438.0" dy="0">Initial snapshot + CDC</tspan>
+            <tspan x="438.0" dy="20.0">Six table mappings</tspan>
+            <tspan x="438.0" dy="20.0">10-second sync interval</tspan>
+            <tspan x="438.0" dy="20.0">Verified source TLS</tspan>
+            <tspan x="438.0" dy="20.0">NULLs and deletes preserved</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pipe-target">
+          <text x="438.0" y="590.375" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="17.0" font-weight="600">
+            <tspan x="438.0" dy="0">Destination: pricing</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pipe-engine">
+          <text x="438.0" y="626.625" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="15.0" font-weight="400">
+            <tspan x="438.0" dy="0">ReplacingMergeTree tables</tspan>
+          </text>
+        </g>
+        <g data-cell-id="ch">
+          <g transform="translate(0.5,0.5)">
+            <rect x="716" y="257" width="398" height="402" rx="31.84" ry="31.84" fill="#ffffff" stroke="#c0c5cf" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="ch-header">
+          <g transform="translate(0.5,0.5)">
+            <rect x="716" y="257" width="398" height="88" rx="7.04" ry="7.04" fill="#faff69" stroke="#c0c5cf" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="ch-num">
+          <text x="738.0" y="295.5" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="20.0" font-weight="600">
+            <tspan x="738.0" dy="0">3</tspan>
+          </text>
+        </g>
+        <g data-cell-id="ch-title">
+          <text x="772.0" y="295.875" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="21.0" font-weight="600">
+            <tspan x="772.0" dy="0">ClickHouse Cloud service</tspan>
+          </text>
+        </g>
+        <g data-cell-id="ch-replica">
+          <text x="738.0" y="329.0" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="738.0" dy="0">1 replica · your public IPv4 /32</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pricing-title">
+          <text x="738.0" y="386.75" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="600">
+            <tspan x="738.0" dy="0">pricing database</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pricing-list">
+          <text x="738.0" y="434.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="738.0" dy="0">Empty sales and dimension/model tables</tspan>
+            <tspan x="738.0" dy="20.0">Six CDC destination tables</tspan>
+            <tspan x="738.0" dy="20.0">Canonical CDC and outcome views</tspan>
+            <tspan x="738.0" dy="20.0">Read-only agent role + query limits</tspan>
+          </text>
+        </g>
+        <g data-cell-id="otel-title">
+          <text x="738.0" y="582.75" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="600">
+            <tspan x="738.0" dy="0">otel database</tspan>
+          </text>
+        </g>
+        <g data-cell-id="otel-sub">
+          <text x="738.0" y="621.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="738.0" dy="0">Ready for the telemetry collector later</tspan>
+          </text>
+        </g>
+        <g data-cell-id="pg-to-pipe">
+          <g>
+            <path d="M 376 458 L 404.61 458" fill="none" stroke="#667085" stroke-width="1.6" stroke-miterlimit="10" pointer-events="stroke"/>
+            <path d="M 414.21 458 L 404.61 462.8 L 404.61 453.2 Z" fill="#667085" stroke="#667085" stroke-width="1.6" stroke-miterlimit="10" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="pipe-to-ch">
+          <g>
+            <path d="M 676 458 L 704.61 458" fill="none" stroke="#667085" stroke-width="1.6" stroke-miterlimit="10" pointer-events="stroke"/>
+            <path d="M 714.21 458 L 704.61 462.8 L 704.61 453.2 Z" fill="#667085" stroke="#667085" stroke-width="1.6" stroke-miterlimit="10" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="local-label">
+          <text x="44.0" y="740.25" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="14.0" font-weight="600">
+            <tspan x="44.0" dy="0">SAVED PRIVATELY ON YOUR LAPTOP</tspan>
+          </text>
+        </g>
+        <g data-cell-id="env">
+          <g transform="translate(0.5,0.5)">
+            <rect x="42" y="764" width="348" height="116" rx="9.28" ry="9.28" fill="#f6f7fa" stroke="#c0c5cf" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="env-title">
+          <text x="62.0" y="800.75" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="600">
+            <tspan x="62.0" dy="0">app/.env.workshop</tspan>
+          </text>
+        </g>
+        <g data-cell-id="env-sub">
+          <text x="62.0" y="836.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="62.0" dy="0">Cloud endpoints and passwords</tspan>
+            <tspan x="62.0" dy="20.0">Installation ID and session secret</tspan>
+          </text>
+        </g>
+        <g data-cell-id="inventory">
+          <g transform="translate(0.5,0.5)">
+            <rect x="414" y="764" width="348" height="116" rx="9.28" ry="9.28" fill="#f6f7fa" stroke="#c0c5cf" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="inventory-title">
+          <text x="434.0" y="800.75" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="600">
+            <tspan x="434.0" dy="0">infra/resources.json</tspan>
+          </text>
+        </g>
+        <g data-cell-id="inventory-sub">
+          <text x="434.0" y="836.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="434.0" dy="0">Three resource IDs</tspan>
+            <tspan x="434.0" dy="20.0">Ownership, organization, and region</tspan>
+          </text>
+        </g>
+        <g data-cell-id="ca">
+          <g transform="translate(0.5,0.5)">
+            <rect x="786" y="764" width="352" height="116" rx="9.28" ry="9.28" fill="#f6f7fa" stroke="#c0c5cf" stroke-width="1.4" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="ca-title">
+          <text x="806.0" y="800.75" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="600">
+            <tspan x="806.0" dy="0">Managed Postgres CA</tspan>
+          </text>
+        </g>
+        <g data-cell-id="ca-sub">
+          <text x="806.0" y="836.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="806.0" dy="0">Certificate for TLS verification</tspan>
+            <tspan x="806.0" dy="20.0">Used with sslmode=verify-full</tspan>
+          </text>
+        </g>
+        <g data-cell-id="next">
+          <text x="44.0" y="939.0" fill="#515b6b" font-family="Arial, Helvetica, sans-serif" font-size="16.0" font-weight="400">
+            <tspan x="44.0" dy="0">Next: load history, build aggregates, and start sales. Create your managed agent in Module 05.</tspan>
+          </text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
