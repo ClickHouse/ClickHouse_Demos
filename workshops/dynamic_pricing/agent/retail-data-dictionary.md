@@ -63,3 +63,11 @@ ORDER BY minute, branch LIMIT 1000;
 
 A LIMIT bounds output, not input work. The connection's execution, scan and memory
 limits bound the query. A limit or query failure means evidence is incomplete.
+
+The `retail_price_comparison` view only returns inputs with `eligibility='ready'`.
+An old cutoff can stop returning rows after 120 wall-clock seconds because delivery
+age is measured from the acknowledged batch at that cutoff. Newer live batches do
+not refresh that old boundary. If a copied comparison returns no rows, inspect
+`retail_opportunities` at the same cutoff to explain eligibility, then obtain fresh
+context and rerun the comparison. Do not label an empty result as zero demand or
+claim that a fixed cutoff guarantees indefinitely repeatable live results.
