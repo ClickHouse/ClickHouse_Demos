@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1191px" height="361px" viewBox="0 0 1191 361" content="&lt;mxfile host=&quot;Electron&quot;&gt;&#10;  &lt;diagram id=&quot;2x-VukDyv8i_49XgNwPP&quot; name=&quot;pageWithNumber&quot;&gt;&#10;    &lt;mxGraphModel grid=&quot;0&quot; gridSize=&quot;10&quot; guides=&quot;1&quot; tooltips=&quot;1&quot; connect=&quot;1&quot; arrows=&quot;1&quot; fold=&quot;0&quot; page=&quot;0&quot; pageScale=&quot;1&quot; pageWidth=&quot;850&quot; pageHeight=&quot;1100&quot; background=&quot;#161517&quot; math=&quot;0&quot; shadow=&quot;0&quot; adaptiveColors=&quot;none&quot;&gt;&#10;      &lt;root&gt;&#10;        &lt;mxCell id=&quot;0&quot; /&gt;&#10;        &lt;mxCell id=&quot;1&quot; parent=&quot;0&quot; /&gt;&#10;        &lt;mxCell id=&quot;canvas&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=10;html=0;fillColor=#161517;strokeColor=none;strokeWidth=1.5;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;330&quot; width=&quot;1160&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;title&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Helvetica;fontSize=28;fontColor=#f5f5f5;fontStyle=1;&quot; value=&quot;Find excess stock across a district&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;42&quot; width=&quot;1100&quot; x=&quot;28&quot; y=&quot;16&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;subtitle&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Helvetica;fontSize=18;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;Step 2 · Compare stock with expected demand at one complete business-time cutoff.&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;42&quot; width=&quot;1100&quot; x=&quot;28&quot; y=&quot;64&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;node0&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=10;html=0;fillColor=#173d37;strokeColor=#86d7c7;strokeWidth=1.5;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;90&quot; width=&quot;240&quot; x=&quot;40&quot; y=&quot;135&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;node0-label&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Helvetica;fontSize=20;fontColor=#f5f5f5;fontStyle=1;&quot; value=&quot;WITH context&amp;#xa;Current run + cutoff&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;84&quot; width=&quot;224&quot; x=&quot;48&quot; y=&quot;138&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;node1&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=10;html=0;fillColor=#20232b;strokeColor=#687080;strokeWidth=1.5;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;90&quot; width=&quot;240&quot; x=&quot;320&quot; y=&quot;135&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;node1-label&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Helvetica;fontSize=20;fontColor=#f5f5f5;fontStyle=1;&quot; value=&quot;District 1&amp;#xa;Sales + inventory&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;84&quot; width=&quot;224&quot; x=&quot;328&quot; y=&quot;138&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;node2&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=10;html=0;fillColor=#20232b;strokeColor=#687080;strokeWidth=1.5;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;90&quot; width=&quot;240&quot; x=&quot;600&quot; y=&quot;135&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;node2-label&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Helvetica;fontSize=20;fontColor=#f5f5f5;fontStyle=1;&quot; value=&quot;Excess stock&amp;#xa;max(stock − demand, 0)&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;84&quot; width=&quot;224&quot; x=&quot;608&quot; y=&quot;138&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;node3&quot; parent=&quot;1&quot; style=&quot;rounded=1;arcSize=10;html=0;fillColor=#faff69;strokeColor=#687080;strokeWidth=1.5;&quot; value=&quot;&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;90&quot; width=&quot;240&quot; x=&quot;880&quot; y=&quot;135&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;node3-label&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Helvetica;fontSize=20;fontColor=#20232b;fontStyle=1;&quot; value=&quot;ORDER BY + LIMIT&amp;#xa;10 largest excess rows&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;84&quot; width=&quot;224&quot; x=&quot;888&quot; y=&quot;138&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;edge0&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;node0&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#687080;strokeWidth=2;&quot; target=&quot;node1&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;edge1&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;node1&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#687080;strokeWidth=2;&quot; target=&quot;node2&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;edge2&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;node2&quot; style=&quot;edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#687080;strokeWidth=2;&quot; target=&quot;node3&quot;&gt;&#10;          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;example&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Helvetica;fontSize=21;fontColor=#f5f5f5;fontStyle=1;&quot; value=&quot;Illustrative row: 58 in stock − 8.1 expected sales = 49.9 excess units.&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;35&quot; width=&quot;1100&quot; x=&quot;28&quot; y=&quot;246&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;        &lt;mxCell id=&quot;takeaway&quot; parent=&quot;1&quot; style=&quot;text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Helvetica;fontSize=18;fontColor=#b9bec9;fontStyle=0;&quot; value=&quot;Choose a row with eligibility = ready and excess_units &amp;gt; 0 for the price comparison.&quot; vertex=&quot;1&quot;&gt;&#10;          &lt;mxGeometry height=&quot;34&quot; width=&quot;1100&quot; x=&quot;28&quot; y=&quot;282&quot; as=&quot;geometry&quot; /&gt;&#10;        &lt;/mxCell&gt;&#10;      &lt;/root&gt;&#10;    &lt;/mxGraphModel&gt;&#10;  &lt;/diagram&gt;&#10;&lt;/mxfile&gt;&#10;" role="img" aria-labelledby="find-excess-stock-title find-excess-stock-description">
+  <title id="find-excess-stock-title">Find products with excess stock</title>
+  <desc id="find-excess-stock-description">The query reads the current run and complete cutoff, calculates district-1 product demand and stock, computes nonnegative excess, and returns the ten largest excess rows. An illustrative row has 58 units, expected demand 8.1, and excess 49.9. Choose a ready row with positive excess.</desc>
+  <defs/>
+  <rect fill="#161517" width="100%" height="100%" x="0" y="0"/>
+  <g>
+    <g data-cell-id="0">
+      <g data-cell-id="1">
+        <g data-cell-id="canvas">
+          <g>
+            <rect x="10" y="10" width="1160" height="330" rx="33" ry="33" fill="#161517" stroke="none" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="title">
+          <text x="40.0" y="57.5" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="28.0" font-weight="600">
+            <tspan x="40.0" dy="0">Find excess stock across a district</tspan>
+          </text>
+        </g>
+        <g data-cell-id="subtitle">
+          <text x="40.0" y="101.75" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="400">
+            <tspan x="40.0" dy="0">Step 2 · Compare stock with expected demand at one complete business-time cutoff.</tspan>
+          </text>
+        </g>
+        <g data-cell-id="node0">
+          <g>
+            <rect x="50" y="145" width="240" height="90" rx="9" ry="9" fill="#173d37" stroke="#86d7c7" stroke-width="1.5" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="node0-label">
+          <text x="60.0" y="185.0" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="20.0" font-weight="600">
+            <tspan x="60.0" dy="0">WITH context</tspan>
+            <tspan x="60.0" dy="25.0">Current run + cutoff</tspan>
+          </text>
+        </g>
+        <g data-cell-id="node1">
+          <g>
+            <rect x="330" y="145" width="240" height="90" rx="9" ry="9" fill="#20232b" stroke="#687080" stroke-width="1.5" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="node1-label">
+          <text x="340.0" y="185.0" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="20.0" font-weight="600">
+            <tspan x="340.0" dy="0">District 1</tspan>
+            <tspan x="340.0" dy="25.0">Sales + inventory</tspan>
+          </text>
+        </g>
+        <g data-cell-id="node2">
+          <g>
+            <rect x="610" y="145" width="240" height="90" rx="9" ry="9" fill="#20232b" stroke="#687080" stroke-width="1.5" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="node2-label">
+          <text x="620.0" y="185.0" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="20.0" font-weight="600">
+            <tspan x="620.0" dy="0">Excess stock</tspan>
+            <tspan x="620.0" dy="25.0">max(stock − demand, 0)</tspan>
+          </text>
+        </g>
+        <g data-cell-id="node3">
+          <g>
+            <rect x="890" y="145" width="240" height="90" rx="9" ry="9" fill="#faff69" stroke="#687080" stroke-width="1.5" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="node3-label">
+          <text x="900.0" y="185.0" fill="#20232b" font-family="Arial, Helvetica, sans-serif" font-size="20.0" font-weight="600">
+            <tspan x="900.0" dy="0">ORDER BY + LIMIT</tspan>
+            <tspan x="900.0" dy="25.0">10 largest excess rows</tspan>
+          </text>
+        </g>
+        <g data-cell-id="edge0">
+          <g>
+            <path d="M 290 190 L 319.76 190" fill="none" stroke="#687080" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+            <path d="M 327.76 190 L 319.76 194 L 319.76 186 Z" fill="#687080" stroke="#687080" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="edge1">
+          <g>
+            <path d="M 570 190 L 599.76 190" fill="none" stroke="#687080" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+            <path d="M 607.76 190 L 599.76 194 L 599.76 186 Z" fill="#687080" stroke="#687080" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="edge2">
+          <g>
+            <path d="M 850 190 L 879.76 190" fill="none" stroke="#687080" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/>
+            <path d="M 887.76 190 L 879.76 194 L 879.76 186 Z" fill="#687080" stroke="#687080" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/>
+          </g>
+        </g>
+        <g data-cell-id="example">
+          <text x="40.0" y="281.375" fill="#f5f5f5" font-family="Arial, Helvetica, sans-serif" font-size="21.0" font-weight="600">
+            <tspan x="40.0" dy="0">Illustrative row: 58 in stock − 8.1 expected sales = 49.9 excess units.</tspan>
+          </text>
+        </g>
+        <g data-cell-id="takeaway">
+          <text x="40.0" y="315.75" fill="#b9bec9" font-family="Arial, Helvetica, sans-serif" font-size="18.0" font-weight="400">
+            <tspan x="40.0" dy="0">Choose a row with eligibility = ready and excess_units &gt; 0 for the price comparison.</tspan>
+          </text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
