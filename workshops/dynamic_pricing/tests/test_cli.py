@@ -62,3 +62,52 @@ def test_register_history_parses_without_a_manifest_override(capsys):
 def test_retail_import_requires_explicit_dataset(capsys):
     assert main(['retail-import']) == 2
     assert 'PRICING_RETAIL_DATASET_MANIFEST' in capsys.readouterr().err
+
+
+def test_retail_rollup_requires_retail_mode_before_validation(monkeypatch,capsys):
+    from types import SimpleNamespace
+    import pricing_lab.cli as cli
+    import pricing_lab.retail_history as history
+    calls=[]
+    monkeypatch.setattr(cli,'AnalyticsClient',lambda settings:SimpleNamespace(database='pricing',close=lambda:None))
+    monkeypatch.setattr(cli,'Ledger',lambda dsn:object())
+    monkeypatch.setattr(history,'RetailHistory',lambda *args:SimpleNamespace(register_rollup=lambda:calls.append('validate')))
+    assert main(['retail-register-rollup'])==2
+    assert calls==[]
+    assert 'retail_mode_required' in capsys.readouterr().err
+
+
+def test_missing_retail_cdc_is_reported_before_long_rollup_validation(monkeypatch,capsys):
+    from types import SimpleNamespace
+    import pricing_lab.cli as cli
+    import pricing_lab.retail_history as history
+    from pricing_lab.retail_cdc import RETAIL_TABLES
+    monkeypatch.setenv('PRICING_RETAIL_MODE','true')
+    calls=[]
+    names=[{'name':name+'_cdc'} for name in RETAIL_TABLES if name!='retail_batches']
+    monkeypatch.setattr(cli,'AnalyticsClient',lambda settings:SimpleNamespace(database='pricing',query=lambda *args:names,close=lambda:None))
+    monkeypatch.setattr(cli,'Ledger',lambda dsn:object())
+    monkeypatch.setattr(history,'RetailHistory',lambda *args:SimpleNamespace(register_rollup=lambda:calls.append('validate')))
+    assert main(['retail-register-rollup'])==2
+    assert calls==[]
+    error=capsys.readouterr().err
+    assert 'retail_cdc_missing' in error and 'retail_batches_cdc' in error
+
+
+def test_rollup_reports_post_validation_stage_without_exposing_raw_error(monkeypatch,capsys):
+    from types import SimpleNamespace
+    import pricing_lab.cli as cli
+    import pricing_lab.retail_history as history
+    import pricing_lab.retail_initialize as initialize
+    from pricing_lab.retail_cdc import RETAIL_TABLES
+    monkeypatch.setenv('PRICING_RETAIL_MODE','true')
+    names=[{'name':name+'_cdc'} for name in RETAIL_TABLES]
+    monkeypatch.setattr(cli,'AnalyticsClient',lambda settings:SimpleNamespace(database='pricing',query=lambda *args:names,close=lambda:None))
+    monkeypatch.setattr(cli,'Ledger',lambda dsn:object())
+    monkeypatch.setattr(history,'RetailHistory',lambda *args:SimpleNamespace(register_rollup=lambda:{'ready':True}))
+    def fail(*args):raise ValueError('PRIVATE_MODEL_ERROR_DO_NOT_PRINT')
+    monkeypatch.setattr(initialize,'install_retail_model',fail)
+    assert main(['retail-register-rollup'])==2
+    captured=capsys.readouterr()
+    assert 'Installing the prepared pricing model' in captured.out
+    assert 'PRIVATE_MODEL_ERROR_DO_NOT_PRINT' not in captured.err

@@ -355,6 +355,9 @@ def main(argv=None):
             return 0
         report_progress('Starting workshop Cloud setup...')
         settings=installation_settings()
+        if not settings.retail_mode:
+            raise WorkshopError('retail_mode_required',
+                'Set PRICING_RETAIL_MODE=true in app/.env.workshop before running the six-table retail workshop setup.')
         runner=CliRunner()
         report_progress('Detecting your Cloud organization and public IPv4 address...')
         settings=cloud_settings(settings,runner)
