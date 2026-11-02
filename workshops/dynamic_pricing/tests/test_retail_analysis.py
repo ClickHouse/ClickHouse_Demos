@@ -166,3 +166,26 @@ def test_missing_exposure_in_required_slot_is_not_zero_demand(opportunity_case,a
     client,run,cutoff=opportunity_case
     analytics.command(f'ALTER TABLE {analytics.database}.retail_availability UPDATE ample_stock=false WHERE toHour(hour)={slot} SETTINGS mutations_sync=2')
     assert client.opportunities(run,1,cutoff)[0]['eligibility']=='missing_history'
+
+
+@pytest.mark.parametrize('weighted',[False,True])
+def test_manual_learner_query_matches_workbench_economics(opportunity_case,analytics,weighted):
+    from pricing_lab.settings import LAB_ROOT
+    from pricing_lab.retail_contracts import RetailSubject
+    client,run,cutoff=opportunity_case
+    if weighted:
+        analytics.command(f'TRUNCATE TABLE {analytics.database}.retail_demand_scenarios')
+        analytics.command(f"INSERT INTO {analytics.database}.retail_demand_scenarios VALUES ('fixture','low',0.5,0.25),('fixture','typical',1,0.5),('fixture','high',1.5,0.25)")
+    sql=(LAB_ROOT/'sql/retail/learner_price_comparison.sql').read_text()
+    sql=sql.replace('pricing.',analytics.database+'.').replace('61 AS selected_store','1 AS selected_store').replace('102 AS selected_sku','101 AS selected_sku')
+    rows=analytics.query(sql.strip().rstrip(';'))
+    inputs=client.price_inputs(run,RetailSubject(store_id=1,sku=101),cutoff)
+    expected=client.compare(inputs)
+    assert len(rows)==len(expected)==3
+    for row in rows:
+        reference=next(r for r in expected if r.price_minor==round(row['price_sgd']*100))
+        assert row['store_id']==1 and row['sku']==101 and row['stock_units']==20
+        assert row['evidence_cutoff']==cutoff
+        for field,attribute,scale in [('expected_units','units',1),('expected_unsold_units','waste_units',1),('revenue_sgd','receipts_minor',100),('net_recovery_sgd','net_recovery_minor',100),('contribution_sgd','contribution_minor',100),('profit_change_sgd','incremental_profit_minor',100)]:
+            assert row[field]==pytest.approx(float(getattr(reference,attribute))/scale)
+        assert bool(row['recommended'])==reference.recommended
