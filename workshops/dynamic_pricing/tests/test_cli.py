@@ -104,10 +104,31 @@ def test_rollup_reports_post_validation_stage_without_exposing_raw_error(monkeyp
     names=[{'name':name+'_cdc'} for name in RETAIL_TABLES]
     monkeypatch.setattr(cli,'AnalyticsClient',lambda settings:SimpleNamespace(database='pricing',query=lambda *args:names,close=lambda:None))
     monkeypatch.setattr(cli,'Ledger',lambda dsn:object())
-    monkeypatch.setattr(history,'RetailHistory',lambda *args:SimpleNamespace(register_rollup=lambda:{'ready':True}))
+    monkeypatch.setattr(history,'RetailHistory',lambda *args:SimpleNamespace(register_rollup=lambda **kwargs:{'ready':True}))
     def fail(*args):raise ValueError('PRIVATE_MODEL_ERROR_DO_NOT_PRINT')
     monkeypatch.setattr(initialize,'install_retail_model',fail)
     assert main(['retail-register-rollup'])==2
     captured=capsys.readouterr()
     assert 'Installing the prepared pricing model' in captured.out
     assert 'PRIVATE_MODEL_ERROR_DO_NOT_PRINT' not in captured.err
+
+
+def test_retail_register_rollup_full_check_is_opt_in(monkeypatch,capsys):
+    from types import SimpleNamespace
+    import pricing_lab.cli as cli
+    import pricing_lab.retail_history as history
+    import pricing_lab.retail_cdc as cdc
+    import pricing_lab.retail_initialize as initialize
+    import pricing_lab.retail_schema as schema
+    monkeypatch.setenv('PRICING_RETAIL_MODE','true')
+    monkeypatch.setattr(cli,'AnalyticsClient',lambda settings:SimpleNamespace(database='pricing',close=lambda:None))
+    monkeypatch.setattr(cli,'Ledger',lambda dsn:object())
+    calls=[]
+    monkeypatch.setattr(history,'RetailHistory',lambda *args:SimpleNamespace(register_rollup=lambda **kwargs:calls.append(kwargs) or {'ready':True}))
+    monkeypatch.setattr(cdc,'require_retail_cdc',lambda *args:None)
+    monkeypatch.setattr(initialize,'install_retail_model',lambda *args:None)
+    monkeypatch.setattr(schema,'install_retail_analysis',lambda *args:None)
+    assert main(['retail-register-rollup'])==0
+    assert calls==[{'full_check':False}]
+    assert main(['retail-register-rollup','--full-check'])==0
+    assert calls[-1]=={'full_check':True}

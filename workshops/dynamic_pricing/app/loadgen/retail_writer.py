@@ -21,6 +21,12 @@ def sales_rate(logical_time, steady_rate, burst_rate, burst_minutes):
     return steady_rate,None
 
 
+def pacing(control,logical_time,default_speed):
+    until=control.get('fast_forward_until')
+    boundary=datetime.fromisoformat(until) if until else None
+    return (20,boundary) if boundary and logical_time<boundary else (default_speed,None)
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--transactions-per-minute',type=int,default=10000)
@@ -63,7 +69,7 @@ def main(argv=None):
         try:
             for pending in source.pending(run['run_id']):
                 delivery.deliver(pending)
-            last_rate=None
+            last_rate=last_speed=None
             finish_at=run['logical_end']+timedelta(minutes=args.minutes)
             deadline=started
             while True:
@@ -71,7 +77,8 @@ def main(argv=None):
                 if current['logical_end']>=finish_at:
                     break
                 with ledger.connect() as conn:
-                    conn.execute("UPDATE pricing.retail_runs SET control=jsonb_set(control,'{writer_heartbeat}',to_jsonb(%s::text)) WHERE run_id=%s",(datetime.now(UTC).isoformat(),run['run_id']))
+                    heartbeat=datetime.now(UTC).isoformat()
+                    conn.execute("UPDATE pricing.retail_runs SET control=jsonb_set(jsonb_set(control,'{writer_heartbeat}',to_jsonb(%s::text)),'{writer_pacing_heartbeat}',to_jsonb(%s::text)) WHERE run_id=%s",(heartbeat,heartbeat,run['run_id']))
                 if current['status']=='held':
                     break
                 if current['status']!='running':
@@ -86,9 +93,13 @@ def main(argv=None):
                 if rate!=last_rate:
                     print(json.dumps({'status':'sales_rate_changed','target_transactions_per_minute':rate,'logical_time':str(current['logical_end'])}),flush=True)
                     last_rate=rate
-                interval=min(60.,10.*args.speed,10000*60/rate)
+                speed,acceleration_end=pacing(current['control'],current['logical_end'],args.speed)
+                if speed!=last_speed:
+                    print(json.dumps({'status':'clock_speed_changed','speed':speed,'until':str(acceleration_end) if acceleration_end else None}),flush=True)
+                    last_speed=speed
+                interval=min(60.,10.*speed,10000*60/rate)
                 next_minute=current['logical_end'].replace(second=0,microsecond=0)+timedelta(minutes=1)
-                end=min(current['logical_end']+timedelta(seconds=interval),next_minute,terminal,finish_at,burst_end or finish_at)
+                end=min(current['logical_end']+timedelta(seconds=interval),next_minute,terminal,finish_at,burst_end or finish_at,acceleration_end or finish_at)
                 count=max(1,int(rate*(end-current['logical_end']).total_seconds()/60))
                 state=source.state(run['run_id'])
                 changes=current['control'].get('district_demand',{})
@@ -100,9 +111,9 @@ def main(argv=None):
                 rows=generate_batch(run['run_id'],current['sequence']+1,state,min(count,10000-len(paired)),end,args.seed,window_seconds=(end-current['logical_end']).total_seconds())+paired
                 batch=make_batch(run['run_id'],current['sequence']+1,rows,end)
                 try:
-                    source.stage(batch,rows)
+                    source.stage(batch,rows,expected_demand_revision=current['control'].get('demand_revision',0))
                 except UncommittedBatchConflict:
-                    print(json.dumps({'status':'regenerating_after_price_change','sequence':batch.sequence}),flush=True)
+                    print(json.dumps({'status':'regenerating_after_source_change','sequence':batch.sequence}),flush=True)
                     continue
                 delivery.deliver(batch)
                 transactions+=len({r['transaction_id'] for r in rows if r['branch']=='applied'}); events+=sum(r['branch']=='applied' for r in rows)
@@ -113,7 +124,7 @@ def main(argv=None):
                 if end==terminal:
                     print(json.dumps({'status':'trading_window_complete'}),flush=True)
                     break
-                deadline+=(end-current['logical_end']).total_seconds()/args.speed
+                deadline+=(end-current['logical_end']).total_seconds()/speed
                 time.sleep(max(0,deadline-time.monotonic()))
         finally:
             with ledger.connect() as conn:

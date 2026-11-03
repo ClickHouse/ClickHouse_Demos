@@ -147,7 +147,7 @@ class RetailSource:
             raise ValueError('Return amounts differ from the original sale.')
         conn.execute('INSERT INTO pricing.retail_return_claims VALUES (%s,%s,%s)', (batch.run_id,original_id,batch.batch_id))
 
-    def stage(self, batch, rows):
+    def stage(self, batch, rows, *, expected_demand_revision=None):
         if not 0 <= len(rows) <= 10000 or len({str(r['event_id']) for r in rows}) != len(rows):
             raise ValueError('Use up to 10,000 uniquely identified sales lines per batch; an empty batch advances the completed clock.')
         encoded = payload_bytes(rows)
@@ -178,6 +178,8 @@ class RetailSource:
                 if existing['payload_sha256'] != batch.payload_sha256:
                     raise ValueError('Immutable batch hash conflict.')
                 return RetailBatch.model_validate({k:existing[k] for k in RetailBatch.model_fields})
+            if expected_demand_revision is not None and expected_demand_revision!=run['control'].get('demand_revision',0):
+                raise UncommittedBatchConflict('Demand changed; regenerate this uncommitted batch.')
             if batch.sequence != run['sequence'] + 1 or batch.logical_end <= run['logical_end']:
                 raise ValueError('Batch sequence or time does not follow the source cursor.')
             if conn.execute("SELECT 1 FROM pricing.retail_batches WHERE run_id=%s AND status!='acknowledged' LIMIT 1",(batch.run_id,)).fetchone():

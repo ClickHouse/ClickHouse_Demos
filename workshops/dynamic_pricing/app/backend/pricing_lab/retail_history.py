@@ -187,13 +187,18 @@ class RetailHistory:
             self._save(conn, state | {'rollup': True})
             return {'ready': True}
 
-    def register_rollup(self):
-        """Verify console-built aggregates before attaching the canonical insert views."""
+    def register_rollup(self, *, full_check=False):
+        """Register console aggregates with metadata checks; full data parity is opt-in."""
         with self._guard() as conn:
             state=self._state(conn)
             if not state.get('active'):raise ValueError('Load and register history first.')
-            if state.get('rollup'):return {'ready':True}
-            if self.analytics.query(f"SELECT count() n FROM {self.db}.retail_sales WHERE source!='history'")[0]['n']:
+            if state.get('rollup') and not full_check:
+                return {'ready':True,'validation':state.get('rollup_validation','existing')}
+            # The writer holds this session lock for its lifetime. It is released
+            # automatically when this guarded Postgres connection closes.
+            if not conn.execute('SELECT pg_try_advisory_lock(84927642) locked').fetchone()['locked']:
+                raise ValueError('Stop the sales writer before registering aggregates.')
+            if conn.execute('SELECT EXISTS (SELECT 1 FROM pricing.retail_batches) has_batches').fetchone()['has_batches']:
                 raise ValueError('Register aggregates before starting live sales.')
             for target,store in [('retail_sales_minute',True),('retail_district_minute',False)]:
                 template=target+'_schema_check'
@@ -205,6 +210,13 @@ class RetailHistory:
                     shape=lambda name:self.analytics.query('SELECT engine,sorting_key,partition_key FROM system.tables WHERE database={db:String} AND name={name:String}',{'db':self.db,'name':name})
                     if shape(target)!=shape(template):raise ValueError('Aggregate engine or sort key differs from the workshop schema.')
                 finally:self.analytics.command(f'DROP TABLE {self.db}.{template} SYNC')
+                print(f'Checking {target}: schema, engine, keys, and populated parts.', flush=True)
+                parts=self.analytics.query('SELECT sum(rows) rows FROM system.parts WHERE database={db:String} AND table={table:String} AND active',
+                    {'db':self.db,'table':target})[0]['rows']
+                if not parts:
+                    raise ValueError(f'{target} is empty; finish its backfill before registering.')
+                if not full_check:
+                    continue
                 keys='district_id,'+('store_id,' if store else '')+'sku,run_id,branch,source,minute'
                 raw=f'''SELECT {keys},sum(toInt64(quantity)) units,sum(toInt64(greatest(quantity,0))) sold,
                   sum(receipts_minor) receipts,sum(sold_cost_minor) cost,count() rows,uniqExact(transaction_id) transactions,max(sequence) sequence
@@ -223,9 +235,11 @@ class RetailHistory:
                     for left,right in [(raw,rollup),(rollup,raw)]:
                         if self.analytics.query(f'SELECT count() n FROM (({left}) EXCEPT ALL ({right})) SETTINGS {VALIDATION_SETTINGS}',{'district':district})[0]['n']:
                             raise ValueError('Aggregate grouped facts differ from sales; correct the backfill before registering.')
-            for target,store in [('retail_sales_minute',True),('retail_district_minute',False)]:
-                select,keys=rollup_select(self.db,store)
-                self.analytics.command(f'DROP TABLE IF EXISTS {self.db}.{target}_mv SYNC')
-                self.analytics.command(f'CREATE MATERIALIZED VIEW {self.db}.{target}_mv TO {self.db}.{target} AS {select} GROUP BY {keys}')
-            self._save(conn,state|{'rollup':True})
-            return {'ready':True}
+            if not state.get('rollup'):
+                for target,store in [('retail_sales_minute',True),('retail_district_minute',False)]:
+                    select,keys=rollup_select(self.db,store)
+                    self.analytics.command(f'DROP TABLE IF EXISTS {self.db}.{target}_mv SYNC')
+                    self.analytics.command(f'CREATE MATERIALIZED VIEW {self.db}.{target}_mv TO {self.db}.{target} AS {select} GROUP BY {keys}')
+            validation='full' if full_check else 'quick'
+            self._save(conn,state|{'rollup':True,'rollup_validation':validation})
+            return {'ready':True,'validation':validation}

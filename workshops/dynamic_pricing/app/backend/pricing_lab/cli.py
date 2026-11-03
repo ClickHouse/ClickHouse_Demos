@@ -91,6 +91,8 @@ def main(argv=None):
     parser=argparse.ArgumentParser(prog='workshop');sub=parser.add_subparsers(dest='command',required=True)
     for command in ('initialize','preflight','load-history','register-history','scenario','reset','export-report','benchmark','retail-import','retail-register-history','retail-create-rollup','retail-register-rollup','retail-initialize','retail-context','retail-stream','retail-benchmark'):
         item=sub.add_parser(command);item.add_argument('--participant');item.add_argument('--offline',action='store_true')
+        if command=='retail-register-rollup':
+            item.add_argument('--full-check',action='store_true',help='Compare all grouped historical facts; slow and optional. Run before starting live sales.')
         if command=='retail-benchmark':
             item.add_argument('--district',type=int,default=1);item.add_argument('--repetitions',type=int,default=20)
             item.add_argument('--output',type=Path,required=True)
@@ -157,8 +159,10 @@ def main(argv=None):
                     raise WorkshopError('retail_mode_required',
                         'Set PRICING_RETAIL_MODE=true in app/.env.workshop and complete the six-table Cloud setup in Module 00 before registering aggregates.')
                 require_retail_cdc(analytics)
-                print('Verifying district and store aggregates...',flush=True)
-                result=history.create_rollup() if args.command=='retail-create-rollup' else history.register_rollup()
+                print('Creating and verifying aggregates...' if args.command=='retail-create-rollup' else
+                    'Running full grouped verification (can take several minutes)...' if args.full_check else
+                    'Checking aggregate schemas and populated parts (no historical data scan)...',flush=True)
+                result=history.create_rollup() if args.command=='retail-create-rollup' else history.register_rollup(full_check=args.full_check)
                 print('Installing the prepared pricing model...',flush=True)
                 install_retail_model(analytics,settings.retail_model_path)
                 print('Installing analytical views...',flush=True)

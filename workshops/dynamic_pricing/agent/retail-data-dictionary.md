@@ -71,3 +71,10 @@ not refresh that old boundary. If a copied comparison returns no rows, inspect
 `retail_opportunities` at the same cutoff to explain eligibility, then obtain fresh
 context and rerun the comparison. Do not label an empty result as zero demand or
 claim that a fixed cutoff guarantees indefinitely repeatable live results.
+
+Forecasting and observed transaction generation are distinct. ClickHouse price forecasts
+use fitted model coefficients. After approval, the writer reuses captured baseline demand
+but applies a known synthetic elasticity of -2, shared Poisson random input, and separate
+stock caps to emit transaction rows for the two branches. It does not generate the
+forecast table as sales. Observed synthetic results are not an independent accuracy test
+because the generator shares baseline inputs and uses a predefined response rule.

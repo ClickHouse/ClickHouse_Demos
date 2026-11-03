@@ -1,5 +1,5 @@
 """Authenticated retail workflow with instance-owned run control."""
-from datetime import UTC,datetime
+from datetime import UTC,datetime,timedelta
 from typing import Literal
 from uuid import UUID
 import time
@@ -72,7 +72,13 @@ class RetailWorkbench:
         data=context[0] if context else dict(cutoff=run['logical_end'].replace(second=0,microsecond=0),model_version='',delivery_age_seconds=None)
         heartbeat=run['control'].get('writer_heartbeat')
         connected=bool(heartbeat and (datetime.now(UTC)-datetime.fromisoformat(heartbeat)).total_seconds()<120)
+        windows={}
+        for district,window in run['control'].get('demand_windows',{}).items():
+            remaining=max(0,min(900,int((datetime.fromisoformat(window['ready_at'])-data['cutoff']).total_seconds()))) if context else 900
+            fresh=data.get('delivery_age_seconds') is not None and data['delivery_age_seconds']<=120
+            windows[district]=dict(window,covered_seconds=900-remaining,remaining_seconds=remaining,ready=remaining==0 and fresh)
         return dict(data,writer_connected=connected,stream_state=run['status'],logical_time=run['logical_end'],
+                    demand_windows=windows,acceleration_supported=connected and heartbeat==run['control'].get('writer_pacing_heartbeat'),
                     aggregation_ready='retail_district_minute' in tables,analysis_ready='retail_opportunities' in tables)
 
     def overview(self,district=0):
@@ -125,9 +131,22 @@ class RetailWorkbench:
             if run['status']=='held':
                 raise WorkshopError('stream_held','Reconcile the held batch before resuming the sales stream.')
             if body.action=='slow_district':
-                control=run['control'];control.setdefault('district_demand',{})[str(body.district)]=body.rate
+                control=run['control'];district=str(body.district)
+                windows=control.setdefault('demand_windows',{})
+                if district in windows and control.get('district_demand',{}).get(district)==body.rate:
+                    return dict(status=run['status'],district=body.district,demand_multiplier=body.rate,demand_window=windows[district])
+                target=run['logical_end']+timedelta(minutes=15)
+                if target.second or target.microsecond:target=target.replace(second=0,microsecond=0)+timedelta(minutes=1)
+                if target>target.replace(hour=10,minute=0,second=0,microsecond=0):
+                    raise WorkshopError('demand_window_unavailable','Start a fresh workshop run; fewer than 15 business minutes remain before trading ends.')
+                window=dict(requested_at=datetime.now(UTC).isoformat(),started_at=run['logical_end'].isoformat(),ready_at=target.isoformat(),speed=20)
+                windows[district]=window
+                control.setdefault('district_demand',{})[district]=body.rate
+                control['demand_revision']=control.get('demand_revision',0)+1
+                previous=control.get('fast_forward_until')
+                control['fast_forward_until']=max(target,datetime.fromisoformat(previous) if previous else target).isoformat()
                 conn.execute('UPDATE pricing.retail_runs SET control=%s WHERE run_id=%s',(Jsonb(control),run['run_id']))
-                return dict(status=run['status'],district=body.district,demand_multiplier=body.rate)
+                return dict(status=run['status'],district=body.district,demand_multiplier=body.rate,demand_window=window)
             status='running' if body.action=='start' else 'stopped'
             conn.execute('UPDATE pricing.retail_runs SET status=%s WHERE run_id=%s',(status,run['run_id']))
             return dict(status=status,action='The separate writer process follows this requested state.')

@@ -97,3 +97,30 @@ test('completed approval replaces the review panel with a receipt and next actio
  await expect(page.getByRole('heading',{name:'Observed results',exact:true})).toBeVisible();
  await expect(page.getByText(receipt,{exact:true})).toBeVisible();
 });
+
+test('demand slowdown shows a durable business-time window and readiness',async({page})=>{
+ await setup(page);
+ const window={requested_at:'2026-11-03T00:00:00Z',started_at:cutoff,ready_at:'2026-01-30T08:15:00Z',speed:20,covered_seconds:0,remaining_seconds:900,ready:false};
+ let reduced=false;let currentCutoff=cutoff;let supported=false;
+ await page.route('**/api/retail/context',route=>route.fulfill({json:{run_id:run,data:{cutoff:currentCutoff,stream_state:'running',writer_connected:true,acceleration_supported:supported,analysis_ready:true,model_version:'fixture',delivery_age_seconds:2,aggregation_ready:true,demand_windows:reduced?{'1':window}:{}}}}));
+ await page.route('**/api/retail/stream',route=>{reduced=true;return route.fulfill({json:{run_id:run,data:{status:'running',demand_window:window}}});});
+ await page.getByRole('button',{name:'Opportunities',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Reduce district demand by 50%'})).toBeDisabled();
+ await expect(page.getByText('Restart the sales writer to enable accelerated demand tracking.')).toBeVisible();
+ supported=true;
+ await page.getByRole('button',{name:'Reduce district demand by 50%'}).click();
+ const progress=page.getByRole('region',{name:'Demand slowdown progress'});
+ await expect(progress).toContainText('08:00:00');
+ await expect(progress).toContainText('08:15:00');
+ await expect(progress).toContainText('20×');
+ await expect(progress.getByRole('progressbar')).toHaveAttribute('value','0');
+ currentCutoff='2026-01-30T08:10:00Z';window.covered_seconds=600;window.remaining_seconds=300;
+ await expect(progress.getByRole('progressbar')).toHaveAttribute('value','600',{timeout:7000});
+ await expect(progress).toContainText('5:00');
+ await page.reload();await page.getByRole('button',{name:'Start learner session'}).click();
+ await page.getByRole('button',{name:'Opportunities',exact:true}).click();
+ await expect(progress).toContainText('08:15:00');
+ currentCutoff='2026-01-30T08:15:00Z';window.covered_seconds=900;window.remaining_seconds=0;window.ready=true;
+ await expect(progress).toContainText('Ready to find pricing opportunities',{timeout:7000});
+ await page.screenshot({path:'../../.run/demand-window-ready.png',fullPage:true});
+});
