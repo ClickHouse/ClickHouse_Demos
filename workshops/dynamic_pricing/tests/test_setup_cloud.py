@@ -352,3 +352,13 @@ def test_retail_pipe_maps_operational_metadata_and_preserves_legacy_pipe(tmp_pat
     legacy=pipe_request(settings.model_copy(update={'retail_mode':False}),'test-secret')
     with pytest.raises(WorkshopError,match='clickpipe_source_mismatch'):
         verify_pipe_source(legacy,settings)
+
+
+def test_learner_setup_rejects_legacy_mode_before_cloud_operations(monkeypatch,capsys):
+    import infra.setup_cloud as setup
+    calls=[]
+    monkeypatch.setattr(setup,'installation_settings',lambda:Settings(retail_mode=False))
+    monkeypatch.setattr(setup,'cloud_settings',lambda *args:calls.append('cloud'))
+    assert setup.main([])==2
+    assert calls==[]
+    assert 'retail_mode_required' in capsys.readouterr().out

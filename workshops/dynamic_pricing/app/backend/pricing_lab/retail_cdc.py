@@ -6,6 +6,18 @@ RETAIL_TABLES = ('retail_runs','retail_batches','retail_inventory_history','reta
                  'retail_policy_history','retail_receipts')
 
 
+def require_retail_cdc(analytics):
+    from .contracts import WorkshopError
+    found={row['name'] for row in analytics.query(
+        'SELECT name FROM system.tables WHERE database={db:String}',
+        {'db':analytics.database})}
+    missing=sorted(name+'_cdc' for name in RETAIL_TABLES if name+'_cdc' not in found)
+    if missing:
+        raise WorkshopError('retail_cdc_missing',
+            'Missing operational CDC tables: '+', '.join(missing)+
+            '. Complete the six-table Cloud setup in Module 00 before registering aggregates; existing sales and aggregate tables can be retained.')
+
+
 def configure_retail_cdc(analytics, only_inventory=False):
     sql=(LAB_ROOT/'sql/clickhouse/009_retail_cdc.sql').read_text().replace('__DATABASE__',identifier(analytics.database))
     statements=[s for s in sql.split(';') if s.strip()]

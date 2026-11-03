@@ -81,3 +81,19 @@ test('comparison keeps its captured cutoff and refresh recomputes it',async({pag
  await expect(page.getByLabel('Captured comparison evidence')).toContainText(newer);
  await expect(page.getByRole('button',{name:'Approve and apply price'})).toHaveCount(0);
 });
+
+test('completed approval replaces the review panel with a receipt and next action',async({page})=>{
+ await setup(page);
+ await page.getByRole('button',{name:'Opportunities',exact:true}).click();
+ await page.getByRole('button',{name:'Compare prices for Store 5000 / SKU 101'}).click();
+ await page.getByRole('button',{name:'Review SGD 7.00'}).click();
+ await page.getByRole('button',{name:'Approve and apply price'}).click();
+ const confirmation=page.getByRole('region',{name:'Applied price confirmation'});
+ await expect(confirmation.getByRole('heading',{name:'Price applied: SGD 7.00'})).toBeVisible();
+ await expect(confirmation.getByText(receipt,{exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Approve and apply price'})).toHaveCount(0);
+ await page.screenshot({path:'../../.run/retail-applied-price-confirmation.png',fullPage:true});
+ await confirmation.getByRole('button',{name:'View observed results'}).click();
+ await expect(page.getByRole('heading',{name:'Observed results',exact:true})).toBeVisible();
+ await expect(page.getByText(receipt,{exact:true})).toBeVisible();
+});

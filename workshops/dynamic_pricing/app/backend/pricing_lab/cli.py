@@ -94,7 +94,9 @@ def main(argv=None):
         if command=='retail-benchmark':
             item.add_argument('--district',type=int,default=1);item.add_argument('--repetitions',type=int,default=20)
             item.add_argument('--output',type=Path,required=True)
-        if command=='retail-initialize': item.add_argument('--model',type=Path)
+        if command=='retail-initialize':
+            item.add_argument('--model',type=Path)
+            item.add_argument('--new-run',action='store_true',help='Create a fresh stocked scenario; stop the writer first. Historical data and previous runs are retained.')
         if command=='retail-stream':
             item.add_argument('--action',choices=('start','stop','slow_district'),required=True)
             item.add_argument('--district',type=int,default=1);item.add_argument('--rate',type=float,default=.5)
@@ -149,8 +151,17 @@ def main(argv=None):
                 args.output.parent.mkdir(parents=True,exist_ok=True)
                 args.output.write_text(json.dumps(result,default=str,indent=2)+'\n')
             elif args.command in ('retail-create-rollup','retail-register-rollup'):
+                from .retail_cdc import require_retail_cdc
+                print('Checking retail CDC setup...',flush=True)
+                if not settings.retail_mode:
+                    raise WorkshopError('retail_mode_required',
+                        'Set PRICING_RETAIL_MODE=true in app/.env.workshop and complete the six-table Cloud setup in Module 00 before registering aggregates.')
+                require_retail_cdc(analytics)
+                print('Verifying district and store aggregates...',flush=True)
                 result=history.create_rollup() if args.command=='retail-create-rollup' else history.register_rollup()
+                print('Installing the prepared pricing model...',flush=True)
                 install_retail_model(analytics,settings.retail_model_path)
+                print('Installing analytical views...',flush=True)
                 install_retail_analysis(analytics)
             elif args.command in ('retail-context','retail-stream'):
                 from .retail_api import RetailWorkbench,StreamRequest
@@ -168,7 +179,7 @@ def main(argv=None):
                     raise WorkshopError('dataset_manifest_missing','Set PRICING_RETAIL_DATASET_MANIFEST or pass --manifest.')
                 if args.command=='retail-initialize':
                     version=install_retail_model(analytics,args.model or settings.retail_model_path)
-                    run=RetailSource(ledger,settings.retail_spool).initialize(manifest)
+                    run=RetailSource(ledger,settings.retail_spool).initialize(manifest,new_run=args.new_run)
                     result={'run_id':str(run),'model_version':version}
                 else:
                     result=(history.load(manifest) if args.command=='retail-import' else history.register_console(manifest))
