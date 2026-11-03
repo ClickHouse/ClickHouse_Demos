@@ -4,16 +4,9 @@ Investigate a synthetic 5,000-store retail chain using 100 million historical sa
 
 Follow the [learner workshop](https://dev-labs.demohouse.cloud/docs/dynamic-pricing/learner/00-setup). Complete setup before the three-hour session. Each attendee creates a dedicated Cloud stack; public S3 data and prepared model artifacts are shared.
 
-The main commands, in order:
+Use the SQL-console steps in the learner workshop to load history and create aggregates. `bash scripts/setup-cloud.sh` creates your Cloud resources; the module instructions cover verification, the local workbench, and the sales writer. Optional Python import and aggregate commands remain available in the source.
 
-```bash
-bash scripts/setup-cloud.sh
-.venv/bin/workshop retail-import
-.venv/bin/workshop retail-initialize
-.venv/bin/workshop retail-create-rollup
-```
-
-The SQL-console lessons provide equivalent manual import and aggregate paths. `retail-register-history` and `retail-register-rollup` verify that work without inserting the same facts again. Start the Docker workbench and separate writer with the commands in Modules 01 and 02. The writer targets 100,000 transactions/minute for its first two business minutes, then 10,000/minute automatically, for a 180-business-minute run. Restarts preserve the clock and do not repeat a completed burst.
+The writer targets 100,000 transactions/minute for its first two business minutes, then 10,000/minute automatically, for a 180-business-minute run. Restarts preserve the clock and do not repeat a completed burst.
 
 For another workshop session, stop the writer and run `.venv/bin/workshop retail-initialize --new-run`. This restores opening stock in a new live scenario while preserving historical data, aggregates, and earlier runs.
 
@@ -23,4 +16,15 @@ Create **Retail Pricing Strategist** in managed ClickHouse Agents using the inst
 
 Stop local containers and use `bash scripts/setup-cloud.sh --destroy` to preview cleanup. Add `--execute` only after reviewing the owned resource IDs. This deletes the workshop Cloud data.
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) for contributor checks and rehearsal evidence.
+## Files you use
+
+| Path | Purpose |
+| --- | --- |
+| `app/` | Environment template, Docker application, and sales writer. |
+| `scripts/setup-cloud.sh` | Create, reuse, or delete your workshop Cloud resources. |
+| `sql/retail/` | Pricing calculations and observed-outcome SQL. |
+| `agent/retail-*.md` | Instructions, data dictionary, and policy for your managed pricing agent. |
+| `pricing/artifacts/retail/` | Prepared model files loaded during initialization. |
+| `infra/` | Cloud provisioning and CDC implementation used by setup. |
+
+You do not need a `reports/` folder to complete the workshop. Measurement and export commands create local output when requested. `generator/`, model-preparation code, `tests/`, benchmark tooling, and developer Compose files support dataset preparation and maintenance; see [DEVELOPMENT.md](DEVELOPMENT.md).

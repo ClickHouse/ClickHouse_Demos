@@ -1,5 +1,6 @@
 from datetime import UTC,datetime,timedelta
 from uuid import UUID
+from pathlib import Path
 import json,time
 from generator.retail_catalog import retail_catalog,reference_rate,calendar_factor
 from pricing_lab.retail_stream import generate_batch
@@ -20,5 +21,5 @@ while now<finish:
 remaining=sum(s['stock_units'] for s in state.values());district=[s for s in state.values() if s['district_id']==1];stocked=sum(s['stock_units']>0 for s in district)
 result=dict(status='passed',business_minutes=180,initial_stock=initial,delivered_transactions=events,remaining_stock=remaining,district_1_stocked_products=stocked,district_1_products=len(district),batches=sequence,elapsed_seconds=time.monotonic()-started,notes='Real deterministic generator; demand multiplier 0.5 in district 1 after minute 20. Inventory capacity evidence; full SQL eligibility verified separately.')
 assert remaining==initial-events and stocked>100 and min(s['stock_units'] for s in state.values())>=0
-from pathlib import Path
+Path('reports').mkdir(parents=True,exist_ok=True)
 Path('reports/retail-three-hour-capacity.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result),flush=True)

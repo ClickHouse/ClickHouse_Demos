@@ -12,7 +12,6 @@ RUN pip install --no-cache-dir --no-deps app/backend && useradd --uid 10001 --cr
 COPY sql sql
 COPY fixtures fixtures
 COPY agent agent
-COPY reports reports
 RUN mkdir -p .run/retail-spool reports/exports && chown -R workshop:workshop .run reports/exports
 USER workshop
 EXPOSE 8000

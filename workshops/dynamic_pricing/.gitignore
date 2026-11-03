@@ -15,3 +15,7 @@ infra/resources.deleted-*.json
 benchmarks/results/private/
 reports/exports/
 infra/resources.lock
+
+# Generated measurements and exports are local output, not workshop inputs.
+reports/
+benchmarks/results/
