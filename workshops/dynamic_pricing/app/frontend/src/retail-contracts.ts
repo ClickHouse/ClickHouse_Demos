@@ -1,6 +1,7 @@
 export type Amount=number|string;
 export type RetailEnvelope<T>={run_id:string;mode:'synthetic';data:T;generated_at:string};
-export type RetailContext={cutoff:string;logical_time?:string;stream_state:string;model_version:string;delivery_age_seconds:number|null;aggregation_ready:boolean;analysis_ready?:boolean;writer_connected?:boolean};
+export type DemandWindow={requested_at:string;started_at:string;ready_at:string;speed:number;covered_seconds:number;remaining_seconds:number;ready:boolean};
+export type RetailContext={cutoff:string;logical_time?:string;stream_state:string;model_version:string;delivery_age_seconds:number|null;aggregation_ready:boolean;analysis_ready?:boolean;writer_connected?:boolean;acceleration_supported?:boolean;demand_windows?:Record<string,DemandWindow>};
 export type Subject={store_id:number;sku:number};
 export type Opportunity=Subject&{stock_units:number;base_demand_units:Amount;excess_units:Amount;eligibility:string;current_price_minor:number;recent_demand_factor?:number};
 export type PriceRow={price_minor:number;units:Amount;receipts_minor:Amount;waste_units:Amount;net_recovery_minor:Amount;contribution_minor:Amount;incremental_profit_minor:Amount;recommended:boolean};

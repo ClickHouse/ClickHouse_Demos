@@ -58,10 +58,10 @@ def test_writer_commits_expiry_and_final_waste(approval_case,analytics,tmp_path,
 def test_writer_regenerates_after_concurrent_approval(approval_case,analytics,tmp_path,monkeypatch):
     c=approval_case;source=prepare_writer(c,analytics,tmp_path,monkeypatch)
     stage=source.stage;attempts=[]
-    def interleaved(batch,rows):
+    def interleaved(batch,rows,**kwargs):
         attempts.append(batch.sequence)
         if len(attempts)==1:c.service.apply(c.request,'learner-1')
-        return stage(batch,rows)
+        return stage(batch,rows,**kwargs)
     monkeypatch.setattr(source,'stage',interleaved)
     retail_writer.main(['--transactions-per-minute','30','--minutes','1','--speed','20'])
     assert attempts==[1,1]
@@ -117,3 +117,21 @@ def test_writer_switches_at_persisted_burst_boundary(approval_case,analytics,tmp
     assert source.run(c.run)['logical_end']==start+timedelta(minutes=1)
     rates=[json.loads(line)['target_transactions_per_minute'] for line in capsys.readouterr().out.splitlines() if 'sales_rate_changed' in line]
     assert rates==[100000,10000]
+
+
+def test_writer_accelerates_only_until_the_persisted_window_target(approval_case,analytics,tmp_path,monkeypatch,capsys):
+    from datetime import UTC,datetime
+    from psycopg.types.json import Jsonb
+    c=approval_case;source=prepare_writer(c,analytics,tmp_path,monkeypatch)
+    start=datetime(2026,1,30,9,58,tzinfo=UTC);target=start+timedelta(minutes=1)
+    with c.ledger.connect() as conn:
+        conn.execute('UPDATE pricing.retail_runs SET logical_end=%s,control=%s',(start,Jsonb({'fast_forward_until':target.isoformat()})))
+    monkeypatch.setattr(retail_writer,'generate_batch',lambda *args,**kwargs:[])
+    monkeypatch.setattr(retail_writer.time,'sleep',lambda seconds:None)
+    retail_writer.main(['--transactions-per-minute','10000','--minutes','1.2'])
+    assert source.run(c.run)['logical_end']==start+timedelta(minutes=1.2)
+    records=[json.loads(line) for line in capsys.readouterr().out.splitlines()]
+    assert [r['speed'] for r in records if r.get('status')=='clock_speed_changed']==[20,1]
+    with c.ledger.connect() as conn:
+        first=conn.execute('SELECT logical_end FROM pricing.retail_batches ORDER BY sequence LIMIT 1').fetchone()
+    assert first['logical_end']==target
