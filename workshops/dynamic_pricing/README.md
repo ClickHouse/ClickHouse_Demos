@@ -10,7 +10,7 @@ The writer targets 100,000 transactions/minute for its first two business minute
 
 For another workshop session, stop the writer and run `.venv/bin/workshop retail-initialize --new-run`. This restores opening stock in a new live scenario while preserving historical data, aggregates, and earlier runs.
 
-Module 02 focuses on ingestion and materialized-view performance. Module 03 finds excess stock and compares permitted prices with SQL before opening the workbench. Run `sql/retail/learner_price_comparison.sql` in SQL console after choosing a ready product; change only the selected store and SKU.
+Module 02 focuses on ingestion and materialized-view performance. Manual aggregate registration uses metadata-only checks by default; the lesson then verifies a representative SQL result. Exhaustive grouped verification is an optional contributor check documented in `DEVELOPMENT.md`. Module 03 finds excess stock and compares permitted prices with SQL before opening the workbench. Run `sql/retail/learner_price_comparison.sql` in SQL console after choosing a ready product; change only the selected store and SKU.
 
 Create **Retail Pricing Strategist** in managed ClickHouse Agents using the instruction and context files in `agent/`. The agent queries and recommends; you review and approve in the workbench. Inspect the receipt-scoped observed series after approval.
 

@@ -30,3 +30,9 @@ Run `PYTHONPATH="$PWD:$PWD/app/backend" .venv/bin/python scripts/rehearse-retail
 Saved rehearsal runs, benchmark results, release checklists, and internal publication notes are not workshop inputs. The public kit does not bundle them. Scripts create `reports/` when needed; Git ignores it and `benchmarks/results/`. Backend images create a writable `reports/exports` directory without copying historical reports.
 
 Diagram assets are served by the WorkshopHouse site and maintained in that repository. Keep tests, fixtures, local Compose definitions, optional CLI implementations, and model preparation code: they verify or support the runnable kit even though attendees do not edit them. Legacy modules still imported by the application must be removed through a separate dependency refactor, not by deleting their files.
+
+## Optional exhaustive aggregate verification
+
+`workshop retail-register-rollup` defaults to metadata checks: schema, engine, sort/partition keys, and populated active parts. It does not scan raw sales or merge all aggregate states, and it does not establish full grouped-data parity.
+
+Before starting the sales writer, use `.venv/bin/workshop retail-register-rollup --full-check` for exhaustive verification. This compares all measures in both directions for both aggregate tables across 20 districts, including exact distinct transactions. It can take several minutes on the 100M-row dataset. The option also runs after a previous quick registration, provided live sales have not started. Failed validation does not upgrade registration status; a successful check records `rollup_validation=full`.
