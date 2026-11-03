@@ -4,6 +4,8 @@ Investigate a synthetic 5,000-store retail chain using 100 million historical sa
 
 Follow the [learner workshop](https://dev-labs.demohouse.cloud/docs/dynamic-pricing/learner/00-setup). Complete setup before the three-hour session. Each attendee creates a dedicated Cloud stack; public S3 data and prepared model artifacts are shared.
 
+Production teams can use ClickHouse transaction history and additional business features as training data for demand or revenue models built with appropriate ML tools. This workshop supplies a prepared model; production model training and deployment are outside its scope. After learner approval, a separate synthetic demand rule generates transactions for ClickHouse to ingest and analyze. See [pricing/model-card.md](pricing/model-card.md) for that flow and its assumptions.
+
 Use the SQL-console steps in the learner workshop to load history and create aggregates. `bash scripts/setup-cloud.sh` creates your Cloud resources; the module instructions cover verification, the local workbench, and the sales writer. Optional Python import and aggregate commands remain available in the source.
 
 The writer targets 100,000 transactions/minute for its first two business minutes, then 10,000/minute automatically, for a 180-business-minute run. Restarts preserve the clock and do not repeat a completed burst.
