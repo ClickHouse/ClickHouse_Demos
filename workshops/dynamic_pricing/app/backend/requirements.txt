@@ -10,6 +10,6 @@ statsmodels==0.14.4
 pandas==2.2.3
 pyarrow==20.0.0
 boto3==1.38.27
-opentelemetry-api==1.39.1
+opentelemetry-api==1.45.1
 opentelemetry-sdk==1.39.1
 opentelemetry-exporter-otlp-proto-http==1.39.1
